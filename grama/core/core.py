@@ -134,6 +134,19 @@ class model_:
         """Formatted print of model attributes
         """
 
+class model_df_(model_):
+    """Derived class for grama models.
+
+    Given function must be vectorized over dataframes
+    """
+
+    def evaluate(self, df):
+        """Evaluate function using an input dataframe
+
+        Assumes function is vectorized over dataframes.
+        """
+        return self.function(df)
+
 ## Default pipeline evaluation function
 @curry
 def eval_df(model, df = None, append = True):
