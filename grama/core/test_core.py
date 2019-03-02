@@ -87,6 +87,19 @@ class TestModel(unittest.TestCase):
             )
         )
 
+class TestEvalDf(unittest.TestCase):
+    """Test implementation of eval_df()
+    """
+
+    def test_catch_no_df(self):
+        """Checks that eval_df() raises when no input df is given.
+        """
+        self.assertRaises(
+            ValueError,
+            eval_df,
+            model_()
+        )
+
 ## Run tests
 if __name__ == "__main__":
     unittest.main()

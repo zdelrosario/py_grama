@@ -130,6 +130,10 @@ class model_:
         ## Package output as DataFrame
         return pd.DataFrame(data = results, columns = self.outputs)
 
+    def printpretty(self):
+        """Formatted print of model attributes
+        """
+
 ## Default pipeline evaluation function
 @curry
 def eval_df(model, df = None, append = True):
@@ -138,6 +142,10 @@ def eval_df(model, df = None, append = True):
     @param df input dataframe to evaluate (Pandas.DataFrame)
     @param append bool flag; append results to original dataframe?
     """
+
+    if df is None:
+        raise ValueError("No input df given!")
+
     df_res = model.evaluate(df)
 
     if append:
