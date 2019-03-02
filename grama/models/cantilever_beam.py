@@ -15,8 +15,8 @@ TAU_V  = 100.
 TAU_E  = 1.45e6
 TAU_Y  = 2000.
 
-def function_beam(x):
-    w, t, H, V, E, Y = x
+def function_beam(x, w = 3, t = 3):
+    H, V, E, Y = x
 
     return array([
         w * t,
@@ -28,10 +28,8 @@ def function_beam(x):
 
 domain_cantilever_beam = core.domain_(
     hypercube = True,
-    inputs    = ["w", "t", "H", "V", "E", "Y"],
+    inputs    = ["H", "V", "E", "Y"],
     bounds    = {
-        "w": [2., 4.],
-        "t": [2., 4.],
         "H": [-Inf, +Inf],
         "V": [-Inf, +Inf],
         "E": [-Inf, +Inf],
@@ -40,15 +38,13 @@ domain_cantilever_beam = core.domain_(
 )
 
 density_cantilever_beam = core.density_(
-    pdf = lambda X: 0.25 * \
+    pdf = lambda X: \
             norm.pdf(X[2], loc = MU_H, scale = TAU_H) * \
             norm.pdf(X[3], loc = MU_V, scale = TAU_V) * \
             norm.pdf(X[4], loc = MU_E, scale = TAU_E) * \
             norm.pdf(X[5], loc = MU_Y, scale = TAU_Y),
-    pdf_factors = ["unif", "unif", "norm", "norm", "norm", "norm"],
+    pdf_factors = ["norm", "norm", "norm", "norm"],
     pdf_param   = [
-        {"lower": 2, "upper": 4},
-        {"lower": 2, "upper": 4},
         {"loc": MU_H, "scale": TAU_H},
         {"loc": MU_V, "scale": TAU_V},
         {"loc": MU_E, "scale": TAU_E},
@@ -56,9 +52,12 @@ density_cantilever_beam = core.density_(
     ]
 )
 
-model_cantilever_beam = core.model_(
-    function = function_beam,
-    outputs  = ["c", "g_stress", "g_displacement"],
-    domain   = domain_cantilever_beam,
-    density  = density_cantilever_beam
-)
+class model_cantilever_beam(core.model_):
+    def __init__(self, w = 3, t = 3):
+        core.model_.__init__(
+            self,
+            function = lambda x: function_beam(x, w = w, t = t),
+            outputs  = ["c", "g_stress", "g_displacement"],
+            domain   = domain_cantilever_beam,
+            density  = density_cantilever_beam
+        )

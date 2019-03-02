@@ -1,25 +1,13 @@
 ## Simple model pipeline example
 import grama.core as gr
+from grama.evals import eval_monte_carlo
 import pandas as pd
 
 from grama.core import pi # Import pipe
 from grama.models import model_cantilever_beam
 
-df_test = pd.DataFrame(
-    data = {
-        "w": [3.],
-        "t": [3.],
-        "H": [500.],
-        "V": [1000.],
-        "E": [2.9e7],
-        "Y": [4e5]
-    }
-)
-
 df_res = \
-    model_cantilever_beam |pi| \
-    gr.eval_df(
-        df = df_test
-    )
+    model_cantilever_beam(w = 2.5, t = 3) |pi| \
+    eval_monte_carlo(n_samples = 10)
 
 print(df_res)
