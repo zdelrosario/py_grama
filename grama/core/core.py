@@ -1,41 +1,11 @@
+## grama core functions
+# Zachary del Rosario, March 2019
 
 import numpy as np
 import pandas as pd
 import unittest
 
-from functools import partial
 from toolz import curry
-from collections import Counter
-
-## Helper functions
-##################################################
-# Infix to help define pipe
-class Infix(object):
-    def __init__(self, func):
-        self.func = func
-    def __or__(self, other):
-        return self.func(other)
-    def __ror__(self, other):
-        return Infix(partial(self.func, other))
-    def __call__(self, v1, v2):
-        return self.func(v1, v2)
-
-# Pipe function
-@Infix
-def pi(x, f):
-    """Infix pipe operator.
-    """
-    return f(x)
-
-# Check if two lists are permutations
-def is_perm(L1, L2):
-    c = Counter(L1)
-    if c != Counter(L2):
-        return False
-    if not c:
-        return (None, None, None)
-    value, count = c.most_common(1)[0]
-    return value, count, type(value)
 
 ## Core functions
 ##################################################
@@ -48,7 +18,7 @@ class model_:
             self,
             function = lambda x: x,
             inputs   = ["x"],
-            outputs  = ["f"],
+            outputs  = ["x"],
             domain   = {"x": [-1, +1]},
             density  = lambda x: 0.5,
     ):
@@ -94,13 +64,35 @@ class model_:
         ## Package output as DataFrame
         return pd.DataFrame(data = results, columns = self.outputs)
 
+## Default pipeline evaluation function
+@curry
+def eval_df(model, df = None):
+    """Evaluates a given model at a given dataframe
+    """
+    return model.evaluate(df)
+
 ## Core function tests
 ##################################################
 class TestPlumbing(unittest.TestCase):
     """test implementation of pipe and support functions
     """
     def setUp(self):
-        pass
+        self.model_default = model_()
+        self.df_ok    = pd.DataFrame(data = {"x" : [0., 1.]})
+
+    ## Basic piping
+
+    def test_model2eval(self):
+        """Checks model evaluation via pipe
+        """
+        self.assertTrue(
+            self.df_ok.equals(
+              self.model_default |pi| \
+                eval_df(
+                    df = self.df_ok
+                )
+            )
+        )
 
 class TestModel(unittest.TestCase):
     """Test implementation of model_
@@ -109,8 +101,8 @@ class TestModel(unittest.TestCase):
     def setUp(self):
         # Default model
         self.model_default = model_()
-        self.df_wrong = pd.DataFrame(data = {"y" : [0, 1]})
-        self.df_ok    = pd.DataFrame(data = {"x" : [0, 1]})
+        self.df_wrong = pd.DataFrame(data = {"y" : [0., 1.]})
+        self.df_ok    = pd.DataFrame(data = {"x" : [0., 1.]})
 
         # 2D identity model with permuted df inputs
         self.model_2d = model_(
@@ -123,8 +115,6 @@ class TestModel(unittest.TestCase):
         self.df_2d = pd.DataFrame(data = {"y": [0.], "x": [+1.]})
         self.res_2d = self.model_2d.evaluate(self.df_2d)
 
-    ## model_
-    # --------------------------------------------------
     ## Basic functionality with default arguments
 
     def test_catch_input_mismatch(self):
