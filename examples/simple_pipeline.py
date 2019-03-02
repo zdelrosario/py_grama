@@ -14,3 +14,5 @@ df_res = \
     gr.eval_df(
         df = df_default
     )
+
+print(df_res)
