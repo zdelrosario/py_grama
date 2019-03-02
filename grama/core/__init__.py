@@ -1,1 +1,1 @@
-from .core import pi, model_, eval_df
+from .core import pi, domain_, density_, model_, eval_df

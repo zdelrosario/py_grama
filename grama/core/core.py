@@ -29,6 +29,27 @@ def pi(x, f):
 
 ## Core functions
 ##################################################
+# Domain parent class
+class domain_:
+    """Parent class for input domains
+    """
+    def __init__(
+            self,
+            hypercube = True,
+            inputs    = ["x"],
+            bounds    = {"x": [-1., +1.]},
+            feasible  = lambda x: (-1 <= x) * (x <= +1)
+    ):
+        """Initialize
+
+        @param hypercube bool flag
+        @param inputs list of input names
+        """
+        self.hypercube = hypercube
+        self.inputs    = inputs
+        self.bounds    = bounds
+        self.feasible  = feasible
+
 # Density parent class
 class density_:
     """Parent class for join densities
@@ -53,27 +74,6 @@ class density_:
         self.pdf         = pdf
         self.pdf_factors = pdf_factors
         self.pdf_param   = pdf_param
-
-# Domain parent class
-class domain_:
-    """Parent class for input domains
-    """
-    def __init__(
-            self,
-            hypercube = True,
-            inputs    = ["x"],
-            bounds    = {"x": [-1., +1.]},
-            feasible  = lambda x: (-1 <= x) * (x <= +1)
-    ):
-        """Initialize
-
-        @param hypercube bool flag
-        @param inputs list of input names
-        """
-        self.hypercube = hypercube
-        self.inputs    = inputs
-        self.bounds    = bounds
-        self.feasible  = feasible
 
 # Model parent class
 class model_:
