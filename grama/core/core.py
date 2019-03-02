@@ -29,6 +29,52 @@ def pi(x, f):
 
 ## Core functions
 ##################################################
+# Density parent class
+class density_:
+    """Parent class for join densities
+    """
+    def __init__(
+            self,
+            pdf = lambda x: 0.5,
+            pdf_factors = ["unif"],
+            pdf_param = [{"lower": -1., "upper": +1.}]
+    ):
+        """Initialize
+
+        @param pdf density function \rho(x) : R^n_in -> R
+        @param pdf_factors if joint density can be factored, list of names
+               of marginal distributions
+        @param pdf_param if joint density can be factored, list of dict
+               of margin density parameters
+
+        @pre (len(pdf_factors) == n_in) || (pdf_factors is None)
+        @pre (len(pdf_param) == n_in) || (pdf_param is None)
+        """
+        self.pdf         = pdf
+        self.pdf_factors = pdf_factors
+        self.pdf_param   = pdf_param
+
+# Domain parent class
+class domain_:
+    """Parent class for input domains
+    """
+    def __init__(
+            self,
+            hypercube = True,
+            inputs    = ["x"],
+            bounds    = {"x": [-1., +1.]},
+            feasible  = lambda x: (-1 <= x) * (x <= +1)
+    ):
+        """Initialize
+
+        @param hypercube bool flag
+        @param inputs list of input names
+        """
+        self.hypercube = hypercube
+        self.inputs    = inputs
+        self.bounds    = bounds
+        self.feasible  = feasible
+
 # Model parent class
 class model_:
     """Parent class for grama models.
@@ -37,32 +83,32 @@ class model_:
     def __init__(
             self,
             function = lambda x: x,
-            inputs   = ["x"],
             outputs  = ["f"],
-            domain   = {"x": [-1, +1]},
-            density  = lambda x: 0.5,
+            domain   = domain_(),
+            density  = density_(),
     ):
         """Constructor
 
-        All arguments must satisfy particular invariants:
-        @param function must be a function f(x) : R^n_in -> R^n_out
-        @param inputs must satisfy len(inputs) == n_in; ordering of abstract inputs x must
-               match names given by inputs
-        @param ouputs must satisfy len(inputs) == n_out; ordering of abstract outputs f(x) must
-               match names given by outputs
-        @param domain must be a dictionary with set(domain.keys()) == set(inputs)
-        @param density must be a function rho(x) : R^d -> R^n_out
+        @param function defining the model mapping f(x) : R^n_in -> R^n_out
+        @param inputs to function; ordering of abstract inputs x given by inputs
+        @param ouputs of function outputs
+        @param domain object of class domain_
+        @param density object of class density_ or None
+
+        @pre len(domain.inputs) == n_in
+        @pre len(outputs) == n_out
+        @pre isinstance(domain, domain_)
+        @pre isinstance(density, density_) || (density is None)
 
         Default model is 1D identity over the interval [-1, +1] with a uniform density.
         """
         self.function = function
-        self.inputs   = inputs
         self.outputs  = outputs
         self.domain   = domain
         self.density  = density
 
         ## Convenience constants
-        self.n_in  = len(inputs)
+        self.n_in  = len(self.domain.inputs)
         self.n_out = len(outputs)
 
     def evaluate(self, df):
@@ -72,14 +118,14 @@ class model_:
         """
 
         ## Check invariant; model inputs must be subset of df columns
-        if not set(self.inputs).issubset(set(df.columns)):
+        if not set(self.domain.inputs).issubset(set(df.columns)):
             raise ValueError("Model inputs not a subset of given columns")
 
         ## Set up output
         n_rows  = df.shape[0]
         results = np.zeros((n_rows, self.n_out))
         for ind in range(n_rows):
-            results[ind] = self.function(df.loc[ind, self.inputs])
+            results[ind] = self.function(df.loc[ind, self.domain.inputs])
 
         ## Package output as DataFrame
         return pd.DataFrame(data = results, columns = self.outputs)

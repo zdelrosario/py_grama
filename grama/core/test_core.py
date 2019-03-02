@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import unittest
 
-from core import model_, eval_df, pi
+from core import density_, domain_, model_, eval_df, pi
 
 ## Core function tests
 ##################################################
@@ -40,12 +40,18 @@ class TestModel(unittest.TestCase):
         self.df_ok    = pd.DataFrame(data = {"x" : [0., 1.]})
 
         # 2D identity model with permuted df inputs
+        domain_2d = domain_(
+            hypercube = True,
+            inputs    = ["x", "y"],
+            bounds    = {"x": [-1., +1.], "y": [0., 1.]},
+            feasible  = lambda X: (-1 <= X[0]) * (x <= X[0]) * (0 <= X[1]) * (X[1] <= 1)
+        )
+
         self.model_2d = model_(
             function = lambda x: [x[0], x[1]],
-            inputs   = ["x", "y"],
             outputs  = ["x", "y"],
-            domain   = {"x": [-1., +1.], "y": [0., 1.]},
-            density  = lambda x: [0.5, 0.5]
+            domain   = domain_2d,
+            density  = None
         )
         self.df_2d = pd.DataFrame(data = {"y": [0.], "x": [+1.]})
         self.res_2d = self.model_2d.evaluate(self.df_2d)
