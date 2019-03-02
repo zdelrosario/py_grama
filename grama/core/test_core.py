@@ -12,6 +12,7 @@ class TestPlumbing(unittest.TestCase):
     def setUp(self):
         self.model_default = model_()
         self.df_ok    = pd.DataFrame(data = {"x" : [0., 1.]})
+        self.df_res   = pd.DataFrame(data = {"f" : [0., 1.]})
 
     ## Basic piping
 
@@ -19,10 +20,11 @@ class TestPlumbing(unittest.TestCase):
         """Checks model evaluation via pipe
         """
         self.assertTrue(
-            self.df_ok.equals(
+            self.df_res.equals(
               self.model_default |pi| \
                 eval_df(
-                    df = self.df_ok
+                    df = self.df_ok,
+                    append = False
                 )
             )
         )

@@ -38,7 +38,7 @@ class model_:
             self,
             function = lambda x: x,
             inputs   = ["x"],
-            outputs  = ["x"],
+            outputs  = ["f"],
             domain   = {"x": [-1, +1]},
             density  = lambda x: 0.5,
     ):
@@ -86,7 +86,15 @@ class model_:
 
 ## Default pipeline evaluation function
 @curry
-def eval_df(model, df = None):
+def eval_df(model, df = None, append = True):
     """Evaluates a given model at a given dataframe
+
+    @param df input dataframe to evaluate (Pandas.DataFrame)
+    @param append bool flag; append results to original dataframe?
     """
-    return model.evaluate(df)
+    df_res = model.evaluate(df)
+
+    if append:
+        df_res = pd.concat([df.reset_index(drop = True), df_res], axis=1)
+
+    return df_res

@@ -6,13 +6,14 @@ from grama.core import pi # Import pipe
 
 model_default = gr.model_()
 df_default    = pd.DataFrame(
-    data = {"x" : [0, 1]}
+    data = {"x" : [0., 1.]}
 )
 
 df_res = \
     model_default |pi| \
     gr.eval_df(
-        df = df_default
+        df = df_default,
+        append = True
     )
 
 print(df_res)
