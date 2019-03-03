@@ -1,13 +1,60 @@
 ## Simple model pipeline example
-import grama.core as gr
-from grama.evals import eval_monte_carlo
+import numpy as np
 import pandas as pd
+import grama.core as gr
 
 from grama.core import pi # Import pipe
 from grama.models import model_cantilever_beam
+from grama.evals import eval_monte_carlo
+from grama.fitting import fit_ols
 
-df_res = \
-    model_cantilever_beam(w = 2.5, t = 3) |pi| \
-    eval_monte_carlo(n_samples = 10)
+np.random.seed(101)
 
-print(df_res)
+n_monte_carlo = int(1e2)
+n_train       = int(50)
+
+## Instantiate model with desired geometry
+model = model_cantilever_beam(w = 2.5, t = 3)
+
+## Draw a number of MC samples
+df_res_direct = \
+    model |pi| \
+    eval_monte_carlo(n_samples = n_monte_carlo)
+
+## Draw samples for training
+df_res_train = \
+    model |pi| \
+    eval_monte_carlo(n_samples = n_train)
+
+## Fit a meta-model via OLS
+## Mysteriously, the pipe does not work for fit_ols()...
+model_fitted = fit_ols(
+    df_res_train,
+    formulae = [
+        "g_stress ~ H + V + E + Y",
+        "g_displacement ~ H + V + E + Y"
+    ],
+    domain  = model.domain,
+    density = model.density
+)
+
+## Draw more samples via the model
+df_res_surrogate = \
+    model_fitted |pi| \
+    eval_monte_carlo(n_samples = n_monte_carlo)
+
+## Post-process
+R_stress_direct       = np.mean(df_res_direct.loc[:, "g_stress"] >= 0)
+R_displacement_direct = np.mean(df_res_direct.loc[:, "g_displacement"] >= 0)
+
+R_stress_surrogate       = np.mean(df_res_surrogate.loc[:, "g_stress"] >= 0)
+R_displacement_surrogate = np.mean(df_res_surrogate.loc[:, "g_displacement"] >= 0)
+
+## Print training samples
+print(df_res_train)
+
+print("R_stress_direct    = {0:4.3e}".format(R_stress_direct))
+print("R_stress_surrogate = {0:4.3e}".format(R_stress_surrogate))
+
+print("R_displacement_direct    = {0:4.3e}".format(R_displacement_direct))
+print("R_displacement_surrogate = {0:4.3e}".format(R_displacement_surrogate))

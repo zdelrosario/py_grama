@@ -40,10 +40,11 @@ def fit_ols(df, formulae = [""], domain = None, density = None):
     for ind in range(n_out):
         fits.append(smf.ols(formulae[ind], data = df).fit())
 
-    def fit_all(x):
-        result = np.zeros((n_obs, n_out))
+    def fit_all(df_new):
+        n_obs_new, _ = df_new.shape
+        result = np.zeros((n_obs_new, n_out))
         for ind in range(n_out):
-            result[:, ind] = fits[ind].predict(df)
+            result[:, ind] = fits[ind].predict(df_new)
         return pd.DataFrame(data = result, columns = outputs)
 
     ## Construct model
