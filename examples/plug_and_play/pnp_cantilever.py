@@ -8,13 +8,13 @@ from grama.models import model_cantilever_beam
 from grama.evals import eval_monte_carlo
 from grama.fitting import fit_ols
 
-np.random.seed(101)
+np.random.seed(101) # Set for reproducibility
 
-n_monte_carlo = int(1e2)
+n_monte_carlo = int(1e3)
 n_train       = int(50)
 
 ## Instantiate model with desired geometry
-model = model_cantilever_beam(w = 2.5, t = 3)
+model = model_cantilever_beam(w = 2.80, t = 3.)
 
 ## Draw a number of MC samples
 df_res_direct = \
