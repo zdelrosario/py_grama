@@ -45,20 +45,21 @@ class domain_:
         @param hypercube bool flag
         @param inputs list of input names
         """
-        self.hypercube = hypercube
-        self.inputs    = inputs
-        self.bounds    = bounds
-        self.feasible  = feasible
+        self.hypercube = hypercube if (hypercube is not None) else True
+        self.inputs    = inputs if (inputs is not None) else ["x"]
+        self.bounds    = bounds if (bounds is not None) else {"x": [-1., +1.]}
+        self.feasible  = feasible if (feasible is not None) else lambda x: (-1<=x) * (x<=+1)
 
 # Density parent class
 class density_:
-    """Parent class for join densities
+    """Parent class for joint densities
     """
     def __init__(
             self,
-            pdf = lambda x: 0.5,
-            pdf_factors = ["unif"],
-            pdf_param = [{"lower": -1., "upper": +1.}]
+            pdf         = None,
+            pdf_factors = None,
+            pdf_param   = None,
+            pdf_corr    = None
     ):
         """Initialize
 
@@ -66,14 +67,21 @@ class density_:
         @param pdf_factors if joint density can be factored, list of names
                of marginal distributions
         @param pdf_param if joint density can be factored, list of dict
-               of margin density parameters
+               of marginal density parameters
+        @param pdf_corr correlation matrix for copula representation,
+               either None (for independent densities) or a list of
+               correlation entries ordered as np.triu_indices(n_in, 1)
 
         @pre (len(pdf_factors) == n_in) || (pdf_factors is None)
         @pre (len(pdf_param) == n_in) || (pdf_param is None)
+        @pre (len(pdf_corr == len(np.triu_indices(n_in, 1)[0]))) || (pdf_param is None)
         """
-        self.pdf         = pdf
-        self.pdf_factors = pdf_factors
-        self.pdf_param   = pdf_param
+        self.pdf         = pdf if (pdf is not None) else lambda x: 0.5
+        self.pdf_factors = pdf_factors if (pdf_factors is not None) else ["unif"]
+        self.pdf_param   = pdf_param if (pdf_param is not None) else [
+            {"lower": -1., "upper": +1.}
+        ]
+        self.pdf_corr    = pdf_corr if (pdf_corr is not None) else None
 
 # Model parent class
 class model_:
@@ -82,17 +90,17 @@ class model_:
 
     def __init__(
             self,
-            function = lambda x: x,
-            outputs  = ["f"],
-            domain   = domain_(),
-            density  = density_(),
+            function = None,
+            outputs  = None,
+            domain   = None,
+            density  = None,
     ):
         """Constructor
 
         @param function defining the model mapping f(x) : R^n_in -> R^n_out
         @param inputs to function; ordering of abstract inputs x given by inputs
-        @param ouputs of function outputs
-        @param domain object of class domain_
+        @param ouputs of function outputs or None
+        @param domain object of class domain_ or None
         @param density object of class density_ or None
 
         @pre len(domain.inputs) == n_in
@@ -102,14 +110,14 @@ class model_:
 
         Default model is 1D identity over the interval [-1, +1] with a uniform density.
         """
-        self.function = function
-        self.outputs  = outputs
-        self.domain   = domain
-        self.density  = density
+        self.function = function if (function is not None) else lambda x: x
+        self.outputs  = outputs if (outputs is not None) else ["f"]
+        self.domain   = domain if (domain is not None) else domain_()
+        self.density  = density if (density is not None) else density_()
 
         ## Convenience constants
         self.n_in  = len(self.domain.inputs)
-        self.n_out = len(outputs)
+        self.n_out = len(self.outputs)
 
     def evaluate(self, df):
         """Evaluate function using an input dataframe

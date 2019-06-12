@@ -26,38 +26,33 @@ def function_beam(x, w = 3, t = 3):
         )
     ])
 
-domain_cantilever_beam = core.domain_(
-    hypercube = True,
-    inputs    = ["H", "V", "E", "Y"],
-    bounds    = {
-        "H": [-Inf, +Inf],
-        "V": [-Inf, +Inf],
-        "E": [-Inf, +Inf],
-        "Y": [-Inf, +Inf]
-    }
-)
-
-density_cantilever_beam = core.density_(
-    pdf = lambda X: \
-            norm.pdf(X[2], loc = MU_H, scale = TAU_H) * \
-            norm.pdf(X[3], loc = MU_V, scale = TAU_V) * \
-            norm.pdf(X[4], loc = MU_E, scale = TAU_E) * \
-            norm.pdf(X[5], loc = MU_Y, scale = TAU_Y),
-    pdf_factors = ["norm", "norm", "norm", "norm"],
-    pdf_param   = [
-        {"loc": MU_H, "scale": TAU_H},
-        {"loc": MU_V, "scale": TAU_V},
-        {"loc": MU_E, "scale": TAU_E},
-        {"loc": MU_Y, "scale": TAU_Y}
-    ]
-)
-
 class model_cantilever_beam(core.model_):
     def __init__(self, w = 3, t = 3):
-        core.model_.__init__(
-            self,
+        super().__init__(
             function = lambda x: function_beam(x, w = w, t = t),
             outputs  = ["c", "g_stress", "g_displacement"],
-            domain   = domain_cantilever_beam,
-            density  = density_cantilever_beam
+            domain   = core.domain_(
+                hypercube = True,
+                inputs    = ["H", "V", "E", "Y"],
+                bounds    = {
+                    "H": [-Inf, +Inf],
+                    "V": [-Inf, +Inf],
+                    "E": [-Inf, +Inf],
+                    "Y": [-Inf, +Inf]
+                }
+            ),
+            density  = core.density_(
+                pdf = lambda X: \
+                norm.pdf(X[2], loc = MU_H, scale = TAU_H) * \
+                norm.pdf(X[3], loc = MU_V, scale = TAU_V) * \
+                norm.pdf(X[4], loc = MU_E, scale = TAU_E) * \
+                norm.pdf(X[5], loc = MU_Y, scale = TAU_Y),
+                pdf_factors = ["norm", "norm", "norm", "norm"],
+                pdf_param   = [
+                    {"loc": MU_H, "scale": TAU_H},
+                    {"loc": MU_V, "scale": TAU_V},
+                    {"loc": MU_E, "scale": TAU_E},
+                    {"loc": MU_Y, "scale": TAU_Y}
+                ]
+            )
         )

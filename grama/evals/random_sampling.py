@@ -28,22 +28,37 @@ def eval_monte_carlo(model, n_samples = 1, seed = None, append = True):
     if seed is not None:
         np.random.seed(seed)
 
-    ## Make space for random draws
-    samples = np.zeros((n_samples, model.n_in))
+    ## Draw from underlying gaussian
+    if model.density.pdf_corr is not None:
+        ## Build correlation structure
+        Sigma = np.eye(model.n_in)
+        Sigma[np.triu_indices(model.n_in, 1)] = model.density.pdf_corr
+        Sigma[np.tril_indices(model.n_in,-1)] = model.density.pdf_corr
+        ## Draw samples
+        gaussian_samples = np.random.multivariate_normal(
+            mean = np.ones(model.n_in),
+            cov  = Sigma,
+            size = (n_samples, model.n_in)
+        )
+        ## Convert to uniform marginals
+        samples = norm.cdf(gaussian_samples)
+    ## Skip if no dependence structure
+    else:
+        samples = np.random.random((n_samples, model.n_in))
 
-    ## Draw from parameterized distribution family
+    ## Convert samples to desired marginals
     for ind in range(model.n_in):
         if model.density.pdf_factors[ind] == "unif":
             samples[:, ind] = \
-                np.random.random(n_samples) * (
+                samples[:, ind] * (
                     model.density.pdf_param[ind]["upper"] -
                     model.density.pdf_param[ind]["lower"]
                 ) + model.density.pdf_param[ind]["lower"]
         elif model.density.pdf_factors[ind] == "norm":
             samples[:, ind] = \
-                np.random.normal(
-                    size  = n_samples,
-                    loc   = model.density.pdf_param[ind]["loc"],
+                norm.ppf(
+                    samples[:, ind],
+                    loc = model.density.pdf_param[ind]["loc"],
                     scale = model.density.pdf_param[ind]["scale"]
                 )
 
