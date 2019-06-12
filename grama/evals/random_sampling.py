@@ -38,7 +38,7 @@ def eval_monte_carlo(model, n_samples = 1, seed = None, append = True):
         gaussian_samples = np.random.multivariate_normal(
             mean = np.ones(model.n_in),
             cov  = Sigma,
-            size = (n_samples, model.n_in)
+            size = n_samples
         )
         ## Convert to uniform marginals
         samples = norm.cdf(gaussian_samples)
