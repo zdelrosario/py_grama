@@ -20,7 +20,7 @@ model_copula = model_cantilever_beam(w = 2.80, t = 3.)
 n_in   = len(model_copula.density.pdf_factors)
 n_corr = len(np.triu_indices(n_in, 1)[0])
 
-model_copula.density.pdf_corr = [0.5] * n_corr
+model_copula.density.pdf_corr = [0.1] * n_corr
 
 # Draw samples
 df_res_indep  = model_indep |pi| \

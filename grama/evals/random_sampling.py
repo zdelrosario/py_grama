@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from .. import core
-from scipy.stats import norm
+from scipy.stats import norm, lognorm
 from toolz import curry
 
 ## Simple Monte Carlo
@@ -14,7 +14,7 @@ def eval_monte_carlo(model, n_samples = 1, seed = None, append = True):
     @param seed random seed to use
     @param append bool flag; append results to original dataframe?
 
-    Only implemented for factorable densities for now.
+    Only implemented for gaussian copula distributions for now.
     """
 
     ## Check if distribution is valid
@@ -36,7 +36,7 @@ def eval_monte_carlo(model, n_samples = 1, seed = None, append = True):
         Sigma[np.tril_indices(model.n_in,-1)] = model.density.pdf_corr
         ## Draw samples
         gaussian_samples = np.random.multivariate_normal(
-            mean = np.ones(model.n_in),
+            mean = np.zeros(model.n_in),
             cov  = Sigma,
             size = n_samples
         )
@@ -47,6 +47,7 @@ def eval_monte_carlo(model, n_samples = 1, seed = None, append = True):
         samples = np.random.random((n_samples, model.n_in))
 
     ## Convert samples to desired marginals
+    ## TODO: More programmatic way of accessing marginal transforms....
     for ind in range(model.n_in):
         if model.density.pdf_factors[ind] == "unif":
             samples[:, ind] = \
@@ -58,9 +59,18 @@ def eval_monte_carlo(model, n_samples = 1, seed = None, append = True):
             samples[:, ind] = \
                 norm.ppf(
                     samples[:, ind],
-                    loc = model.density.pdf_param[ind]["loc"],
+                    loc   = model.density.pdf_param[ind]["loc"],
                     scale = model.density.pdf_param[ind]["scale"]
                 )
+        elif model.density.pdf_factors[ind] == "lognorm":
+            samples[:, ind] = \
+                lognorm.ppf(
+                    samples[:, ind],
+                    loc   = model.density.pdf_param[ind]["loc"],
+                    scale = model.density.pdf_param[ind]["scale"]
+                )
+        else:
+            raise ValueError("model.density.pdf_factors[{}] nor supported".format(ind))
 
     ## Create dataframe for inputs
     df_inputs = pd.DataFrame(
