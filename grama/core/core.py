@@ -61,7 +61,8 @@ class density_:
             pdf         = None,
             pdf_factors = None,
             pdf_param   = None,
-            pdf_corr    = None
+            pdf_corr    = None,
+            pdf_qt_flip = None
     ):
         """Initialize
 
@@ -73,10 +74,13 @@ class density_:
         @param pdf_corr correlation matrix for copula representation,
                either None (for independent densities) or a list of
                correlation entries ordered as np.triu_indices(n_in, 1)
+        @param pdf_qt_flip array of boolean flags for flipping the quantiles,
+               useful for quantile evaluation approaches
 
         @pre (len(pdf_factors) == n_in) || (pdf_factors is None)
         @pre (len(pdf_param) == n_in) || (pdf_param is None)
         @pre (len(pdf_corr == len(np.triu_indices(n_in, 1)[0]))) || (pdf_param is None)
+        @pre (len(pdf_qt_flip) == n_in) || (pdf_qt_flip is None)
         """
         self.pdf         = pdf if (pdf is not None) else lambda x: 0.5
         self.pdf_factors = pdf_factors if (pdf_factors is not None) else ["unif"]
@@ -84,6 +88,7 @@ class density_:
             {"lower": -1., "upper": +1.}
         ]
         self.pdf_corr    = pdf_corr if (pdf_corr is not None) else None
+        self.pdf_qt_flip = pdf_qt_flip if (pdf_qt_flip is not None) else [0] * len(self.pdf_factors)
 
 # Model parent class
 class model_:
@@ -150,6 +155,11 @@ class model_:
         samples = np.zeros(quantiles.shape)
 
         for ind in range(self.n_in):
+            ## Flip quantiles if desired
+            if self.density.pdf_qt_flip[ind]:
+                quantiles[:, ind] = 1 - quantiles[:, ind]
+
+            ## Map with inverse density
             if self.density.pdf_factors[ind] == "unif":
                 samples[:, ind] = \
                     quantiles[:, ind] * (

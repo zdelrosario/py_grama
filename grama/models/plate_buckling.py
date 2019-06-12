@@ -42,6 +42,7 @@ class model_plate_buckle(core.model_):
                 pdf_param   = [
                     {"s": SIG_LOG_E, "loc": MU_LOG_E, "scale": 1},
                     {"lower": A_NU, "upper": B_NU},
-                ]
+                ],
+                pdf_qt_flip = [0, 1]
             )
         )
