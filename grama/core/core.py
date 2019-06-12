@@ -7,6 +7,8 @@ import pandas as pd
 from functools import partial
 from toolz import curry
 
+from scipy.stats import norm, lognorm
+
 ## Helper functions
 ##################################################
 # Infix to help define pipe
@@ -137,6 +139,39 @@ class model_:
 
         ## Package output as DataFrame
         return pd.DataFrame(data = results, columns = self.outputs)
+
+    def sample_quantile(self, quantiles):
+        """Convert quantiles to input samples
+
+        @pre quantiles.shape[1] == n_in
+        """
+        samples = np.zeros(quantiles.shape)
+
+        for ind in range(self.n_in):
+            if self.density.pdf_factors[ind] == "unif":
+                samples[:, ind] = \
+                    quantiles[:, ind] * (
+                        self.density.pdf_param[ind]["upper"] -
+                        self.density.pdf_param[ind]["lower"]
+                    ) + self.density.pdf_param[ind]["lower"]
+            elif self.density.pdf_factors[ind] == "norm":
+                samples[:, ind] = \
+                    norm.ppf(
+                        quantiles[:, ind],
+                        loc   = self.density.pdf_param[ind]["loc"],
+                        scale = self.density.pdf_param[ind]["scale"]
+                    )
+            elif self.density.pdf_factors[ind] == "lognorm":
+                samples[:, ind] = \
+                    lognorm.ppf(
+                        quantiles[:, ind],
+                        s     = self.density.pdf_param[ind]["s"],
+                        loc   = self.density.pdf_param[ind]["loc"],
+                        scale = self.density.pdf_param[ind]["scale"]
+                    )
+            else:
+                raise ValueError("model.density.pdf_factors[{}] not supported".format(ind))
+        return samples
 
     def printpretty(self):
         """Formatted print of model attributes

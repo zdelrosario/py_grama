@@ -41,37 +41,13 @@ def eval_monte_carlo(model, n_samples = 1, seed = None, append = True):
             size = n_samples
         )
         ## Convert to uniform marginals
-        samples = norm.cdf(gaussian_samples)
+        quantiles = norm.cdf(gaussian_samples)
     ## Skip if no dependence structure
     else:
-        samples = np.random.random((n_samples, model.n_in))
+        quantiles = np.random.random((n_samples, model.n_in))
 
     ## Convert samples to desired marginals
-    ## TODO: More programmatic way of accessing marginal transforms....
-    for ind in range(model.n_in):
-        if model.density.pdf_factors[ind] == "unif":
-            samples[:, ind] = \
-                samples[:, ind] * (
-                    model.density.pdf_param[ind]["upper"] -
-                    model.density.pdf_param[ind]["lower"]
-                ) + model.density.pdf_param[ind]["lower"]
-        elif model.density.pdf_factors[ind] == "norm":
-            samples[:, ind] = \
-                norm.ppf(
-                    samples[:, ind],
-                    loc   = model.density.pdf_param[ind]["loc"],
-                    scale = model.density.pdf_param[ind]["scale"]
-                )
-        elif model.density.pdf_factors[ind] == "lognorm":
-            samples[:, ind] = \
-                lognorm.ppf(
-                    samples[:, ind],
-                    s     = model.density.pdf_param[ind]["s"],
-                    loc   = model.density.pdf_param[ind]["loc"],
-                    scale = model.density.pdf_param[ind]["scale"]
-                )
-        else:
-            raise ValueError("model.density.pdf_factors[{}] nor supported".format(ind))
+    samples = model.sample_quantile(quantiles)
 
     ## Create dataframe for inputs
     df_inputs = pd.DataFrame(
