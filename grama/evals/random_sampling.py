@@ -66,6 +66,7 @@ def eval_monte_carlo(model, n_samples = 1, seed = None, append = True):
             samples[:, ind] = \
                 lognorm.ppf(
                     samples[:, ind],
+                    s     = model.density.pdf_param[ind]["s"],
                     loc   = model.density.pdf_param[ind]["loc"],
                     scale = model.density.pdf_param[ind]["scale"]
                 )
