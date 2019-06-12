@@ -33,7 +33,7 @@ def eval_monte_carlo(model, n_samples = 1, seed = None, append = True):
         ## Build correlation structure
         Sigma = np.eye(model.n_in)
         Sigma[np.triu_indices(model.n_in, 1)] = model.density.pdf_corr
-        Sigma[np.tril_indices(model.n_in,-1)] = model.density.pdf_corr
+        Sigma = Sigma + (Sigma - np.eye(model.n_in)).T
         ## Draw samples
         gaussian_samples = np.random.multivariate_normal(
             mean = np.zeros(model.n_in),
