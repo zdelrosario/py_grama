@@ -92,6 +92,7 @@ class model_:
 
     def __init__(
             self,
+            name     = None,
             function = None,
             outputs  = None,
             domain   = None,
@@ -112,6 +113,7 @@ class model_:
 
         Default model is 1D identity over the interval [-1, +1] with a uniform density.
         """
+        self.name     = name if (name is not None) else "Default"
         self.function = function if (function is not None) else lambda x: x
         self.outputs  = outputs if (outputs is not None) else ["f"]
         self.domain   = domain if (domain is not None) else domain_()
@@ -176,6 +178,9 @@ class model_:
     def printpretty(self):
         """Formatted print of model attributes
         """
+        print(self.name)
+        print("  inputs  = {}".format(self.domain.inputs))
+        print("  outputs = {}".format(self.outputs))
 
 class model_df_(model_):
     """Derived class for grama models.

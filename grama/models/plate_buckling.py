@@ -23,6 +23,7 @@ def function_buckle_state(x, t = THICKNESS, h = HEIGHT):
 class model_plate_buckle(core.model_):
     def __init__(self, t = THICKNESS, h = HEIGHT):
         super().__init__(
+            name     = "Plate Buckling",
             function = lambda x: function_buckle_state(x, t = t, h = h),
             outputs  = ["g_buckle"],
             domain   = core.domain_(

@@ -29,8 +29,9 @@ def function_beam(x, w = 3, t = 3):
 class model_cantilever_beam(core.model_):
     def __init__(self, w = 3, t = 3):
         super().__init__(
+            name     = "Cantilever Beam",
             function = lambda x: function_beam(x, w = w, t = t),
-            outputs  = ["c", "g_stress", "g_displacement"],
+            outputs  = ["c_area", "g_stress", "g_displacement"],
             domain   = core.domain_(
                 hypercube = True,
                 inputs    = ["H", "V", "E", "Y"],
