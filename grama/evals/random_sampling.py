@@ -95,17 +95,18 @@ def ev_lhs(model, n_samples = 1, seed = None, append = True, criterion = None):
         Sigma[np.triu_indices(model.n_in, 1)] = model.density.pdf_corr
         Sigma = Sigma + (Sigma - np.eye(model.n_in)).T
         Sh_tmp = cholesky(Sigma)
-        Si_tmp = inv(Sh_tmp)
         ## Draw samples
         gaussian_samples = \
             np.dot(
-                Si_tmp,
                 norm.ppf(
-                    model.n_in,
-                    samples   = n_samples,
-                    criterion = criterion
-                ).T
-            ).T
+                    lhs(
+                        model.n_in,
+                        samples   = n_samples,
+                        criterion = criterion
+                    )
+                ),
+                Sh_tmp.T
+            )
         ## Convert to uniform marginals
         quantiles = norm.cdf(gaussian_samples)
     ## Skip if no dependence structure
