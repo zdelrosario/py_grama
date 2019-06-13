@@ -5,8 +5,8 @@ import grama.core as gr
 
 from grama.core import pi # Import pipe
 from grama.models import model_cantilever_beam
-from grama.evals import eval_monte_carlo
-from grama.fitting import fit_ols
+from grama.evals import ev_monte_carlo
+from grama.fitting import ft_ols
 
 np.random.seed(101) # Set for reproducibility
 
@@ -19,16 +19,16 @@ model = model_cantilever_beam(w = 2.80, t = 3.)
 ## Draw a number of MC samples
 df_res_direct = \
     model |pi| \
-    eval_monte_carlo(n_samples = n_monte_carlo)
+    ev_monte_carlo(n_samples = n_monte_carlo)
 
 ## Draw samples for training
 df_res_train = \
     model |pi| \
-    eval_monte_carlo(n_samples = n_train)
+    ev_monte_carlo(n_samples = n_train)
 
 ## Fit a meta-model via OLS
-## Mysteriously, the pipe does not work for fit_ols()...
-model_fitted = fit_ols(
+## Mysteriously, the pipe does not work for ft_ols()...
+model_fitted = ft_ols(
     df_res_train,
     formulae = [
         "g_stress ~ H + V + E + Y",
@@ -41,7 +41,7 @@ model_fitted = fit_ols(
 ## Draw more samples via the model
 df_res_surrogate = \
     model_fitted |pi| \
-    eval_monte_carlo(n_samples = n_monte_carlo)
+    ev_monte_carlo(n_samples = n_monte_carlo)
 
 ## Post-process
 R_stress_direct       = np.mean(df_res_direct.loc[:, "g_stress"] >= 0)

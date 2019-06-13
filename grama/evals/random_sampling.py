@@ -7,7 +7,7 @@ from toolz import curry
 
 ## Simple Monte Carlo
 @curry
-def eval_monte_carlo(model, n_samples = 1, seed = None, append = True):
+def ev_monte_carlo(model, n_samples = 1, seed = None, append = True):
     """Evaluates a given model at a given dataframe
 
     @param n_samples number of Monte Carlo samples to draw
@@ -55,4 +55,4 @@ def eval_monte_carlo(model, n_samples = 1, seed = None, append = True):
         columns = model.domain.inputs
     )
 
-    return core.eval_df(model, df = df_inputs, append = append)
+    return core.ev_df(model, df = df_inputs, append = append)

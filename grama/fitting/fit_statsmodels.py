@@ -8,7 +8,7 @@ from toolz import curry
 
 ## Fit model via OLS
 @curry # TODO Determine why pipe fails with this function....
-def fit_ols(df, formulae = [""], domain = None, density = None):
+def ft_ols(df, formulae = [""], domain = None, density = None):
     """Fit a model via Ordinary Least Squares
 
     @param df pandas dataframe

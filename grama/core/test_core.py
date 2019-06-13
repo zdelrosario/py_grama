@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import unittest
 
-from core import density_, domain_, model_, eval_df, pi
+from core import density_, domain_, model_, ev_df, pi
 
 ## Core function tests
 ##################################################
@@ -22,7 +22,7 @@ class TestPlumbing(unittest.TestCase):
         self.assertTrue(
             self.df_res.equals(
               self.model_default |pi| \
-                eval_df(
+                ev_df(
                     df = self.df_ok,
                     append = False
                 )
@@ -88,15 +88,15 @@ class TestModel(unittest.TestCase):
         )
 
 class TestEvalDf(unittest.TestCase):
-    """Test implementation of eval_df()
+    """Test implementation of ev_df()
     """
 
     def test_catch_no_df(self):
-        """Checks that eval_df() raises when no input df is given.
+        """Checks that ev_df() raises when no input df is given.
         """
         self.assertRaises(
             ValueError,
-            eval_df,
+            ev_df,
             model_()
         )
 

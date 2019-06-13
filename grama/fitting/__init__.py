@@ -1,1 +1,1 @@
-from .fit_statsmodels import fit_ols
+from .fit_statsmodels import ft_ols

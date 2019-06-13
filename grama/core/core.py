@@ -207,7 +207,7 @@ class model_df_(model_):
 
 ## Default pipeline evaluation function
 @curry
-def eval_df(model, df = None, append = True):
+def ev_df(model, df = None, append = True):
     """Evaluates a given model at a given dataframe
 
     @param df input dataframe to evaluate (Pandas.DataFrame)

@@ -11,7 +11,7 @@ df_default    = pd.DataFrame(
 
 df_res = \
     model_default |pi| \
-    gr.eval_df(
+    gr.ev_df(
         df = df_default,
         append = True
     )

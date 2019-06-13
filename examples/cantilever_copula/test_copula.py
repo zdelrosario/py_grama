@@ -5,8 +5,7 @@ import grama.core as gr
 
 from grama.core import pi # Import pipe
 from grama.models import model_cantilever_beam
-from grama.evals import eval_monte_carlo
-from grama.fitting import fit_ols
+from grama.evals import ev_monte_carlo
 
 np.random.seed(101) # Set for reproducibility
 
@@ -24,10 +23,10 @@ model_copula.density.pdf_corr = [0.1] * n_corr
 
 # Draw samples
 df_res_indep  = model_indep |pi| \
-    eval_monte_carlo(n_samples = n_monte_carlo)
+    ev_monte_carlo(n_samples = n_monte_carlo)
 
 df_res_copula = model_copula |pi| \
-    eval_monte_carlo(n_samples = n_monte_carlo)
+    ev_monte_carlo(n_samples = n_monte_carlo)
 
 # Compare input marginals
 print(df_res_indep[ ["H", "V", "E", "Y"]].describe())
