@@ -4,24 +4,34 @@
 # C.T. Sun "Mechanics of Aircraft Structures" (1998)
 
 # from .. import core
+from grama import core
 import numpy as np
-from itertools.chain import from_iterable
+import itertools
 
-## Carbon Fiber properties
+## Composite properties
 ##################################################
-E1_MU   = 140e9
-E2_MU   = 10e9
-G12_MU  = 6.9e9
-nu12_MU = 0.3
+# Inspired by Arevo data
+E1_M   = 114e9
+E2_M   =   7e9
+G12_M  =   4e9
+nu12_M = 0.45
 
-E1_SIG   = E1_MU * np.sqrt(0.02)   # Inspired by Arevo data
-E2_SIG   = E2_MU * np.sqrt(0.08)
-G12_SIG  = G12_MU * np.sqrt(0.1)
-nu12_SIG = nu12_MU * np.sqrt(0.08)
+E1_CV    = np.sqrt(0.02)
+E2_CV    = np.sqrt(0.08)
+G12_CV   = np.sqrt(0.1)
+nu12_SIG = nu12_M * np.sqrt(0.08)
 
 T_NOM    = 1e-3            # Nominal thickness
 T_PM     = T_NOM * 0.01    # +/- ply thickness
 THETA_PM = 3 * np.pi / 180 # +/- angle tolerance
+
+SIG_11_T_M = 1.4e9 # Tensile strength
+SIG_11_C_M = 0.5e9 # Compressive strength
+SIG_12_M_M =  62e6 # Interlaminar strength
+
+SIG_11_T_CV = 0.06
+SIG_11_C_CV = 0.06
+SIG_12_M_CV = 0.07
 
 ## Laminate Composite Analysis
 ##################################################
@@ -202,6 +212,7 @@ def uniaxial_stress_limit(X):
     Sigma_max = X[:, 6:]
 
     ## Evaluate stress
+    ## TODO: Scale stresses by given load
     Stresses = uniaxial_stresses(Param, Theta, T)
 
     ## Construct limit state
@@ -215,32 +226,47 @@ def uniaxial_stress_limit(X):
 ##################################################
 # Helper function to create domain for given ply
 def make_domain(
-        Theta_nominal,
-        t_nominal = 1e-3
+        Theta_nom,
+        T_nom= T_NOM
 ):
     """
     Helper function to construct domain object for composite panel
 
     Usage
-        domain = make_domain(Theta_nominal)
-        domain = make_domain(Theta_nominal, t_nominal = t_nominal)
+        domain = make_domain(Theta_nom)
+        domain = make_domain(Theta_nom, T_nom= T_nom)
     Arguments
-        Theta_nominal = nominal lamina angles; determines dimensionality of problem
-                      = [theta_1, ..., theta_k]
-        t_nominal     = nominal ply thickness
+        Theta_nom = nominal lamina angles; determines dimensionality of problem
+                  = [theta_1, ..., theta_k]
+    Keyword Arguments
+        t_nom     = nominal ply thicknesses
+                  = [t_1, ..., t_k] OR
+                  = t_nom
     Returns
         domain = grama domain object
     """
-    k = len(Theta_nominal)
-    inputs = list(from_iterable([ \
-        ["E1_{}".format(i), "E2_{}".format(i), "nu12_{}".format(i), "G12_{}".format(i) \
-         "theta_{}".format(i), "t_{}".format(i), \
-         "sigma_11_tensile_{}".format(i), \
-         "sigma_11_comp_{}".format(i), \
-         "sigma_12_tmax_{}".format(i)] for i in range(k)
+    k = len(Theta_nom)
+    inputs = list(itertools.chain.from_iterable([
+        ["E1_{}".format(i),
+         "E2_{}".format(i),
+         "nu12_{}".format(i),
+         "G12_{}".format(i),
+         "theta_{}".format(i),
+         "t_{}".format(i),
+         "sigma_11_tensile_{}".format(i),
+         "sigma_11_comp_{}".format(i),
+         "sigma_12_max_{}".format(i)] for i in range(k)
     ]))
-    bounds = list(from_iterable([ \
-        {var: [-np.Inf, +np.Inf]} for var in inputs  # DEBUG: Not correct!
+    bounds = list(itertools.chain.from_iterable([
+       [{"E1_{}".format(i): [0, +np.Inf]},
+        {"E2_{}".format(i): [0, +np.Inf]},
+        {"nu12_{}".format(i): [-np.Inf, +np.Inf]},
+        {"G12_{}".format(i): [0, +np.Inf]},
+        {"theta_{}".format(i): [-np.pi/2, +np.pi/2]},
+        {"t_{}".format(i): [-np.Inf, +np.Inf]},
+        {"sigma_11_tensile_{}".format(i): [0, +np.Inf]},
+        {"sigma_11_comp_{}".format(i): [0, +np.Inf]},
+        {"sigma_12_max_{}".format(i): [0, +np.Inf]}] for i in range(k)
     ]))
 
     return core.domain_(
@@ -251,23 +277,89 @@ def make_domain(
 
 # Helper function to create density for given ply
 def make_density(
-        Theta_nominal,
-        t_nominal = 1e-3
+        Theta_nom,
+        T_nom = T_NOM,
 ):
     """
     Helper function to construct density object for composite panel
 
     Usage
-        density = make_density(Theta_nominal)
-        density = make_density(Theta_nominal, t_nominal = t_nominal)
+        density = make_density(Theta_nom)
+        density = make_density(Theta_nom, t_nom= t_nom)
     Arguments
-        Theta_nominal = nominal lamina angles; determines dimensionality of problem
+        Theta_nom = nominal lamina angles; determines dimensionality of problem
                       = [theta_1, ..., theta_k]
-        t_nominal     = nominal ply thickness
+    Keyword Arguments
+        t_nom     = nominal ply thicknesses
+                      = [t_1, ..., t_k] OR
+                      = t_nom
     Returns
         density = grama density object
     """
+    ## Setup
+    k = len(Theta_nom)
+    if not isinstance(T_nom, list):
+        T_nom= [T_nom] * k
 
+    ## TODO: Implement pdf
+    pdf = lambda X: 1
+    pdf_factors = list(itertools.chain.from_iterable([
+        ["lognorm",                   # E1
+         "lognorm",                   # E2
+         "norm",                      # nu12
+         "lognorm",                   # G12
+         "unif",                      # theta
+         "unif",                      # t
+         "lognorm",                   # sigma_11_tensile
+         "lognorm",                   # sigma_11_comp
+         "lognorm"] for i in range(k) # sigma_12_max
+    ]))
+    pdf_param = list(itertools.chain.from_iterable([
+       [{"loc": E1_M, "s": E1_CV, "scale": 1},                                # E1
+        {"loc": E2_M, "s": E2_CV, "scale": 1},                                # E2
+        {"loc": nu12_M, "scale": nu12_SIG},                                   # nu12
+        {"loc": G12_M, "s": G12_CV, "scale": 1},                              # G12
+        {"lower": Theta_nom[i] - THETA_PM, "upper": Theta_nom[i] + THETA_PM}, # theta
+        {"lower": T_nom[i] - T_PM, "upper": T_nom[i] + T_PM},                 # t
+        {"loc": SIG_11_T_M, "s": SIG_11_T_CV, "scale": 1}, # sigma_11_tensile
+        {"loc": SIG_11_C_M, "s": SIG_11_C_CV, "scale": 1}, # sigma_11_comp
+        {"loc": SIG_12_M_M, "s": SIG_12_M_CV, "scale": 1}] for i in range(k) # sigma_12_max
+    ]))
+    ## TODO: Determine proper "conservative" quantile directions!
+    pdf_qt_flip = list(itertools.chain.from_iterable([
+        [0,                   # E1
+         0,                   # E2
+         0,                   # nu12
+         0,                   # G12
+         0,                   # theta
+         0,                   # t
+         0,                   # sigma_11_tensile
+         0,                   # sigma_11_comp
+         0] for i in range(k) # sigma_12_max
+    ]))
+    return core.density_(
+        pdf         = pdf,
+        pdf_factors = pdf_factors,
+        pdf_param   = pdf_param,
+        pdf_qt_flip = pdf_qt_flip
+    )
+
+## Model class
+##################################################
+
+class model_composite_plate_tension(core.model_):
+    def __init__(self, Theta_nom, T_nom = T_NOM):
+        k = len(Theta_nom)
+
+        super().__init__(
+            name = "Composite Plate in Tension",
+            function = lambda X: uniaxial_stress_limit(X),
+            outputs = list(itertools.chain.from_iterable([
+                ["g_sigma_11_{}".format(i), "g_sigma_12_{}".format(i)] for i in range(k)
+            ])),
+            domain = make_domain(Theta_nom, T_nom = T_nom),
+            density = make_density(Theta_nom, T_nom = T_nom)
+        )
 
 ## Verification
 ##################################################
