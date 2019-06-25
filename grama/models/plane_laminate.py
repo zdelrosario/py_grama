@@ -32,7 +32,7 @@ SIG_11_T_CV = 0.06
 SIG_11_C_CV = 0.06
 SIG_12_M_CV = 0.07
 
-Nx_M = 1e3                    # Nominal load conditions [N/m]
+Nx_M = 1.2e6                    # Nominal load conditions [N/m]
 Nx_SIG = Nx_M * np.sqrt(0.01)
 
 ## Laminate Composite Analysis
