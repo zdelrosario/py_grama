@@ -3,8 +3,7 @@
 # References:
 # C.T. Sun "Mechanics of Aircraft Structures" (1998)
 
-# from .. import core
-from grama import core
+from .. import core
 import numpy as np
 import itertools
 
@@ -32,6 +31,9 @@ SIG_12_M_M =  62e6 # Interlaminar strength
 SIG_11_T_CV = 0.06
 SIG_11_C_CV = 0.06
 SIG_12_M_CV = 0.07
+
+Nx_M = 1e3                    # Nominal load conditions [N/m]
+Nx_SIG = Nx_M * np.sqrt(0.01)
 
 ## Laminate Composite Analysis
 ##################################################
@@ -193,34 +195,40 @@ def uniaxial_stress_limit(X):
     Usage
         g_stress = uniaxial_stress_limit(X)
     Arguments
-        X = array of composite laminate properties
-          = [[E1, E2, nu12, G12, theta, t, \sigma_11_tensile, \sigma_11_comp, \sigma_12_max]_1
+        X = array of composite laminate properties and loading
+          = [E1, E2, nu12, G12, theta, t, ...
+              \sigma_11_tensile, \sigma_11_comp, \sigma_12_max, # for i = 1
                                   .  .  .
-          =  [E1, E2, nu12, G12, theta, t, \sigma_11_tensile, \sigma_11_comp, \sigma_12_max]_k]
+             E1, E2, nu12, G12, theta, t, ...
+              \sigma_11_tensile, \sigma_11_comp, \sigma_12_max, # for i = k
+             Nx]
     Returns
         g_stress = array of limit state values
                  = [g_sigma_11_1, g_sigma_12_1,
                             .  .  .
                     g_sigma_11_k, g_sigma_12_k]
-    @pre X.shape == (k, 8)
+    @pre ((len(X) - 1) % 9) == 0
     """
-    k = X.shape[0]
+    ## Pre-process inputs
+    k = int((len(X) - 1) / 9)
+    Y = np.reshape(np.array(X[:-1]), (k, 9))
+
     ## Unpack inputs
-    Param = X[:, 0:4]
-    Theta = X[:, 4]
-    T     = X[:, 5]
-    Sigma_max = X[:, 6:]
+    Nx        = X[-1]
+    Param     = Y[:, 0:4]
+    Theta     = Y[:, 4]
+    T         = Y[:, 5]
+    Sigma_max = Y[:, 6:9]
 
     ## Evaluate stress
-    ## TODO: Scale stresses by given load
-    Stresses = uniaxial_stresses(Param, Theta, T)
+    Stresses = Nx * uniaxial_stresses(Param, Theta, T)
 
     ## Construct limit state
-    g_limit = np.zeros()
+    g_limit = np.zeros((k, 3))
     g_limit[:, (0, 2)] = Sigma_max[:, (0,2)] - Stresses[:, (0,2)]
     g_limit[:, 1]      = Sigma_max[:, 1]     + Stresses[:, 1]
 
-    return g_limit
+    return g_limit.flatten()
 
 ## Random variable model
 ##################################################
@@ -256,7 +264,7 @@ def make_domain(
          "sigma_11_tensile_{}".format(i),
          "sigma_11_comp_{}".format(i),
          "sigma_12_max_{}".format(i)] for i in range(k)
-    ]))
+    ])) + ["Nx"]
     bounds = list(itertools.chain.from_iterable([
        [{"E1_{}".format(i): [0, +np.Inf]},
         {"E2_{}".format(i): [0, +np.Inf]},
@@ -267,7 +275,7 @@ def make_domain(
         {"sigma_11_tensile_{}".format(i): [0, +np.Inf]},
         {"sigma_11_comp_{}".format(i): [0, +np.Inf]},
         {"sigma_12_max_{}".format(i): [0, +np.Inf]}] for i in range(k)
-    ]))
+    ])) + [{"Nx": [-np.Inf, +np.Inf]}]
 
     return core.domain_(
         hypercube = True,
@@ -313,7 +321,7 @@ def make_density(
          "lognorm",                   # sigma_11_tensile
          "lognorm",                   # sigma_11_comp
          "lognorm"] for i in range(k) # sigma_12_max
-    ]))
+    ])) + ["norm"]                    # Nx
     pdf_param = list(itertools.chain.from_iterable([
        [{"loc": E1_M, "s": E1_CV, "scale": 1},                                # E1
         {"loc": E2_M, "s": E2_CV, "scale": 1},                                # E2
@@ -321,10 +329,10 @@ def make_density(
         {"loc": G12_M, "s": G12_CV, "scale": 1},                              # G12
         {"lower": Theta_nom[i] - THETA_PM, "upper": Theta_nom[i] + THETA_PM}, # theta
         {"lower": T_nom[i] - T_PM, "upper": T_nom[i] + T_PM},                 # t
-        {"loc": SIG_11_T_M, "s": SIG_11_T_CV, "scale": 1}, # sigma_11_tensile
-        {"loc": SIG_11_C_M, "s": SIG_11_C_CV, "scale": 1}, # sigma_11_comp
-        {"loc": SIG_12_M_M, "s": SIG_12_M_CV, "scale": 1}] for i in range(k) # sigma_12_max
-    ]))
+        {"loc": SIG_11_T_M, "s": SIG_11_T_CV, "scale": 1},                # sigma_11_tensile
+        {"loc": SIG_11_C_M, "s": SIG_11_C_CV, "scale": 1},                # sigma_11_comp
+        {"loc": SIG_12_M_M, "s": SIG_12_M_CV, "scale": 1}] for i in range(k)  # sigma_12_max
+    ])) + [{"loc": Nx_M, "scale": Nx_SIG}]                                    # Nx
     ## TODO: Determine proper "conservative" quantile directions!
     pdf_qt_flip = list(itertools.chain.from_iterable([
         [0,                   # E1
@@ -336,7 +344,7 @@ def make_density(
          0,                   # sigma_11_tensile
          0,                   # sigma_11_comp
          0] for i in range(k) # sigma_12_max
-    ]))
+    ])) + [1]                 # Nx
     return core.density_(
         pdf         = pdf,
         pdf_factors = pdf_factors,
@@ -355,7 +363,9 @@ class model_composite_plate_tension(core.model_):
             name = "Composite Plate in Tension",
             function = lambda X: uniaxial_stress_limit(X),
             outputs = list(itertools.chain.from_iterable([
-                ["g_sigma_11_{}".format(i), "g_sigma_12_{}".format(i)] for i in range(k)
+                ["g_sigma_11_tension_{}".format(i),
+                 "g_sigma_11_comp_{}".format(i),
+                 "g_sigma_12_{}".format(i)] for i in range(k)
             ])),
             domain = make_domain(Theta_nom, T_nom = T_nom),
             density = make_density(Theta_nom, T_nom = T_nom)
@@ -395,3 +405,8 @@ if __name__ == "__main__":
     # Uniaxial (unit) tension
     strain_uniaxial = np.linalg.solve(A, np.array([1, 0, 0]))
     stress_uniaxial = uniaxial_stresses(Param, Theta, T)
+
+    ## Test model
+    model = model_composite_plate_tension(
+        Theta_nom = [0]
+    )
