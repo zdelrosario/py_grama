@@ -15,9 +15,9 @@ E2_M   =   7e9
 G12_M  =   4e9
 nu12_M = 0.45
 
-E1_CV    = np.sqrt(0.02)
-E2_CV    = np.sqrt(0.08)
-G12_CV   = np.sqrt(0.1)
+E1_CV    = 0.02
+E2_CV    = 0.08
+G12_CV   = 0.1
 nu12_SIG = nu12_M * np.sqrt(0.08)
 
 T_NOM    = 1e-3            # Nominal thickness
@@ -323,15 +323,15 @@ def make_density(
          "lognorm"] for i in range(k) # sigma_12_max
     ])) + ["norm"]                    # Nx
     pdf_param = list(itertools.chain.from_iterable([
-       [{"loc": E1_M, "s": E1_CV, "scale": 1},                                # E1
-        {"loc": E2_M, "s": E2_CV, "scale": 1},                                # E2
+       [{"loc": 1, "s": E1_CV, "scale": E1_M},                                # E1
+        {"loc": 1, "s": E2_CV, "scale": E2_M},                                # E2
         {"loc": nu12_M, "scale": nu12_SIG},                                   # nu12
-        {"loc": G12_M, "s": G12_CV, "scale": 1},                              # G12
+        {"loc": 1, "s": G12_CV, "scale": G12_M},                              # G12
         {"lower": Theta_nom[i] - THETA_PM, "upper": Theta_nom[i] + THETA_PM}, # theta
         {"lower": T_nom[i] - T_PM, "upper": T_nom[i] + T_PM},                 # t
-        {"loc": SIG_11_T_M, "s": SIG_11_T_CV, "scale": 1},                # sigma_11_tensile
-        {"loc": SIG_11_C_M, "s": SIG_11_C_CV, "scale": 1},                # sigma_11_comp
-        {"loc": SIG_12_M_M, "s": SIG_12_M_CV, "scale": 1}] for i in range(k)  # sigma_12_max
+        {"loc": 1, "s": SIG_11_T_CV, "scale": SIG_11_T_M},         # sigma_11_tensile
+        {"loc": 1, "s": SIG_11_C_CV, "scale": SIG_11_C_M},         # sigma_11_comp
+        {"loc": 1, "s": SIG_12_M_CV, "scale": SIG_12_M_M}] for i in range(k)  # sigma_12_max
     ])) + [{"loc": Nx_M, "scale": Nx_SIG}]                                    # Nx
     ## TODO: Determine proper "conservative" quantile directions!
     pdf_qt_flip = list(itertools.chain.from_iterable([
