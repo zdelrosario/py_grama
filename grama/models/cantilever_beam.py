@@ -55,6 +55,7 @@ class model_cantilever_beam(core.model_):
                     {"loc": MU_E, "scale": TAU_E},
                     {"loc": MU_Y, "scale": TAU_Y}
                 ],
-                pdf_qt_flip = [1, 1, 0, 0]
+                # pdf_qt_flip = [1, 1, 0, 0]
+                pdf_qt_sign = [+1, +1, -1, -1]
             )
         )

@@ -334,22 +334,22 @@ def make_density(
         {"loc": 1, "s": SIG_12_M_CV, "scale": SIG_12_M_M}] for i in range(k)  # sigma_12_max
     ])) + [{"loc": Nx_M, "scale": Nx_SIG}]                                    # Nx
     ## TODO: Determine proper "conservative" quantile directions!
-    pdf_qt_flip = list(itertools.chain.from_iterable([
-        [0,                   # E1
-         0,                   # E2
-         0,                   # nu12
-         0,                   # G12
-         0,                   # theta
-         0,                   # t
-         0,                   # sigma_11_tensile
-         0,                   # sigma_11_comp
-         0] for i in range(k) # sigma_12_max
-    ])) + [1]                 # Nx
+    pdf_qt_sign = list(itertools.chain.from_iterable([
+        [ 0,                   # E1
+          0,                   # E2
+          0,                   # nu12
+          0,                   # G12
+          0,                   # theta
+          0,                   # t
+         -1,                   # sigma_11_tensile
+         -1,                   # sigma_11_comp
+         -1] for i in range(k) # sigma_12_max
+    ])) + [+1]                 # Nx
     return core.density_(
         pdf         = pdf,
         pdf_factors = pdf_factors,
         pdf_param   = pdf_param,
-        pdf_qt_flip = pdf_qt_flip
+        pdf_qt_sign = pdf_qt_sign
     )
 
 ## Model class

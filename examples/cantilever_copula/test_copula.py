@@ -5,7 +5,7 @@ import grama.core as gr
 
 from grama.core import pi # Import pipe
 from grama.models import model_cantilever_beam
-from grama.evals import ev_monte_carlo
+from grama.evals import *
 
 np.random.seed(101) # Set for reproducibility
 
@@ -21,19 +21,29 @@ n_corr = len(np.triu_indices(n_in, 1)[0])
 
 model_copula.density.pdf_corr = [0.1] * n_corr
 
-# Draw samples
-df_res_indep  = model_indep |pi| \
-    ev_monte_carlo(n_samples = n_monte_carlo)
+## DEBUG nominal vs conservative
+df_nom = model_indep |pi|\
+    ev_nominal()
 
-df_res_copula = model_copula |pi| \
-    ev_monte_carlo(n_samples = n_monte_carlo)
+df_con = model_indep |pi|\
+    ev_conservative()
 
-# Compare input marginals
-print(df_res_indep[ ["H", "V", "E", "Y"]].describe())
-print(df_res_copula[["H", "V", "E", "Y"]].describe())
-## Note, marginal summary stats look similar
+print(df_nom)
+print(df_con)
 
-# Compute output summary
-print(df_res_indep[ ["g_stress", "g_displacement"]].describe())
-print(df_res_copula[["g_stress", "g_displacement"]].describe())
-## Note, output summary stats look very dissimilar!
+# # Draw samples
+# df_res_indep  = model_indep |pi| \
+#     ev_monte_carlo(n_samples = n_monte_carlo)
+
+# df_res_copula = model_copula |pi| \
+#     ev_monte_carlo(n_samples = n_monte_carlo)
+
+# # Compare input marginals
+# print(df_res_indep[ ["H", "V", "E", "Y"]].describe())
+# print(df_res_copula[["H", "V", "E", "Y"]].describe())
+# ## Note, marginal summary stats look similar
+
+# # Compute output summary
+# print(df_res_indep[ ["g_stress", "g_displacement"]].describe())
+# print(df_res_copula[["g_stress", "g_displacement"]].describe())
+# ## Note, output summary stats look very dissimilar!
