@@ -8,7 +8,34 @@ from functools import partial
 from toolz import curry
 
 from numpy.linalg import cholesky
+
+from scipy.stats import alpha, beta, chi, chi2, expon, gamma, laplace
+from scipy.stats import ncf, nct, pareto, powerlaw, rayleigh
+from scipy.stats import t, truncexpon, truncnorm, uniform, weibull_min, weibull_max
 from scipy.stats import norm, lognorm
+
+valid_dist = {
+    "alpha"       : alpha,
+    "beta"        : beta,
+    "chi"         : chi,
+    "chi2"        : chi2,
+    "expon"       : expon,
+    "gamma"       : gamma,
+    "laplace"     : laplace,
+    "ncf"         : ncf,
+    "nct"         : nct,
+    "pareto"      : pareto,
+    "powerlaw"    : powerlaw,
+    "rayleigh"    : rayleigh,
+    "t"           : t,
+    "truncexpon"  : truncexpon,
+    "truncnorm"   : truncnorm,
+    "uniform"     : uniform,
+    "weibull_min" : weibull_min,
+    "weibull_max" : weibull_max,
+    "norm"        : norm,
+    "lognorm"     : lognorm
+}
 
 ## Helper functions
 ##################################################
@@ -162,10 +189,10 @@ class model_:
         ## Perform copula conversion, if necessary
         if self.density.pdf_corr is not None:
             ## Build correlation structure
-            Sigma = np.eye(self.n_in)
+            Sigma                                = np.eye(self.n_in)
             Sigma[np.triu_indices(self.n_in, 1)] = self.density.pdf_corr
-            Sigma = Sigma + (Sigma - np.eye(self.n_in)).T
-            Sigma_h = cholesky(Sigma)
+            Sigma                                = Sigma + (Sigma - np.eye(self.n_in)).T
+            Sigma_h                              = cholesky(Sigma)
             ## Convert samples
             gaussian_samples = np.dot(norm.ppf(quantiles), Sigma_h.T)
 
@@ -176,29 +203,10 @@ class model_:
         ## Apply appropriate marginal
         for ind in range(self.n_in):
             ## Map with inverse density
-            if self.density.pdf_factors[ind] == "unif":
-                samples[:, ind] = \
-                    quantiles[:, ind] * (
-                        self.density.pdf_param[ind]["upper"] -
-                        self.density.pdf_param[ind]["lower"]
-                    ) + self.density.pdf_param[ind]["lower"]
-            elif self.density.pdf_factors[ind] == "norm":
-                samples[:, ind] = \
-                    norm.ppf(
-                        quantiles[:, ind],
-                        loc   = self.density.pdf_param[ind]["loc"],
-                        scale = self.density.pdf_param[ind]["scale"]
-                    )
-            elif self.density.pdf_factors[ind] == "lognorm":
-                samples[:, ind] = \
-                    lognorm.ppf(
-                        quantiles[:, ind],
-                        s     = self.density.pdf_param[ind]["s"],
-                        loc   = self.density.pdf_param[ind]["loc"],
-                        scale = self.density.pdf_param[ind]["scale"]
-                    )
-            else:
-                raise ValueError("model.density.pdf_factors[{}] not supported".format(ind))
+            samples[:, ind] = valid_dist[self.density.pdf_factors[ind]].ppf(
+                quantiles[:, ind],
+                **self.density.pdf_param[ind]
+            )
         return samples
 
     def printpretty(self):
