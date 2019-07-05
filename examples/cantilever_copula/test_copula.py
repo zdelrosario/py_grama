@@ -21,29 +21,29 @@ n_corr = len(np.triu_indices(n_in, 1)[0])
 
 model_copula.density.pdf_corr = [0.1] * n_corr
 
-## DEBUG nominal vs conservative
-df_nom = model_indep |pi|\
-    ev_nominal()
+# ## DEBUG nominal vs conservative
+# df_nom = model_indep |pi|\
+#     ev_nominal()
 
-df_con = model_indep |pi|\
-    ev_conservative()
+# df_con = model_indep |pi|\
+#     ev_conservative()
 
-print(df_nom)
-print(df_con)
+# print(df_nom)
+# print(df_con)
 
-# # Draw samples
-# df_res_indep  = model_indep |pi| \
-#     ev_monte_carlo(n_samples = n_monte_carlo)
+# Draw samples
+df_res_indep  = model_indep |pi| \
+    ev_monte_carlo(n_samples = n_monte_carlo)
 
-# df_res_copula = model_copula |pi| \
-#     ev_monte_carlo(n_samples = n_monte_carlo)
+df_res_copula = model_copula |pi| \
+    ev_monte_carlo(n_samples = n_monte_carlo)
 
-# # Compare input marginals
-# print(df_res_indep[ ["H", "V", "E", "Y"]].describe())
-# print(df_res_copula[["H", "V", "E", "Y"]].describe())
-# ## Note, marginal summary stats look similar
+# Compare input marginals
+print(df_res_indep[ ["H", "V", "E", "Y"]].describe())
+print(df_res_copula[["H", "V", "E", "Y"]].describe())
+## Note, marginal summary stats look similar
 
-# # Compute output summary
-# print(df_res_indep[ ["g_stress", "g_displacement"]].describe())
-# print(df_res_copula[["g_stress", "g_displacement"]].describe())
-# ## Note, output summary stats look very dissimilar!
+# Compute output summary
+print(df_res_indep[ ["g_stress", "g_displacement"]].describe())
+print(df_res_copula[["g_stress", "g_displacement"]].describe())
+## Note, output summary stats look very dissimilar!

@@ -7,6 +7,7 @@ import pandas as pd
 from functools import partial
 from toolz import curry
 
+from numpy.linalg import cholesky
 from scipy.stats import norm, lognorm
 
 ## Helper functions
@@ -158,6 +159,21 @@ class model_:
         """
         samples = np.zeros(quantiles.shape)
 
+        ## Perform copula conversion, if necessary
+        if self.density.pdf_corr is not None:
+            ## Build correlation structure
+            Sigma = np.eye(self.n_in)
+            Sigma[np.triu_indices(self.n_in, 1)] = self.density.pdf_corr
+            Sigma = Sigma + (Sigma - np.eye(self.n_in)).T
+            Sigma_h = cholesky(Sigma)
+            ## Convert samples
+            gaussian_samples = np.dot(norm.ppf(quantiles), Sigma_h.T)
+
+            ## Convert to uniform marginals
+            quantiles = norm.cdf(gaussian_samples)
+        ## Skip if no dependence structure
+
+        ## Apply appropriate marginal
         for ind in range(self.n_in):
             ## Map with inverse density
             if self.density.pdf_factors[ind] == "unif":

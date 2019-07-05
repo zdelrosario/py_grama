@@ -30,23 +30,8 @@ def ev_monte_carlo(model, n_samples = 1, seed = None, append = True):
     if seed is not None:
         np.random.seed(seed)
 
-    ## Draw from underlying gaussian
-    if model.density.pdf_corr is not None:
-        ## Build correlation structure
-        Sigma = np.eye(model.n_in)
-        Sigma[np.triu_indices(model.n_in, 1)] = model.density.pdf_corr
-        Sigma = Sigma + (Sigma - np.eye(model.n_in)).T
-        ## Draw samples
-        gaussian_samples = np.random.multivariate_normal(
-            mean = np.zeros(model.n_in),
-            cov  = Sigma,
-            size = n_samples
-        )
-        ## Convert to uniform marginals
-        quantiles = norm.cdf(gaussian_samples)
-    ## Skip if no dependence structure
-    else:
-        quantiles = np.random.random((n_samples, model.n_in))
+    ## Draw samples
+    quantiles = lhs(model.n_in, samples = n_samples)
 
     ## Convert samples to desired marginals
     samples = model.sample_quantile(quantiles)
@@ -88,30 +73,8 @@ def ev_lhs(model, n_samples = 1, seed = None, append = True, criterion = None):
     if seed is not None:
         np.random.seed(seed)
 
-    ## Draw from underlying gaussian
-    if model.density.pdf_corr is not None:
-        ## Build correlation structure
-        Sigma = np.eye(model.n_in)
-        Sigma[np.triu_indices(model.n_in, 1)] = model.density.pdf_corr
-        Sigma = Sigma + (Sigma - np.eye(model.n_in)).T
-        Sh_tmp = cholesky(Sigma)
-        ## Draw samples
-        gaussian_samples = \
-            np.dot(
-                norm.ppf(
-                    lhs(
-                        model.n_in,
-                        samples   = n_samples,
-                        criterion = criterion
-                    )
-                ),
-                Sh_tmp.T
-            )
-        ## Convert to uniform marginals
-        quantiles = norm.cdf(gaussian_samples)
-    ## Skip if no dependence structure
-    else:
-        quantiles = lhs(model.n_in, samples = n_samples)
+    ## Draw samples
+    quantiles = lhs(model.n_in, samples = n_samples)
 
     ## Convert samples to desired marginals
     samples = model.sample_quantile(quantiles)
