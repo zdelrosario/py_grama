@@ -316,23 +316,23 @@ def make_density(
          "lognorm",                   # E2
          "norm",                      # nu12
          "lognorm",                   # G12
-         "unif",                      # theta
-         "unif",                      # t
+         "uniform",                   # theta
+         "uniform",                   # t
          "lognorm",                   # sigma_11_tensile
          "lognorm",                   # sigma_11_comp
          "lognorm"] for i in range(k) # sigma_12_max
     ])) + ["norm"]                    # Nx
     pdf_param = list(itertools.chain.from_iterable([
-       [{"loc": 1, "s": E1_CV, "scale": E1_M},                                # E1
-        {"loc": 1, "s": E2_CV, "scale": E2_M},                                # E2
-        {"loc": nu12_M, "scale": nu12_SIG},                                   # nu12
-        {"loc": 1, "s": G12_CV, "scale": G12_M},                              # G12
-        {"lower": Theta_nom[i] - THETA_PM, "upper": Theta_nom[i] + THETA_PM}, # theta
-        {"lower": T_nom[i] - T_PM, "upper": T_nom[i] + T_PM},                 # t
-        {"loc": 1, "s": SIG_11_T_CV, "scale": SIG_11_T_M},         # sigma_11_tensile
-        {"loc": 1, "s": SIG_11_C_CV, "scale": SIG_11_C_M},         # sigma_11_comp
-        {"loc": 1, "s": SIG_12_M_CV, "scale": SIG_12_M_M}] for i in range(k)  # sigma_12_max
-    ])) + [{"loc": Nx_M, "scale": Nx_SIG}]                                    # Nx
+       [{"loc": 1, "s": E1_CV, "scale": E1_M},                               # E1
+        {"loc": 1, "s": E2_CV, "scale": E2_M},                               # E2
+        {"loc": nu12_M, "scale": nu12_SIG},                                  # nu12
+        {"loc": 1, "s": G12_CV, "scale": G12_M},                             # G12
+        {"loc": Theta_nom[i] - THETA_PM, "scale": 2 * THETA_PM},             # theta
+        {"loc": T_nom[i] - T_PM, "scale": 2 * T_PM},                         # t
+        {"loc": 1, "s": SIG_11_T_CV, "scale": SIG_11_T_M},                   # sigma_11_tensile
+        {"loc": 1, "s": SIG_11_C_CV, "scale": SIG_11_C_M},                   # sigma_11_comp
+        {"loc": 1, "s": SIG_12_M_CV, "scale": SIG_12_M_M}] for i in range(k) # sigma_12_max
+    ])) + [{"loc": Nx_M, "scale": Nx_SIG}]                                   # Nx
     ## TODO: Determine proper "conservative" quantile directions!
     pdf_qt_sign = list(itertools.chain.from_iterable([
         [ 0,                   # E1

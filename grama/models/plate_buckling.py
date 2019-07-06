@@ -38,10 +38,10 @@ class model_plate_buckle(core.model_):
                 pdf = lambda X: \
                 lognorm.pdf(X[2], s = SIG_LOG_E, loc = MU_LOG_E, scale = 1) * \
                 uniform.pdf(X[3], loc = A_NU, scale = B_NU - A_NU),
-                pdf_factors = ["lognorm", "unif"],
+                pdf_factors = ["lognorm", "uniform"],
                 pdf_param   = [
                     {"s": SIG_LOG_E, "loc": MU_LOG_E, "scale": 1},
-                    {"lower": A_NU, "upper": B_NU},
+                    {"loc": A_NU, "scale": B_NU - A_NU},
                 ],
                 # pdf_qt_flip = [0, 1]
                 pdf_qt_sign = [-1, +1]
