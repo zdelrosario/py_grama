@@ -333,7 +333,8 @@ def make_density(
         {"loc": 1, "s": SIG_11_C_CV, "scale": SIG_11_C_M},                   # sigma_11_comp
         {"loc": 1, "s": SIG_12_M_CV, "scale": SIG_12_M_M}] for i in range(k) # sigma_12_max
     ])) + [{"loc": Nx_M, "scale": Nx_SIG}]                                   # Nx
-    ## TODO: Determine proper "conservative" quantile directions!
+    ## MMPDS dictates BV for strength and load values, and mean estimates for
+    ## all other inputs; here we use the median
     pdf_qt_sign = list(itertools.chain.from_iterable([
         [ 0,                   # E1
           0,                   # E2
