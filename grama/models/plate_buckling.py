@@ -42,7 +42,7 @@ class model_plate_buckle(core.model_):
                   lognorm.pdf(X[2], s = SIG_LOG_E, loc = MU_LOG_E, scale = 1) * \
                   uniform.pdf(X[3], loc = A_NU, scale = B_NU - A_NU) * \
                   lognorm.pdf(X[4], s = SIG_LOG_L, loc = MU_LOG_L, scale = 1),
-                pdf_factors = ["lognorm", "uniform"],
+                pdf_factors = ["lognorm", "uniform", "lognorm"],
                 pdf_param   = [
                     {"s": SIG_LOG_E, "loc": MU_LOG_E, "scale": 1},
                     {"loc": A_NU, "scale": B_NU - A_NU},
