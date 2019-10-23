@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import itertools
 
 from .. import core
 from toolz import curry
@@ -34,6 +35,65 @@ def ev_nominal(model, append = True):
     )
 
     return core.ev_df(model, df = df_inputs, append = append)
+
+## Gradient finite-difference evaluation
+@curry
+def ev_grad_fd(model, df_base = None, append = True, h = 1e-8):
+    """Evaluates a given model with a central-difference stencil to
+    approximate the gradient
+
+    @param model Valid grama model
+    @param df_base DataFrame of base-points for gradient calculations
+    @param append bool flag append results to df_base (True) or
+           return results in separate DataFrame (False)?
+    @param h finite difference stepsize,
+           single (scalar) or per-input (np.array)
+
+    @pre (not isinstance(h, collections.Sequence)) | (h.shape[0] == model.n_in)
+    """
+    ## Build stencil
+    stencil = np.eye(model.n_in) * h
+    scaler  = np.tile(np.atleast_2d(0.5/h).T, (1, model.n_out))
+
+    outputs = model.outputs
+    inputs = model.domain.inputs
+    nested_labels = [
+        list(map(lambda s_out: "D" + s_out + "_D" + s_in, outputs)) for s_in in inputs
+    ]
+    grad_labels = list(itertools.chain.from_iterable(nested_labels))
+
+    ## Loop over df_base
+    results = [] # TODO: Preallocate?
+    for row_i in range(df_base.shape[0]):
+        df_left = core.ev_df(
+            model,
+            pd.DataFrame(
+                columns = inputs,
+                data = -stencil + df_base[inputs].iloc[[row_i]].values
+            ),
+            append = False
+        )
+
+        df_right = core.ev_df(
+            model,
+            pd.DataFrame(
+                columns = inputs,
+                data = +stencil + df_base[inputs].iloc[[row_i]].values
+            ),
+            append = False
+        )
+
+        res = (scaler * (df_right - df_left).values).flatten()
+
+        df_grad = pd.DataFrame(
+            columns = grad_labels,
+            data = [res]
+        )
+
+        results.append(df_grad)
+
+    ## TODO: append
+    return pd.concat(results)
 
 ## Conservative quantile evaluation
 @curry
