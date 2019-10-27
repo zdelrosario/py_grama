@@ -359,9 +359,19 @@ def make_density(
 class model_composite_plate_tension(core.model_):
     def __init__(self, Theta_nom, T_nom = T_NOM):
         k = len(Theta_nom)
+        deg_int = [int(theta / np.pi * 180) for theta in Theta_nom]
+        def mapSign(x):
+            if x < 0:
+                return "m" + str(abs(x))
+            elif x > 0:
+                return "p" + str(x)
+            else:
+                return str(x)
+        deg_str = map(mapSign, deg_int)
+        name =  "Composite Plate in Tension " + "-".join(deg_str)
 
         super().__init__(
-            name = "Composite Plate in Tension",
+            name = name,
             function = lambda X: uniaxial_stress_limit(X),
             outputs = list(itertools.chain.from_iterable([
                 ["g_sigma_11_tension_{}".format(i),
