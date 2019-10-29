@@ -231,7 +231,7 @@ class model_:
             jnd = corr_ind[1][knd]
             corr_names["corr_" + str(knd)] = corr_mat[ind][jnd]
 
-        print(corr_names)
+        return corr_names
 
     def printpretty(self):
         """Formatted print of model attributes
