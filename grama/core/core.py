@@ -215,13 +215,12 @@ class model_:
         ## Build matrix of names
         corr_mat = []
         for ind in range(self.n_in):
-            for jnd in range(self.n_in):
-                corr_mat.append(
-                    list(map(
-                        lambda s: s + "," + self.domain.inputs[ind],
-                        self.domain.inputs
-                    ))
-                )
+            corr_mat.append(
+                list(map(
+                    lambda s: s + "," + self.domain.inputs[ind],
+                    self.domain.inputs
+                ))
+            )
 
         ## Access matrix of names
         corr_names = dict()
