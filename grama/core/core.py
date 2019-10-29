@@ -209,6 +209,30 @@ class model_:
             )
         return samples
 
+    def name_corr(self):
+        """Name the correlation elements
+        """
+        ## Build matrix of names
+        corr_mat = []
+        for ind in range(self.n_in):
+            for jnd in range(self.n_in):
+                corr_mat.append(
+                    list(map(
+                        lambda s: s + "," + self.domain.inputs[ind],
+                        self.domain.inputs
+                    ))
+                )
+
+        ## Access matrix of names
+        corr_names = dict()
+        corr_ind = np.triu_indices(self.n_in, 1)
+        for knd in range(len(corr_ind[0])):
+            ind = corr_ind[0][knd]
+            jnd = corr_ind[1][knd]
+            corr_names["corr_" + str(knd)] = corr_mat[ind][jnd]
+
+        print(corr_names)
+
     def printpretty(self):
         """Formatted print of model attributes
         """
