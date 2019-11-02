@@ -204,9 +204,9 @@ def uniaxial_stress_limit(X):
              Nx]
     Returns
         g_stress = array of limit state values
-                 = [g_sigma_11_1, g_sigma_12_1,
+                 = [g_11_tensile_1 g_22_tensile_1 g_11_comp_1 g_22_comp_1 g_shear_12_1,
                             .  .  .
-                    g_sigma_11_k, g_sigma_12_k]
+                    g_11_tensile_k g_22_tensile_k g_11_comp_k g_22_comp_k g_shear_12_k]
     @pre ((len(X) - 1) % 9) == 0
     """
     ## Pre-process inputs
@@ -220,13 +220,14 @@ def uniaxial_stress_limit(X):
     T         = Y[:, 5]
     Sigma_max = Y[:, 6:9]
 
-    ## Evaluate stress
+    ## Evaluate stress [\sigma_11, \sigma_22, \sigma_12]_i
     Stresses = Nx * uniaxial_stresses(Param, Theta, T)
 
     ## Construct limit state
-    g_limit = np.zeros((k, 3))
-    g_limit[:, (0, 2)] = Sigma_max[:, (0,2)] - Stresses[:, (0,2)]
-    g_limit[:, 1]      = Sigma_max[:, 1]     + Stresses[:, 1]
+    g_limit = np.zeros((k, 5))
+    g_limit[:, (0,1)] = +Sigma_max[:, (0,1)] - Stresses[:, 0]
+    g_limit[:, (2,3)] = +Sigma_max[:, (0,1)] + Stresses[:, 1]
+    g_limit[:, 4]     = +Sigma_max[:, 2]     - np.abs(Stresses[:, 2])
 
     return g_limit.flatten()
 
@@ -374,9 +375,11 @@ class model_composite_plate_tension(core.model_):
             name = name,
             function = lambda X: uniaxial_stress_limit(X),
             outputs = list(itertools.chain.from_iterable([
-                ["g_sigma_11_tension_{}".format(i),
-                 "g_sigma_11_comp_{}".format(i),
-                 "g_sigma_12_{}".format(i)] for i in range(k)
+                ["g_11_tension_{}".format(i),
+                 "g_22_tension_{}".format(i),
+                 "g_11_compression_{}".format(i),
+                 "g_22_compression_{}".format(i),
+                 "g_12_shear_{}".format(i)] for i in range(k)
             ])),
             domain = make_domain(Theta_nom, T_nom = T_nom),
             density = make_density(Theta_nom, T_nom = T_nom)
