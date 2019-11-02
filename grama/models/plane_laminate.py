@@ -26,11 +26,17 @@ THETA_PM = 3 * np.pi / 180 # +/- angle tolerance
 
 SIG_11_T_M = 1.4e9 # Tensile strength
 SIG_11_C_M = 0.5e9 # Compressive strength
-SIG_12_M_M =  62e6 # Interlaminar strength
+SIG_12_M_M =  62e6 # Shear strength
 
 SIG_11_T_CV = 0.06
 SIG_11_C_CV = 0.06
 SIG_12_M_CV = 0.07
+
+SIG_22_T_M = 1.4e6 # Tensile strength
+SIG_22_C_M = 0.5e6 # Compressive strength
+
+SIG_22_T_CV = 0.06
+SIG_22_C_CV = 0.06
 
 Nx_M = 1.2e6                    # Nominal load conditions [N/m]
 Nx_SIG = Nx_M * np.sqrt(0.01)
@@ -197,37 +203,37 @@ def uniaxial_stress_limit(X):
     Arguments
         X = array of composite laminate properties and loading
           = [E1, E2, nu12, G12, theta, t, ...
-              \sigma_11_tensile, \sigma_11_comp, \sigma_12_max, # for i = 1
+              sig_11_tensile, sig_11_comp, sig_22_tensile, sig_22_comp, sig_12_max, # for i = 1
                                   .  .  .
              E1, E2, nu12, G12, theta, t, ...
-              \sigma_11_tensile, \sigma_11_comp, \sigma_12_max, # for i = k
+              sig_11_tensile, sig_11_comp, sig_22_tensile, sig_22_comp, sig_12_max, # for i = k
              Nx]
     Returns
         g_stress = array of limit state values
                  = [g_11_tensile_1 g_22_tensile_1 g_11_comp_1 g_22_comp_1 g_shear_12_1,
                             .  .  .
                     g_11_tensile_k g_22_tensile_k g_11_comp_k g_22_comp_k g_shear_12_k]
-    @pre ((len(X) - 1) % 9) == 0
+    @pre ((len(X) - 1) % 11) == 0
     """
     ## Pre-process inputs
-    k = int((len(X) - 1) / 9)
-    Y = np.reshape(np.array(X[:-1]), (k, 9))
+    k = int((len(X) - 1) / 11)
+    Y = np.reshape(np.array(X[:-1]), (k, 11))
 
     ## Unpack inputs
     Nx        = X[-1]
     Param     = Y[:, 0:4]
     Theta     = Y[:, 4]
     T         = Y[:, 5]
-    Sigma_max = Y[:, 6:9]
+    Sigma_max = Y[:, 6:11]
 
     ## Evaluate stress [\sigma_11, \sigma_22, \sigma_12]_i
     Stresses = Nx * uniaxial_stresses(Param, Theta, T)
 
     ## Construct limit state
     g_limit = np.zeros((k, 5))
-    g_limit[:, (0,1)] = +Sigma_max[:, (0,1)] - Stresses[:, 0]
-    g_limit[:, (2,3)] = +Sigma_max[:, (0,1)] + Stresses[:, 1]
-    g_limit[:, 4]     = +Sigma_max[:, 2]     - np.abs(Stresses[:, 2])
+    g_limit[:, (0,1)] = +Sigma_max[:, (0,1)] - Stresses[:, (0,1)]
+    g_limit[:, (2,3)] = +Sigma_max[:, (2,3)] + Stresses[:, (0,1)]
+    g_limit[:, 4]     = +Sigma_max[:, 4]     - np.abs(Stresses[:, 2])
 
     return g_limit.flatten()
 
@@ -263,7 +269,9 @@ def make_domain(
          "theta_{}".format(i),
          "t_{}".format(i),
          "sigma_11_tensile_{}".format(i),
+         "sigma_22_tensile_{}".format(i),
          "sigma_11_comp_{}".format(i),
+         "sigma_22_comp_{}".format(i),
          "sigma_12_max_{}".format(i)] for i in range(k)
     ])) + ["Nx"]
     bounds = list(itertools.chain.from_iterable([
@@ -274,7 +282,9 @@ def make_domain(
         {"theta_{}".format(i): [-np.pi/2, +np.pi/2]},
         {"t_{}".format(i): [-np.Inf, +np.Inf]},
         {"sigma_11_tensile_{}".format(i): [0, +np.Inf]},
+        {"sigma_22_tensile_{}".format(i): [0, +np.Inf]},
         {"sigma_11_comp_{}".format(i): [0, +np.Inf]},
+        {"sigma_22_comp_{}".format(i): [0, +np.Inf]},
         {"sigma_12_max_{}".format(i): [0, +np.Inf]}] for i in range(k)
     ])) + [{"Nx": [-np.Inf, +np.Inf]}]
 
@@ -320,7 +330,9 @@ def make_density(
          "uniform",                   # theta
          "uniform",                   # t
          "lognorm",                   # sigma_11_tensile
+         "lognorm",                   # sigma_22_tensile
          "lognorm",                   # sigma_11_comp
+         "lognorm",                   # sigma_22_comp
          "lognorm"] for i in range(k) # sigma_12_max
     ])) + ["norm"]                    # Nx
     pdf_param = list(itertools.chain.from_iterable([
@@ -331,7 +343,9 @@ def make_density(
         {"loc": Theta_nom[i] - THETA_PM, "scale": 2 * THETA_PM},             # theta
         {"loc": T_nom[i] - T_PM, "scale": 2 * T_PM},                         # t
         {"loc": 1, "s": SIG_11_T_CV, "scale": SIG_11_T_M},                   # sigma_11_tensile
+        {"loc": 1, "s": SIG_22_T_CV, "scale": SIG_22_T_M},                   # sigma_22_tensile
         {"loc": 1, "s": SIG_11_C_CV, "scale": SIG_11_C_M},                   # sigma_11_comp
+        {"loc": 1, "s": SIG_22_C_CV, "scale": SIG_22_C_M},                   # sigma_22_comp
         {"loc": 1, "s": SIG_12_M_CV, "scale": SIG_12_M_M}] for i in range(k) # sigma_12_max
     ])) + [{"loc": Nx_M, "scale": Nx_SIG}]                                   # Nx
     ## MMPDS dictates BV for strength and load values, and mean estimates for
@@ -344,7 +358,9 @@ def make_density(
           0,                   # theta
           0,                   # t
          -1,                   # sigma_11_tensile
+         -1,                   # sigma_22_tensile
          -1,                   # sigma_11_comp
+         -1,                   # sigma_22_comp
          -1] for i in range(k) # sigma_12_max
     ])) + [+1]                 # Nx
     return core.density_(
