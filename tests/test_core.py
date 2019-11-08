@@ -52,7 +52,28 @@ class TestModel(unittest.TestCase):
             function = lambda x: [x[0], x[1]],
             outputs  = ["x", "y"],
             domain   = domain_2d,
-            density  = None
+            density  = core.density_(
+                pdf = lambda x: 1,
+                pdf_factors = ["uniform", "uniform"],
+                pdf_param = [
+                    {"loc":-1, "scale": 2},
+                    {"loc": 0, "scale": 1}
+                ]
+            )
+        )
+        self.model_2d_corr = core.model_(
+            function = lambda x: [x[0], x[1]],
+            outputs  = ["x", "y"],
+            domain   = domain_2d,
+            density  = core.density_(
+                pdf = lambda x: 1,
+                pdf_factors = ["uniform", "uniform"],
+                pdf_param = [
+                    {"loc":-1, "scale": 2},
+                    {"loc": 0, "scale": 1}
+                ],
+                pdf_corr = [0.5]
+            )
         )
         self.df_2d = pd.DataFrame(data = {"y": [0.], "x": [+1.]})
         self.res_2d = self.model_2d.evaluate(self.df_2d)
@@ -85,6 +106,28 @@ class TestModel(unittest.TestCase):
         self.assertTrue(
             self.df_2d.equals(
                 self.res_2d.loc[:, self.df_2d.columns]
+            )
+        )
+
+    ## Test quantile evaluation
+
+    def test_quantile(self):
+        """Checks that model_.sample_quantile() evaluates correctly.
+        """
+        self.assertTrue(
+            np.all(
+                self.model_2d.sample_quantile(np.array([[0.5, 0.5]])) == \
+                np.array([0.0, 0.5])
+            )
+        )
+
+    def test_quantile_corr(self):
+        """Checks that model_.sample_quantile() evaluates correctly with copula model.
+        """
+        self.assertTrue(
+            np.all(
+                self.model_2d_corr.sample_quantile(np.array([[0.5, 0.5]])) == \
+                np.array([0.0, 0.5])
             )
         )
 
