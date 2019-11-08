@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import unittest
 
-from core import density_, domain_, model_, ev_df, pi
+from grama.core import density_, domain_, model_, ev_df, pi
 
 ## Core function tests
 ##################################################
