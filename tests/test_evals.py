@@ -70,8 +70,6 @@ class TestModel(unittest.TestCase):
         """
         df_res = self.model_2d |pi| gr.ev_conservative(quantiles = [0.1, 0.1])
 
-        print(self.df_2d_qe.values == df_res.values)
-
         self.assertTrue(
             np.allclose(self.df_2d_qe.values, df_res.values)
         )
