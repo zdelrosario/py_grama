@@ -1,10 +1,9 @@
 ## Test gradient
 import numpy as np
-import grama.core as gr
+import grama as gr
 import pandas as pd
 
-from grama.core import pi # Import pipe
-from grama.evals import ev_grad_fd, ev_nominal
+from grama import pi # Import pipe
 from grama.models import model_poly
 
 model = model_poly()
@@ -19,7 +18,7 @@ df_nom = pd.DataFrame(
 
 df_grad = \
     model |pi| \
-    ev_grad_fd(
+    gr.ev_grad_fd(
         df_base = df_nom,
         append = True,
         h = np.array([1e-3, 1e-6, 1e-9])

@@ -1,11 +1,10 @@
 ## Simple model pipeline example
 import numpy as np
 import pandas as pd
-import grama.core as gr
+import grama as gr
 
 from grama.core import pi # Import pipe
 from grama.models import model_cantilever_beam
-from grama.evals import *
 
 np.random.seed(101) # Set for reproducibility
 
@@ -23,20 +22,20 @@ model_copula.density.pdf_corr = [0.1] * n_corr
 
 # ## DEBUG nominal vs conservative
 # df_nom = model_indep |pi|\
-#     ev_nominal()
+#     gr.ev_nominal()
 
 # df_con = model_indep |pi|\
-#     ev_conservative()
+#     gr.ev_conservative()
 
 # print(df_nom)
 # print(df_con)
 
 # Draw samples
 df_res_indep  = model_indep |pi| \
-    ev_monte_carlo(n_samples = n_monte_carlo)
+    gr.ev_monte_carlo(n_samples = n_monte_carlo)
 
 df_res_copula = model_copula |pi| \
-    ev_monte_carlo(n_samples = n_monte_carlo)
+    gr.ev_monte_carlo(n_samples = n_monte_carlo)
 
 # Compare input marginals
 print(df_res_indep[ ["H", "V", "E", "Y"]].describe())

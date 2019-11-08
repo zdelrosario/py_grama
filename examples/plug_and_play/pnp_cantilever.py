@@ -1,12 +1,10 @@
 ## Simple model pipeline example
 import numpy as np
 import pandas as pd
-import grama.core as gr
+import grama as gr
 
-from grama.core import pi # Import pipe
+from grama import pi
 from grama.models import model_cantilever_beam
-from grama.evals import ev_monte_carlo
-from grama.fitting import ft_ols
 
 np.random.seed(101) # Set for reproducibility
 
@@ -19,16 +17,16 @@ model = model_cantilever_beam(w = 2.80, t = 3.)
 ## Draw a number of MC samples
 df_res_direct = \
     model |pi| \
-    ev_monte_carlo(n_samples = n_monte_carlo)
+    gr.ev_monte_carlo(n_samples = n_monte_carlo)
 
 ## Draw samples for training
 df_res_train = \
     model |pi| \
-    ev_monte_carlo(n_samples = n_train)
+    gr.ev_monte_carlo(n_samples = n_train)
 
 ## Fit a meta-model via OLS
 ## Mysteriously, the pipe does not work for ft_ols()...
-model_fitted = ft_ols(
+model_fitted = gr.ft_ols(
     df_res_train,
     formulae = [
         "g_stress ~ H + V + E + Y",
@@ -41,7 +39,7 @@ model_fitted = ft_ols(
 ## Draw more samples via the model
 df_res_surrogate = \
     model_fitted |pi| \
-    ev_monte_carlo(n_samples = n_monte_carlo)
+    gr.ev_monte_carlo(n_samples = n_monte_carlo)
 
 ## Post-process
 R_stress_direct       = np.mean(df_res_direct.loc[:, "g_stress"] >= 0)

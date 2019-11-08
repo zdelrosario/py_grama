@@ -1,12 +1,11 @@
 ## Compare sampling plans
 import numpy as np
 import pandas as pd
-import grama.core as gr
+import grama as gr
 import time
 
-from grama.core import pi # Import pipe
-from grama.evals import ev_monte_carlo, ev_lhs
-from scipy.stats import multivariate_normal
+from grama import pi # Import pipe
+from grama.core import model_, domain_, density_
 
 np.random.seed(101) # Set for reproducibility
 np.set_printoptions(precision = 3)
@@ -25,11 +24,11 @@ Sig = np.array([
 mu_f   = np.dot(v, mu)
 sig2_f = np.dot(v, np.dot(Sig, v))
 
-model = gr.model_(
+model = model_(
     name = "Linear-Normal",
     function = lambda x: np.dot(v, x),
     outputs  = ["f"],
-    domain   = gr.domain_(
+    domain   = domain_(
         hypercube = True,
         inputs    = ["X1", "X2"],
         bounds    = {
@@ -37,7 +36,7 @@ model = gr.model_(
             "X2": [-np.Inf, +np.Inf]
         }
     ),
-    density  = gr.density_(
+    density  = density_(
         pdf = lambda X: multivariate_normal.pdf(X, mean = mu, cov = Sig),
         pdf_factors = ["norm", "norm"],
         pdf_param = [
@@ -62,12 +61,12 @@ for jnd in range(n_samp):
         ## Simple monte carlo
         df_res_smc = \
             model |pi| \
-            ev_monte_carlo(n_samples = SAMP_ALL[jnd])
+            gr.ev_monte_carlo(n_samples = SAMP_ALL[jnd])
 
         ## Latin Hypercube Sample
         df_res_lhs = \
             model |pi| \
-            ev_lhs(n_samples = SAMP_ALL[jnd])
+            gr.ev_lhs(n_samples = SAMP_ALL[jnd])
 
         mean_smc_all[ind] = np.mean(df_res_smc["f"].values)
         mean_lhs_all[ind] = np.mean(df_res_lhs["f"].values)

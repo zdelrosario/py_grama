@@ -1,10 +1,10 @@
 ## Simple model pipeline example
-import grama.core as gr
+import grama as gr
 import pandas as pd
 
-from grama.core import pi # Import pipe
+from grama.core import pi
 
-model_default = gr.model_()
+model_default = gr.core.model_()
 df_default    = pd.DataFrame(
     data = {"x" : [0., 1.]}
 )
