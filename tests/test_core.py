@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import unittest
 
-from grama.core import density_, domain_, model_, ev_df, pi
+from context import core
+from context import pi
 
 ## Core function tests
 ##################################################
@@ -10,7 +11,7 @@ class TestPlumbing(unittest.TestCase):
     """test implementation of pipe and support functions
     """
     def setUp(self):
-        self.model_default = model_()
+        self.model_default = core.model_()
         self.df_ok    = pd.DataFrame(data = {"x" : [0., 1.]})
         self.df_res   = pd.DataFrame(data = {"f" : [0., 1.]})
 
@@ -22,7 +23,7 @@ class TestPlumbing(unittest.TestCase):
         self.assertTrue(
             self.df_res.equals(
               self.model_default |pi| \
-                ev_df(
+                core.ev_df(
                     df = self.df_ok,
                     append = False
                 )
@@ -35,19 +36,19 @@ class TestModel(unittest.TestCase):
 
     def setUp(self):
         # Default model
-        self.model_default = model_()
+        self.model_default = core.model_()
         self.df_wrong = pd.DataFrame(data = {"y" : [0., 1.]})
         self.df_ok    = pd.DataFrame(data = {"x" : [0., 1.]})
 
         # 2D identity model with permuted df inputs
-        domain_2d = domain_(
+        domain_2d = core.domain_(
             hypercube = True,
             inputs    = ["x", "y"],
             bounds    = {"x": [-1., +1.], "y": [0., 1.]},
             feasible  = lambda X: (-1 <= X[0]) * (x <= X[0]) * (0 <= X[1]) * (X[1] <= 1)
         )
 
-        self.model_2d = model_(
+        self.model_2d = core.model_(
             function = lambda x: [x[0], x[1]],
             outputs  = ["x", "y"],
             domain   = domain_2d,
@@ -96,8 +97,8 @@ class TestEvalDf(unittest.TestCase):
         """
         self.assertRaises(
             ValueError,
-            ev_df,
-            model_()
+            core.ev_df,
+            core.model_()
         )
 
 ## Run tests
