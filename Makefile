@@ -5,3 +5,4 @@ test_all:
 coverage:
 	coverage run tests/test_core.py
 	coverage html
+	xdg-open htmlcov/index.html
