@@ -89,8 +89,8 @@ def ev_lhs(model, n_samples = 1, seed = None, append = True, criterion = None):
 
 ## Marginal sweeps with random origins
 @curry
-def ev_sweeps_marginal(model, n_density=10, n_sweeps=3, varname="sweep", append=True):
-    """Perform sweeps over each model marginal
+def ev_sinews(model, n_density=10, n_sweeps=3, varname="sweep", append=True):
+    """Perform sweeps over each model marginal (sinew)
     """
     ## Build quantile sweep data
     q_random = np.tile(
