@@ -89,11 +89,14 @@ def ev_lhs(model, n_samples = 1, seed = None, append = True, criterion = None):
 
 ## Marginal sweeps with random origins
 @curry
-def ev_sweeps_marginal(model, n_density=10, n_sweeps=3, append=True):
+def ev_sweeps_marginal(model, n_density=10, n_sweeps=3, varname="sweep", append=True):
     """Perform sweeps over each model marginal
     """
     ## Build quantile sweep data
-    q_random = np.random.random((n_density, model.n_in, n_sweeps))
+    q_random = np.tile(
+        np.random.random((1, model.n_in, n_sweeps)),
+        (n_density, 1, 1)
+    )
     q_dense  = np.linspace(0, 1, num=n_density)
     Q_all    = np.zeros((n_density * n_sweeps * model.n_in, model.n_in))
     C_labels = ["tmp"] * (n_density * n_sweeps * model.n_in)
@@ -114,6 +117,6 @@ def ev_sweeps_marginal(model, n_density=10, n_sweeps=3, append=True):
     ## Apply
     df_inputs = pd.DataFrame(data=Q_all, columns=model.domain.inputs)
     df_result = core.ev_df(model, df=df_inputs, append=append)
-    df_result["sweep_var"] = C_labels
+    df_result[varname] = C_labels
 
     return df_result
