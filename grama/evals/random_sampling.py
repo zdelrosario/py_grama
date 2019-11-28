@@ -115,7 +115,8 @@ def ev_sweeps_marginal(model, n_density=10, n_sweeps=3, varname="sweep", append=
                 n_density
 
     ## Apply
-    df_inputs = pd.DataFrame(data=Q_all, columns=model.domain.inputs)
+    samples = model.sample_quantile(Q_all)
+    df_inputs = pd.DataFrame(data=samples, columns=model.domain.inputs)
     df_result = core.ev_df(model, df=df_inputs, append=append)
     df_result[varname] = C_labels
 
