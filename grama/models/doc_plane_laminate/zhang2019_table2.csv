@@ -1,0 +1,7 @@
+Test, Lay-up, "Modulus (GPa)", "Strength (MPa)"
+"Tensile", "0^{\circ}", "115 \pm 2", "1420 \pm 83"
+"", "[-45^{\circ}/90^{\circ}/45^{\circ}/0^{\circ}]s", "41 \pm 3", "479 \pm 66"
+"Compressive", "0^{\circ}", "100 \pm 2", "712 \pm 47"
+"", "[-45^{\circ}/90^{\circ}/45^{\circ}/0^{\circ}]s", "37 \pm 2", "280 \pm 26"
+"Flexural", "0^{\circ}", "104 \pm 1", "1173 \pm 64"
+"", "[-45^{\circ}/90^{\circ}/45^{\circ}/0^{\circ}]s", "31 \pm 2", "492 \pm 54"

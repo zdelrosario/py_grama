@@ -1,0 +1,7 @@
+Property,Test,Unit Cost,ntests,Mean,C.o.V.
+Sxx (tensile strength),ASTM D3039,1,12,1.42 GPa,0.0585
+Sxz (interlaminar shear strength),ASTM D2344,0.15,78,61.93 MPa,0.0721
+Exx (tensile modulus),ASTM D3039,0,12,114.90 GPa,0.018
+Eyy (tranverse tensile modulus),ASTM D3039,1,5,7.10 GPa,0.0845
+Gxy (shear modulus),DIN SPEC 4885,2.5,5,4.21 GPa,0.105
+"νxy (Poisson ratio)",ASTM D3039,0,12,0.45,0.08
