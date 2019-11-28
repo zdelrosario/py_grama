@@ -1,3 +1,4 @@
+import numpy as np
 from .. import core
 from numpy import sqrt, array, Inf
 from scipy.stats import norm
@@ -21,7 +22,7 @@ def function_beam(x, w = 3, t = 3):
     return array([
         w * t,
         Y - 600 * V / w / t**2 - 600 * H / w**2 / t,
-        D_MAX - 4 * LENGTH**3 / E / w / t * sqrt(
+        D_MAX - np.float64(4) * LENGTH**3 / E / w / t * sqrt(
             V**2 / t**4 + H**2 / w**4
         )
     ])
