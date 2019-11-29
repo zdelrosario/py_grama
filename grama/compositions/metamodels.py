@@ -1,18 +1,25 @@
+__all__ = [
+    "comp_metamodel",
+    "cp_metamodel"
+]
+
 ## Fitting via statsmodels package
 from .. import core
 from .. import evals
 from .. import fitting
+from ..core import pipe
 from toolz import curry
 
 ## Fit a metamodel
+# --------------------------------------------------
 @curry
-def cp_metamodel(model, n=1, ev=None, ft=None, seed=None):
+def comp_metamodel(model, n=1, ev=None, ft=None, seed=None):
     """Create a metamodel
 
     @param model Original model, to be evaluated and fit
     @param n Number of samples to draw
-    @param ev Evaluation strategy, default ev_lhs
-    @param ft Fitting strategy, default ft_ols w/ linear features
+    @param ev Evaluation strategy, default eval_lhs
+    @param ft Fitting strategy, default fit_ols w/ linear features
     @param seed Random seed, default None
     """
     ## Extract model information
@@ -21,7 +28,7 @@ def cp_metamodel(model, n=1, ev=None, ft=None, seed=None):
 
     ## Assign default arguments
     if ev is None:
-        ev = evals.ev_lhs
+        ev = evals.eval_lhs
 
     if ft is None:
         # Linear features for each output
@@ -31,7 +38,7 @@ def cp_metamodel(model, n=1, ev=None, ft=None, seed=None):
             outputs
         ))
 
-        ft = lambda df: fitting.ft_ols(
+        ft = lambda df: fitting.fit_ols(
             df,
             formulae=formulae,
             domain=model.domain,
@@ -45,3 +52,7 @@ def cp_metamodel(model, n=1, ev=None, ft=None, seed=None):
     model = ft(df_results)
 
     return model
+
+@pipe
+def cp_metamodel(*args, **kwargs):
+    return comp_metamodel(*args, **kwargs)

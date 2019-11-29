@@ -1,15 +1,26 @@
+__all__ = [
+    "eval_monte_carlo",
+    "ev_monte_carlo",
+    "eval_lhs",
+    "ev_lhs",
+    "eval_sinews",
+    "ev_sinews"
+]
+
 import numpy as np
 import pandas as pd
 
 from .. import core
+from ..core import pipe
 from scipy.stats import norm, lognorm
 from toolz import curry
 from pyDOE import lhs
 from numpy.linalg import cholesky, inv
 
 ## Simple Monte Carlo
+# --------------------------------------------------
 @curry
-def ev_monte_carlo(model, n_samples = 1, seed = None, append = True):
+def eval_monte_carlo(model, n_samples=1, seed=None, append=True):
     """Evaluates a given model at a given dataframe
 
     @param n_samples number of Monte Carlo samples to draw
@@ -42,11 +53,16 @@ def ev_monte_carlo(model, n_samples = 1, seed = None, append = True):
         columns = model.domain.inputs
     )
 
-    return core.ev_df(model, df = df_inputs, append = append)
+    return core.eval_df(model, df = df_inputs, append = append)
+
+@pipe
+def ev_monte_carlo(*args, **kwargs):
+    return eval_monte_carlo(*args, **kwargs)
 
 ## Latin Hypercube Sampling (LHS)
+# --------------------------------------------------
 @curry
-def ev_lhs(model, n_samples = 1, seed = None, append = True, criterion = None):
+def eval_lhs(model, n_samples=1, seed=None, append=True, criterion=None):
     """Evaluates a given model on a latin hypercube sample (LHS)
     using the model's density
 
@@ -74,7 +90,7 @@ def ev_lhs(model, n_samples = 1, seed = None, append = True, criterion = None):
         np.random.seed(seed)
 
     ## Draw samples
-    quantiles = lhs(model.n_in, samples = n_samples)
+    quantiles = lhs(model.n_in, samples=n_samples)
 
     ## Convert samples to desired marginals
     samples = model.sample_quantile(quantiles)
@@ -85,13 +101,30 @@ def ev_lhs(model, n_samples = 1, seed = None, append = True, criterion = None):
         columns = model.domain.inputs
     )
 
-    return core.ev_df(model, df = df_inputs, append = append)
+    return core.eval_df(model, df = df_inputs, append = append)
+
+@pipe
+def ev_lhs(*args, **kwargs):
+    return eval_lhs(*args, **kwargs)
 
 ## Marginal sweeps with random origins
+# --------------------------------------------------
 @curry
-def ev_sinews(model, n_density=10, n_sweeps=3, varname="sweep", append=True):
+def eval_sinews(
+        model,
+        n_density=10,
+        n_sweeps=3,
+        seed=None,
+        varname="sweep_var",
+        indname="sweep_ind",
+        append=True
+):
     """Perform sweeps over each model marginal (sinew)
     """
+    ## Set seed only if given
+    if seed is not None:
+        np.random.seed(seed)
+
     ## Build quantile sweep data
     q_random = np.tile(
         np.random.random((1, model.n_in, n_sweeps)),
@@ -99,7 +132,8 @@ def ev_sinews(model, n_density=10, n_sweeps=3, varname="sweep", append=True):
     )
     q_dense  = np.linspace(0, 1, num=n_density)
     Q_all    = np.zeros((n_density * n_sweeps * model.n_in, model.n_in))
-    C_labels = ["tmp"] * (n_density * n_sweeps * model.n_in)
+    C_var    = ["tmp"] * (n_density * n_sweeps * model.n_in)
+    C_ind    = [0] * (n_density * n_sweeps * model.n_in)
 
     ## Interlace
     for i_input in range(model.n_in):
@@ -110,14 +144,20 @@ def ev_sinews(model, n_density=10, n_sweeps=3, varname="sweep", append=True):
 
             Q_all[ind_start:ind_end]          = q_random[:, :, i_sweep]
             Q_all[ind_start:ind_end, i_input] = q_dense
-            C_labels[ind_start:ind_end] = \
-                [model.domain.inputs[i_input] + "_s" + str(i_sweep)] * \
-                n_density
+            C_var[ind_start:ind_end] = \
+                [model.domain.inputs[i_input]] * n_density
+            C_ind[ind_start:ind_end] = [i_sweep] * n_density
 
     ## Apply
     samples = model.sample_quantile(Q_all)
     df_inputs = pd.DataFrame(data=samples, columns=model.domain.inputs)
-    df_result = core.ev_df(model, df=df_inputs, append=append)
-    df_result[varname] = C_labels
+    df_result = core.eval_df(model, df=df_inputs, append=append)
+
+    df_result[varname] = C_var
+    df_result[indname] = C_ind
 
     return df_result
+
+@pipe
+def ev_sinews(*args, **kwargs):
+    return eval_sinews(*args, **kwargs)

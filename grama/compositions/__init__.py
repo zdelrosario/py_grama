@@ -1,1 +1,1 @@
-from .metamodels import cp_metamodel
+from .metamodels import *

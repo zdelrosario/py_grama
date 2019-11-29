@@ -1,14 +1,21 @@
+__all__ = [
+    "fit_ols",
+    "ft_ols"
+]
+
 ## Fitting via statsmodels package
 import pandas as pd
 import numpy as np
 import statsmodels.formula.api as smf
 
 from .. import core
+from ..core import pipe
 from toolz import curry
 
 ## Fit model via OLS
-@curry # TODO Determine why pipe fails with this function....
-def ft_ols(df, formulae = [""], domain = None, density = None):
+# --------------------------------------------------
+@curry
+def fit_ols(df, formulae=[""], domain=None, density=None):
     """Fit a model via Ordinary Least Squares
 
     @param df pandas dataframe
@@ -45,12 +52,16 @@ def ft_ols(df, formulae = [""], domain = None, density = None):
         result = np.zeros((n_obs_new, n_out))
         for ind in range(n_out):
             result[:, ind] = fits[ind].predict(df_new)
-        return pd.DataFrame(data = result, columns = outputs)
+        return pd.DataFrame(data=result, columns=outputs)
 
     ## Construct model
-    return core.model_df_(
+    return core.model_vectorized_(
         function = fit_all,
         outputs  = outputs,
         domain   = domain,
         density  = density
     )
+
+@pipe
+def ft_ols(*args, **kwargs):
+    return fit_ols(*args, **kwargs)

@@ -1,13 +1,24 @@
+__all__ = [
+    "eval_nominal",
+    "ev_nominal",
+    "eval_grad_fd",
+    "ev_grad_fd",
+    "eval_conservative",
+    "ev_conservative"
+]
+
 import numpy as np
 import pandas as pd
 import itertools
 
 from .. import core
+from ..core import pipe
 from toolz import curry
 
 ## Nominal evaluation
+# --------------------------------------------------
 @curry
-def ev_nominal(model, append = True):
+def eval_nominal(model, append=True):
     """Evaluates a given model at a model nominal conditions (median)
 
     @param append bool flag; append results to nominal inputs?
@@ -34,11 +45,16 @@ def ev_nominal(model, append = True):
         columns = model.domain.inputs
     )
 
-    return core.ev_df(model, df = df_inputs, append = append)
+    return model >> core.ev_df(df=df_inputs, append=append)
+
+@pipe
+def ev_nominal(*args, **kwargs):
+    return eval_nominal(*args, **kwargs)
 
 ## Gradient finite-difference evaluation
+# --------------------------------------------------
 @curry
-def ev_grad_fd(model, df_base = None, append = True, h = 1e-8):
+def eval_grad_fd(model, df_base=None, append=True, h=1e-8):
     """Evaluates a given model with a central-difference stencil to
     approximate the gradient
 
@@ -65,7 +81,7 @@ def ev_grad_fd(model, df_base = None, append = True, h = 1e-8):
     ## Loop over df_base
     results = [] # TODO: Preallocate?
     for row_i in range(df_base.shape[0]):
-        df_left = core.ev_df(
+        df_left = core.eval_df(
             model,
             pd.DataFrame(
                 columns = inputs,
@@ -74,7 +90,7 @@ def ev_grad_fd(model, df_base = None, append = True, h = 1e-8):
             append = False
         )
 
-        df_right = core.ev_df(
+        df_right = core.eval_df(
             model,
             pd.DataFrame(
                 columns = inputs,
@@ -95,9 +111,14 @@ def ev_grad_fd(model, df_base = None, append = True, h = 1e-8):
     ## TODO: append
     return pd.concat(results)
 
+@pipe
+def ev_grad_fd(*args, **kwargs):
+    return eval_grad_fd(*args, **kwargs)
+
 ## Conservative quantile evaluation
+# --------------------------------------------------
 @curry
-def ev_conservative(model, quantiles = None, append = True):
+def eval_conservative(model, quantiles=None, append=True):
     """Evaluates a given model at conservative input quantiles
 
     Uses model specifications to determine the "conservative" direction
@@ -144,4 +165,8 @@ def ev_conservative(model, quantiles = None, append = True):
         columns = model.domain.inputs
     )
 
-    return core.ev_df(model, df = df_inputs, append = append)
+    return core.eval_df(model, df = df_inputs, append = append)
+
+@pipe
+def ev_conservative(*args, **kwargs):
+    return eval_conservative(*args, **kwargs)

@@ -1,12 +1,22 @@
 ## grama core functions
 # Zachary del Rosario, March 2019
 
+__all__ = [
+    "pipe",
+    "domain_",
+    "density_",
+    "model_",
+    "model_vectorized_",
+
+    "eval_df",
+    "ev_df"
+]
+
 import numpy as np
 import pandas as pd
+import warnings
 
-from functools import partial
 from toolz import curry
-
 from numpy.linalg import cholesky
 
 from scipy.stats import alpha, beta, chi, chi2, expon, gamma, laplace
@@ -37,25 +47,37 @@ valid_dist = {
     "lognorm"     : lognorm
 }
 
-## Helper functions
-##################################################
-# Infix to help define pipe
-class Infix(object):
-    def __init__(self, func):
-        self.func = func
-    def __or__(self, other):
-        return self.func(other)
-    def __ror__(self, other):
-        return Infix(partial(self.func, other))
-    def __call__(self, v1, v2):
-        return self.func(v1, v2)
+## Pipe decorator
+class pipe(object):
+    __name__ = "pipe"
 
-# Pipe function
-@Infix
-def pi(x, f):
-    """Infix pipe operator.
-    """
-    return f(x)
+    def __init__(self, function):
+        self.function = function
+        self.__doc__ = function.__doc__
+
+        self.chained_pipes = []
+
+    def __rshift__(self, other):
+        assert isinstance(other, pipe)
+        self.chained_pipes.append(other)
+        return self
+
+    def __rrshift__(self, other):
+        other_copy = other.copy()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            if isinstance(other, pd.DataFrame):
+                other_copy._grouped_by = getattr(other, '_grouped_by', None)
+
+        result = self.function(other_copy)
+
+        for p in self.chained_pipes:
+            result = p.__rrshift__(result)
+        return result
+
+    def __call__(self, *args, **kwargs):
+        return pipe(lambda x: self.function(x, *args, **kwargs))
 
 ## Core functions
 ##################################################
@@ -115,9 +137,9 @@ class density_:
         @pre (len(pdf_qt_sign) == n_in) || (pdf_qt_sign is None)
         """
         self.pdf         = pdf if (pdf is not None) else lambda x: 0.5
-        self.pdf_factors = pdf_factors if (pdf_factors is not None) else ["unif"]
+        self.pdf_factors = pdf_factors if (pdf_factors is not None) else ["uniform"]
         self.pdf_param   = pdf_param if (pdf_param is not None) else [
-            {"lower": -1., "upper": +1.}
+            {"loc": -1., "scale": +2.}
         ]
         self.pdf_corr    = pdf_corr if (pdf_corr is not None) else None
         self.pdf_qt_sign = pdf_qt_sign if (pdf_qt_sign is not None) else [0] * len(self.pdf_factors)
@@ -165,7 +187,6 @@ class model_:
 
         Does not assume a vectorized function.
         """
-
         ## Check invariant; model inputs must be subset of df columns
         if not set(self.domain.inputs).issubset(set(df.columns)):
             raise ValueError("Model inputs not a subset of given columns")
@@ -177,7 +198,7 @@ class model_:
             results[ind] = self.function(df.loc[ind, self.domain.inputs])
 
         ## Package output as DataFrame
-        return pd.DataFrame(data = results, columns = self.outputs)
+        return pd.DataFrame(data=results, columns=self.outputs)
 
     def sample_quantile(self, quantiles):
         """Convert quantiles to input samples
@@ -232,6 +253,18 @@ class model_:
 
         return corr_names
 
+    def copy(self):
+        """Make a copy of this model
+        """
+        model = model_(
+            name     = self.name,
+            function = self.function,
+            outputs  = self.outputs,
+            domain   = self.domain,
+            density  = self.density
+        )
+        return model
+
     def printpretty(self):
         """Formatted print of model attributes
         """
@@ -239,7 +272,8 @@ class model_:
         print("  inputs  = {}".format(self.domain.inputs))
         print("  outputs = {}".format(self.outputs))
 
-class model_df_(model_):
+# Derived dataframe-vectorized model
+class model_vectorized_(model_):
     """Derived class for grama models.
 
     Given function must be vectorized over dataframes
@@ -252,9 +286,22 @@ class model_df_(model_):
         """
         return self.function(df)
 
-## Default pipeline evaluation function
+    def copy(self):
+        """Make a copy of this model
+        """
+        model = model_vectorized_(
+            name     = self.name,
+            function = self.function,
+            outputs  = self.outputs,
+            domain   = self.domain,
+            density  = self.density
+        )
+        return model
+
+## Default evaluation function
+# --------------------------------------------------
 @curry
-def ev_df(model, df = None, append = True):
+def eval_df(model, df=None, append=True):
     """Evaluates a given model at a given dataframe
 
     @param df input dataframe to evaluate (Pandas.DataFrame)
@@ -267,6 +314,10 @@ def ev_df(model, df = None, append = True):
     df_res = model.evaluate(df)
 
     if append:
-        df_res = pd.concat([df.reset_index(drop = True), df_res], axis=1)
+        df_res = pd.concat([df.reset_index(drop=True), df_res], axis=1)
 
     return df_res
+
+@pipe
+def ev_df(*args, **kwargs):
+    return eval_df(*args, **kwargs)
