@@ -4,7 +4,6 @@ import unittest
 
 from context import core
 from context import grama as gr
-from context import pi
 
 class TestModel(unittest.TestCase):
     """Test implementation of model_
@@ -49,26 +48,31 @@ class TestModel(unittest.TestCase):
         """
         self.assertTrue(
             self.df_2d_nominal.equals(
-                self.model_2d |pi| gr.ev_nominal()
+                gr.eval_nominal(self.model_2d)
             )
         )
 
     def test_grad_fd_accurate(self):
         """Checks the FD is accurate
         """
-        df_grad = self.model_2d |pi| \
-                   gr.ev_grad_fd(df_base = self.df_2d_nominal, append = False)
+        df_grad = gr.eval_grad_fd(
+            self.model_2d,
+            df_base=self.df_2d_nominal,
+            append=False
+        )
         grad_hat = df_grad.values
 
         self.assertTrue(
-            # np.linalg.norm(grad_hat - np.array([1, 1])) / np.sqrt(2) <= eps_fd
             np.allclose(grad_hat, np.array([1, 1]))
         )
 
     def test_conservative_accurate(self):
         """Checks that conservative QE is accurate
         """
-        df_res = self.model_2d |pi| gr.ev_conservative(quantiles = [0.1, 0.1])
+        df_res = gr.eval_conservative(
+            self.model_2d,
+            quantiles = [0.1, 0.1]
+        )
 
         self.assertTrue(
             np.allclose(self.df_2d_qe.values, df_res.values)

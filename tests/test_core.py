@@ -3,33 +3,9 @@ import pandas as pd
 import unittest
 
 from context import core
-from context import pi
 
 ## Core function tests
 ##################################################
-class TestPlumbing(unittest.TestCase):
-    """test implementation of pipe and support functions
-    """
-    def setUp(self):
-        self.model_default = core.model_()
-        self.df_ok    = pd.DataFrame(data = {"x" : [0., 1.]})
-        self.df_res   = pd.DataFrame(data = {"f" : [0., 1.]})
-
-    ## Basic piping
-
-    def test_model2eval(self):
-        """Checks model evaluation via pipe
-        """
-        self.assertTrue(
-            self.df_res.equals(
-              self.model_default |pi| \
-                core.ev_df(
-                    df = self.df_ok,
-                    append = False
-                )
-            )
-        )
-
 class TestModel(unittest.TestCase):
     """Test implementation of model_
     """
@@ -131,16 +107,37 @@ class TestModel(unittest.TestCase):
             )
         )
 
+class TestVectorizedModel(unittest.TestCase):
+    """Test the implementation of model_vectorized_
+    """
+    def setUp(self):
+        func = lambda df: pd.DataFrame(data = {"f": df['x']})
+
+        self.df_input = pd.DataFrame(data = {"x": [0, 1, 2]})
+        self.df_output = pd.DataFrame(data = {"f": [0, 1, 2]})
+        self.model_vectorized = core.model_vectorized_(
+            function=func,
+            outputs=["f"]
+        )
+
+    def test_copy(self):
+        """Invoke a copy through pipe evaluation
+        """
+        df_res = self.model_vectorized >> \
+            core.ev_df(df=self.df_input, append=False)
+
+        self.assertTrue(self.df_output.equals(df_res))
+
 class TestEvalDf(unittest.TestCase):
-    """Test implementation of ev_df()
+    """Test implementation of eval_df()
     """
 
     def test_catch_no_df(self):
-        """Checks that ev_df() raises when no input df is given.
+        """Checks that eval_df() raises when no input df is given.
         """
         self.assertRaises(
             ValueError,
-            core.ev_df,
+            core.eval_df,
             core.model_()
         )
 
