@@ -4,7 +4,6 @@ import pandas as pd
 import grama as gr
 import time
 
-from grama import pi # Import pipe
 from grama.models import model_composite_plate_tension
 
 n = int(1e3)
@@ -12,8 +11,7 @@ n = int(1e3)
 # model = model_composite_plate_tension([0])
 model = model_composite_plate_tension([-np.pi/4, +np.pi/4])
 
-df_res = model |pi| \
-    gr.ev_lhs(n_samples=n, append=False)
+df_res = model >> gr.ev_lhs(n_samples=n, append=False)
 
 print(df_res.describe())
 

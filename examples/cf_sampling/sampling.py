@@ -4,11 +4,10 @@ import pandas as pd
 import grama as gr
 import time
 
-from grama import pi # Import pipe
 from grama.core import model_, domain_, density_
 
 np.random.seed(101) # Set for reproducibility
-np.set_printoptions(precision = 3)
+np.set_printoptions(precision=3)
 
 SAMP_ALL = [10, 50, 100, 500, 1000]
 n_samp   = len(SAMP_ALL)
@@ -25,25 +24,25 @@ mu_f   = np.dot(v, mu)
 sig2_f = np.dot(v, np.dot(Sig, v))
 
 model = model_(
-    name = "Linear-Normal",
-    function = lambda x: np.dot(v, x),
-    outputs  = ["f"],
-    domain   = domain_(
-        hypercube = True,
-        inputs    = ["X1", "X2"],
-        bounds    = {
+    name="Linear-Normal",
+    function=lambda x: np.dot(v, x),
+    outputs=["f"],
+    domain=domain_(
+        hypercube=True,
+        inputs=["X1", "X2"],
+        bounds={
             "X1": [-np.Inf, +np.Inf],
             "X2": [-np.Inf, +np.Inf]
         }
     ),
-    density  = density_(
-        pdf = lambda X: multivariate_normal.pdf(X, mean = mu, cov = Sig),
-        pdf_factors = ["norm", "norm"],
-        pdf_param = [
+    density=density_(
+        pdf=lambda X: multivariate_normal.pdf(X, mean = mu, cov = Sig),
+        pdf_factors=["norm", "norm"],
+        pdf_param=[
             {"loc": mu[0], "scale": Sig[0, 0]},
             {"loc": mu[1], "scale": Sig[1, 1]}
         ],
-        pdf_corr = [Sig[0, 1]]
+        pdf_corr=[Sig[0, 1]]
     )
 )
 
@@ -59,14 +58,12 @@ for jnd in range(n_samp):
 
     for ind in range(n_repl):
         ## Simple monte carlo
-        df_res_smc = \
-            model |pi| \
-            gr.ev_monte_carlo(n_samples = SAMP_ALL[jnd])
+        df_res_smc = model >> \
+            gr.ev_monte_carlo(n_samples=SAMP_ALL[jnd])
 
         ## Latin Hypercube Sample
-        df_res_lhs = \
-            model |pi| \
-            gr.ev_lhs(n_samples = SAMP_ALL[jnd])
+        df_res_lhs = model >> \
+            gr.ev_lhs(n_samples=SAMP_ALL[jnd])
 
         mean_smc_all[ind] = np.mean(df_res_smc["f"].values)
         mean_lhs_all[ind] = np.mean(df_res_lhs["f"].values)

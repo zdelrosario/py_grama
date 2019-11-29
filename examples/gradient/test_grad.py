@@ -3,7 +3,6 @@ import numpy as np
 import grama as gr
 import pandas as pd
 
-from grama import pi # Import pipe
 from grama.models import model_poly
 
 model = model_poly()
@@ -16,12 +15,11 @@ df_nom = pd.DataFrame(
     }
 )
 
-df_grad = \
-    model |pi| \
+df_grad = model >> \
     gr.ev_grad_fd(
-        df_base = df_nom,
-        append = True,
-        h = np.array([1e-3, 1e-6, 1e-9])
+        df_base=df_nom,
+        append=True,
+        h=np.array([1e-3, 1e-6, 1e-9])
     )
 
 print(df_grad.iloc[:, 0:3])

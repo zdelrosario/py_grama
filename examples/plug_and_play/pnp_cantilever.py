@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import grama as gr
 
-from grama import pi
 from grama.models import model_cantilever_beam
 
 np.random.seed(101) # Set for reproducibility
@@ -12,34 +11,27 @@ n_monte_carlo = int(1e3)
 n_train       = int(50)
 
 ## Instantiate model with desired geometry
-model = model_cantilever_beam(w = 2.80, t = 3.)
+model = model_cantilever_beam(w=2.80, t=3.00)
 
 ## Draw a number of MC samples
-df_res_direct = \
-    model |pi| \
-    gr.ev_monte_carlo(n_samples = n_monte_carlo)
+df_res_direct = model >> gr.ev_monte_carlo(n_samples=n_monte_carlo)
 
 ## Draw samples for training
-df_res_train = \
-    model |pi| \
-    gr.ev_monte_carlo(n_samples = n_train)
+df_res_train = model >> gr.ev_monte_carlo(n_samples=n_train)
 
 ## Fit a meta-model via OLS
-## Mysteriously, the pipe does not work for ft_ols()...
-model_fitted = gr.ft_ols(
-    df_res_train,
-    formulae = [
-        "g_stress ~ H + V + E + Y",
-        "g_displacement ~ H + V + E + Y"
-    ],
-    domain  = model.domain,
-    density = model.density
-)
+model_fitted = df_res_train >> \
+    gr.ft_ols(
+        formulae=[
+            "g_stress ~ H + V + E + Y",
+            "g_displacement ~ H + V + E + Y"
+        ],
+        domain=model.domain,
+        density=model.density
+    )
 
 ## Draw more samples via the model
-df_res_surrogate = \
-    model_fitted |pi| \
-    gr.ev_monte_carlo(n_samples = n_monte_carlo)
+df_res_surrogate = model_fitted >> gr.ev_monte_carlo(n_samples=n_monte_carlo)
 
 ## Post-process
 R_stress_direct       = np.mean(df_res_direct.loc[:, "g_stress"] >= 0)
