@@ -22,12 +22,13 @@ from numpy.linalg import cholesky, inv
 ## Simple Monte Carlo
 # --------------------------------------------------
 @curry
-def eval_monte_carlo(model, n_samples=1, seed=None, append=True):
+def eval_monte_carlo(model, n_samples=1, seed=None, append=True, skip=False):
     """Evaluates a given model at a given dataframe
 
     @param n_samples number of Monte Carlo samples to draw
     @param seed random seed to use
     @param append bool flag; append results to original dataframe?
+    @param skip bool flag; skip computing the results?
 
     Only implemented for gaussian copula distributions for now.
     """
@@ -51,11 +52,14 @@ def eval_monte_carlo(model, n_samples=1, seed=None, append=True):
 
     ## Create dataframe for inputs
     df_inputs = pd.DataFrame(
-        data = samples,
-        columns = model.domain.inputs
+        data=samples,
+        columns=model.domain.inputs
     )
 
-    return core.eval_df(model, df = df_inputs, append = append)
+    if skip:
+        return df_inputs
+    else:
+        return core.eval_df(model, df=df_inputs, append=append)
 
 @pipe
 def ev_monte_carlo(*args, **kwargs):
