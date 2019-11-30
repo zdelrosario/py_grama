@@ -101,7 +101,7 @@ def tf_sobol(*args, **kwargs):
 # --------------------------------------------------
 ## Gradient principal directions (AS)
 @curry
-def tran_directions(df, prefix="D", outvar="output", lamvar="lambda"):
+def tran_directions(df, prefix="D", outvar="output", lamvar="lam"):
     """Compute principal directions and eigenvalues for all outputs
     based on output of ev_grad_fd()
     """
