@@ -4,7 +4,9 @@ __all__ = [
     "eval_lhs",
     "ev_lhs",
     "eval_sinews",
-    "ev_sinews"
+    "ev_sinews",
+    "eval_hybrid",
+    "ev_hybrid"
 ]
 
 import numpy as np
@@ -161,3 +163,59 @@ def eval_sinews(
 @pipe
 def ev_sinews(*args, **kwargs):
     return eval_sinews(*args, **kwargs)
+
+## Hybrid points for Sobol' indices
+# --------------------------------------------------
+@curry
+def eval_hybrid(
+        model,
+        n_samples=1,
+        varname="hybrid_var",
+        plan="first",
+        seed=None,
+        append=True
+):
+    """Hybrid points for first order indices
+    """
+    ## Set seed only if given
+    if seed is not None:
+        np.random.seed(seed)
+    n_samples = int(n_samples)
+
+    ## Draw hybrid points
+    X = np.random.random((n_samples, model.n_in))
+    Z = np.random.random((n_samples, model.n_in))
+
+    ## Reserve space
+    Q_all = np.zeros((n_samples * (model.n_in + 1), model.n_in))
+    Q_all[:n_samples] = X # Base samples
+    C_var = ["_"] * (n_samples * (model.n_in + 1))
+
+    ## Interleave samples
+    for i_in in range(model.n_in):
+        i_start = (i_in + 1) * n_samples
+        i_end   = (i_in + 2) * n_samples
+
+        if plan == "first":
+            Q_all[i_start:i_end, :]    = Z
+            Q_all[i_start:i_end, i_in] = X[:, i_in]
+        elif plan == "total":
+            Q_all[i_start:i_end, :]    = X
+            Q_all[i_start:i_end, i_in] = Z[:, i_in]
+        else:
+            raise ValueError("plan must be `first` or `total`")
+
+        C_var[i_start:i_end] = [model.domain.inputs[i_in]] * n_samples
+
+    ## Apply
+    samples = model.sample_quantile(Q_all)
+    df_inputs = pd.DataFrame(data=samples, columns=model.domain.inputs)
+    df_result = core.eval_df(model, df=df_inputs, append=append)
+
+    df_result[varname] = C_var
+
+    return df_result
+
+@pipe
+def ev_hybrid(*args, **kwargs):
+    return eval_hybrid(*args, **kwargs)
