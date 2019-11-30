@@ -44,6 +44,8 @@ def eval_monte_carlo(model, n_samples=1, seed=None, append=True, skip=False):
     if seed is not None:
         np.random.seed(seed)
 
+    n_samples = int(n_samples)
+
     ## Draw samples
     quantiles = np.random.random((n_samples, model.n_in))
 
