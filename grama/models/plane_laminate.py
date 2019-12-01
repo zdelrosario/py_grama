@@ -207,16 +207,16 @@ def uniaxial_stress_limit(X):
     Arguments
         X = array of composite laminate properties and loading
           = [E1, E2, nu12, G12, theta, t, ...
-              sig_11_tensile, sig_11_comp, sig_22_tensile, sig_22_comp, sig_12_max, # for i = 1
+              sig_11_t, sig_22_t, sig_11_c, sig_22_c, sig_12_s, # for i = 1
                                   .  .  .
              E1, E2, nu12, G12, theta, t, ...
-              sig_11_tensile, sig_11_comp, sig_22_tensile, sig_22_comp, sig_12_max, # for i = k
+              sig_11_t, sig_22_t, sig_11_c, sig_22_c, sig_12_s, # for i = k
              Nx]
     Returns
         g_stress = array of limit state values
-                 = [g_11_tensile_1 g_22_tensile_1 g_11_comp_1 g_22_comp_1 g_shear_12_1,
+                 = [g_11_t_1 g_22_t_1 g_11_c_1 g_22_c_1 g_s_12_1,
                             .  .  .
-                    g_11_tensile_k g_22_tensile_k g_11_comp_k g_22_comp_k g_shear_12_k]
+                    g_11_t_k g_22_t_k g_11_c_k g_22_c_k g_s_12_k]
     @pre ((len(X) - 1) % 11) == 0
     """
     ## Pre-process inputs
@@ -225,10 +225,10 @@ def uniaxial_stress_limit(X):
 
     ## Unpack inputs
     Nx        = X[-1]
-    Param     = Y[:, 0:4]
+    Param     = Y[:, 0:4]  # [E1, E2, nu12, G12]
     Theta     = Y[:, 4]
     T         = Y[:, 5]
-    Sigma_max = Y[:, 6:11]
+    Sigma_max = Y[:, 6:11] # [sig_11_t, sig_11_c, sig_22_t, sig_22_c, sig_12_s]
 
     ## Evaluate stress [\sigma_11, \sigma_22, \sigma_12]_i
     Stresses = Nx * uniaxial_stresses(Param, Theta, T)
@@ -263,19 +263,19 @@ def make_domain(Theta_nom, T_nom= T_NOM):
     """
     k = len(Theta_nom)
     bounds_list = list(itertools.chain.from_iterable([
-       [{"E1_{}".format(i): [0, +np.Inf]},
-        {"E2_{}".format(i): [0, +np.Inf]},
-        {"nu12_{}".format(i): [-np.Inf, +np.Inf]},
-        {"G12_{}".format(i): [0, +np.Inf]},
-        {"theta_{}".format(i): [-np.pi/2, +np.pi/2]},
-        {"t_{}".format(i): [-np.Inf, +np.Inf]},
-        {"sigma_11_t_{}".format(i): [0, +np.Inf]},
-        {"sigma_22_t_{}".format(i): [0, +np.Inf]},
-        {"sigma_11_c_{}".format(i): [0, +np.Inf]},
-        {"sigma_22_c_{}".format(i): [0, +np.Inf]},
-        {"sigma_12_s_{}".format(i): [0, +np.Inf]}] for i in range(k)
-    ])) + [{"Nx": [-np.Inf, +np.Inf]}]
-    bounds = ChainMap(*bounds_list)
+       [("E1_{}".format(i), [0, +np.Inf]),
+        ("E2_{}".format(i), [0, +np.Inf]),
+        ("nu12_{}".format(i), [-np.Inf, +np.Inf]),
+        ("G12_{}".format(i), [0, +np.Inf]),
+        ("theta_{}".format(i), [-np.pi/2, +np.pi/2]),
+        ("t_{}".format(i), [-np.Inf, +np.Inf]),
+        ("sigma_11_t_{}".format(i), [0, +np.Inf]),
+        ("sigma_22_t_{}".format(i), [0, +np.Inf]),
+        ("sigma_11_c_{}".format(i), [0, +np.Inf]),
+        ("sigma_22_c_{}".format(i), [0, +np.Inf]),
+        ("sigma_12_s_{}".format(i), [0, +np.Inf])] for i in range(k)
+    ])) + [("Nx", [-np.Inf, +np.Inf])]
+    bounds = od(bounds_list)
 
     return core.domain(bounds=bounds)
 
