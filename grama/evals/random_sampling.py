@@ -159,6 +159,12 @@ def eval_sinews(
                 [model.var_rand[i_input]] * n_density
             C_ind[ind_start:ind_end] = [i_sweep] * n_density
 
+            ## Modify endpoints for infinite support
+            if not np.isfinite(model.domain._bounds[model.var_rand[i_input]][0]):
+                Q_all[ind_start, i_input] = 1 / n_density / 10
+            if not np.isfinite(model.domain._bounds[model.var_rand[i_input]][1]):
+                Q_all[ind_end-1, i_input] = 1 / n_density / 10
+
     ## Assemble sampling plan
     df_quant = pd.DataFrame(data=Q_all, columns=model.var_rand)
     df_rand = model.var_rand_quantile(df_quant)
