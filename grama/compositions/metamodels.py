@@ -7,7 +7,7 @@ __all__ = [
 from .. import core
 from .. import evals
 from .. import fitting
-from ..core import pipe
+from ..tools import pipe
 from toolz import curry
 
 ## Fit a metamodel

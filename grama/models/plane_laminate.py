@@ -1,9 +1,13 @@
+__all__ = ["make_composite_plate_tension"]
+
 ##
 #
 # References:
 # C.T. Sun "Mechanics of Aircraft Structures" (1998)
 
 from .. import core
+from collections import OrderedDict as od
+from collections import ChainMap
 import numpy as np
 import itertools
 
@@ -240,10 +244,7 @@ def uniaxial_stress_limit(X):
 ## Random variable model
 ##################################################
 # Helper function to create domain for given ply
-def make_domain(
-        Theta_nom,
-        T_nom= T_NOM
-):
+def make_domain(Theta_nom, T_nom= T_NOM):
     """
     Helper function to construct domain object for composite panel
 
@@ -261,44 +262,25 @@ def make_domain(
         domain = grama domain object
     """
     k = len(Theta_nom)
-    inputs = list(itertools.chain.from_iterable([
-        ["E1_{}".format(i),
-         "E2_{}".format(i),
-         "nu12_{}".format(i),
-         "G12_{}".format(i),
-         "theta_{}".format(i),
-         "t_{}".format(i),
-         "sigma_11_tensile_{}".format(i),
-         "sigma_22_tensile_{}".format(i),
-         "sigma_11_comp_{}".format(i),
-         "sigma_22_comp_{}".format(i),
-         "sigma_12_max_{}".format(i)] for i in range(k)
-    ])) + ["Nx"]
-    bounds = list(itertools.chain.from_iterable([
+    bounds_list = list(itertools.chain.from_iterable([
        [{"E1_{}".format(i): [0, +np.Inf]},
         {"E2_{}".format(i): [0, +np.Inf]},
         {"nu12_{}".format(i): [-np.Inf, +np.Inf]},
         {"G12_{}".format(i): [0, +np.Inf]},
         {"theta_{}".format(i): [-np.pi/2, +np.pi/2]},
         {"t_{}".format(i): [-np.Inf, +np.Inf]},
-        {"sigma_11_tensile_{}".format(i): [0, +np.Inf]},
-        {"sigma_22_tensile_{}".format(i): [0, +np.Inf]},
-        {"sigma_11_comp_{}".format(i): [0, +np.Inf]},
-        {"sigma_22_comp_{}".format(i): [0, +np.Inf]},
-        {"sigma_12_max_{}".format(i): [0, +np.Inf]}] for i in range(k)
+        {"sigma_11_t_{}".format(i): [0, +np.Inf]},
+        {"sigma_22_t_{}".format(i): [0, +np.Inf]},
+        {"sigma_11_c_{}".format(i): [0, +np.Inf]},
+        {"sigma_22_c_{}".format(i): [0, +np.Inf]},
+        {"sigma_12_s_{}".format(i): [0, +np.Inf]}] for i in range(k)
     ])) + [{"Nx": [-np.Inf, +np.Inf]}]
+    bounds = ChainMap(*bounds_list)
 
-    return core.domain_(
-        hypercube = True,
-        inputs = inputs,
-        bounds = bounds
-    )
+    return core.domain(bounds=bounds)
 
 # Helper function to create density for given ply
-def make_density(
-        Theta_nom,
-        T_nom = T_NOM,
-):
+def make_density(Theta_nom, T_nom=T_NOM):
     """
     Helper function to construct density object for composite panel
 
@@ -318,63 +300,91 @@ def make_density(
     ## Setup
     k = len(Theta_nom)
     if not isinstance(T_nom, list):
-        T_nom= [T_nom] * k
+        T_nom = [T_nom] * k
 
-    ## TODO: Implement pdf
-    pdf = lambda X: 1
-    pdf_factors = list(itertools.chain.from_iterable([
-        ["lognorm",                   # E1
-         "lognorm",                   # E2
-         "norm",                      # nu12
-         "lognorm",                   # G12
-         "uniform",                   # theta
-         "uniform",                   # t
-         "lognorm",                   # sigma_11_tensile
-         "lognorm",                   # sigma_22_tensile
-         "lognorm",                   # sigma_11_comp
-         "lognorm",                   # sigma_22_comp
-         "lognorm"] for i in range(k) # sigma_12_max
-    ])) + ["norm"]                    # Nx
-    pdf_param = list(itertools.chain.from_iterable([
-       [{"loc": 1, "s": E1_CV, "scale": E1_M},                               # E1
-        {"loc": 1, "s": E2_CV, "scale": E2_M},                               # E2
-        {"loc": nu12_M, "scale": nu12_SIG},                                  # nu12
-        {"loc": 1, "s": G12_CV, "scale": G12_M},                             # G12
-        {"loc": Theta_nom[i] - THETA_PM, "scale": 2 * THETA_PM},             # theta
-        {"loc": T_nom[i] - T_PM, "scale": 2 * T_PM},                         # t
-        {"loc": 1, "s": SIG_11_T_CV, "scale": SIG_11_T_M},                   # sigma_11_tensile
-        {"loc": 1, "s": SIG_22_T_CV, "scale": SIG_22_T_M},                   # sigma_22_tensile
-        {"loc": 1, "s": SIG_11_C_CV, "scale": SIG_11_C_M},                   # sigma_11_comp
-        {"loc": 1, "s": SIG_22_C_CV, "scale": SIG_22_C_M},                   # sigma_22_comp
-        {"loc": 1, "s": SIG_12_M_CV, "scale": SIG_12_M_M}] for i in range(k) # sigma_12_max
-    ])) + [{"loc": Nx_M, "scale": Nx_SIG}]                                   # Nx
-    ## MMPDS dictates BV for strength and load values, and mean estimates for
-    ## all other inputs; here we use the median
-    pdf_qt_sign = list(itertools.chain.from_iterable([
-        [ 0,                   # E1
-          0,                   # E2
-          0,                   # nu12
-          0,                   # G12
-          0,                   # theta
-          0,                   # t
-         -1,                   # sigma_11_tensile
-         -1,                   # sigma_22_tensile
-         -1,                   # sigma_11_comp
-         -1,                   # sigma_22_comp
-         -1] for i in range(k) # sigma_12_max
-    ])) + [+1]                 # Nx
-    return core.density_(
-        pdf         = pdf,
-        pdf_factors = pdf_factors,
-        pdf_param   = pdf_param,
-        pdf_qt_sign = pdf_qt_sign
-    )
+    ## Create variables for each ply
+    marginals = list(itertools.chain.from_iterable([[
+        core.marginal_named(
+            "E1_{}".format(i),
+            sign=0,
+            d_name="lognorm",
+            d_param={"loc": 1, "s": E1_CV, "scale": E1_M}
+        ),
+        core.marginal_named(
+            "E2_{}".format(i),
+            sign=0,
+            d_name="lognorm",
+            d_param={"loc": 1, "s": E2_CV, "scale": E2_M}
+        ),
+        core.marginal_named(
+            "nu12_{}".format(i),
+            sign=0,
+            d_name="norm",
+            d_param={"loc": nu12_M, "scale": nu12_SIG}
+        ),
+        core.marginal_named(
+            "G12_{}".format(i),
+            sign=0,
+            d_name="lognorm",
+            d_param={"loc": 1, "s": G12_CV, "scale": G12_M}
+        ),
+        core.marginal_named(
+            "theta_{}".format(i),
+            sign=0,
+            d_name="uniform",
+            d_param={"loc": Theta_nom[i] - THETA_PM, "scale": 2 * THETA_PM}
+        ),
+        core.marginal_named(
+            "t_{}".format(i),
+            sign=0,
+            d_name="uniform",
+            d_param={"loc": T_nom[i] - T_PM, "scale": 2 * T_PM}
+        ),
+        core.marginal_named(
+            "sigma_11_t_{}".format(i),
+            sign=-1,
+            d_name="lognorm",
+            d_param={"loc": 1, "s": SIG_11_T_CV, "scale": SIG_11_T_M}
+        ),
+        core.marginal_named(
+            "sigma_22_t_{}".format(i),
+            sign=-1,
+            d_name="lognorm",
+            d_param={"loc": 1, "s": SIG_22_T_CV, "scale": SIG_22_T_M}
+        ),
+        core.marginal_named(
+            "sigma_11_c_{}".format(i),
+            sign=-1,
+            d_name="lognorm",
+            d_param={"loc": 1, "s": SIG_11_C_CV, "scale": SIG_11_C_M}
+        ),
+        core.marginal_named(
+            "sigma_22_c_{}".format(i),
+            sign=-1,
+            d_name="lognorm",
+            d_param={"loc": 1, "s": SIG_22_C_CV, "scale": SIG_22_C_M}
+        ),
+        core.marginal_named(
+            "sigma_12_s_{}".format(i),
+            sign=-1,
+            d_name="lognorm",
+            d_param={"loc": 1, "s": SIG_12_M_CV, "scale": SIG_12_M_M}
+        ) \
+     ] for i in range(k)])) + [
+        core.marginal_named(
+            "Nx",
+            sign=+1,
+            d_name="norm",
+            d_param={"loc": Nx_M, "scale": Nx_SIG}
+        )
+    ]
+
+    return core.density(marginals=marginals)
 
 ## Model class
 ##################################################
-
-class model_composite_plate_tension(core.model_):
-    def __init__(self, Theta_nom, T_nom = T_NOM):
+class make_composite_plate_tension(core.model):
+    def __init__(self, Theta_nom, T_nom=T_NOM):
         k = len(Theta_nom)
         deg_int = [int(theta / np.pi * 180) for theta in Theta_nom]
         def mapSign(x):
@@ -388,17 +398,17 @@ class model_composite_plate_tension(core.model_):
         name =  "Composite Plate in Tension " + "-".join(deg_str)
 
         super().__init__(
-            name = name,
-            function = lambda X: uniaxial_stress_limit(X),
-            outputs = list(itertools.chain.from_iterable([
+            name=name,
+            function=lambda X: uniaxial_stress_limit(X),
+            outputs=list(itertools.chain.from_iterable([
                 ["g_11_tension_{}".format(i),
                  "g_22_tension_{}".format(i),
                  "g_11_compression_{}".format(i),
                  "g_22_compression_{}".format(i),
                  "g_12_shear_{}".format(i)] for i in range(k)
             ])),
-            domain = make_domain(Theta_nom, T_nom = T_nom),
-            density = make_density(Theta_nom, T_nom = T_nom)
+            domain=make_domain(Theta_nom, T_nom=T_nom),
+            density=make_density(Theta_nom, T_nom=T_nom)
         )
 
 ## Verification

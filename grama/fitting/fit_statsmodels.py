@@ -9,7 +9,7 @@ import numpy as np
 import statsmodels.formula.api as smf
 
 from .. import core
-from ..core import pipe
+from ..tools import pipe
 from toolz import curry
 
 ## Fit model via OLS
@@ -55,11 +55,11 @@ def fit_ols(df, formulae=[""], domain=None, density=None):
         return pd.DataFrame(data=result, columns=outputs)
 
     ## Construct model
-    return core.model_vectorized_(
-        function = fit_all,
-        outputs  = outputs,
-        domain   = domain,
-        density  = density
+    return core.model_vectorized(
+        function=fit_all,
+        outputs=outputs,
+        domain=domain,
+        density=density
     )
 
 @pipe

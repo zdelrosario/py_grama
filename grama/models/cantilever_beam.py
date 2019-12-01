@@ -1,5 +1,8 @@
+__all__ = ["make_cantilever_beam"]
+
 import numpy as np
 from .. import core
+from collections import OrderedDict as od
 from numpy import sqrt, array, Inf
 from scipy.stats import norm
 
@@ -16,8 +19,8 @@ TAU_V  = 100.
 TAU_E  = 1.45e6
 TAU_Y  = 2000.
 
-def function_beam(x, w = 3, t = 3):
-    H, V, E, Y = x
+def function_beam(x):
+    w, t, H, V, E, Y = x
 
     return array([
         w * t,
@@ -27,36 +30,47 @@ def function_beam(x, w = 3, t = 3):
         )
     ])
 
-class model_cantilever_beam(core.model_):
-    def __init__(self, w = 3, t = 3):
+class make_cantilever_beam(core.model):
+    def __init__(self):
+        bounds = od()
+        bounds["w"] = [2, 4]
+        bounds["t"] = [2, 4]
+        bounds["H"] = [-Inf, +Inf]
+        bounds["V"] = [-Inf, +Inf]
+        bounds["E"] = [-Inf, +Inf]
+        bounds["Y"] = [-Inf, +Inf]
+
         super().__init__(
-            name     = "Cantilever Beam",
-            function = lambda x: function_beam(x, w = w, t = t),
-            outputs  = ["c_area", "g_stress", "g_displacement"],
-            domain   = core.domain_(
-                hypercube = True,
-                inputs    = ["H", "V", "E", "Y"],
-                bounds    = {
-                    "H": [-Inf, +Inf],
-                    "V": [-Inf, +Inf],
-                    "E": [-Inf, +Inf],
-                    "Y": [-Inf, +Inf]
-                }
-            ),
-            density  = core.density_(
-                pdf = lambda X: \
-                norm.pdf(X[2], loc = MU_H, scale = TAU_H) * \
-                norm.pdf(X[3], loc = MU_V, scale = TAU_V) * \
-                norm.pdf(X[4], loc = MU_E, scale = TAU_E) * \
-                norm.pdf(X[5], loc = MU_Y, scale = TAU_Y),
-                pdf_factors = ["norm", "norm", "norm", "norm"],
-                pdf_param   = [
-                    {"loc": MU_H, "scale": TAU_H},
-                    {"loc": MU_V, "scale": TAU_V},
-                    {"loc": MU_E, "scale": TAU_E},
-                    {"loc": MU_Y, "scale": TAU_Y}
-                ],
-                #               H,  V,  E,  Y
-                pdf_qt_sign = [+1, +1,  0, -1]
+            name="Cantilever Beam",
+            function=lambda x: function_beam(x),
+            outputs=["c_area", "g_stress", "g_displacement"],
+            domain=core.domain(bounds=bounds),
+            density=core.density(
+                marginals=[
+                    core.marginal_named(
+                        "H",
+                        sign=+1,
+                        d_name="norm",
+                        d_param={"loc": MU_H, "scale": TAU_H}
+                    ),
+                    core.marginal_named(
+                        "V",
+                        sign=+1,
+                        d_name="norm",
+                        d_param={"loc": MU_V, "scale": TAU_V}
+                    ),
+                    core.marginal_named(
+                        "E",
+                        sign=0,
+                        d_name="norm",
+                        d_param={"loc": MU_E, "scale": TAU_E}
+                    ),
+                    core.marginal_named(
+                        "Y",
+                        sign=-1,
+                        d_name="norm",
+                        d_param={"loc": MU_Y, "scale": TAU_Y}
+                    )
+                ]
             )
         )

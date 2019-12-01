@@ -13,8 +13,7 @@ import re
 import itertools
 import warnings
 
-from .. import core
-from ..core import pipe
+from ..tools import pipe
 from toolz import curry
 
 ## Compute Sobol' indices
