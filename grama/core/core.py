@@ -71,6 +71,13 @@ class domain:
         self._feasible  = feasible
         self._variables = list(self._bounds.keys())
 
+    def bound_summary(self, bound):
+        return "{0:}: [{1:}, {2:}]".format(
+            bound,
+            self._bounds[bound][0],
+            self._bounds[bound][1],
+        )
+
 # Marginal parent class
 class marginal_(ABC):
     """Parent class for marginal distributions
@@ -343,7 +350,7 @@ class model:
 
         print("  var_det:")
         for var_det in self.var_det:
-            print("    {}".format(var_det))
+            print("    {}".format(self.domain.bound_summary(var_det)))
 
         print("  var_rand:")
         for marginal in self.density._marginals:
