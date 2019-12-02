@@ -22,7 +22,7 @@ from toolz import curry
 def tran_sobol(
         df,
         varname="hybrid_var",
-        typename="var",
+        typename="ind",
         plan="first"
 ):
     """Estimate Sobol' indices based on hybrid point evaluations
