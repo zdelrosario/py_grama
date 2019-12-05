@@ -33,6 +33,7 @@ class pipe(object):
             warnings.simplefilter("ignore")
             if isinstance(other, pd.DataFrame):
                 other_copy._grouped_by = getattr(other, '_grouped_by', None)
+                other_copy._plot_info = getattr(other, '_plot_info', None)
 
         result = self.function(other_copy)
 
