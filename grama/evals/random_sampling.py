@@ -174,11 +174,21 @@ def eval_sinews(
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
     if skip:
+        ## For autoplot
+        df_samp._plot_info = {"type": "sinew_inputs", "var": model.var_rand}
         ## Pass-through
         return df_samp
     else:
         ## Apply
-        return eval_df(model, df=df_samp, append=append)
+        df_res = eval_df(model, df=df_samp, append=append)
+        ## For autoplot
+        df_res._plot_info = {
+            "type": "sinew_outputs",
+            "var": model.var_rand,
+            "outputs": model.outputs
+        }
+
+        return df_res
 
 @pipe
 def ev_sinews(*args, **kwargs):
