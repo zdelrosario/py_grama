@@ -5,8 +5,6 @@ test_all:
 	python tests/test_evals.py
 
 coverage:
-	coverage run tests/test_pipes.py
-	coverage run tests/test_core.py
-	coverage run tests/test_evals.py
+	cd tests; coverage run -m unittest discover
 	coverage html
 	xdg-open htmlcov/index.html
