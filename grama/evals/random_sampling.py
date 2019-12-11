@@ -11,6 +11,7 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
+import warnings
 
 from .defaults import eval_df
 from ..tools import pipe
@@ -175,18 +176,22 @@ def eval_sinews(
 
     if skip:
         ## For autoplot
-        df_samp._plot_info = {"type": "sinew_inputs", "var": model.var_rand}
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_samp._plot_info = {"type": "sinew_inputs", "var": model.var_rand}
         ## Pass-through
         return df_samp
     else:
         ## Apply
         df_res = eval_df(model, df=df_samp, append=append)
         ## For autoplot
-        df_res._plot_info = {
-            "type": "sinew_outputs",
-            "var": model.var_rand,
-            "outputs": model.outputs
-        }
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_res._plot_info = {
+                "type": "sinew_outputs",
+                "var": model.var_rand,
+                "outputs": model.outputs
+            }
 
         return df_res
 
