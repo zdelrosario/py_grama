@@ -23,12 +23,32 @@ def tran_sobol(
         df,
         varname="hybrid_var",
         typename="ind",
-        plan="first"
+        digits=2
 ):
     """Estimate Sobol' indices based on hybrid point evaluations
+
+    :param df: hybrid point output from a model
+    :param varname:
+    :param typename:
+    :param digits: Number of digits for rounding
+
+    :type df: Pandas DataFrame
+    :type varname: string
+    :type typename: string
+    :type digits: integer
+
+    :returns:
+    :rtype: Pandas DataFrame
     """
     if not (varname in df.columns):
         raise ValueError("{} not in df.columns".format(varname))
+
+    ## Determine plan from dataframe metadata
+    metadata = df._meta
+    if "ev_hybrid" in metadata:
+        plan = metadata[10:]
+    else:
+        raise ValueError("df not hybrid points!")
 
     ## Setup
     v_model = list(filter(
@@ -59,7 +79,7 @@ def tran_sobol(
             ).mean()
 
             df_tau = pd.DataFrame(s2_var - mu_tot**2).transpose()
-            df_tau[typename] = v_model[i_var]
+            df_tau[typename] = "T_" + v_model[i_var]
 
             df_index = df_tau.drop(columns=typename) \
                              .reset_index(drop=True) \
@@ -79,7 +99,7 @@ def tran_sobol(
             ).mean() * 0.5
 
             df_tau = pd.DataFrame(s2_var).transpose()
-            df_tau[typename] = v_model[i_var]
+            df_tau[typename] = "T_" + v_model[i_var]
 
             df_index = df_tau.drop(columns=typename) \
                              .reset_index(drop=True) \
@@ -89,6 +109,16 @@ def tran_sobol(
             df_res = pd.concat((df_res, df_tau, df_index))
     else:
         raise ValueError("plan `{}` not valid".format(plan))
+
+    ## Post-process
+    outputs = df_res.drop(typename, axis=1).columns
+    df_res[outputs] = df_res[outputs].apply(
+        lambda row: np.round(row, decimals=digits)
+    )
+    df_res.sort_values(
+        typename,
+        inplace=True
+    )
 
     return df_res
 

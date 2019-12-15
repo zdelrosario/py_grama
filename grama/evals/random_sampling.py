@@ -253,9 +253,18 @@ def eval_hybrid(
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
     if skip:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_samp._meta = "ev_hybrid_" + plan
+
         return df_samp
     else:
-        return eval_df(model, df=df_samp, append=append)
+        df_res = eval_df(model, df=df_samp, append=append)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_res._meta = "ev_hybrid_" + plan
+
+        return df_res
 
 @pipe
 def ev_hybrid(*args, **kwargs):
