@@ -243,6 +243,24 @@ def uniaxial_stress_limit(X):
 
 ## Random variable model
 ##################################################
+def make_names(Theta_nom):
+    k = len(Theta_nom)
+    vars_list = list(itertools.chain.from_iterable([
+       ["E1_{}".format(i),
+        "E2_{}".format(i),
+        "nu12_{}".format(i),
+        "G12_{}".format(i),
+        "theta_{}".format(i),
+        "t_{}".format(i),
+        "sigma_11_t_{}".format(i),
+        "sigma_22_t_{}".format(i),
+        "sigma_11_c_{}".format(i),
+        "sigma_22_c_{}".format(i),
+        "sigma_12_s_{}".format(i)] for i in range(k)
+    ])) + ["Nx"]
+
+    return vars_list
+
 # Helper function to create domain for given ply
 def make_domain(Theta_nom, T_nom= T_NOM):
     """
@@ -399,14 +417,20 @@ class make_composite_plate_tension(core.model):
 
         super().__init__(
             name=name,
-            function=lambda X: uniaxial_stress_limit(X),
-            outputs=list(itertools.chain.from_iterable([
-                ["g_11_tension_{}".format(i),
-                 "g_22_tension_{}".format(i),
-                 "g_11_compression_{}".format(i),
-                 "g_22_compression_{}".format(i),
-                 "g_12_shear_{}".format(i)] for i in range(k)
-            ])),
+            functions=[
+                core.function(
+                    lambda X: uniaxial_stress_limit(X),
+                    make_names(Theta_nom),
+                    list(itertools.chain.from_iterable([
+                        ["g_11_tension_{}".format(i),
+                         "g_22_tension_{}".format(i),
+                         "g_11_compression_{}".format(i),
+                         "g_22_compression_{}".format(i),
+                         "g_12_shear_{}".format(i)] for i in range(k)
+                    ])),
+                    "limit states"
+                )
+            ],
             domain=make_domain(Theta_nom, T_nom=T_nom),
             density=make_density(Theta_nom, T_nom=T_nom)
         )

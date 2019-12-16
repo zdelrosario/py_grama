@@ -16,8 +16,14 @@ class make_test(core.model):
     def __init__(self):
         super().__init__(
             name="test",
-            function=fcn,
-            outputs=["f"],
+            functions=[
+                core.function(
+                    fcn,
+                    ["x1", "x2", "x3"],
+                    ["f"],
+                    "test"
+                )
+            ],
             domain=core.domain(
                 bounds={
                     "x1": [-1, +1],

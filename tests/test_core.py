@@ -22,8 +22,14 @@ class TestModel(unittest.TestCase):
         )
 
         self.model_2d = gr.model(
-            function=lambda x: [x[0], x[1]],
-            outputs=["x", "y"],
+            functions=[
+                gr.function(
+                    lambda x: [x[0], x[1]],
+                    ["x", "y"],
+                    ["x", "y"],
+                    "test"
+                )
+            ],
             domain=domain_2d,
             density=gr.density(
                 marginals=[
@@ -98,29 +104,6 @@ class TestModel(unittest.TestCase):
     #             np.array([0.0, 0.5])
     #         )
     #     )
-
-class TestVectorizedModel(unittest.TestCase):
-    """Test the implementation of model_vectorized
-    """
-    def setUp(self):
-        func = lambda df: pd.DataFrame(data = {"f": df['x']})
-
-        self.df_input = pd.DataFrame(data = {"x": [0, 1, 2]})
-        self.df_output = pd.DataFrame(data = {"f": [0, 1, 2]})
-        self.model_vectorized = gr.model_vectorized(
-            function=func,
-            outputs=["f"],
-            domain=gr.domain(bounds=od([("x", [0, 2])])),
-            density=gr.density(marginals=[gr.marginal_named("x")])
-        )
-
-    def test_copy(self):
-        """Invoke a copy through pipe evaluation
-        """
-        df_res = self.model_vectorized >> \
-            gr.ev_df(df=self.df_input, append=False)
-
-        self.assertTrue(self.df_output.equals(df_res))
 
 class TestEvalDf(unittest.TestCase):
     """Test implementation of eval_df()

@@ -13,8 +13,14 @@ class make_linear_normal(core.model):
     def __init__(self):
         super().__init__(
             name="Linear-Normal",
-            function=limit_state,
-            outputs=["g_linear"],
+            functions=[
+                core.function(
+                    limit_state,
+                    ["x1", "x2"],
+                    ["g_linear"],
+                    "limit state"
+                )
+            ],
             domain=core.domain(
                 bounds = {
                     "x1": [-np.Inf, +np.Inf],

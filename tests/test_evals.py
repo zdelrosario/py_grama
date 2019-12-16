@@ -17,8 +17,14 @@ class TestModel(unittest.TestCase):
         )
 
         self.model_2d = gr.model(
-            function=lambda x: [x[0], x[1]],
-            outputs=["f", "g"],
+            functions=[
+                gr.function(
+                    lambda x: [x[0], x[1]],
+                    ["x", "y"],
+                    ["f", "g"],
+                    "test"
+                )
+            ],
             domain=domain_2d,
             density=gr.density(
                 marginals=[

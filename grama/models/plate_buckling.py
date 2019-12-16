@@ -30,8 +30,14 @@ class make_plate_buckle(core.model):
     def __init__(self):
         super().__init__(
             name="Plate Buckling",
-            function=lambda x: function_buckle_state(x),
-            outputs=["g_buckle"],
+            functions=[
+                core.function(
+                    lambda x: function_buckle_state(x),
+                    ["t", "h", "E", "nu", "L"],
+                    ["g_buckle"],
+                    "limit state"
+                )
+            ],
             domain=core.domain(
                 bounds=od([
                     ("t",  [0, 2 * THICKNESS]),

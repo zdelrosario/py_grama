@@ -6,16 +6,30 @@ from collections import OrderedDict as od
 from .. import core
 from scipy.stats import uniform
 
-def function_poly(x):
-    x1, x2, x3 = x
-    return np.array([x1, x2**2, x3**3])
-
 class make_poly(core.model):
     def __init__(self):
         super().__init__(
             name="Polynomials",
-            function=lambda x: function_poly(x),
-            outputs=["p0", "p1", "p2"],
+            functions=[
+                core.function(
+                    lambda x: x,
+                    ["x0"],
+                    ["p0"],
+                    "linear"
+                ),
+                core.function(
+                    lambda x: x,
+                    ["x1"],
+                    ["p1"],
+                    "quadratic"
+                ),
+                core.function(
+                    lambda x: x,
+                    ["x2"],
+                    ["p2"],
+                    "cubic"
+                )
+            ],
             domain=core.domain(
                 bounds    = od([
                     ("x0",  [-1, +1]),

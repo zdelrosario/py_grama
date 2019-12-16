@@ -30,21 +30,47 @@ def function_beam(x):
         )
     ])
 
+def function_area(x):
+    w, t = x
+    return w * t
+
+def function_stress(x):
+    w, t, H, V, E, Y = x
+    return Y - 600 * V / w / t**2 - 600 * H / w**2 / t
+
+def function_displacement(x):
+    w, t, H, V, E, Y = x
+    return D_MAX - np.float64(4) * LENGTH**3 / E / w / t * sqrt(
+        V**2 / t**4 + H**2 / w**4
+    )
+
 class make_cantilever_beam(core.model):
     def __init__(self):
-        bounds = od()
-        bounds["w"] = [2, 4]
-        bounds["t"] = [2, 4]
-        bounds["H"] = [-Inf, +Inf]
-        bounds["V"] = [-Inf, +Inf]
-        bounds["E"] = [-Inf, +Inf]
-        bounds["Y"] = [-Inf, +Inf]
-
         super().__init__(
             name="Cantilever Beam",
-            function=lambda x: function_beam(x),
-            outputs=["c_area", "g_stress", "g_displacement"],
-            domain=core.domain(bounds=bounds),
+            # function=lambda x: function_beam(x),
+            # outputs=["c_area", "g_stress", "g_displacement"],
+            functions=[
+                core.function(
+                    function_area,
+                    ["w", "t"],
+                    ["c_area"],
+                    "cross-sectional area"
+                ),
+                core.function(
+                    function_stress,
+                    ["w", "t", "H", "V", "E", "Y"],
+                    ["g_stress"],
+                    "limit state: stress"
+                ),
+                core.function(
+                    function_displacement,
+                    ["w", "t", "H", "V", "E", "Y"],
+                    ["g_displacement"],
+                    "limit state: tip displacement"
+                )
+            ],
+            domain=core.domain(bounds={"w": [2, 4], "t": [2, 4]}),
             density=core.density(
                 marginals=[
                     core.marginal_named(

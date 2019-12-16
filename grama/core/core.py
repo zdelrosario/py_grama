@@ -4,9 +4,10 @@
 __all__ = [
     "domain",
     "density",
-    "model",
-    "model_vectorized",
+    "function",
+    "function_vectorized",
     "marginal_named",
+    "model",
     "valid_dist"
 ]
 
@@ -14,11 +15,11 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
+from itertools import chain
+from numpy.linalg import cholesky
 from ..transforms import tran_outer
 from ..tools import pipe
-
 from toolz import curry
-from numpy.linalg import cholesky
 
 from scipy.stats import alpha, beta, chi, chi2, expon, gamma, laplace
 from scipy.stats import ncf, nct, pareto, powerlaw, rayleigh
@@ -50,33 +51,110 @@ valid_dist = {
 
 ## Core functions
 ##################################################
+# Function class
+class function:
+    """Parent class for functions.
+
+    A function specifies its own inputs and outputs; these are subsets of the
+    full model's inputs and outputs.
+
+    """
+    def __init__(self, func, inputs, outputs, name):
+        """Constructor
+
+        :param func: Function mapping X^d -> X^r
+        :param inputs: Named inputs; must match order of X^d
+        :param outputs: Named outputs; must match order of X^r
+        :param name: Function name
+
+        :type func: function
+        :type inputs: List of Strings
+        :type outputs: List of Strings
+        :type name: String
+
+        """
+        self.func = func
+        self.inputs = inputs
+        self.outputs = outputs
+        self.name = name
+
+    def eval(self, df):
+        """Evaluate function. Loops over dataframe rows.
+
+        :param df: Input values to evaluate
+        :type df: Pandas DataFrame
+
+        :returns: Result values
+        :rtype: Pandas DataFrame
+
+        """
+        ## Check invariant; model inputs must be subset of df columns
+        if not set(self.inputs).issubset(set(df.columns)):
+            raise ValueError(
+                "Model function `{}` inputs not a subset of given columns".format(self.name)
+            )
+
+        ## Set up output
+        n_rows  = df.shape[0]
+        results = np.zeros((n_rows, len(self.outputs)))
+        for ind in range(n_rows):
+            results[ind] = self.func(df.loc[ind, self.inputs])
+
+        ## Package output as DataFrame
+        return pd.DataFrame(data=results, columns=self.outputs)
+
+    def summary(self):
+        """Returns a summary string
+        """
+        return "{0:}: {1:} -> {2:}".format(self.name, self.inputs, self.outputs)
+
+class function_vectorized(function):
+    def eval(self, df):
+        """Evaluate function. Assumes function is vectorized over dataframes.
+
+        :param df: Input values to evaluate
+        :type df: Pandas DataFrame
+
+        :returns: Result values
+        :rtype: Pandas DataFrame
+
+        """
+        df_res = self.func(df)
+        df_res.columns = self.outputs
+
+        return df_res
+
 # Domain parent class
 class domain:
     """Parent class for input domains
 
-    The domain is defined for all the variables; therefore it
-    is the domain of the model's function.
+    The domain defines constraints on the variables. Together with a model's
+    functions, it defines the mathematical domain of a model.
+
     """
     def __init__(self, bounds=None, feasible=None):
         """Initialize
 
-        @param bounds OrderedDict of variable bounds
-        @param feasible vectorized function mapping variables to bool
+        @param bounds [dict] Variable bounds, given as {"var": [Lower, Upper]} dict entires
+        @param feasible [function] Vectorized function mapping variables to bool
 
-        @pre isinstance(bounds, collection.OrderedDict)
+        @pre isinstance(bounds, dict)
         @pre (feasible is function) | (feasible is None)
         @pre len(bounds) == n where model.function:R^n -> R^m
+
         """
         self._bounds    = bounds
         self._feasible  = feasible
-        self._variables = list(self._bounds.keys())
 
     def bound_summary(self, bound):
-        return "{0:}: [{1:}, {2:}]".format(
-            bound,
-            self._bounds[bound][0],
-            self._bounds[bound][1],
-        )
+        if bound in self._bounds.keys():
+            return "{0:}: [{1:}, {2:}]".format(
+                bound,
+                self._bounds[bound][0],
+                self._bounds[bound][1],
+            )
+        else:
+            return "{0:}: (unbounded)".format(bound)
 
 # Marginal parent class
 class marginal_(ABC):
@@ -164,38 +242,50 @@ class model:
     def __init__(
             self,
             name=None,
-            function=None,
-            outputs=None,
+            functions=None,
             domain=None,
             density=None,
     ):
         """Constructor
 
-        @param function defining the model mapping f(x) : R^n_in -> R^n_out
-        @param inputs to function; ordering of abstract inputs x given by inputs
-        @param ouputs of function outputs or None
-        @param domain object of class domain_ or None
-        @param density object of class density_ or None
+        @param name [string] Name of model
+        @param functions [list(gr.function)] Define the model mapping f(x) : R^n_in -> R^n_out
+               along with function input and output names
+        @param domain [gr.domain] Model domain
+        @param density [gr.density] Model density
 
         @pre len(domain.inputs) == n_in
         @pre len(outputs) == n_out
         @pre isinstance(domain, domain_)
         @pre isinstance(density, density_) || (density is None)
         """
-        self.name     = name
-        self.function = function
-        self.outputs  = outputs
-        self.domain   = domain
-        self.density  = density
+        self.name      = name
+        self.functions = functions
+        self.domain    = domain
+        self.density   = density
 
         self.update()
 
     def update(self):
-        """Update model public attributes based on domain and
-        density representation
+        """Update model public attributes based on functions, domain, and density.
+
+        The variables and parameters are implicitly defined by the model
+        attributes.
+
+        - self.functions defines the full list of inputs
+        - self.domain defines the constraints on the model's domain
+        - self.density defines the random variables
+
         """
-        ## Maintain list of variables and parameters
-        self.var      = self.domain._variables
+        ## Compute list of outputs
+        self.outputs = list(set().union(
+            *[f.outputs for f in self.functions]
+        ))
+
+        ## Compute list of variables and parameters
+        self.var = list(set().union(
+            *[f.inputs for f in self.functions]
+        ))
         self.var_rand = self.density._var_rand
         self.var_det  = list(set(self.var).difference(self.var_rand))
 
@@ -209,36 +299,48 @@ class model:
 
     def det_nom(self):
         """Return nominal conditions for deterministic variables
+
+        @returns [DataFrame] Nominal values for deterministic variables
         """
-        df_nom = pd.DataFrame(
-            data={
-                var: [
-                    0.5 * (
+        data = {}
+
+        for var in self.var_det:
+            if var in self.domain._bounds.keys():
+                data[var] = [0.5 * (
                         self.domain._bounds[var][0] + \
                         self.domain._bounds[var][1]
-                    )
-                ] for var in self.var_det
-            }
-        )
-        return df_nom
+                )]
+            else:
+                data[var] = [0.]
+
+        return pd.DataFrame(data=data)
 
     def evaluate_df(self, df):
         """Evaluate function using an input dataframe
 
-        Does not assume a vectorized function.
+        @param df [DataFrame] Variable values at which to evaluate model functions
+
+        @returns [DataFrame] Output results
         """
         ## Check invariant; model inputs must be subset of df columns
-        if not set(self.domain._variables).issubset(set(df.columns)):
+        if not set(self.var).issubset(set(df.columns)):
             raise ValueError("Model inputs not a subset of given columns")
 
-        ## Set up output
-        n_rows  = df.shape[0]
-        results = np.zeros((n_rows, self.n_out))
-        for ind in range(n_rows):
-            results[ind] = self.function(df.loc[ind, self.domain._variables])
+        # ## Set up output
+        # n_rows  = df.shape[0]
+        # results = np.zeros((n_rows, self.n_out))
+        # for ind in range(n_rows):
+        #     results[ind] = self.function(df.loc[ind, self.domain._variables])
 
         ## Package output as DataFrame
-        return pd.DataFrame(data=results, columns=self.outputs)
+        # return pd.DataFrame(data=results, columns=self.outputs)
+
+        list_df = []
+        ## Evaluate each function
+        for func in self.functions:
+            list_df.append(func.eval(df))
+
+        return pd.concat(list_df, axis=1)
 
     def var_outer(self, df_rand, df_det=None):
         """Constuct outer product of random and deterministic samples.
@@ -335,53 +437,29 @@ class model:
         """Make a copy of this model
         """
         new_model = model(
-            name     = self.name,
-            function = self.function,
-            outputs  = self.outputs,
-            domain   = self.domain,
-            density  = self.density
+            name      = self.name,
+            functions = self.functions,
+            domain    = self.domain,
+            density   = self.density
         )
+        new_model.update()
+
         return new_model
 
     def printpretty(self):
         """Formatted print of model attributes
         """
         print("model: {}".format(self.name))
-
-        print("  var_det:")
+        print("")
+        print("  inputs:")
+        print("    var_det:")
         for var_det in self.var_det:
-            print("    {}".format(self.domain.bound_summary(var_det)))
+            print("      {}".format(self.domain.bound_summary(var_det)))
 
-        print("  var_rand:")
+        print("    var_rand:")
         for marginal in self.density._marginals:
-            print("    {}".format(marginal.summary()))
+            print("      {}".format(marginal.summary()))
 
-        print("  outputs:")
-        for output in self.outputs:
-            print("    {}".format(output))
-
-# Derived dataframe-vectorized model
-class model_vectorized(model):
-    """Derived class for grama models.
-
-    Given function must be vectorized over dataframes
-    """
-
-    def evaluate_df(self, df):
-        """Evaluate function using an input dataframe
-
-        Assumes function is vectorized over dataframes.
-        """
-        return self.function(df)
-
-    def copy(self):
-        """Make a copy of this model
-        """
-        new_model = model_vectorized(
-            name     = self.name,
-            function = self.function,
-            outputs  = self.outputs,
-            domain   = self.domain,
-            density  = self.density
-        )
-        return new_model
+        print("  functions:")
+        for function in self.functions:
+            print("    {}".format(function.summary()))

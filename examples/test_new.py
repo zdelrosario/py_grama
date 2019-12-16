@@ -4,6 +4,11 @@ import pandas as pd
 
 from grama.models import *
 
+## Define a test model
+def fcn(x):
+    x1, x2, x3 = x
+    return x1 + x2 + x3
+
 # model = make_cantilever_beam()
 # model = make_test()
 # model = make_ishigami()
@@ -14,6 +19,7 @@ model = make_poly()
 
 ## Ensure proper bookkeeping
 model.printpretty()
+print()
 
 ## Test nominal settings
 # df_det = model.det_nom()
