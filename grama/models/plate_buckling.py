@@ -2,7 +2,6 @@ __all__ = ["make_plate_buckle"]
 
 import numpy as np
 
-from collections import OrderedDict as od
 from .. import core
 from scipy.stats import lognorm, uniform
 
@@ -26,20 +25,20 @@ def function_buckle_state(x):
     t, h, E, nu, L = x
     return np.pi * E / 12 / (1 - nu**2) * (t / h)**2 - L
 
-class make_plate_buckle(core.model):
+class make_plate_buckle(core.Model):
     def __init__(self):
         super().__init__(
             name="Plate Buckling",
             functions=[
-                core.function(
+                core.Function(
                     lambda x: function_buckle_state(x),
                     ["t", "h", "E", "nu", "L"],
                     ["g_buckle"],
                     "limit state"
                 )
             ],
-            domain=core.domain(
-                bounds=od([
+            domain=core.Domain(
+                bounds=dict([
                     ("t",  [0, 2 * THICKNESS]),
                     ("h",  [6, 18]),
                     ("E",  [0, +np.Inf]),
@@ -47,19 +46,19 @@ class make_plate_buckle(core.model):
                     ("L",  [0, +np.Inf])
                 ])
             ),
-            density=core.density(
+            density=core.Density(
                 marginals=[
-                    core.marginal_named(
+                    core.MarginalNamed(
                         "E",
                         d_name="lognorm",
                         d_param={"loc": 1, "s": SIG_LOG_E, "scale": MU_LOG_E}
                     ),
-                    core.marginal_named(
+                    core.MarginalNamed(
                         "nu",
                         d_name="uniform",
                         d_param={"loc": A_NU, "scale": B_NU - A_NU}
                     ),
-                    core.marginal_named(
+                    core.MarginalNamed(
                         "L",
                         sign=+1,
                         d_name="lognorm",

@@ -17,13 +17,13 @@ class TestModel(unittest.TestCase):
         self.df_wrong = pd.DataFrame(data={"z" : [0., 1.]})
 
         # 2D identity model with permuted df inputs
-        domain_2d = gr.domain(
-            bounds=od([("x", [-1., +1.]), ("y", [0., 1.])]),
+        domain_2d = gr.Domain(
+            bounds=dict([("x", [-1., +1.]), ("y", [0., 1.])]),
         )
 
-        self.model_2d = gr.model(
+        self.model_2d = gr.Model(
             functions=[
-                gr.function(
+                gr.Function(
                     lambda x: [x[0], x[1]],
                     ["x", "y"],
                     ["x", "y"],
@@ -31,14 +31,14 @@ class TestModel(unittest.TestCase):
                 )
             ],
             domain=domain_2d,
-            density=gr.density(
+            density=gr.Density(
                 marginals=[
-                    gr.marginal_named(
+                    gr.MarginalNamed(
                         "x",
                         d_name="uniform",
                         d_param={"loc":-1, "scale": 2}
                     ),
-                    gr.marginal_named(
+                    gr.MarginalNamed(
                         "y",
                         d_name="uniform",
                         d_param={"loc": 0, "scale": 1}

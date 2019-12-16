@@ -135,7 +135,7 @@ def eval_grad_fd(
             append = False
         )
 
-        res = (stepscale * (df_right - df_left).values).flatten()
+        res = (stepscale * (df_right[outputs] - df_left[outputs]).values).flatten()
 
         df_grad = pd.DataFrame(
             columns=grad_labels,
@@ -179,7 +179,7 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
 
     ## Modify quantiles for conservative directions
     quantiles = [
-        0.5 + (0.5 - quantiles[i]) * model.density._marginals[i]._sign \
+        0.5 + (0.5 - quantiles[i]) * model.density.marginals[i].sign \
         for i in range(model.n_var_rand)
     ]
     quantiles = np.atleast_2d(quantiles)

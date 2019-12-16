@@ -12,33 +12,33 @@ def fcn(x):
     x1, x2, x3 = x
     return x1 + x2 + x3
 
-class make_test(core.model):
+class make_test(core.Model):
     def __init__(self):
         super().__init__(
             name="test",
             functions=[
-                core.function(
+                core.Function(
                     fcn,
                     ["x1", "x2", "x3"],
                     ["f"],
                     "test"
                 )
             ],
-            domain=core.domain(
+            domain=core.Domain(
                 bounds={
                     "x1": [-1, +1],
                     "x2": [-1, +1],
                     "x3": [-1, +1]
                 }
             ),
-            density=core.density(
+            density=core.Density(
                 marginals=[
-                    core.marginal_named(
+                    core.MarginalNamed(
                         "x1",
                         d_name="uniform",
                         d_param={"loc": -1, "scale": +2}
                     ),
-                    core.marginal_named(
+                    core.MarginalNamed(
                         "x2",
                         d_name="uniform",
                         d_param={"loc": -1, "scale": +2}

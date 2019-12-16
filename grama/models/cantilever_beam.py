@@ -44,54 +44,54 @@ def function_displacement(x):
         V**2 / t**4 + H**2 / w**4
     )
 
-class make_cantilever_beam(core.model):
+class make_cantilever_beam(core.Model):
     def __init__(self):
         super().__init__(
             name="Cantilever Beam",
             # function=lambda x: function_beam(x),
             # outputs=["c_area", "g_stress", "g_displacement"],
             functions=[
-                core.function(
+                core.Function(
                     function_area,
                     ["w", "t"],
                     ["c_area"],
                     "cross-sectional area"
                 ),
-                core.function(
+                core.Function(
                     function_stress,
                     ["w", "t", "H", "V", "E", "Y"],
                     ["g_stress"],
                     "limit state: stress"
                 ),
-                core.function(
+                core.Function(
                     function_displacement,
                     ["w", "t", "H", "V", "E", "Y"],
                     ["g_displacement"],
                     "limit state: tip displacement"
                 )
             ],
-            domain=core.domain(bounds={"w": [2, 4], "t": [2, 4]}),
-            density=core.density(
+            domain=core.Domain(bounds={"w": [2, 4], "t": [2, 4]}),
+            density=core.Density(
                 marginals=[
-                    core.marginal_named(
+                    core.MarginalNamed(
                         "H",
                         sign=+1,
                         d_name="norm",
                         d_param={"loc": MU_H, "scale": TAU_H}
                     ),
-                    core.marginal_named(
+                    core.MarginalNamed(
                         "V",
                         sign=+1,
                         d_name="norm",
                         d_param={"loc": MU_V, "scale": TAU_V}
                     ),
-                    core.marginal_named(
+                    core.MarginalNamed(
                         "E",
                         sign=0,
                         d_name="norm",
                         d_param={"loc": MU_E, "scale": TAU_E}
                     ),
-                    core.marginal_named(
+                    core.MarginalNamed(
                         "Y",
                         sign=-1,
                         d_name="norm",

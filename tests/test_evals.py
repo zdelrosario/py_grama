@@ -12,13 +12,13 @@ class TestModel(unittest.TestCase):
 
     def setUp(self):
         # 2D identity model with permuted df inputs
-        domain_2d = gr.domain(
+        domain_2d = gr.Domain(
             bounds=od([("x", [-1., +1.]), ("y", [0., 1.])]),
         )
 
-        self.model_2d = gr.model(
+        self.model_2d = gr.Model(
             functions=[
-                gr.function(
+                gr.Function(
                     lambda x: [x[0], x[1]],
                     ["x", "y"],
                     ["f", "g"],
@@ -26,14 +26,14 @@ class TestModel(unittest.TestCase):
                 )
             ],
             domain=domain_2d,
-            density=gr.density(
+            density=gr.Density(
                 marginals=[
-                    gr.marginal_named(
+                    gr.MarginalNamed(
                         "x",
                         d_name="uniform",
                         d_param={"loc":-1, "scale": 2}
                     ),
-                    gr.marginal_named(
+                    gr.MarginalNamed(
                         "y",
                         sign=-1,
                         d_name="uniform",
@@ -74,8 +74,13 @@ class TestModel(unittest.TestCase):
             append=False
         )
 
+        print()
+        print(df_grad[self.df_2d_grad.columns])
+        print(self.df_2d_grad)
+        print()
+
         self.assertTrue(
-            np.allclose(df_grad, self.df_2d_grad)
+            np.allclose(df_grad[self.df_2d_grad.columns], self.df_2d_grad)
         )
 
     def test_conservative_accurate(self):

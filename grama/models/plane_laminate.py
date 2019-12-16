@@ -6,8 +6,6 @@ __all__ = ["make_composite_plate_tension"]
 # C.T. Sun "Mechanics of Aircraft Structures" (1998)
 
 from .. import core
-from collections import OrderedDict as od
-from collections import ChainMap
 import numpy as np
 import itertools
 
@@ -293,9 +291,9 @@ def make_domain(Theta_nom, T_nom= T_NOM):
         ("sigma_22_c_{}".format(i), [0, +np.Inf]),
         ("sigma_12_s_{}".format(i), [0, +np.Inf])] for i in range(k)
     ])) + [("Nx", [-np.Inf, +np.Inf])]
-    bounds = od(bounds_list)
+    bounds = dict(bounds_list)
 
-    return core.domain(bounds=bounds)
+    return core.Domain(bounds=bounds)
 
 # Helper function to create density for given ply
 def make_density(Theta_nom, T_nom=T_NOM):
@@ -322,74 +320,74 @@ def make_density(Theta_nom, T_nom=T_NOM):
 
     ## Create variables for each ply
     marginals = list(itertools.chain.from_iterable([[
-        core.marginal_named(
+        core.MarginalNamed(
             "E1_{}".format(i),
             sign=0,
             d_name="lognorm",
             d_param={"loc": 1, "s": E1_CV, "scale": E1_M}
         ),
-        core.marginal_named(
+        core.MarginalNamed(
             "E2_{}".format(i),
             sign=0,
             d_name="lognorm",
             d_param={"loc": 1, "s": E2_CV, "scale": E2_M}
         ),
-        core.marginal_named(
+        core.MarginalNamed(
             "nu12_{}".format(i),
             sign=0,
             d_name="norm",
             d_param={"loc": nu12_M, "scale": nu12_SIG}
         ),
-        core.marginal_named(
+        core.MarginalNamed(
             "G12_{}".format(i),
             sign=0,
             d_name="lognorm",
             d_param={"loc": 1, "s": G12_CV, "scale": G12_M}
         ),
-        core.marginal_named(
+        core.MarginalNamed(
             "theta_{}".format(i),
             sign=0,
             d_name="uniform",
             d_param={"loc": Theta_nom[i] - THETA_PM, "scale": 2 * THETA_PM}
         ),
-        core.marginal_named(
+        core.MarginalNamed(
             "t_{}".format(i),
             sign=0,
             d_name="uniform",
             d_param={"loc": T_nom[i] - T_PM, "scale": 2 * T_PM}
         ),
-        core.marginal_named(
+        core.MarginalNamed(
             "sigma_11_t_{}".format(i),
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_11_T_CV, "scale": SIG_11_T_M}
         ),
-        core.marginal_named(
+        core.MarginalNamed(
             "sigma_22_t_{}".format(i),
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_22_T_CV, "scale": SIG_22_T_M}
         ),
-        core.marginal_named(
+        core.MarginalNamed(
             "sigma_11_c_{}".format(i),
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_11_C_CV, "scale": SIG_11_C_M}
         ),
-        core.marginal_named(
+        core.MarginalNamed(
             "sigma_22_c_{}".format(i),
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_22_C_CV, "scale": SIG_22_C_M}
         ),
-        core.marginal_named(
+        core.MarginalNamed(
             "sigma_12_s_{}".format(i),
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_12_M_CV, "scale": SIG_12_M_M}
         ) \
      ] for i in range(k)])) + [
-        core.marginal_named(
+        core.MarginalNamed(
             "Nx",
             sign=+1,
             d_name="norm",
@@ -397,11 +395,11 @@ def make_density(Theta_nom, T_nom=T_NOM):
         )
     ]
 
-    return core.density(marginals=marginals)
+    return core.Density(marginals=marginals)
 
 ## Model class
 ##################################################
-class make_composite_plate_tension(core.model):
+class make_composite_plate_tension(core.Model):
     def __init__(self, Theta_nom, T_nom=T_NOM):
         k = len(Theta_nom)
         deg_int = [int(theta / np.pi * 180) for theta in Theta_nom]
@@ -418,7 +416,7 @@ class make_composite_plate_tension(core.model):
         super().__init__(
             name=name,
             functions=[
-                core.function(
+                core.Function(
                     lambda X: uniaxial_stress_limit(X),
                     make_names(Theta_nom),
                     list(itertools.chain.from_iterable([

@@ -9,33 +9,33 @@ def limit_state(x):
 
     return 1 - x1 - x2
 
-class make_linear_normal(core.model):
+class make_linear_normal(core.Model):
     def __init__(self):
         super().__init__(
             name="Linear-Normal",
             functions=[
-                core.function(
+                core.Function(
                     limit_state,
                     ["x1", "x2"],
                     ["g_linear"],
                     "limit state"
                 )
             ],
-            domain=core.domain(
+            domain=core.Domain(
                 bounds = {
                     "x1": [-np.Inf, +np.Inf],
                     "x2": [-np.Inf, +np.Inf]
                 }
             ),
-            density=core.density(
+            density=core.Density(
                 marginals=[
-                    core.marginal_named(
+                    core.MarginalNamed(
                         "x1",
                         sign=+1,
                         d_name="norm",
                         d_param={"loc": 0, "scale": 1}
                     ),
-                    core.marginal_named(
+                    core.MarginalNamed(
                         "x2",
                         sign=+1,
                         d_name="norm",

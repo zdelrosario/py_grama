@@ -2,12 +2,12 @@
 # Zachary del Rosario, March 2019
 
 __all__ = [
-    "domain",
-    "density",
-    "function",
-    "function_vectorized",
-    "marginal_named",
-    "model",
+    "Domain",
+    "Density",
+    "Function",
+    "FunctionVectorized",
+    "MarginalNamed",
+    "Model",
     "valid_dist"
 ]
 
@@ -52,7 +52,7 @@ valid_dist = {
 ## Core functions
 ##################################################
 # Function class
-class function:
+class Function:
     """Parent class for functions.
 
     A function specifies its own inputs and outputs; these are subsets of the
@@ -108,7 +108,7 @@ class function:
         """
         return "{0:}: {1:} -> {2:}".format(self.name, self.inputs, self.outputs)
 
-class function_vectorized(function):
+class FunctionVectorized(Function):
     def eval(self, df):
         """Evaluate function. Assumes function is vectorized over dataframes.
 
@@ -125,7 +125,7 @@ class function_vectorized(function):
         return df_res
 
 # Domain parent class
-class domain:
+class Domain:
     """Parent class for input domains
 
     The domain defines constraints on the variables. Together with a model's
@@ -143,26 +143,26 @@ class domain:
         @pre len(bounds) == n where model.function:R^n -> R^m
 
         """
-        self._bounds    = bounds
-        self._feasible  = feasible
+        self.bounds    = bounds
+        self.feasible  = feasible
 
     def bound_summary(self, bound):
-        if bound in self._bounds.keys():
+        if bound in self.bounds.keys():
             return "{0:}: [{1:}, {2:}]".format(
                 bound,
-                self._bounds[bound][0],
-                self._bounds[bound][1],
+                self.bounds[bound][0],
+                self.bounds[bound][1],
             )
         else:
             return "{0:}: (unbounded)".format(bound)
 
 # Marginal parent class
-class marginal_(ABC):
+class Marginal(ABC):
     """Parent class for marginal distributions
     """
     def __init__(self, var, sign=0):
-        self._var = var
-        self._sign = sign
+        self.var = var
+        self.sign = sign
 
     ## Likelihood function
     @abstractmethod
@@ -185,38 +185,38 @@ class marginal_(ABC):
         pass
 
 ## Named marginal class
-class marginal_named(marginal_):
+class MarginalNamed(Marginal):
     """Marginal using a named distribution from core.valid_dist"""
 
     def __init__(self, var, d_name=None, d_param=None, **kw):
         super().__init__(var, **kw)
 
-        self._d_name = d_name
-        self._d_param = d_param
+        self.d_name = d_name
+        self.d_param = d_param
 
     ## Likelihood function
     def l(self, x):
-        return valid_dist[self._d_name].pdf(x, **self._d_param)
+        return valid_dist[self.d_name].pdf(x, **self.d_param)
 
     ## Cumulative density function
     def p(self, x):
-        return valid_dist[self._d_name].cdf(x, **self._d_param)
+        return valid_dist[self.d_name].cdf(x, **self.d_param)
 
     ## Quantile function
     def q(self, p):
-        return valid_dist[self._d_name].ppf(p, **self._d_param)
+        return valid_dist[self.d_name].ppf(p, **self.d_param)
 
     ## Summary
     def summary(self):
         return "{0:} ({1:}): {2:}, {3:}".format(
-            self._var,
-            self._sign,
-            self._d_name,
-            self._d_param
+            self.var,
+            self.sign,
+            self.d_name,
+            self.d_param
         )
 
 # Density parent class
-class density:
+class Density:
     """Parent class for joint densities
 
     The density is defined for all the random variables; therefore
@@ -230,12 +230,12 @@ class density:
         @param marginals list of marginal_ defining random variables
         @param copula TODO
         """
-        self._marginals = marginals
-        self._copula = copula
-        self._var_rand = list(map(lambda m: m._var, self._marginals))
+        self.marginals = marginals
+        self.copula = copula
+        self.var_rand = list(map(lambda m: m.var, self.marginals))
 
 # Model parent class
-class model:
+class Model:
     """Parent class for grama models.
     """
 
@@ -259,6 +259,13 @@ class model:
         @pre isinstance(domain, domain_)
         @pre isinstance(density, density_) || (density is None)
         """
+        if functions is None:
+            functions = []
+        if domain is None:
+            domain = Domain()
+        if density is None:
+            density = Density()
+
         self.name      = name
         self.functions = functions
         self.domain    = domain
@@ -286,7 +293,7 @@ class model:
         self.var = list(set().union(
             *[f.inputs for f in self.functions]
         ))
-        self.var_rand = self.density._var_rand
+        self.var_rand = self.density.var_rand
         self.var_det  = list(set(self.var).difference(self.var_rand))
 
         ## TODO parameters
@@ -305,10 +312,10 @@ class model:
         data = {}
 
         for var in self.var_det:
-            if var in self.domain._bounds.keys():
+            if var in self.domain.bounds.keys():
                 data[var] = [0.5 * (
-                        self.domain._bounds[var][0] + \
-                        self.domain._bounds[var][1]
+                        self.domain.bounds[var][0] + \
+                        self.domain.bounds[var][1]
                 )]
             else:
                 data[var] = [0.]
@@ -380,15 +387,15 @@ class model:
         @post df_samp.shape[1] == n_var_rand
         """
         ## Check invariant; given columns must be equal to var_rand
-        if (set(self.density._var_rand) != set(df_quant.columns)):
+        if (set(self.density.var_rand) != set(df_quant.columns)):
             raise ValueError("Quantile columns must equal model var_rand")
 
         samples = np.zeros(df_quant.shape)
         ## Ensure correct column ordering
-        quantiles = df_quant[self.density._var_rand].values
+        quantiles = df_quant[self.density.var_rand].values
 
         ## Perform copula conversion, if necessary
-        if self.density._copula is not None:
+        if self.density.copula is not None:
             raise NotImplementedError
             ## Build correlation structure
             Sigma                                = np.eye(self.n_in)
@@ -403,11 +410,11 @@ class model:
         ## Skip if no dependence structure
 
         ## Apply appropriate marginal
-        for ind in range(len(self.density._var_rand)):
+        for ind in range(len(self.density.var_rand)):
             ## Map with inverse density
-            samples[:, ind] = self.density._marginals[ind].q(quantiles[:, ind])
+            samples[:, ind] = self.density.marginals[ind].q(quantiles[:, ind])
 
-        return pd.DataFrame(data=samples, columns=self.density._var_rand)
+        return pd.DataFrame(data=samples, columns=self.density.var_rand)
 
     def name_corr(self):
         """Name the correlation elements
@@ -436,7 +443,7 @@ class model:
     def copy(self):
         """Make a copy of this model
         """
-        new_model = model(
+        new_model = Model(
             name      = self.name,
             functions = self.functions,
             domain    = self.domain,
