@@ -12,6 +12,7 @@ __all__ = [
 ]
 
 from abc import ABC, abstractmethod
+import copy
 import numpy as np
 import pandas as pd
 
@@ -78,6 +79,16 @@ class Function:
         self.out = out
         self.name = name
 
+    def copy(self):
+        """Make a copy"""
+        func_new = Function(
+            copy.deepcopy(self.func),
+            copy.deepcopy(self.var),
+            copy.deepcopy(self.out),
+            copy.deepcopy(self.name)
+        )
+        return func_new
+
     def eval(self, df):
         """Evaluate function. Loops over dataframe rows.
 
@@ -124,6 +135,11 @@ class FunctionVectorized(Function):
 
         return df_res
 
+    def copy(self):
+        """Make a copy"""
+        func_new = FunctionVectorized(self.func, self.var, self.out, self.name)
+        return func_new
+
 # Domain parent class
 class Domain:
     """Parent class for input domains
@@ -146,14 +162,25 @@ class Domain:
         self.bounds    = bounds
         self.feasible  = feasible
 
+    def copy(self):
+        new_domain = Domain(
+            bounds=copy.deepcopy(self.bounds),
+            feasible=copy.deepcopy(self.feasible)
+        )
+
+        return new_domain
+
     def bound_summary(self, bound):
-        if bound in self.bounds.keys():
-            return "{0:}: [{1:}, {2:}]".format(
-                bound,
-                self.bounds[bound][0],
-                self.bounds[bound][1],
-            )
-        else:
+        try:
+            if bound in self.bounds.keys():
+                return "{0:}: [{1:}, {2:}]".format(
+                    bound,
+                    self.bounds[bound][0],
+                    self.bounds[bound][1],
+                )
+            else:
+                return "{0:}: (unbounded)".format(bound)
+        except AttributeError:
             return "{0:}: (unbounded)".format(bound)
 
 # Marginal parent class
@@ -163,6 +190,14 @@ class Marginal(ABC):
     def __init__(self, var, sign=0):
         self.var = var
         self.sign = sign
+
+    def copy(self):
+        new_marginal = Marginal(
+            copy.deepcopy(self.var),
+            sign=self.sign
+        )
+
+        return new_marginal
 
     ## Likelihood function
     @abstractmethod
@@ -193,6 +228,19 @@ class MarginalNamed(Marginal):
 
         self.d_name = d_name
         self.d_param = d_param
+
+    def copy(self):
+        new_marginal = MarginalNamed(
+            copy.deepcopy(self.var),
+            sign=self.sign,
+            d_name=self.d_name,
+            d_param=copy.deepcopy(self.d_param)
+        )
+
+        return new_marginal
+
+    def __deepcopy(self):
+        return self.copy()
 
     ## Likelihood function
     def l(self, x):
@@ -236,6 +284,21 @@ class Density:
             self.var_rand = list(map(lambda m: m.var, self.marginals))
         except TypeError:
             self.var_rand = []
+
+    def copy(self):
+        try:
+            new_marginals = [
+                marginal.copy() for marginal in self.marginals
+            ]
+        except TypeError:
+            new_marginals = []
+
+        new_density = Density(
+            marginals=new_marginals,
+            copula=copy.deepcopy(self.copula)
+        )
+
+        return new_density
 
 # Model parent class
 class Model:
@@ -448,9 +511,9 @@ class Model:
         """
         new_model = Model(
             name      = self.name,
-            functions = self.functions,
-            domain    = self.domain,
-            density   = self.density
+            functions = copy.deepcopy(self.functions),
+            domain    = self.domain.copy(),
+            density   = self.density.copy()
         )
         new_model.update()
 

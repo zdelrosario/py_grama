@@ -24,8 +24,9 @@ class TestPlumbing(unittest.TestCase):
         df_res = gr.eval_df(self.model_default, df=self.df_test)
 
         self.assertTrue(
-            df_res.equals(
-              self.model_default >> gr.ev_df(df=self.df_test)
+            gr.df_equal(
+                df_res,
+                self.model_default >> gr.ev_df(df=self.df_test)
             )
         )
 
@@ -35,8 +36,9 @@ class TestPlumbing(unittest.TestCase):
         df_res = gr.eval_nominal(self.model_default, df_det="nom")
 
         self.assertTrue(
-            df_res.equals(
-              self.model_default >> gr.ev_nominal(df_det="nom")
+            gr.df_equal(
+                df_res,
+                self.model_default >> gr.ev_nominal(df_det="nom")
             )
         )
 
@@ -46,8 +48,9 @@ class TestPlumbing(unittest.TestCase):
         df_res = gr.eval_grad_fd(self.model_default, df_base=self.df_test)
 
         self.assertTrue(
-            df_res.equals(
-              self.model_default >> gr.ev_grad_fd(df_base=self.df_test)
+            gr.df_equal(
+                df_res,
+                self.model_default >> gr.ev_grad_fd(df_base=self.df_test)
             )
         )
 
@@ -57,8 +60,9 @@ class TestPlumbing(unittest.TestCase):
         df_res = gr.eval_conservative(self.model_default, df_det="nom")
 
         self.assertTrue(
-            df_res.equals(
-              self.model_default >> gr.ev_conservative(df_det="nom")
+            gr.df_equal(
+                df_res,
+                self.model_default >> gr.ev_conservative(df_det="nom")
             )
         )
 
@@ -68,8 +72,9 @@ class TestPlumbing(unittest.TestCase):
         df_res = gr.eval_monte_carlo(self.model_default, seed=101, df_det="nom")
 
         self.assertTrue(
-            df_res.equals(
-              self.model_default >> gr.ev_monte_carlo(seed=101, df_det="nom")
+            gr.df_equal(
+                df_res,
+                self.model_default >> gr.ev_monte_carlo(seed=101, df_det="nom")
             )
         )
 
@@ -79,8 +84,9 @@ class TestPlumbing(unittest.TestCase):
         df_res = gr.eval_lhs(self.model_default, seed=101, df_det="nom")
 
         self.assertTrue(
-            df_res.equals(
-              self.model_default >> gr.ev_lhs(seed=101, df_det="nom")
+            gr.df_equal(
+                df_res,
+                self.model_default >> gr.ev_lhs(seed=101, df_det="nom")
             )
         )
 
@@ -90,8 +96,9 @@ class TestPlumbing(unittest.TestCase):
         df_res = gr.eval_sinews(self.model_default, seed=101, df_det="nom")
 
         self.assertTrue(
-            df_res.equals(
-              self.model_default >> gr.ev_sinews(seed=101, df_det="nom")
+            gr.df_equal(
+                df_res,
+                self.model_default >> gr.ev_sinews(seed=101, df_det="nom")
             )
         )
 

@@ -1,5 +1,6 @@
 __all__ = [
-    "pipe"
+    "pipe",
+    "df_equal"
 ]
 
 import pandas as pd
@@ -44,3 +45,19 @@ class pipe(object):
 
     def __call__(self, *args, **kwargs):
         return pipe(lambda x: self.function(x, *args, **kwargs))
+
+## DataFrame equality checker
+def df_equal(df1, df2):
+    """Check that two dataframes have the same columns and values. Allow
+    column order to differ.
+
+    @param df1 [DataFrame]
+    @param df2 [DataFrame]
+
+    @returns [bool]
+    """
+
+    if not set(df1.columns) == set(df2.columns):
+        return False
+
+    return df1[df2.columns].equals(df2)
