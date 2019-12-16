@@ -467,8 +467,11 @@ class Model:
             print("      {}".format(self.domain.bound_summary(var_det)))
 
         print("    var_rand:")
-        for marginal in self.density._marginals:
-            print("      {}".format(marginal.summary()))
+        try:
+            for marginal in self.density.marginals:
+                print("      {}".format(marginal.summary()))
+        except TypeError:
+            pass
 
         print("  functions:")
         for function in self.functions:
