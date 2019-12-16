@@ -74,11 +74,6 @@ class TestModel(unittest.TestCase):
             append=False
         )
 
-        print()
-        print(df_grad[self.df_2d_grad.columns])
-        print(self.df_2d_grad)
-        print()
-
         self.assertTrue(
             np.allclose(df_grad[self.df_2d_grad.columns], self.df_2d_grad)
         )
