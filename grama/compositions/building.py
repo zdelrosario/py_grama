@@ -1,6 +1,10 @@
 __all__ = [
     "comp_function",
-    "cp_function"
+    "cp_function",
+    "comp_bounds",
+    "cp_bounds",
+    "comp_marginals",
+    "cp_marginals"
 ]
 
 from .. import core
@@ -11,18 +15,26 @@ from toolz import curry
 
 ## Model Building Interface (MBI) tools
 ##################################################
+# Add a lambda function
+# -------------------------
 @curry
 def comp_function(
     model, fun=None, var=None, out=None, name=None
 ):
     """Add a function to a model.
 
-    @param model [gr.model] Model to compose
-    @param fun [function] Function taking R^d -> R^r
-    @param var [list(string) or int] List of variable names or number of inputs
-    @param out [list(string) or int] List of output names or number of outputs
+    @param model Model to compose
+    @param fun Function taking R^d -> R^r
+    @param var List of variable names or number of inputs
+    @param out List of output names or number of outputs
 
-    @returns [gr.model] New model with added function
+    @type model gr.model
+    @type fun function
+    @type var list(string)
+    @param out list(string)
+
+    @returns New model with added function
+    @rtype gr.model
 
     @pre (len(var) == d) | (var == d)
     @pre (len(out) == r) | (var == r)
@@ -56,10 +68,124 @@ def comp_function(
     model_new.functions.append(
         core.Function(fun, var, out, name)
     )
-    model_new.update()
 
+    model_new.update()
     return model_new
 
 @pipe
 def cp_function(*args, **kwargs):
-    comp_function(*args, **kwargs)
+    return comp_function(*args, **kwargs)
+
+# Add bounds
+# -------------------------
+@curry
+def comp_bounds(model, **kwargs):
+    """Add variable bounds to a model.
+
+    Bounds are specified by iterable; the model variable name is specified by the
+    keyword argument name.
+
+    @param model Model to modify
+    @param var Bound information
+
+    @type model gr.model
+    @type var iterable
+
+    @returns Model with new marginals
+    @rtype gr.model
+
+    @pre len(var) >= 2
+
+    Examples
+
+    import grama as gr
+    md = gr.Model() >> \
+        cp_function(
+            lambda x: x[0] + x[1],
+            var=["x0", "x1"],
+            out=1
+        ) >> \
+        cp_bounds(
+            x0=(-1, 1),
+            x1=(0, np.inf)
+        )
+
+    """
+    new_model = model.copy()
+
+    ## Parse keyword arguments
+    for key, value in kwargs.items():
+        ## Add new bound
+        new_model.domain.bounds[key] = [value[0], value[1]]
+
+    new_model.update()
+    return new_model
+
+@pipe
+def cp_bounds(*args, **kwargs):
+    return comp_bounds(*args, **kwargs)
+
+# Add marginals
+# -------------------------
+@curry
+def comp_marginals(model, **kwargs):
+    """Add marginals to a model.
+
+    Marginals are specified by dictionary entries; the model
+    variable name is specified by the keyword argument name.
+
+    @param model Model to modify
+    @param var Marginal information
+
+    @type model gr.model
+    @type var dict
+
+    @returns Model with new marginals
+    @rtype gr.model
+
+    TODO:
+    - Implement marginals other than MarginalNamed
+
+    Examples
+
+    import grama as gr
+    print(gr.valid_dist.keys()) # Print list of implemented marginals
+
+    md = gr.Model() >> \
+        cp_function(
+            lambda x: x[0] + x[1],
+            var=["x0", "x1"],
+            out=1
+        ) >> \
+        cp_marginals(
+            x0={"dist": "norm", "loc": 0, "scale": 1}
+        )
+
+    """
+    new_model = model.copy()
+
+    ## Parse keyword arguments
+    for key, value in kwargs.items():
+        ## Check for named marginal
+        try:
+            dist = value.pop("dist")
+        except KeyError:
+            raise NotImplementationError("Non-named marginals not implemented; please provide a valid 'dist' key")
+
+        try:
+            sign = value.pop("sign")
+        except KeyError:
+            sign = 0
+
+        new_model.density.marginals[key] = core.MarginalNamed(
+            sign=sign,
+            d_name=dist,
+            d_param=value
+        )
+
+    new_model.update()
+    return new_model
+
+@pipe
+def cp_marginals(*args, **kwargs):
+    return comp_marginals(*args, **kwargs)

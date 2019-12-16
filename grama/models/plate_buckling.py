@@ -3,7 +3,7 @@ __all__ = ["make_plate_buckle"]
 import numpy as np
 
 from .. import core
-from scipy.stats import lognorm, uniform
+from .. import compositions as cp
 
 LOAD      = 0.00128 # Applied load (kips)
 
@@ -25,45 +25,23 @@ def function_buckle_state(x):
     t, h, E, nu, L = x
     return np.pi * E / 12 / (1 - nu**2) * (t / h)**2 - L
 
-class make_plate_buckle(core.Model):
-    def __init__(self):
-        super().__init__(
-            name="Plate Buckling",
-            functions=[
-                core.Function(
-                    lambda x: function_buckle_state(x),
-                    ["t", "h", "E", "nu", "L"],
-                    ["g_buckle"],
-                    "limit state"
-                )
-            ],
-            domain=core.Domain(
-                bounds=dict([
-                    ("t",  [0, 2 * THICKNESS]),
-                    ("h",  [6, 18]),
-                    ("E",  [0, +np.Inf]),
-                    ("nu", [A_NU, B_NU]),
-                    ("L",  [0, +np.Inf])
-                ])
-            ),
-            density=core.Density(
-                marginals=[
-                    core.MarginalNamed(
-                        "E",
-                        d_name="lognorm",
-                        d_param={"loc": 1, "s": SIG_LOG_E, "scale": MU_LOG_E}
-                    ),
-                    core.MarginalNamed(
-                        "nu",
-                        d_name="uniform",
-                        d_param={"loc": A_NU, "scale": B_NU - A_NU}
-                    ),
-                    core.MarginalNamed(
-                        "L",
-                        sign=+1,
-                        d_name="lognorm",
-                        d_param={"loc": 1, "s": SIG_LOG_L, "scale": MU_LOG_L}
-                    )
-                ]
-            )
-        )
+def make_plate_buckle():
+    md = core.Model("Plate Buckling") >> \
+         cp.cp_function(
+             fun=function_buckle_state,
+             var=["t", "h", "E", "nu", "L"],
+             out=["g_buckle"],
+             name="limit state"
+         ) >> \
+         cp.cp_bounds(t=(0, 2 * THICKNESS), h=(6, 18)) >> \
+         cp.cp_marginals(
+             E={"dist": "lognorm", "loc": 1, "s": SIG_LOG_E, "scale": MU_LOG_E},
+             nu={"dist": "uniform", "loc": A_NU, "scale": B_NU - A_NU},
+             L={
+                 "dist": "lognorm",
+                 "loc": 1, "s": SIG_LOG_L, "scale": MU_LOG_L,
+                 "sign": +1
+             }
+         )
+
+    return md

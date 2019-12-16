@@ -12,8 +12,16 @@ class TestModel(unittest.TestCase):
 
     def setUp(self):
         # 2D identity model with permuted df inputs
-        domain_2d = gr.Domain(
-            bounds=od([("x", [-1., +1.]), ("y", [0., 1.])]),
+        domain_2d = gr.Domain(bounds={"x": [-1., +1], "y": [0., 1.]})
+        marginals = {}
+        marginals["x"] = gr.MarginalNamed(
+            d_name="uniform",
+            d_param={"loc":-1, "scale": 2}
+        )
+        marginals["y"] = gr.MarginalNamed(
+            sign=-1,
+            d_name="uniform",
+            d_param={"loc": 0, "scale": 1}
         )
 
         self.model_2d = gr.Model(
@@ -26,21 +34,7 @@ class TestModel(unittest.TestCase):
                 )
             ],
             domain=domain_2d,
-            density=gr.Density(
-                marginals=[
-                    gr.MarginalNamed(
-                        "x",
-                        d_name="uniform",
-                        d_param={"loc":-1, "scale": 2}
-                    ),
-                    gr.MarginalNamed(
-                        "y",
-                        sign=-1,
-                        d_name="uniform",
-                        d_param={"loc": 0, "scale": 1}
-                    )
-                ]
-            )
+            density=gr.Density(marginals=marginals)
         )
 
         ## Correct results

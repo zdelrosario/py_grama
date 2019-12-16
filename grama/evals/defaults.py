@@ -84,7 +84,7 @@ def eval_grad_fd(
     """Evaluates a given model with a central-difference stencil to
     approximate the gradient
 
-    @param model Valid grama model
+    @param model Model to differentiate
     @param h finite difference stepsize,
            single (scalar) or per-input (np.array)
     @param df_base DataFrame of base-points for gradient calculations
@@ -120,8 +120,8 @@ def eval_grad_fd(
         df_left = eval_df(
             model,
             pd.DataFrame(
-                columns = model.var,
-                data = -stencil + df_base[model.var].iloc[[row_i]].values
+                columns=model.var,
+                data=-stencil + df_base[model.var].iloc[[row_i]].values
             ),
             append = False
         )
@@ -129,8 +129,8 @@ def eval_grad_fd(
         df_right = eval_df(
             model,
             pd.DataFrame(
-                columns = model.var,
-                data = +stencil + df_base[model.var].iloc[[row_i]].values
+                columns=model.var,
+                data=+stencil + df_base[model.var].iloc[[row_i]].values
             ),
             append = False
         )
@@ -179,7 +179,9 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
 
     ## Modify quantiles for conservative directions
     quantiles = [
-        0.5 + (0.5 - quantiles[i]) * model.density.marginals[i].sign \
+        0.5 + (0.5 - quantiles[i]) * model.density.marginals[
+            model.var_rand[i]
+        ].sign \
         for i in range(model.n_var_rand)
     ]
     quantiles = np.atleast_2d(quantiles)

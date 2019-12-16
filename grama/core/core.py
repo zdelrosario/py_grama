@@ -159,8 +159,15 @@ class Domain:
         @pre len(bounds) == n where model.function:R^n -> R^m
 
         """
-        self.bounds    = bounds
-        self.feasible  = feasible
+        if bounds is None:
+            bounds = {}
+
+        self.bounds   = bounds
+        self.feasible = feasible
+        try:
+            self.var = bounds.keys()
+        except AttributeError:
+            self.var = []
 
     def copy(self):
         new_domain = Domain(
@@ -187,8 +194,7 @@ class Domain:
 class Marginal(ABC):
     """Parent class for marginal distributions
     """
-    def __init__(self, var, sign=0):
-        self.var = var
+    def __init__(self, sign=0):
         self.sign = sign
 
     def copy(self):
@@ -223,15 +229,14 @@ class Marginal(ABC):
 class MarginalNamed(Marginal):
     """Marginal using a named distribution from core.valid_dist"""
 
-    def __init__(self, var, d_name=None, d_param=None, **kw):
-        super().__init__(var, **kw)
+    def __init__(self, d_name=None, d_param=None, **kw):
+        super().__init__(**kw)
 
         self.d_name = d_name
         self.d_param = d_param
 
     def copy(self):
         new_marginal = MarginalNamed(
-            copy.deepcopy(self.var),
             sign=self.sign,
             d_name=self.d_name,
             d_param=copy.deepcopy(self.d_param)
@@ -256,42 +261,39 @@ class MarginalNamed(Marginal):
 
     ## Summary
     def summary(self):
-        return "{0:} ({1:}): {2:}, {3:}".format(
-            self.var,
-            self.sign,
-            self.d_name,
-            self.d_param
-        )
+        return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, self.d_param)
 
 # Density parent class
 class Density:
     """Parent class for joint densities
 
-    The density is defined for all the random variables; therefore
-    it explicitly defines the list of random variables, and together
-    with the domain defines the deterministic variables via
-    domain._variables - density._variables
+    The density is defined for all the random variables; therefore it explicitly
+    defines the list of random variables, and together implicitly defines the
+    deterministic variables via
+
+        domain.var + [functions.var] - density._variables
+
     """
     def __init__(self, marginals=None, copula=None):
         """Initialize
 
-        @param marginals list of marginal_ defining random variables
-        @param copula TODO
+        @param marginals
+        @param copula
+
+        @type marginals dict
+        @type copula TODO
         """
         self.marginals = marginals
         self.copula = copula
-        try:
-            self.var_rand = list(map(lambda m: m.var, self.marginals))
-        except TypeError:
-            self.var_rand = []
 
     def copy(self):
         try:
-            new_marginals = [
-                marginal.copy() for marginal in self.marginals
-            ]
-        except TypeError:
-            new_marginals = []
+            new_marginals = {}
+            for key, value in self.marginals.items():
+                new_marginals[key] = self.marginals[key].copy()
+
+        except AttributeError:
+            new_marginals = {}
 
         new_density = Density(
             marginals=new_marginals,
@@ -299,6 +301,9 @@ class Density:
         )
 
         return new_density
+
+    def summary_marginal(self, var):
+        return "{0:}: {1:}".format(var, self.marginals[var].summary())
 
 # Model parent class
 class Model:
@@ -358,8 +363,12 @@ class Model:
         ## Compute list of variables and parameters
         self.var = list(set().union(
             *[f.var for f in self.functions]
-        ))
-        self.var_rand = self.density.var_rand
+        ).union(set(self.domain.var)))
+
+        try:
+            self.var_rand = list(self.density.marginals.keys())
+        except AttributeError:
+            self.var_rand = []
         self.var_det  = list(set(self.var).difference(self.var_rand))
 
         ## TODO parameters
@@ -453,12 +462,12 @@ class Model:
         @post df_samp.shape[1] == n_var_rand
         """
         ## Check invariant; given columns must be equal to var_rand
-        if (set(self.density.var_rand) != set(df_quant.columns)):
+        if (set(self.var_rand) != set(df_quant.columns)):
             raise ValueError("Quantile columns must equal model var_rand")
 
         samples = np.zeros(df_quant.shape)
         ## Ensure correct column ordering
-        quantiles = df_quant[self.density.var_rand].values
+        quantiles = df_quant[self.var_rand].values
 
         ## Perform copula conversion, if necessary
         if self.density.copula is not None:
@@ -476,11 +485,12 @@ class Model:
         ## Skip if no dependence structure
 
         ## Apply appropriate marginal
-        for ind in range(len(self.density.var_rand)):
+        for ind in range(len(self.var_rand)):
             ## Map with inverse density
-            samples[:, ind] = self.density.marginals[ind].q(quantiles[:, ind])
+            var = self.var_rand[ind]
+            samples[:, ind] = self.density.marginals[var].q(quantiles[:, ind])
 
-        return pd.DataFrame(data=samples, columns=self.density.var_rand)
+        return pd.DataFrame(data=samples, columns=self.var_rand)
 
     def name_corr(self):
         """Name the correlation elements
@@ -531,9 +541,9 @@ class Model:
 
         print("    var_rand:")
         try:
-            for marginal in self.density.marginals:
-                print("      {}".format(marginal.summary()))
-        except TypeError:
+            for key, marginal in self.density.marginals.items():
+                print("      {}".format(self.density.summary_marginal(key)))
+        except AttributeError:
             pass
 
         print("  functions:")

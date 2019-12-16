@@ -2,6 +2,7 @@ __all__ = ["make_cantilever_beam"]
 
 import numpy as np
 from .. import core
+from .. import compositions as cp
 from collections import OrderedDict as od
 from numpy import sqrt, array, Inf
 from scipy.stats import norm
@@ -44,59 +45,35 @@ def function_displacement(x):
         V**2 / t**4 + H**2 / w**4
     )
 
-class make_cantilever_beam(core.Model):
-    def __init__(self):
-        super().__init__(
-            name="Cantilever Beam",
-            # function=lambda x: function_beam(x),
-            # outputs=["c_area", "g_stress", "g_displacement"],
-            functions=[
-                core.Function(
-                    function_area,
-                    ["w", "t"],
-                    ["c_area"],
-                    "cross-sectional area"
-                ),
-                core.Function(
-                    function_stress,
-                    ["w", "t", "H", "V", "E", "Y"],
-                    ["g_stress"],
-                    "limit state: stress"
-                ),
-                core.Function(
-                    function_displacement,
-                    ["w", "t", "H", "V", "E", "Y"],
-                    ["g_displacement"],
-                    "limit state: tip displacement"
-                )
-            ],
-            domain=core.Domain(bounds={"w": [2, 4], "t": [2, 4]}),
-            density=core.Density(
-                marginals=[
-                    core.MarginalNamed(
-                        "H",
-                        sign=+1,
-                        d_name="norm",
-                        d_param={"loc": MU_H, "scale": TAU_H}
-                    ),
-                    core.MarginalNamed(
-                        "V",
-                        sign=+1,
-                        d_name="norm",
-                        d_param={"loc": MU_V, "scale": TAU_V}
-                    ),
-                    core.MarginalNamed(
-                        "E",
-                        sign=0,
-                        d_name="norm",
-                        d_param={"loc": MU_E, "scale": TAU_E}
-                    ),
-                    core.MarginalNamed(
-                        "Y",
-                        sign=-1,
-                        d_name="norm",
-                        d_param={"loc": MU_Y, "scale": TAU_Y}
-                    )
-                ]
-            )
-        )
+def make_cantilever_beam():
+    md = core.Model(name = "Cantilever Beam") >> \
+         cp.cp_function(
+             fun=function_area,
+             var=["w", "t"],
+             out=["c_area"],
+             name="cross-sectional area"
+         ) >> \
+         cp.cp_function(
+             fun=function_stress,
+             var=["w", "t", "H", "V", "E", "Y"],
+             out=["g_stress"],
+             name="limit state: stress"
+         ) >> \
+         cp.cp_function(
+             fun=function_displacement,
+             var=["w", "t", "H", "V", "E", "Y"],
+             out=["g_disp"],
+             name="limit state: displacement"
+         ) >> \
+         cp.cp_bounds(
+             w=(2, 4),
+             t=(2, 4)
+         ) >> \
+         cp.cp_marginals(
+             H={"dist": "norm", "loc": MU_H, "scale": TAU_H, "sign": +1},
+             V={"dist": "norm", "loc": MU_V, "scale": TAU_V, "sign": +1},
+             E={"dist": "norm", "loc": MU_E, "scale": TAU_E, "sign":  0},
+             Y={"dist": "norm", "loc": MU_Y, "scale": TAU_Y, "sign": -1}
+         )
+
+    return md
