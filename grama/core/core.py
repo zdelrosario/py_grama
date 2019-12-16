@@ -59,23 +59,23 @@ class Function:
     full model's inputs and outputs.
 
     """
-    def __init__(self, func, inputs, outputs, name):
+    def __init__(self, func, var, out, name):
         """Constructor
 
         :param func: Function mapping X^d -> X^r
-        :param inputs: Named inputs; must match order of X^d
-        :param outputs: Named outputs; must match order of X^r
+        :param var: Named variables; must match order of X^d
+        :param out: Named outputs; must match order of X^r
         :param name: Function name
 
         :type func: function
-        :type inputs: List of Strings
-        :type outputs: List of Strings
+        :type var: List of Strings
+        :type out: List of Strings
         :type name: String
 
         """
         self.func = func
-        self.inputs = inputs
-        self.outputs = outputs
+        self.var = var
+        self.out = out
         self.name = name
 
     def eval(self, df):
@@ -89,24 +89,24 @@ class Function:
 
         """
         ## Check invariant; model inputs must be subset of df columns
-        if not set(self.inputs).issubset(set(df.columns)):
+        if not set(self.var).issubset(set(df.columns)):
             raise ValueError(
-                "Model function `{}` inputs not a subset of given columns".format(self.name)
+                "Model function `{}` var not a subset of given columns".format(self.name)
             )
 
         ## Set up output
         n_rows  = df.shape[0]
-        results = np.zeros((n_rows, len(self.outputs)))
+        results = np.zeros((n_rows, len(self.out)))
         for ind in range(n_rows):
-            results[ind] = self.func(df.loc[ind, self.inputs])
+            results[ind] = self.func(df.loc[ind, self.var])
 
         ## Package output as DataFrame
-        return pd.DataFrame(data=results, columns=self.outputs)
+        return pd.DataFrame(data=results, columns=self.out)
 
     def summary(self):
         """Returns a summary string
         """
-        return "{0:}: {1:} -> {2:}".format(self.name, self.inputs, self.outputs)
+        return "{0:}: {1:} -> {2:}".format(self.name, self.var, self.out)
 
 class FunctionVectorized(Function):
     def eval(self, df):
@@ -120,7 +120,7 @@ class FunctionVectorized(Function):
 
         """
         df_res = self.func(df)
-        df_res.columns = self.outputs
+        df_res.columns = self.out
 
         return df_res
 
@@ -232,7 +232,10 @@ class Density:
         """
         self.marginals = marginals
         self.copula = copula
-        self.var_rand = list(map(lambda m: m.var, self.marginals))
+        try:
+            self.var_rand = list(map(lambda m: m.var, self.marginals))
+        except TypeError:
+            self.var_rand = []
 
 # Model parent class
 class Model:
@@ -254,8 +257,8 @@ class Model:
         @param domain [gr.domain] Model domain
         @param density [gr.density] Model density
 
-        @pre len(domain.inputs) == n_in
-        @pre len(outputs) == n_out
+        @pre len(domain.var) == n_in
+        @pre len(out) == n_out
         @pre isinstance(domain, domain_)
         @pre isinstance(density, density_) || (density is None)
         """
@@ -285,13 +288,13 @@ class Model:
 
         """
         ## Compute list of outputs
-        self.outputs = list(set().union(
-            *[f.outputs for f in self.functions]
+        self.out = list(set().union(
+            *[f.out for f in self.functions]
         ))
 
         ## Compute list of variables and parameters
         self.var = list(set().union(
-            *[f.inputs for f in self.functions]
+            *[f.var for f in self.functions]
         ))
         self.var_rand = self.density.var_rand
         self.var_det  = list(set(self.var).difference(self.var_rand))
@@ -302,7 +305,7 @@ class Model:
         self.n_var      = len(self.var)
         self.n_var_rand = len(self.var_rand)
         self.n_var_det  = len(self.var_det)
-        self.n_out      = len(self.outputs)
+        self.n_out      = len(self.out)
 
     def det_nom(self):
         """Return nominal conditions for deterministic variables
@@ -340,7 +343,7 @@ class Model:
         #     results[ind] = self.function(df.loc[ind, self.domain._variables])
 
         ## Package output as DataFrame
-        # return pd.DataFrame(data=results, columns=self.outputs)
+        # return pd.DataFrame(data=results, columns=self.out)
 
         list_df = []
         ## Evaluate each function
@@ -425,8 +428,8 @@ class Model:
         for ind in range(self.n_in):
             corr_mat.append(
                 list(map(
-                    lambda s: s + "," + self.domain.inputs[ind],
-                    self.domain.inputs
+                    lambda s: s + "," + self.domain.var[ind],
+                    self.domain.var
                 ))
             )
 

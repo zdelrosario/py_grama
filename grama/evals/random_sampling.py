@@ -190,7 +190,7 @@ def eval_sinews(
             df_res._plot_info = {
                 "type": "sinew_outputs",
                 "var": model.var_rand,
-                "outputs": model.outputs
+                "out": model.out
             }
 
         return df_res

@@ -107,7 +107,7 @@ def eval_grad_fd(
     stencil = np.eye(model.n_var) * h
     stepscale = np.tile(np.atleast_2d(0.5/h).T, (1, model.n_out))
 
-    outputs = model.outputs
+    outputs = model.out
     nested_labels = [
         list(map(lambda s_out: "D" + s_out + "_D" + s_var, outputs)) \
         for s_var in model.var

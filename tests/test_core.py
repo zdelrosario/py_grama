@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import unittest
 
-from collections import OrderedDict as od
 from context import grama as gr
 from context import models
 
@@ -71,7 +70,7 @@ class TestModel(unittest.TestCase):
         """
         self.assertEqual(
             set(self.model_2d.evaluate_df(self.df_2d).columns),
-            set(self.model_2d.outputs)
+            set(self.model_2d.out)
         )
 
     def test_2d_identity(self):
