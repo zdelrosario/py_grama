@@ -25,20 +25,18 @@ def tran_sobol(
         typename="ind",
         digits=2
 ):
-    """Estimate Sobol' indices based on hybrid point evaluations
+    """Estimate Sobol' indices based on hybrid point evaluations.
 
-    :param df: hybrid point output from a model
-    :param varname:
-    :param typename:
-    :param digits: Number of digits for rounding
+    Index type ["first", "total"] is inferred from input df._meta; this is
+    assigned by eval_hybrid().
 
-    :type df: Pandas DataFrame
-    :type varname: string
-    :type typename: string
-    :type digits: integer
+    @param df [Pandas DataFrame] Hybrid point output from a model
+    @param varname [String] Name of variable column in df
+    @param typename [String] Name to give index type column in return
+    @param digits [Integer] Number of digits for rounding reported results
 
-    :returns:
-    :rtype: Pandas DataFrame
+    @return [Pandas DataFrame] Sobol' indices
+
     """
     if not (varname in df.columns):
         raise ValueError("{} not in df.columns".format(varname))
