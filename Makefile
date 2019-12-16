@@ -1,8 +1,6 @@
 
-test_all:
-	python tests/test_pipes.py
-	python tests/test_core.py
-	python tests/test_evals.py
+test:
+	cd tests; python -m unittest discover
 
 coverage:
 	cd tests; coverage run -m unittest discover
