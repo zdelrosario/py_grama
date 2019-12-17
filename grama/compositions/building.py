@@ -166,21 +166,23 @@ def comp_marginals(model, **kwargs):
 
     ## Parse keyword arguments
     for key, value in kwargs.items():
+        value_copy = value.copy()
+
         ## Check for named marginal
         try:
-            dist = value.pop("dist")
+            dist = value_copy.pop("dist")
         except KeyError:
             raise NotImplementationError("Non-named marginals not implemented; please provide a valid 'dist' key")
 
         try:
-            sign = value.pop("sign")
+            sign = value_copy.pop("sign")
         except KeyError:
             sign = 0
 
         new_model.density.marginals[key] = core.MarginalNamed(
             sign=sign,
             d_name=dist,
-            d_param=value
+            d_param=value_copy
         )
 
     new_model.update()
