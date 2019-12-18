@@ -7,8 +7,7 @@ __all__ = [
     "Function",
     "FunctionVectorized",
     "MarginalNamed",
-    "Model",
-    "valid_dist"
+    "Model"
 ]
 
 from abc import ABC, abstractmethod
