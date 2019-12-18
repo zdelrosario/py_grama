@@ -166,16 +166,33 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
     the given quantile will be ignored and the median will automatically
     be selected.
 
-    @param quantiles array of integer values in [0, 0.5]; assumed to be
-    a lower quantile, automatically corrected if the upper quantile is
-    conservative.
+    @param quantiles lower quantile value(s) for conservative evaluation;
+                     can be single value for all inputs, array of values
+                     for each random variable, or None for default 0.01.
+                     values in [0, 0.5]
     @param df_det DataFrame deterministic samples
     @param append bool flag; append results to nominal inputs?
+    @param skip
 
-    @pre (len(quantiles) == model.n_in) || (quantiles is None)
+    @type quantiles float OR array of floats OR None
+    @type df_det pd.DataFrame OR "nom"
+    @type append bool
+    @type skip bool
+
+    @returns Conservative evaluation of random variables
+    @rtype pd.DataFrame
     """
+    ## Default behavior
     if quantiles is None:
+        print("eval_conservative() using quantile default 0.01;")
+        print("provide `quantiles` keyword for non-default behavior.")
         quantiles = [0.01] * model.n_var_rand
+
+    ## Handle scalar vs vector quantiles
+    try:
+        len(quantiles)
+    except TypeError:
+        quantiles = [quantiles] * model.n_var_rand
 
     ## Modify quantiles for conservative directions
     quantiles = [
