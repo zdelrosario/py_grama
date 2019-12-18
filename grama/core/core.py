@@ -19,36 +19,8 @@ import pandas as pd
 from itertools import chain
 from numpy.linalg import cholesky
 from ..transforms import tran_outer
-from ..tools import pipe
+from ..tools import pipe, valid_dist, param_dist
 from toolz import curry
-
-from scipy.stats import alpha, beta, chi, chi2, expon, gamma, laplace
-from scipy.stats import ncf, nct, pareto, powerlaw, rayleigh
-from scipy.stats import t, truncexpon, truncnorm, uniform, weibull_min, weibull_max
-from scipy.stats import norm, lognorm
-
-valid_dist = {
-    "alpha"       : alpha,
-    "beta"        : beta,
-    "chi"         : chi,
-    "chi2"        : chi2,
-    "expon"       : expon,
-    "gamma"       : gamma,
-    "laplace"     : laplace,
-    "ncf"         : ncf,
-    "nct"         : nct,
-    "pareto"      : pareto,
-    "powerlaw"    : powerlaw,
-    "rayleigh"    : rayleigh,
-    "t"           : t,
-    "truncexpon"  : truncexpon,
-    "truncnorm"   : truncnorm,
-    "uniform"     : uniform,
-    "weibull_min" : weibull_min,
-    "weibull_max" : weibull_max,
-    "norm"        : norm,
-    "lognorm"     : lognorm
-}
 
 ## Core functions
 ##################################################
