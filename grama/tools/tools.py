@@ -208,7 +208,7 @@ param_dist = {
     "norm": ["loc", "scale"],
     "norminvgauss": ["a", "b", "loc", "scale"],
     "pareto": ["b", "loc", "scale"],
-    "pearson": ["skew", "loc", "scale"],
+    "pearson3": ["skew", "loc", "scale"],
     "powerlaw": ["a", "loc", "scale"],
     "powerlognorm": ["c", "s", "loc", "scale"],
     "powernorm": ["c", "loc", "scale"],
