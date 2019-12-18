@@ -1,7 +1,8 @@
 __all__ = [
-    "pipe",
+    "continuous_fit",
     "df_equal",
     "param_dist",
+    "pipe",
     "valid_dist"
 ]
 
@@ -285,3 +286,24 @@ def df_equal(df1, df2):
         return False
 
     return df1[df2.columns].equals(df2)
+
+## Fit a named scipy.stats distribution
+def continuous_fit(data, dist):
+    """
+    Fits a named scipy.stats continuous distribution
+
+    @param data Data for fit
+    @param dist Distribution to fit
+
+    @type data iterable numeric
+    @type dist string
+
+    @returns distribution parameters organized by keyword
+    @rtype dict
+    """
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        res = valid_dist[dist].fit(data)
+
+    return dict(zip(param_dist[dist], res))
