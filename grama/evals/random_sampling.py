@@ -19,6 +19,7 @@ from scipy.stats import norm, lognorm
 from toolz import curry
 from pyDOE import lhs
 from numpy.linalg import cholesky, inv
+from numbers import Integral
 
 ## Simple Monte Carlo
 # --------------------------------------------------
@@ -38,7 +39,9 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
         np.random.seed(seed)
 
     ## Ensure sample count is int
-    n = int(n)
+    if not isinstance(n, Integral):
+        print("eval_monte_carlo() is rounding n...")
+        n = int(n)
 
     ## Draw samples
     df_quant = pd.DataFrame(
