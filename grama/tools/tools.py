@@ -10,6 +10,7 @@ import pandas as pd
 import warnings
 
 from functools import wraps
+from numbers import Integral
 
 from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime
 from scipy.stats import bradford, burr, burr12, cauchy, chi, chi2, cosine
@@ -288,22 +289,48 @@ def df_equal(df1, df2):
     return df1[df2.columns].equals(df2)
 
 ## Fit a named scipy.stats distribution
-def continuous_fit(data, dist):
-    """
-    Fits a named scipy.stats continuous distribution
+def continuous_fit(data, dist, name=True, sign=None):
+    """Fits a named scipy.stats continuous distribution. Intended to be used to
+    define a marginal distribution from data.
 
     @param data Data for fit
     @param dist Distribution to fit
+    @param name Include distribution name?
+    @param sign Include sign? (Optional)
 
     @type data iterable numeric
     @type dist string
+    @type name bool
+    @type sign integer
 
     @returns distribution parameters organized by keyword
     @rtype dict
+
+    Examples:
+
+    import grama as gr
+    from grama.misc import df_stang
+
+    param_E  = gr.continuous_fit(df_stang.E, "norm")
+    param_mu = gr.continuous_fit(df_stang.mu, "beta")
+
+    md = gr.Model("Marginal Example") >> \
+        gr.cp_marginals(E=param_E, mu=param_mu)
+    md.printpretty()
     """
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         res = valid_dist[dist].fit(data)
 
-    return dict(zip(param_dist[dist], res))
+    res = dict(zip(param_dist[dist], res))
+
+    if name:
+        res["dist"] = dist
+
+    if sign is not None:
+        if not (sign in [-1, 0, +1]):
+            raise ValueError("Invalid `sign`")
+        res["sign"] = sign
+
+    return res
