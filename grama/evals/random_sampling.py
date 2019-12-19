@@ -33,6 +33,24 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
     @param seed random seed to use
     @param append bool flag; append results to original dataframe?
     @param skip bool flag; skip computing the results? (return the design)
+
+    @type n numeric
+    @type df_det pd.DataFrame
+    @type seed integer
+    @type append bool
+    @skip bool
+
+    @returns Results of Monte Carlo simulation
+    @rtype pd.DataFrame
+
+    Examples:
+
+    import grama as gr
+    from grama.models import make_test
+
+    md = make_test()
+    df = md >> gr.ev_monte_carlo(n=1e2, df_det="nom")
+    df.describe()
     """
     ## Set seed only if given
     if seed is not None:
