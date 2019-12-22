@@ -28,14 +28,14 @@ def pt_sinew_inputs(*args, **kwargs):
     return plot_sinew_inputs(*args, **kwargs)
 
 @curry
-def plot_sinew_outputs(df, var=None, outputs=None, sweep_ind="sweep_ind", sweep_var="sweep_var"):
+def plot_sinew_outputs(df, var=None, out=None, sweep_ind="sweep_ind", sweep_var="sweep_var"):
     """
     Construct sinew plot
     """
     if var is None:
         raise ValueError("Must provide input columns list as keyword arg var")
-    if outputs is None:
-        raise ValueError("Must provide output columns list as keyword arg outputs")
+    if out is None:
+        raise ValueError("Must provide output columns list as keyword arg out")
 
     ## Prepare data
     # Gather inputs
@@ -49,11 +49,11 @@ def plot_sinew_outputs(df, var=None, outputs=None, sweep_ind="sweep_ind", sweep_
     )
 
     # Gather outputs
-    id_vars = [col for col in df_tmp.columns if col not in outputs]
+    id_vars = [col for col in df_tmp.columns if col not in out]
     df_plot = pd.melt(
         df_tmp,
         id_vars,
-        outputs,
+        out,
         "_output",
         "_y"
     )
