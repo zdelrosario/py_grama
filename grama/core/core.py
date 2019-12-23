@@ -135,10 +135,7 @@ class Domain:
 
         self.bounds   = bounds
         self.feasible = feasible
-        try:
-            self.var = bounds.keys()
-        except AttributeError:
-            self.var = []
+        self.var = bounds.keys()
 
     def copy(self):
         new_domain = Domain(
@@ -149,16 +146,13 @@ class Domain:
         return new_domain
 
     def bound_summary(self, bound):
-        try:
-            if bound in self.bounds.keys():
-                return "{0:}: [{1:}, {2:}]".format(
-                    bound,
-                    self.bounds[bound][0],
-                    self.bounds[bound][1],
-                )
-            else:
-                return "{0:}: (unbounded)".format(bound)
-        except AttributeError:
+        if bound in self.bounds.keys():
+            return "{0:}: [{1:}, {2:}]".format(
+                bound,
+                self.bounds[bound][0],
+                self.bounds[bound][1],
+            )
+        else:
             return "{0:}: (unbounded)".format(bound)
 
 # Marginal parent class

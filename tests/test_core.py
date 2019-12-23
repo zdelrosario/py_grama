@@ -125,6 +125,9 @@ class TestMarginal(unittest.TestCase):
 
     def test_fcn(self):
 
+        ## Invoke summary
+        self.marginal_named.summary()
+
         self.assertTrue(
             self.marginal_named.l(0.5) == norm.pdf(0.5)
         )
@@ -137,6 +140,23 @@ class TestMarginal(unittest.TestCase):
             self.marginal_named.q(0.5) == norm.ppf(0.5)
         )
 
+
+class TestDomain(unittest.TestCase):
+
+    def setUp(self):
+        self.domain = gr.Domain(bounds={"x": (0, 1)})
+
+    def test_blank(self):
+        ## Test blank domain valid
+        gr.Domain()
+
+        ## Invoke summary
+        self.domain.bound_summary("x")
+
+        ## Invoke summary;
+        self.assertTrue(
+            self.domain.bound_summary("y").find("unbounded") > -1
+        )
 
 ## Run tests
 if __name__ == "__main__":
