@@ -50,13 +50,22 @@ class TestModel(unittest.TestCase):
 
     ## Test default evaluations
 
-    def test_nominal_accurate(self):
+    def test_nominal(self):
         """Checks the nominal evaluation is accurate
         """
         df_res = gr.eval_nominal(self.model_2d)
 
+        ## Accurate
         self.assertTrue(
             np.allclose(self.df_2d_nominal, df_res)
+        )
+
+        ## Pass-through
+        self.assertTrue(
+            np.allclose(
+                self.df_2d_nominal.drop(["f", "g"], axis=1),
+                gr.eval_nominal(self.model_2d, skip=True)
+            )
         )
 
     def test_grad_fd_accurate(self):
@@ -72,15 +81,26 @@ class TestModel(unittest.TestCase):
             np.allclose(df_grad[self.df_2d_grad.columns], self.df_2d_grad)
         )
 
-    def test_conservative_accurate(self):
-        """Checks that conservative QE is accurate
-        """
+    def test_conservative(self):
+        ## Accuracy
         df_res = gr.eval_conservative(
             self.model_2d,
             quantiles=[0.1, 0.1]
         )
 
         self.assertTrue(np.allclose(self.df_2d_qe, df_res))
+
+        ## Repeat scalar value
+        self.assertTrue(np.allclose(
+            self.df_2d_qe,
+            gr.eval_conservative(self.model_2d, quantiles=0.1)
+        ))
+
+        ## Pass-through
+        self.assertTrue(np.allclose(
+            self.df_2d_qe.drop(["f", "g"], axis=1),
+            gr.eval_conservative(self.model_2d, quantiles=0.1, skip=True)
+        ))
 
 ## Run tests
 if __name__ == "__main__":
