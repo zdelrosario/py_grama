@@ -366,15 +366,6 @@ class Model:
         if not set(self.var).issubset(set(df.columns)):
             raise ValueError("Model inputs not a subset of given columns")
 
-        # ## Set up output
-        # n_rows  = df.shape[0]
-        # results = np.zeros((n_rows, self.n_out))
-        # for ind in range(n_rows):
-        #     results[ind] = self.function(df.loc[ind, self.domain._variables])
-
-        ## Package output as DataFrame
-        # return pd.DataFrame(data=results, columns=self.out)
-
         list_df = []
         ## Evaluate each function
         for func in self.functions:

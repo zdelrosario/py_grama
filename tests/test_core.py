@@ -47,6 +47,22 @@ class TestModel(unittest.TestCase):
         self.df_median_in = pd.DataFrame({"x": [0.5], "y": [0.5]})
         self.df_median_out = pd.DataFrame({"x": [0.0], "y": [0.5]})
 
+        self.model_3d = gr.Model(
+            functions=[
+                gr.Function(
+                    lambda x: x[0] + x[1] + x[2],
+                    ["x", "y", "z"],
+                    ["f"],
+                    "test"
+                )
+            ],
+            density=gr.Density(marginals=marginals)
+        )
+
+    def test_prints(self):
+        ## Invoke printpretty
+        self.model_3d.printpretty()
+
     ## Basic functionality with default arguments
 
     def test_catch_input_mismatch(self):
@@ -58,6 +74,22 @@ class TestModel(unittest.TestCase):
             self.model_2d.evaluate_df,
             self.df_wrong
         )
+
+    def test_var_outer(self):
+        with self.assertRaises(ValueError):
+            self.model_3d.var_outer(self.df_2d)
+
+        with self.assertRaises(ValueError):
+            self.model_3d.var_outer(self.df_2d, df_det="foo")
+
+        with self.assertRaises(ValueError):
+            self.model_3d.var_outer(self.df_2d, df_det=self.df_2d)
+
+    def test_var_rand_quantile(self):
+        ## TODO: Copula tests
+
+        with self.assertRaises(ValueError):
+            self.model_2d.var_rand_quantile(self.df_wrong)
 
     ## Test re-ordering issues
 
