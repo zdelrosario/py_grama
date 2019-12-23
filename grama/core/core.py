@@ -168,13 +168,9 @@ class Marginal(ABC):
     def __init__(self, sign=0):
         self.sign = sign
 
+    @abstractmethod
     def copy(self):
-        new_marginal = Marginal(
-            copy.deepcopy(self.var),
-            sign=self.sign
-        )
-
-        return new_marginal
+        pass
 
     ## Likelihood function
     @abstractmethod
@@ -214,9 +210,6 @@ class MarginalNamed(Marginal):
         )
 
         return new_marginal
-
-    def __deepcopy(self):
-        return self.copy()
 
     ## Likelihood function
     def l(self, x):

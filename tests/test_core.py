@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.stats import norm
 import unittest
 
 from context import grama as gr
@@ -113,6 +114,29 @@ class TestEvalDf(unittest.TestCase):
             gr.eval_df,
             self.model
         )
+
+class TestMarginal(unittest.TestCase):
+
+    def setUp(self):
+        self.marginal_named = gr.MarginalNamed(
+            d_name="norm",
+            d_param={"loc": 0, "scale": 1}
+        )
+
+    def test_fcn(self):
+
+        self.assertTrue(
+            self.marginal_named.l(0.5) == norm.pdf(0.5)
+        )
+
+        self.assertTrue(
+            self.marginal_named.p(0.5) == norm.cdf(0.5)
+        )
+
+        self.assertTrue(
+            self.marginal_named.q(0.5) == norm.ppf(0.5)
+        )
+
 
 ## Run tests
 if __name__ == "__main__":
