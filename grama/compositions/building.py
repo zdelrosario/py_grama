@@ -172,7 +172,7 @@ def comp_marginals(model, **kwargs):
         try:
             dist = value_copy.pop("dist")
         except KeyError:
-            raise NotImplementationError("Non-named marginals not implemented; please provide a valid 'dist' key")
+            raise NotImplementedError("Non-named marginals not implemented; please provide a valid 'dist' key")
 
         try:
             sign = value_copy.pop("sign")

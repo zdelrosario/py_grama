@@ -88,6 +88,29 @@ class TestMBI(unittest.TestCase):
             "test"
         )
 
+        ## Invariant checks
+        with self.assertRaises(ValueError):
+            gr.comp_function(
+                self.md,
+                fun=None,
+                var=["foo"],
+                out=["bar"]
+            )
+        with self.assertRaises(ValueError):
+            gr.comp_function(
+                self.md,
+                fun=lambda x: x,
+                var=None,
+                out=["bar"]
+            )
+        with self.assertRaises(ValueError):
+            gr.comp_function(
+                self.md,
+                fun=lambda x: x,
+                var=["foo"],
+                out=None
+            )
+
     def test_comp_bounds(self):
         """Test comp_bounds()"""
 
@@ -153,3 +176,7 @@ class TestMBI(unittest.TestCase):
         self.assertEqual(md3.n_var_rand, 1)
         self.assertEqual(md3.var_det, ["y"])
         self.assertEqual(md3.var_rand, ["x"])
+
+        ## Invariant raises
+        with self.assertRaises(NotImplementedError):
+            gr.comp_marginals(self.md, x={})
