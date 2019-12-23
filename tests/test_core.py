@@ -158,6 +158,60 @@ class TestDomain(unittest.TestCase):
             self.domain.bound_summary("y").find("unbounded") > -1
         )
 
+class TestFunction(unittest.TestCase):
+
+    def setUp(self):
+        self.fcn = gr.Function(
+            lambda x: x,
+            ["x"],
+            ["x"],
+            "test"
+        )
+
+        self.fcn_vec = gr.FunctionVectorized(
+            lambda df: df,
+            ["x"],
+            ["x"],
+            "test"
+        )
+
+        self.df = pd.DataFrame({"x": [0]})
+
+        self.df_wrong = pd.DataFrame({"z": [0]})
+
+    def test_function(self):
+        fcn_copy = self.fcn.copy()
+
+        self.assertTrue(self.fcn.var == fcn_copy.var)
+        self.assertTrue(self.fcn.out == fcn_copy.out)
+        self.assertTrue(self.fcn.name == fcn_copy.name)
+
+        pd.testing.assert_frame_equal(
+            self.df,
+            self.fcn.eval(self.df),
+            check_dtype=False
+        )
+
+        with self.assertRaises(ValueError):
+            self.fcn.eval(self.df_wrong)
+
+        ## Invoke summary
+        self.fcn.summary()
+
+    def test_function_vectorized(self):
+        fcn_copy = self.fcn_vec.copy()
+
+        self.assertTrue(self.fcn_vec.var == fcn_copy.var)
+        self.assertTrue(self.fcn_vec.out == fcn_copy.out)
+        self.assertTrue(self.fcn_vec.name == fcn_copy.name)
+
+        pd.testing.assert_frame_equal(
+            self.df,
+            self.fcn_vec.eval(self.df),
+            check_dtype=False
+        )
+
+
 ## Run tests
 if __name__ == "__main__":
     unittest.main()
