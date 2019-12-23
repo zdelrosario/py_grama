@@ -114,7 +114,9 @@ def eval_lhs(
         np.random.seed(seed)
 
     ## Ensure sample count is int
-    n = int(n)
+    if not isinstance(n, Integral):
+        print("eval_monte_carlo() is rounding n...")
+        n = int(n)
 
     ## Draw samples
     df_quant = pd.DataFrame(
