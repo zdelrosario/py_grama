@@ -334,18 +334,18 @@ def eval_hybrid(
         n = int(n)
 
     ## Draw hybrid points
-    X = np.random.random((n_samples, model.n_var_rand))
-    Z = np.random.random((n_samples, model.n_var_rand))
+    X = np.random.random((n, model.n_var_rand))
+    Z = np.random.random((n, model.n_var_rand))
 
     ## Reserve space
-    Q_all = np.zeros((n_samples * (model.n_var_rand + 1), model.n_var_rand))
-    Q_all[:n_samples] = X # Base samples
-    C_var = ["_"] * (n_samples * (model.n_var_rand + 1))
+    Q_all = np.zeros((n * (model.n_var_rand + 1), model.n_var_rand))
+    Q_all[:n] = X # Base samples
+    C_var = ["_"] * (n * (model.n_var_rand + 1))
 
     ## Interleave samples
     for i_in in range(model.n_var_rand):
-        i_start = (i_in + 1) * n_samples
-        i_end   = (i_in + 2) * n_samples
+        i_start = (i_in + 1) * n
+        i_end   = (i_in + 2) * n
 
         if plan == "first":
             Q_all[i_start:i_end, :]    = Z
@@ -356,7 +356,7 @@ def eval_hybrid(
         else:
             raise ValueError("plan must be `first` or `total`")
 
-        C_var[i_start:i_end] = [model.var_rand[i_in]] * n_samples
+        C_var[i_start:i_end] = [model.var_rand[i_in]] * n
 
     ## Construct sampling plan
     df_quant = pd.DataFrame(data=Q_all, columns=model.var_rand)
