@@ -270,6 +270,10 @@ class pipe(object):
             result = p.__rrshift__(result)
         return result
 
+    def __repr__(self):
+        return self.__name__ + ": " + self.function.__name__ + \
+            "\n Did you mean to use a full-prefix verb?"
+
     def __call__(self, *args, **kwargs):
         return pipe(lambda x: self.function(x, *args, **kwargs))
 
