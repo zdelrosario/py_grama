@@ -10,6 +10,9 @@ Welcome to py_grama's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   source/overview
+   source/language
+
 .. autosummary::
    :toctree: stubs
 
