@@ -51,19 +51,22 @@ def make_cantilever_beam():
              fun=function_area,
              var=["w", "t"],
              out=["c_area"],
-             name="cross-sectional area"
+             name="cross-sectional area",
+             runtime=1.717e-7
          ) >> \
          cp.cp_function(
              fun=function_stress,
              var=["w", "t", "H", "V", "E", "Y"],
              out=["g_stress"],
-             name="limit state: stress"
+             name="limit state: stress",
+             runtime=8.88e-7
          ) >> \
          cp.cp_function(
              fun=function_displacement,
              var=["w", "t", "H", "V", "E", "Y"],
              out=["g_disp"],
-             name="limit state: displacement"
+             name="limit state: displacement",
+             runtime=3.97e-6
          ) >> \
          cp.cp_bounds(
              w=(2, 4),

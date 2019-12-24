@@ -74,6 +74,19 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
     if skip:
+        ## Evaluation estimate
+        runtime_est = model.runtime(df_samp.shape[0])
+        if runtime_est > 0:
+            print(
+                "Estimated runtime for design with model ({0:1}):\n  {1:4.3} sec"
+                .format(model.name, runtime_est)
+            )
+        else:
+            print(
+                "Design runtime estimates unavailable; model has no timing data."
+            )
+
+        ## Attach metadata
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             df_samp._plot_info = {
@@ -84,6 +97,8 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
         return df_samp
     else:
         df_res = eval_df(model, df=df_samp, append=append)
+
+        ## Attach metadata
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             df_res._plot_info = {
@@ -268,10 +283,23 @@ def eval_sinews(
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
     if skip:
+        ## Evaluation estimate
+        runtime_est = model.runtime(df_samp.shape[0])
+        if runtime_est > 0:
+            print(
+                "Estimated runtime for design with model ({0:1}):\n  {1:4.3} sec"
+                .format(model.name, runtime_est)
+            )
+        else:
+            print(
+                "Design runtime estimates unavailable; model has no timing data."
+            )
+
         ## For autoplot
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             df_samp._plot_info = {"type": "sinew_inputs", "var": model.var_rand}
+
         ## Pass-through
         return df_samp
     else:
