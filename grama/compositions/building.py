@@ -19,7 +19,7 @@ from toolz import curry
 # -------------------------
 @curry
 def comp_function(
-    model, fun=None, var=None, out=None, name=None
+        model, fun=None, var=None, out=None, name=None, runtime=0
 ):
     """Add a function to a model
 
@@ -30,6 +30,7 @@ def comp_function(
         fun (function): Function taking R^d -> R^r
         var (list(string)): List of variable names or number of inputs
         out (list(string)): List of output names or number of outputs
+        runtime (numeric): Estimated single-eval runtime (in seconds)
 
     Returns:
         gr.model: New model with added function
@@ -76,7 +77,7 @@ def comp_function(
 
     ## Add new function
     model_new.functions.append(
-        core.Function(fun, var, out, name)
+        core.Function(fun, var, out, name, runtime)
     )
 
     model_new.update()

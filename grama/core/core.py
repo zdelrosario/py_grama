@@ -21,6 +21,9 @@ from ..transforms import tran_outer
 from ..tools import pipe, valid_dist, param_dist
 from toolz import curry
 
+## Package settings
+RUNTIME_LOWER = 1 # Cutoff threshold for runtime messages
+
 ## Core functions
 ##################################################
 # Function class
@@ -31,7 +34,7 @@ class Function:
     full model's inputs and outputs.
 
     """
-    def __init__(self, func, var, out, name):
+    def __init__(self, func, var, out, name, runtime):
         """Function constructor
 
         Construct a grama function. Generally not called directly; preferred
@@ -42,6 +45,7 @@ class Function:
             var (list(str)): Named variables; must match order of X^d
             out (list(str)): Named outputs; must match order of X^r
             name (str): Function name
+            runtime (numeric): Estimated single-eval runtime (in seconds)
 
         Returns:
             gr.Function: grama function
@@ -51,6 +55,7 @@ class Function:
         self.var = var
         self.out = out
         self.name = name
+        self.runtime = runtime
 
     def copy(self):
         """Make a copy"""
@@ -58,7 +63,8 @@ class Function:
             copy.deepcopy(self.func),
             copy.deepcopy(self.var),
             copy.deepcopy(self.out),
-            copy.deepcopy(self.name)
+            copy.deepcopy(self.name),
+            runtime=self.runtime
         )
         return func_new
 
@@ -115,7 +121,13 @@ class FunctionVectorized(Function):
 
     def copy(self):
         """Make a copy"""
-        func_new = FunctionVectorized(self.func, self.var, self.out, self.name)
+        func_new = FunctionVectorized(
+            self.func,
+            self.var,
+            self.out,
+            self.name,
+            self.runtime
+        )
         return func_new
 
 # Domain parent class
@@ -435,6 +447,46 @@ class Model:
         self.n_var_rand = len(self.var_rand)
         self.n_var_det  = len(self.var_det)
         self.n_out      = len(self.out)
+
+    def runtime(self, n):
+        """Estimate runtime
+
+        Estimate the total runtime to evaluate n observations.
+
+        Args:
+            self (gr.Model):
+            n (int): Number of observations
+
+        Returns:
+            float: Estimated runtime, in seconds
+
+        """
+        rate = 0
+        for fun in self.functions:
+            rate = rate + fun.runtime
+
+        return rate * n
+
+    def runtime_message(self, df):
+        """Runtime message
+
+        Estimate total runtime based on proposed DataFrame, prepare a message
+        for console print. Print no message if runtime is negligible.
+
+        Args:
+            self (gr.Model):
+            df (DataFrame): Data to evaluate
+
+        Returns:
+            str: Runtime message
+
+        """
+        runtime = self.runtime(df.shape[0])
+
+        if runtime < RUNTIME_LOWER:
+            return None
+        else:
+            return "Estimated runtime: {0:3.4f} sec".format(runtime)
 
     def det_nom(self):
         """Return nominal conditions for deterministic variables

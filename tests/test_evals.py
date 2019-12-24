@@ -30,7 +30,8 @@ class TestDefaults(unittest.TestCase):
                     lambda x: [x[0], x[1]],
                     ["x", "y"],
                     ["f", "g"],
-                    "test"
+                    "test",
+                    0
                 )
             ],
             domain=domain_2d,

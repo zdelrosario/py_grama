@@ -35,7 +35,8 @@ class TestModel(unittest.TestCase):
                     lambda x: [x[0], x[1]],
                     ["x", "y"],
                     ["x", "y"],
-                    "test"
+                    "test",
+                    0
                 )
             ],
             domain=domain_2d,
@@ -53,15 +54,52 @@ class TestModel(unittest.TestCase):
                     lambda x: x[0] + x[1] + x[2],
                     ["x", "y", "z"],
                     ["f"],
-                    "test"
+                    "test",
+                    0
                 )
             ],
             density=gr.Density(marginals=marginals)
         )
 
+        ## Timing check
+        self.model_slow = gr.Model(
+            functions=[
+                gr.Function(
+                    lambda x: x,
+                    ["x"],
+                    ["y"],
+                    "f0",
+                    1
+                ),
+                gr.Function(
+                    lambda x: x,
+                    ["x"],
+                    ["y"],
+                    "f1",
+                    1
+                )
+            ]
+        )
+
     def test_prints(self):
         ## Invoke printpretty
         self.model_3d.printpretty()
+
+    def test_timings(self):
+        ## Default is zero
+        self.assertTrue(self.model_2d.runtime(1) == 0)
+
+        ## Estimation accounts for both functions
+        self.assertTrue(np.allclose(self.model_slow.runtime(1), 2))
+
+        ## Fast function has empty message
+        self.assertTrue(self.model_2d.runtime_message(self.df_2d) is None)
+
+        ## Slow function returns string message
+        msg = self.model_slow.runtime_message(pd.DataFrame({"x": [0]}))
+        self.assertTrue(
+            isinstance(msg, str)
+        )
 
     ## Basic functionality with default arguments
 
@@ -197,14 +235,16 @@ class TestFunction(unittest.TestCase):
             lambda x: x,
             ["x"],
             ["x"],
-            "test"
+            "test",
+            0
         )
 
         self.fcn_vec = gr.FunctionVectorized(
             lambda df: df,
             ["x"],
             ["x"],
-            "test"
+            "test",
+            0
         )
 
         self.df = pd.DataFrame({"x": [0]})
