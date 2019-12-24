@@ -3,3 +3,4 @@ pandas
 pyDOE
 scipy
 statsmodels
+toolz
