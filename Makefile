@@ -4,5 +4,5 @@ test:
 
 coverage:
 	cd tests; coverage run -m unittest discover
-	coverage html
+	cd tests; coverage html
 	xdg-open htmlcov/index.html
