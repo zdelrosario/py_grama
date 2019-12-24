@@ -299,7 +299,7 @@ class Density:
     defines the list of random variables, and together implicitly defines the
     deterministic variables via
 
-        domain.var + [functions.var] - density._variables
+        domain.var + [functions.var] - density.marginals.keys()
 
     """
     def __init__(self, marginals=None, copula=None):
