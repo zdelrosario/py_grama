@@ -12,6 +12,7 @@ Welcome to py_grama's documentation!
 
    source/overview
    source/language
+   source/modules
 
 .. autosummary::
    :toctree: stubs
