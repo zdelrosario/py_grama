@@ -12,7 +12,17 @@ from toolz import curry
 ## DataFrame outer product
 @curry
 def tran_outer(df, df_outer):
-    """Perform an outer-merge on two dataframes
+    """Outer merge
+
+    Perform an outer-merge on two dataframes.
+
+    Args:
+        df (DataFrame): Data to merge
+        df_outer (DataFrame): Data to merge; outer
+
+    Returns:
+        DataFrame: Merged data
+
     """
     n_rows = df.shape[0]
     list_df = []

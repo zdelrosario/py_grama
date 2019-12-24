@@ -16,23 +16,27 @@ from toolz import curry
 # --------------------------------------------------
 @curry
 def fit_ols(df, formulae=[""], domain=None, density=None):
-    """Fit a model via Ordinary Least Squares
+    """Fit a function via Ordinary Least Squares
 
-    @param df pandas dataframe
-    @param formulae set of R-like formula strings
-    @param domain domain object for new model
-    @param density density object for new model
+    Fit a function via ordinary least squares. Specify features via
+    statsmodels formula.
 
-    @return model a valid grama model
+    Args:
+        df (DataFrame): Data for function fitting
+        formulae (list(str)): List of statsmodels formulae
+        domain (gr.Domain): Domain for new model
+        density (gr.Density): Density for new model
+
+    Returns:
+        gr.Model: A grama model with fitted function(s)
 
     @pre domain is not None
     @pre len(formulae) == len(domain.inputs)
+
+    Notes:
+        - Wrapper for statsmodels.formula.api.ols
+
     """
-
-    ## Check invariants
-    if domain is None:
-        raise ValueError("No domain given")
-
     n_obs, n_in = df.shape
 
     ## Parse formulae for output names

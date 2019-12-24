@@ -14,43 +14,44 @@ import pandas as pd
 import warnings
 
 from .defaults import eval_df
-from ..tools import pipe
+from ..tools import pipe, custom_formatwarning
 from scipy.stats import norm, lognorm
 from toolz import curry
 from pyDOE import lhs
 from numpy.linalg import cholesky, inv
 from numbers import Integral
 
+warnings.formatwarning = custom_formatwarning
+
 ## Simple Monte Carlo
 # --------------------------------------------------
 @curry
 def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False):
-    """Evaluates a given model at a given dataframe. Generates outer product
-    with deterministic samples
+    """Monte Carlo evaluation
 
-    @param n number of Monte Carlo samples to draw
-    @param df_det DataFrame deterministic samples
-    @param seed random seed to use
-    @param append bool flag; append results to original dataframe?
-    @param skip bool flag; skip computing the results? (return the design)
+    Evaluates a given model at a given dataframe. Generates outer product
+    with deterministic samples.
 
-    @type n numeric
-    @type df_det pd.DataFrame
-    @type seed integer
-    @type append bool
-    @skip bool
+    Args:
+        model (gr.Model): Model to evaluate
+        n (numeric): number of Monte Carlo samples to draw
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
+            for nominal deterministic levels.
+        seed (int): random seed to use
+        append (bool): Append results to random values?
+        skip (bool): Skip evaluation?
 
-    @returns Results of Monte Carlo simulation
-    @rtype pd.DataFrame
+    Returns:
+        DataFrame: Results of evaluation or unevaluated design
 
     Examples:
 
-    import grama as gr
-    from grama.models import make_test
+        >>> import grama as gr
+        >>> from grama.models import make_test
+        >>> md = make_test()
+        >>> df = md >> gr.ev_monte_carlo(n=1e2, df_det="nom")
+        >>> df.describe()
 
-    md = make_test()
-    df = md >> gr.ev_monte_carlo(n=1e2, df_det="nom")
-    df.describe()
     """
     ## Set seed only if given
     if seed is not None:
@@ -93,21 +94,29 @@ def eval_lhs(
         skip=False,
         criterion=None
 ):
-    """Evaluates a given model on a latin hypercube sample (LHS)
-    using the model's density
+    """Latin Hypercube evaluation
 
-    @param n number of LHS samples to draw
-    @param df_det DataFrame deterministic samples
-    @param seed random seed to use
-    @param append bool flag; append results to original dataframe?
-    @param skip bool flag; skip computing the results? (return the design)
-    @param criterion flag for LHS sample criterion
-           allowable values: None, "center" ("c"), "maxmin" ("m"),
-                             "centermaxmin" ("cm"), "correlation" ("corr")
+    Evaluates a given model on a latin hypercube sample (LHS) using the model's
+    density.
 
-    Built on pyDOE.lhs
+    Args:
+        model (gr.Model): Model to evaluate
+        n (numeric): Number of LHS samples to draw
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
+            for nominal deterministic levels.
+        seed (int): Random seed to use
+        append (bool): Append results to conservative inputs?
+        skip (bool): Skip evaluation?
+        criterion (str): flag for LHS sample criterion
+            allowable values: None, "center" ("c"), "maxmin" ("m"),
+            "centermaxmin" ("cm"), "correlation" ("corr")
 
-    Only implemented for gaussian copula distributions for now.
+    Returns:
+        DataFrame: Results of evaluation or unevaluated design
+
+    Notes:
+        - Wrapper on pyDOE.lhs
+
     """
     ## Set seed only if given
     if seed is not None:
@@ -152,11 +161,53 @@ def eval_sinews(
         append=True,
         skip=False
 ):
-    """Perform sweeps over each model marginal (sinew)
+    """Sweep study
+
+    Perform coordinate sweeps over each model random variable ("sinew" design).
+    Use random starting points drawn from the joint density.
+
+    Use gr.plot_auto() to construct a quick visualization of the output
+    dataframe. Use `skip` version to visualize the design, and non-skipped
+    version to visualize the results.
+
+    Args:
+        model (gr.Model): Model to evaluate
+        n_density (numeric): Number of points along each sweep
+        n_sweeps (numeric): Number of sweeps per-random variable
+        seed (int): Random seed to use
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
+            for nominal deterministic levels.
+        varname (str): Column name to give for sweep variable; default="sweep_var"
+        indname (str): Column name to give for sweep index; default="sweep_ind"
+        append (bool): Append results to conservative inputs?
+        skip (bool): Skip evaluation?
+
+    Returns:
+        DataFrame: Results of evaluation or unevaluated design
+
+    Examples:
+
+        >>> import grama as gr
+        >>> md = gr.make_cantilever_beam()
+        >>> # Skip evaluation, vis. design
+        >>> df_design = md >> gr.ev_sinews(df_det="nom", skip=True)
+        >>> df_design >> gr.pt_auto()
+        >>> # Vis results
+        >>> df_sinew = md >> gr.ev_sinews(df_det="nom")
+        >>> df_sinew >> gr.pt_auto()
+
     """
     ## Set seed only if given
     if seed is not None:
         np.random.seed(seed)
+
+    ## Ensure sample count is int
+    if not isinstance(n_density, Integral):
+        print("eval_sinews() is rounding n_density...")
+        n_density = int(n_density)
+    if not isinstance(n_sweeps, Integral):
+        print("eval_sinews() is rounding n_sweeps...")
+        n_sweeps = int(n_sweeps)
 
     ## Build quantile sweep data
     q_random = np.tile(
@@ -231,20 +282,56 @@ def ev_sinews(*args, **kwargs):
 @curry
 def eval_hybrid(
         model,
-        n_samples=1,
+        n=1,
+        plan="first",
         df_det=None,
         varname="hybrid_var",
-        plan="first",
         seed=None,
         append=True,
         skip=False
 ):
-    """Hybrid points for first order indices
+    """Hybrid points for Sobol' indices
+
+    Use the "hybrid point" design (Sobol', 1999) to support estimating Sobol'
+    indices. Use gr.tran_sobol() to post-process the results and compute
+    estimates.
+
+    Args:
+        model (gr.Model): Model to evaluate
+        n (numeric): Number of points along each sweep
+        plan (str): Sobol' index to compute; plan={"first", "total"}
+        seed (int): Random seed to use
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
+            for nominal deterministic levels.
+        varname (str): Column name to give for sweep variable; default="hybrid_var"
+        append (bool): Append results to conservative inputs?
+        skip (bool): Skip evaluation?
+
+    Returns:
+        DataFrame: Results of evaluation or unevaluated design
+
+    References:
+        I.M. Sobol', "Sensitivity Estimates for Nonlinear Mathematical Models"
+        (1999) MMCE, Vol 1.
+
+    Examples:
+
+        >>> import grama as gr
+        >>> md = gr.make_cantilever_beam()
+        >>> df_first = md >> gr.ev_hybrid(df_det="nom", plan="first")
+        >>> df_first >> gr.tf_sobol()
+        >>>
+        >>> df_total = md >> gr.ev_hybrid(df_det="nom", plan="total")
+        >>> df_total >> gr.tf_sobol()
+
     """
     ## Set seed only if given
     if seed is not None:
         np.random.seed(seed)
-    n_samples = int(n_samples)
+
+    if not isinstance(n, Integral):
+        print("eval_hybrid() is rounding n...")
+        n = int(n)
 
     ## Draw hybrid points
     X = np.random.random((n_samples, model.n_var_rand))

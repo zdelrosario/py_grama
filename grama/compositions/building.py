@@ -21,23 +21,33 @@ from toolz import curry
 def comp_function(
     model, fun=None, var=None, out=None, name=None
 ):
-    """Add a function to a model.
+    """Add a function to a model
 
-    @param model Model to compose
-    @param fun Function taking R^d -> R^r
-    @param var List of variable names or number of inputs
-    @param out List of output names or number of outputs
+    Composition: Add a function to an existing model.
 
-    @type model gr.model
-    @type fun function
-    @type var list(string)
-    @param out list(string)
+    Args:
+        model (gr.model): Model to compose
+        fun (function): Function taking R^d -> R^r
+        var (list(string)): List of variable names or number of inputs
+        out (list(string)): List of output names or number of outputs
 
-    @returns New model with added function
-    @rtype gr.model
+    Returns:
+        gr.model: New model with added function
 
     @pre (len(var) == d) | (var == d)
     @pre (len(out) == r) | (var == r)
+
+    Examples:
+
+        >>> import grama as gr
+        >>> md = gr.Model("test") >> \
+        >>>     gr.function(
+        >>>         fun=lambda x: x,
+        >>>         var=1,
+        >>>         out=["y"],
+        >>>         name="identity"
+        >>>     )
+
     """
     model_new = model.copy()
 
@@ -80,35 +90,34 @@ def cp_function(*args, **kwargs):
 # -------------------------
 @curry
 def comp_bounds(model, **kwargs):
-    """Add variable bounds to a model.
+    """Add variable bounds to a model
 
-    Bounds are specified by iterable; the model variable name is specified by the
-    keyword argument name.
+    Composition: Add variable bounds to an existing model. Bounds are specified
+    by iterable; the model variable name is specified by the keyword argument
+    name.
 
-    @param model Model to modify
-    @param var Bound information
+    Args:
+        model (gr.model): Model to modify
+        var (iterable): Bound information
 
-    @type model gr.model
-    @type var iterable
-
-    @returns Model with new marginals
-    @rtype gr.model
+    Returns:
+        gr.model: Model with new marginals
 
     @pre len(var) >= 2
 
-    Examples
+    Examples:
 
-    import grama as gr
-    md = gr.Model() >> \
-        cp_function(
-            lambda x: x[0] + x[1],
-            var=["x0", "x1"],
-            out=1
-        ) >> \
-        cp_bounds(
-            x0=(-1, 1),
-            x1=(0, np.inf)
-        )
+        >>> import grama as gr
+        >>> md = gr.Model() >> \
+        >>>     cp_function(
+        >>>         lambda x: x[0] + x[1],
+        >>>         var=["x0", "x1"],
+        >>>         out=1
+        >>>     ) >> \
+        >>>     cp_bounds(
+        >>>         x0=(-1, 1),
+        >>>         x1=(0, np.inf)
+        >>>     )
 
     """
     new_model = model.copy()
@@ -129,37 +138,35 @@ def cp_bounds(*args, **kwargs):
 # -------------------------
 @curry
 def comp_marginals(model, **kwargs):
-    """Add marginals to a model.
+    """Add marginals to a model
 
-    Marginals are specified by dictionary entries; the model
-    variable name is specified by the keyword argument name.
+    Composition: Add marginals to an existing model. Marginals are specified by
+    dictionary entries; the model variable name is specified by the keyword
+    argument name.
 
-    @param model Model to modify
-    @param var Marginal information
+    Args:
+        model (gr.model): Model to modify
+        var (dict): Marginal information
 
-    @type model gr.model
-    @type var dict
-
-    @returns Model with new marginals
-    @rtype gr.model
+    Returns:
+        gr.model: Model with new marginals
 
     TODO:
     - Implement marginals other than MarginalNamed
 
-    Examples
+    Examples:
 
-    import grama as gr
-    print(gr.valid_dist.keys()) # Print list of implemented marginals
-
-    md = gr.Model() >> \
-        cp_function(
-            lambda x: x[0] + x[1],
-            var=["x0", "x1"],
-            out=1
-        ) >> \
-        cp_marginals(
-            x0={"dist": "norm", "loc": 0, "scale": 1}
-        )
+        >>> import grama as gr
+        >>> print(gr.valid_dist.keys()) # Supported distributions
+        >>> md = gr.Model() >> \
+        >>>     cp_function(
+        >>>         lambda x: x[0] + x[1],
+        >>>         var=["x0", "x1"],
+        >>>         out=1
+        >>>     ) >> \
+        >>>     cp_marginals(
+        >>>         x0={"dist": "norm", "loc": 0, "scale": 1}
+        >>>     )
 
     """
     new_model = model.copy()

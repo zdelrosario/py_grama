@@ -21,12 +21,19 @@ from toolz import curry
 # --------------------------------------------------
 @curry
 def eval_df(model, df=None, append=True):
-    """Evaluates a given model at a given dataframe
+    """Evaluate model at given values
 
-    @param df input dataframe to evaluate (Pandas.DataFrame)
-    @param append bool flag; append results to original dataframe?
+    Evaluates a given model at a given dataframe.
+
+    Args:
+        model (gr.Model): Model to evaluate
+        df (DataFrame): Input dataframe to evaluate
+        append (bool): Append results to original dataframe?
+
+    Returns:
+        DataFrame: Results of model evaluation
+
     """
-
     if df is None:
         raise ValueError("No input df given!")
 
@@ -45,11 +52,20 @@ def ev_df(*args, **kwargs):
 # --------------------------------------------------
 @curry
 def eval_nominal(model, df_det=None, append=True, skip=False):
-    """Evaluates a given model at a model nominal conditions (median)
+    """Evaluate model at nominal values
 
-    @param append bool flag; append results to nominal inputs?
+    Evaluates a given model at a model nominal conditions (median).
 
-    Only implemented for gaussian copula distributions for now.
+    Args:
+        model (gr.Model): Model to evaluate
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
+            for nominal deterministic levels.
+        append (bool): Append results to nominal inputs?
+        skip (bool): Skip evaluation?
+
+    Returns:
+        DataFrame: Results of nominal model evaluation or unevaluated design
+
     """
     ## Draw from underlying gaussian
     quantiles = np.ones((1, model.n_var_rand)) * 0.5 # Median
@@ -81,20 +97,27 @@ def eval_grad_fd(
         append=True,
         skip=False
 ):
-    """Evaluates a given model with a central-difference stencil to
-    approximate the gradient
+    """Finite-difference gradient approximation
 
-    @param model Model to differentiate
-    @param h finite difference stepsize,
-           single (scalar) or per-input (np.array)
-    @param df_base DataFrame of base-points for gradient calculations
-    @param varsdiff list of variables to differentiate TODO
-    @param append bool flag append results to df_base (True) or
-           return results in separate DataFrame (False)?
-    @param skip
+    Evaluates a given model with a central-difference stencil to approximate the
+    gradient.
+
+    Args:
+        model (gr.Model): Model to differentiate
+        h (numeric): finite difference stepsize,
+            single (scalar): or per-input (np.array)
+        df_base (DataFrame): Base-points for gradient calculations
+        varsdiff (list(str)): list of variables to differentiate
+            NOT IMPLEMENTED
+        append (bool): Append results to base point inputs?
+        skip (bool): Skip evaluation?
+
+    Returns:
+        DataFrame: Gradient approximation or unevaluated design
 
     @pre (not isinstance(h, collections.Sequence)) |
          (h.shape[0] == df_base.shape[1])
+
     """
     ## TODO
     if not (varsdiff is None):
@@ -144,7 +167,6 @@ def eval_grad_fd(
 
         results.append(df_grad)
 
-    ## TODO: append
     return pd.concat(results)
 
 @pipe
@@ -166,21 +188,20 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
     the given quantile will be ignored and the median will automatically
     be selected.
 
-    @param quantiles lower quantile value(s) for conservative evaluation;
-                     can be single value for all inputs, array of values
-                     for each random variable, or None for default 0.01.
-                     values in [0, 0.5]
-    @param df_det DataFrame deterministic samples
-    @param append bool flag; append results to nominal inputs?
-    @param skip
+    Args:
+        model (gr.Model): Model to evaluate
+        quantiles (numeric): lower quantile value(s) for conservative
+            evaluation; can be single value for all inputs, array
+            of values for each random variable, or None for default 0.01.
+            values in [0, 0.5]
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
+            for nominal deterministic levels.
+        append (bool): Append results to conservative inputs?
+        skip (bool): Skip evaluation?
 
-    @type quantiles float OR array of floats OR None
-    @type df_det pd.DataFrame OR "nom"
-    @type append bool
-    @type skip bool
+    Returns:
+        DataFrame: Conservative evaluation or unevaluated design
 
-    @returns Conservative evaluation of random variables
-    @rtype pd.DataFrame
     """
     ## Default behavior
     if quantiles is None:

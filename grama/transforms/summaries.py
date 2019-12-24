@@ -1,8 +1,8 @@
 __all__ = [
     "tran_sobol",
     "tf_sobol",
-    "tran_directions",
-    "tf_directions",
+    "tran_asub",
+    "tf_asub",
     "tran_inner",
     "tf_inner"
 ]
@@ -13,8 +13,10 @@ import re
 import itertools
 import warnings
 
-from ..tools import pipe
+from ..tools import pipe, custom_formatwarning
 from toolz import curry
+
+warnings.formatwarning = custom_formatwarning
 
 ## Compute Sobol' indices
 # --------------------------------------------------
@@ -25,17 +27,38 @@ def tran_sobol(
         typename="ind",
         digits=2
 ):
-    """Estimate Sobol' indices based on hybrid point evaluations.
+    """Post-process results from gr.eval_hybrid()
 
-    Index type ["first", "total"] is inferred from input df._meta; this is
-    assigned by eval_hybrid().
+    Estimate Sobol' indices based on hybrid point evaluations (Sobol', 1999).
+    Intended as post-processor for gr.eval_hybrid().
 
-    @param df [Pandas DataFrame] Hybrid point output from a model
-    @param varname [String] Name of variable column in df
-    @param typename [String] Name to give index type column in return
-    @param digits [Integer] Number of digits for rounding reported results
+    Args:
+        df (DataFrame): Hybrid point results from gr.eval_hybrid()
+        varname (str): Column name to give for sweep variable; default="hybrid_var"
+        typename (str): Name to give index type column in results
+        digits (int): Number of digits for rounding reported results
 
-    @return [Pandas DataFrame] Sobol' indices
+    Returns:
+        DataFrame: Sobol' indices
+
+    Notes:
+        - Index type ["first", "total"] is inferred from input df._meta;
+          this is assigned by gr.eval_hybrid().
+
+    References:
+        I.M. Sobol', "Sensitivity Estimates for Nonlinear Mathematical Models"
+        (1999) MMCE, Vol 1.
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.models import make_cantilever_beam
+        >>> md = make_cantilever_beam()
+        >>> df_first = md >> gr.ev_hybrid(df_det="nom", plan="first")
+        >>> df_first >> gr.tf_sobol()
+        >>>
+        >>> df_total = md >> gr.ev_hybrid(df_det="nom", plan="total")
+        >>> df_total >> gr.tf_sobol()
 
     """
     if not (varname in df.columns):
@@ -125,12 +148,36 @@ def tf_sobol(*args, **kwargs):
     return tran_sobol(*args, **kwargs)
 
 ## Linear algebra tools
-# --------------------------------------------------
+##################################################
 ## Gradient principal directions (AS)
 @curry
-def tran_directions(df, prefix="D", outvar="output", lamvar="lam"):
-    """Compute principal directions and eigenvalues for all outputs
-    based on output of ev_grad_fd()
+def tran_asub(df, prefix="D", outvar="out", lamvar="lam"):
+    """Active subspace estimator
+
+    Compute principal directions and eigenvalues for all outputs based on output
+    of ev_grad_fd() to estimate the /active subspace/ (Constantine, 2015).
+
+    Args:
+        df (DataFrame): Gradient evaluations
+        prefix (str): Column name prefix; default="D"
+        outvar (str): Name to give output id column; default="output"
+        lambvar (str): Name to give eigenvalue column; default="lam"
+
+    Returns:
+        DataFrame: Active subspace directions and eigenvalues
+
+    References:
+        Constantine, "Active Subspaces" (2015) SIAM
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.models import make_cantilever_beam
+        >>> md = make_cantilever_beam()
+        >>> df_base = md >> gr.ev_monte_carlo(n=1e2, df_det="nom", skip=True)
+        >>> df_grad = md >> gr.ev_grad_fd(df_base=df_base)
+        >>> df_as = df_grad >> gr.tf_asub()
+
     """
     ## Setup
     res = list(map(lambda s: s.split("_" + prefix, 1), df.columns))
@@ -156,22 +203,67 @@ def tran_directions(df, prefix="D", outvar="output", lamvar="lam"):
     return pd.concat(list_df).reset_index(drop=True)
 
 @pipe
-def tf_directions(*args, **kwargs):
-    return tran_directions(*args, **kwargs)
+def tf_asub(*args, **kwargs):
+    return tran_asub(*args, **kwargs)
 
+# --------------------------------------------------
 ## Inner product
 @curry
-def tran_inner(df, df_weights, prefix="dot", append=False):
-    """Compute inner products
+def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
+    """Inner products
 
-    @param df DataFrame data to compute inner products against
-    @param df_weights DataFrame weights for inner prodcuts
-    @prefix string name prefix for resulting inner product columns
-    @append bool append new data to original DataFrame?
+    Compute inner product of target df with weights defined by df_weights.
+
+    Args:
+        df (DataFrame): Data to compute inner products against
+        df_weights (DataFrame): Weights for inner prodcuts
+        prefix (str): Name prefix for resulting inner product columns;
+            default="dot"
+        name (str): Name of identity column in df_weights or None
+        append (bool): Append new data to original DataFrame?; default=False
+
+    Returns:
+        DataFrame: Results of inner products
+
+    Examples:
+
+        >>> ## Setup
+        >>> from dfply import *
+        >>> import grama as gr
+        >>> from grama.models import make_cantilever_beam
+        >>> import seaborn as sns
+        >>> import matplotlib.pyplot as plt
+        >>> md = make_cantilever_beam()
+        >>> # Generate active subspace results
+        >>> df_base = md >> gr.ev_monte_carlo(n=1e2, df_det="nom")
+        >>> df_grad = md >> gr.ev_grad_fd(df_base=df_base)
+        >>> df_as = df_grad >> \
+        >>>     gr.tf_asub() >> \
+        >>>     group_by(X.out) >> \
+        >>>     mask(min_rank(-X.lam) == 1) >> \
+        >>>     ungroup()
+        >>> # Post-process
+        >>> df_reduce = gr.tran_inner(df_base, df_as, name="out")
+        >>> sns.scatterplot(
+        >>>     data=df_reduce,
+        >>>     x="dot_g_stress",
+        >>>     y="g_stress"
+        >>> )
+        >>> plt.show()
+        >>> sns.scatterplot(
+        >>>     data=df_reduce,
+        >>>     x="dot_g_disp",
+        >>>     y="g_disp"
+        >>> )
+        >>> plt.show()
+
     """
     ## Check invariants
     if df_weights.shape[0] == 0:
-        raise ValueError("df_weights cannot be empty!")
+        raise ValueError("df_weights cannot be empty")
+    if isinstance(name, str):
+        if not (name in df_weights.columns):
+            raise ValueError("name must be column of df_weights or None")
 
     ## Check column overlap
     diff = set(df_weights.columns).difference(set(df.columns))
@@ -187,19 +279,23 @@ def tran_inner(df, df_weights, prefix="dot", append=False):
         df_res = pd.DataFrame(data = {prefix: dot.flatten()})
 
     elif df_weights.shape[0] > 1:
-        df_res = pd.DataFrame(
-            data = dot,
-            columns = list(map(
+        if name is None:
+            names = list(map(
                 lambda i: prefix + str(i),
                 range(dot.shape[1])
             ))
-        )
+        else:
+            names = list(map(
+                lambda i: prefix + "_" + df_weights[name].values[i],
+                range(dot.shape[1])
+            ))
+
+        df_res = pd.DataFrame(data=dot, columns=names)
 
     if append:
         df_res = df.join(df_res)
 
     return df_res
-
 
 @pipe
 def tf_inner(*args, **kwargs):

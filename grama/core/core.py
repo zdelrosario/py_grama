@@ -32,17 +32,19 @@ class Function:
 
     """
     def __init__(self, func, var, out, name):
-        """Constructor
+        """Function constructor
 
-        :param func: Function mapping X^d -> X^r
-        :param var: Named variables; must match order of X^d
-        :param out: Named outputs; must match order of X^r
-        :param name: Function name
+        Construct a grama function. Generally not called directly; preferred
+        usage is through gr.comp_function().
 
-        :type func: function
-        :type var: List of Strings
-        :type out: List of Strings
-        :type name: String
+        Args:
+            func (function): Function mapping X^d -> X^r
+            var (list(str)): Named variables; must match order of X^d
+            out (list(str)): Named outputs; must match order of X^r
+            name (str): Function name
+
+        Returns:
+            gr.Function: grama function
 
         """
         self.func = func
@@ -61,13 +63,16 @@ class Function:
         return func_new
 
     def eval(self, df):
-        """Evaluate function. Loops over dataframe rows.
+        """Evaluate function
 
-        :param df: Input values to evaluate
-        :type df: Pandas DataFrame
+        Evaluate a grama function; loops over dataframe rows. Intended for
+        internal use.
 
-        :returns: Result values
-        :rtype: Pandas DataFrame
+        Args:
+        df (DataFrame): Input values to evaluate
+
+        Returns:
+            DataFrame: Result values
 
         """
         ## Check invariant; model inputs must be subset of df columns
@@ -92,13 +97,15 @@ class Function:
 
 class FunctionVectorized(Function):
     def eval(self, df):
-        """Evaluate function. Assumes function is vectorized over dataframes.
+        """Evaluate function; DataFrame vectorized
 
-        :param df: Input values to evaluate
-        :type df: Pandas DataFrame
+        Evaluate grama function. Assumes function is vectorized over dataframes.
 
-        :returns: Result values
-        :rtype: Pandas DataFrame
+        Args:
+            df (DataFrame): Input values to evaluate
+
+        Returns:
+            DataFrame: Result values
 
         """
         df_res = self.func(df)
@@ -120,10 +127,19 @@ class Domain:
 
     """
     def __init__(self, bounds=None, feasible=None):
-        """Initialize
+        """Constructor
 
-        @param bounds [dict] Variable bounds, given as {"var": [Lower, Upper]} dict entires
-        @param feasible [function] Vectorized function mapping variables to bool
+        Construct a grama domain. Generally not called directly; preferred usage
+        is through gr.comp_bounds().
+
+        Args:
+        bounds (dict): Variable bounds, given as {"var": [Lower, Upper]}
+            dict entires
+        feasible (function): Vectorized function mapping variables to bool
+            NOT IMPLEMENTED
+
+        Returns:
+            gr.Domain: grama domain
 
         @pre isinstance(bounds, dict)
         @pre (feasible is function) | (feasible is None)
@@ -221,7 +237,61 @@ class MarginalNamed(Marginal):
     def summary(self):
         return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, self.d_param)
 
-# Density parent class
+## Copula base class
+class Copula(ABC):
+    """Parent class for copulas
+    """
+    @abstractmethod
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def copy(self):
+        pass
+
+    @abstractmethod
+    def sample(self, n=1):
+        pass
+
+class CopulaGaussian(ABC):
+    def __init__(self, R):
+        """Constructor
+
+        Args:
+            self (gr.CopulaGaussian):
+            R (np.array): Correlation structure
+
+        Returns:
+            gr.CopulaGaussian
+        """
+        self.R = R
+
+    def copy(self):
+        """Copy
+
+        Args:
+            self (gr.CopulaGaussian):
+
+        Returns:
+            gr.CopulaGaussian
+        """
+        cop = CopulaGaussian(R=self.R)
+
+        return cop
+
+    def sample(self, n=1):
+        """Draw samples
+
+        Args:
+            self (gr.CopulaGaussian):
+            n (int): Number of samples to draw
+
+        Returns:
+            np.array:
+        """
+
+
+## Density parent class
 class Density:
     """Parent class for joint densities
 
@@ -233,13 +303,19 @@ class Density:
 
     """
     def __init__(self, marginals=None, copula=None):
-        """Initialize
+        """Constructor
 
-        @param marginals
-        @param copula
+        Construct a grama density. Generally not called directly; preferred
+        usage is through gr.comp_marginals() and gr.comp_copula().
 
-        @type marginals dict
-        @type copula TODO
+        Args:
+            marginals (dict): Dictionary of gr.Marginal objects
+            copula (gr.Copula): Copula object
+                NOT IMPLEMENTED
+
+        Returns:
+            gr.Density: grama density
+
         """
         self.marginals = marginals
         self.copula = copula
@@ -277,16 +353,39 @@ class Model:
     ):
         """Constructor
 
-        @param name [string] Name of model
-        @param functions [list(gr.function)] Define the model mapping f(x) : R^n_in -> R^n_out
-               along with function input and output names
-        @param domain [gr.domain] Model domain
-        @param density [gr.density] Model density
+        Construct a grama model. Generally called without arguments; suggested
+        procedure is to use gr.building tools to build up the model.
+
+        Args:
+            name (string): Name of model
+            functions (list(gr.function)): Define the model mapping
+                f(x) : R^n_in -> R^n_out along with function input and output names
+            domain (gr.Domain): Model domain
+            density (gr.Density): Model density
+
+        Returns:
+            gr.Model: grama model
 
         @pre len(domain.var) == n_in
         @pre len(out) == n_out
         @pre isinstance(domain, domain_)
         @pre isinstance(density, density_) || (density is None)
+
+        Examples:
+
+            >>> import grama as gr
+            >>> print(gr.valid_dist.keys()) # Supported distributions
+            >>> md = gr.Model() >> \
+            >>>     gr.cp_function(
+            >>>         lambda x: x[0] + x[1],
+            >>>         var=["x0", "x1"],
+            >>>         out=1
+            >>>     ) >> \
+            >>>     gr.cp_marginals(
+            >>>         x0={"dist": "uniform", "loc": 0, "scale": 1}
+            >>>     ) >> \
+            >>>     gr.cp_bounds(x1=(0, 1))
+
         """
         if functions is None:
             functions = []
@@ -306,7 +405,7 @@ class Model:
         """Update model public attributes based on functions, domain, and density.
 
         The variables and parameters are implicitly defined by the model
-        attributes.
+        attributes. For internal use.
 
         - self.functions defines the full list of inputs
         - self.domain defines the constraints on the model's domain
@@ -340,7 +439,9 @@ class Model:
     def det_nom(self):
         """Return nominal conditions for deterministic variables
 
-        @returns [DataFrame] Nominal values for deterministic variables
+        Returns:
+            DataFrame: Nominal values for deterministic variables
+
         """
         data = {}
 
@@ -358,9 +459,12 @@ class Model:
     def evaluate_df(self, df):
         """Evaluate function using an input dataframe
 
-        @param df [DataFrame] Variable values at which to evaluate model functions
+        Args:
+            df (DataFrame): Variable values at which to evaluate model functions
 
-        @returns [DataFrame] Output results
+        Returns:
+            DataFrame: Output results
+
         """
         ## Check invariant; model inputs must be subset of df columns
         if not set(self.var).issubset(set(df.columns)):
@@ -374,11 +478,16 @@ class Model:
         return pd.concat(list_df, axis=1)
 
     def var_outer(self, df_rand, df_det=None):
-        """Constuct outer product of random and deterministic samples.
+        """Outer product of random and deterministic samples
 
-        @param df_rand DataFrame random variable samples
-        @param df_det DataFrame deterministic variable samples
-                      set to "nom" for nominal evaluation
+        Args:
+            df_rand (DataFrame) random variable samples
+            df_det (DataFrame) deterministic variable samples
+                set to "nom" for nominal evaluation
+
+        Returns:
+            DataFrame: Outer product of samples
+
         """
         ## Pass-through if no var_det
         if self.n_var_det == 0:
@@ -404,8 +513,11 @@ class Model:
     def var_rand_quantile(self, df_quant):
         """Convert random variable quantiles to input samples
 
-        @param df_quant DataFrame; values \in [0,1]
-        @returns DataFrame
+        Args:
+            df_quant (DataFrame): Values \in [0,1]
+
+        Returns:
+            DataFrame: Variable quantiles
 
         @pre df_quant.shape[1] == n_var_rand
         @post df_samp.shape[1] == n_var_rand

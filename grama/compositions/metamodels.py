@@ -16,11 +16,21 @@ from toolz import curry
 def comp_metamodel(model, n=1, ev=None, ft=None, seed=None):
     """Create a metamodel
 
-    @param model Original model, to be evaluated and fit
-    @param n Number of samples to draw
-    @param ev Evaluation strategy, default eval_lhs
-    @param ft Fitting strategy, default fit_ols w/ linear features
-    @param seed Random seed, default None
+    Composition: Create a metamodel from an existing model. This convenience
+    function essentially applies a recipe of Evaluation followed by Fitting.
+    Default methods are Latin Hypercube Evaluation and Ordinary Least Squares
+    Fitting with linear features.
+
+    Args:
+        model (gr.model): Original model, to be evaluated and fit
+        n (numeric): Number of samples to draw
+        ev (gr.eval_): Evaluation strategy, default eval_lhs
+        ft (gr.fit_): Fitting strategy, default fit_ols w/ linear features
+        seed (int): Random seed, default None
+
+    Returns:
+        gr.model: Metamodel
+
     """
     ## Extract model information
     inputs  = model.domain.inputs

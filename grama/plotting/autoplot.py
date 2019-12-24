@@ -1,6 +1,7 @@
 __all__ = [
     "plot_auto",
-    "pt_auto"
+    "pt_auto",
+    "plot_list"
 ]
 
 from ..tools import pipe
@@ -15,7 +16,17 @@ plot_list = {
 
 @curry
 def plot_auto(df):
-    """
+    """Automagic plotting
+
+    Convenience tool for various grama outputs.
+
+    Args:
+        df (DataFrame): Data output from appropriate grama routine. See
+            gr.plot_list.keys() for list of supported methods.
+
+    Returns:
+        Plot results
+
     """
     try:
         d = df._plot_info

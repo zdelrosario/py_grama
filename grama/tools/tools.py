@@ -1,5 +1,6 @@
 __all__ = [
     "continuous_fit",
+    "custom_formatwarning",
     "df_equal",
     "param_dist",
     "pipe",
@@ -274,13 +275,18 @@ class pipe(object):
 
 ## DataFrame equality checker
 def df_equal(df1, df2):
-    """Check that two dataframes have the same columns and values. Allow
-    column order to differ.
+    """Check DataFrame equality
 
-    @param df1 [DataFrame]
-    @param df2 [DataFrame]
+    Check that two dataframes have the same columns and values. Allow column
+    order to differ.
 
-    @returns [bool]
+    Args:
+        df1 (DataFrame): Comparison input 1
+        df2 (DataFrame): Comparison input 2
+
+    Returns:
+        bool: Result of comparison
+
     """
 
     if not set(df1.columns) == set(df2.columns):
@@ -290,35 +296,31 @@ def df_equal(df1, df2):
 
 ## Fit a named scipy.stats distribution
 def continuous_fit(data, dist, name=True, sign=None):
-    """Fits a named scipy.stats continuous distribution. Intended to be used to
+    """Fit scipy.stats continuous distirbution
+
+    Fits a named scipy.stats continuous distribution. Intended to be used to
     define a marginal distribution from data.
 
-    @param data Data for fit
-    @param dist Distribution to fit
-    @param name Include distribution name?
-    @param sign Include sign? (Optional)
+    Args:
+        data (iterable): Data for fit
+        dist (str): Distribution to fit
+        name (bool): Include distribution name?
+        sign (bool): Include sign? (Optional)
 
-    @type data iterable numeric
-    @type dist string
-    @type name bool
-    @type sign integer
-
-    @returns distribution parameters organized by keyword
-    @rtype dict
+    Returns:
+        dict: Distribution parameters organized by keyword
 
     Examples:
 
-    import grama as gr
-    from grama.misc import df_stang
+        >>> import grama as gr
+        >>> from grama.misc import df_stang
+        >>> param_E  = gr.continuous_fit(df_stang.E, "norm")
+        >>> param_mu = gr.continuous_fit(df_stang.mu, "beta")
+        >>> md = gr.Model("Marginal Example") >> \
+        >>>     gr.cp_marginals(E=param_E, mu=param_mu)
+        >>> md.printpretty()
 
-    param_E  = gr.continuous_fit(df_stang.E, "norm")
-    param_mu = gr.continuous_fit(df_stang.mu, "beta")
-
-    md = gr.Model("Marginal Example") >> \
-        gr.cp_marginals(E=param_E, mu=param_mu)
-    md.printpretty()
     """
-
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         res = valid_dist[dist].fit(data)
@@ -334,3 +336,8 @@ def continuous_fit(data, dist, name=True, sign=None):
         res["sign"] = sign
 
     return res
+
+## Monkey-patched warning fcn
+def custom_formatwarning(msg, *args, **kwargs):
+    # ignore everything except the message
+    return "Warning: " + str(msg) + '\n'
