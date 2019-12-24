@@ -1,5 +1,7 @@
 # py_grama
-Implementation of the *grammar of model analysis* (*grama*).
+[![Documentation Status](https://readthedocs.org/projects/py_grama/badge/?version=latest)](https://py_grama.readthedocs.io/en/latest/?badge=latest) [![Build Status](https://travis-ci.org/zdelrosario/py_grama.png?branch=master)](https://travis-ci.org/zdelrosario/py_grama) [![codecov](https://codecov.io/gh/zdelrosario/py_grama/branch/master/graph/badge.svg)](https://codecov.io/gh/zdelrosario/py_grama)
+
+Implementation of a *grammar of model analysis* (*grama*).
 
 # Installation
 Clone this repo and add to your `PYTHONPATH`. Run `pip install -r requirements.txt` from the repo root.
