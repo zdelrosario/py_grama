@@ -1,6 +1,8 @@
+matplotlib
 numpy
 pandas
 pyDOE
+seaborn
 scipy
 statsmodels
 toolz
