@@ -68,7 +68,7 @@ def plot_sinew_outputs(df, var=None, out=None, sweep_ind="sweep_ind", sweep_var=
         y="_y",
         hue=sweep_ind,
         col="_var",
-        row="_output",
+        row="_out",
         kind="line",
         facet_kws=dict(sharex=False, sharey=False)
     )
