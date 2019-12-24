@@ -35,6 +35,13 @@ learnable and accessible. The `py_grama` package is heavily inspired by the
 programming patterns, but primarily in terms of its *user-first perspective*.
 `py_grama` is designed to help users learn and use UQ tools to analyze models.
 
+## Why quantify uncertainty?
+
+Uncertainty quantification is a relatively new scientific discipline, so the
+motivation for doing UQ may not be immediately obvious. The following example notebooks demonstrate UQ in a number of settings:
+
+- [structural safety: cable design example](https://github.com/zdelrosario/py_grama/blob/master/examples/tension/tension.ipynb)---failing to account for uncertainty can lead to unsafe structures. UQ enables safer design.
+
 ## What does it look like?
 
 For a quick demonstration of `py_grama`, see the following demo notebooks:
