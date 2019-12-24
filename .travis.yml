@@ -1,0 +1,15 @@
+language: python
+
+install:
+ - pip install codecov
+ - pip install -r requirements.txt
+
+script:
+ - cd tests; coverage run -m unittest discover
+
+after_success:
+ - cd tests; codecov
+
+env:
+  global:
+    - CODECOV_TOKEN="ee76b7ca-4705-495a-a8c5-929ca6c111a8"
