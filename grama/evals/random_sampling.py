@@ -74,9 +74,24 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
     if skip:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_samp._plot_info = {
+                "type": "monte_carlo_inputs",
+                "var_rand": model.var_rand
+            }
+
         return df_samp
     else:
-        return eval_df(model, df=df_samp, append=append)
+        df_res = eval_df(model, df=df_samp, append=append)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_res._plot_info = {
+                "type": "monte_carlo_outputs",
+                "out": model.out
+            }
+
+        return df_res
 
 @pipe
 def ev_monte_carlo(*args, **kwargs):
