@@ -10,7 +10,11 @@ Welcome to py_grama's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+.. autosummary::
+   :toctree: stubs
 
+.. automodule:: grama
+   :members:
 
 Indices and tables
 ==================
