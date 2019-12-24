@@ -54,7 +54,7 @@ def plot_sinew_outputs(df, var=None, out=None, sweep_ind="sweep_ind", sweep_var=
         df_tmp,
         id_vars,
         out,
-        "_output",
+        "_out",
         "_y"
     )
 
