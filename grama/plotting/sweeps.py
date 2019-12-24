@@ -18,7 +18,7 @@ def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
     Inspect the design
     """
     if var is None:
-        raise ValueError("Must provide input columnw list as keyword arg var")
+        raise ValueError("Must provide input columns list as keyword var")
 
     ## Plot
     return sns.pairplot(data=df, vars=var, hue=sweep_ind)
