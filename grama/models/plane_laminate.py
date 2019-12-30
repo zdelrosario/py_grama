@@ -319,81 +319,69 @@ def make_density(Theta_nom, T_nom=T_NOM):
         T_nom = [T_nom] * k
 
     ## Create variables for each ply
-    marginals = list(itertools.chain.from_iterable([[
-        core.MarginalNamed(
-            "E1_{}".format(i),
+    marginals = {}
+    for i in range(k):
+        marginals["E1_{}".format(i)] = core.MarginalNamed(
             sign=0,
             d_name="lognorm",
             d_param={"loc": 1, "s": E1_CV, "scale": E1_M}
-        ),
-        core.MarginalNamed(
-            "E2_{}".format(i),
+        )
+        marginals["E2_{}".format(i)] = core.MarginalNamed(
             sign=0,
             d_name="lognorm",
             d_param={"loc": 1, "s": E2_CV, "scale": E2_M}
-        ),
-        core.MarginalNamed(
-            "nu12_{}".format(i),
+        )
+        marginals["nu12_{}".format(i)] = core.MarginalNamed(
             sign=0,
             d_name="norm",
             d_param={"loc": nu12_M, "scale": nu12_SIG}
-        ),
-        core.MarginalNamed(
-            "G12_{}".format(i),
+        )
+        marginals["G12_{}".format(i)] = core.MarginalNamed(
             sign=0,
             d_name="lognorm",
             d_param={"loc": 1, "s": G12_CV, "scale": G12_M}
-        ),
-        core.MarginalNamed(
-            "theta_{}".format(i),
+        )
+        marginals["theta_{}".format(i)] = core.MarginalNamed(
             sign=0,
             d_name="uniform",
             d_param={"loc": Theta_nom[i] - THETA_PM, "scale": 2 * THETA_PM}
-        ),
-        core.MarginalNamed(
-            "t_{}".format(i),
+        )
+        marginals["t_{}".format(i)] = core.MarginalNamed(
             sign=0,
             d_name="uniform",
             d_param={"loc": T_nom[i] - T_PM, "scale": 2 * T_PM}
-        ),
-        core.MarginalNamed(
-            "sigma_11_t_{}".format(i),
+           )
+        marginals["sigma_11_t_{}".format(i)] = core.MarginalNamed(
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_11_T_CV, "scale": SIG_11_T_M}
-        ),
-        core.MarginalNamed(
-            "sigma_22_t_{}".format(i),
+           )
+        marginals["sigma_22_t_{}".format(i)] = core.MarginalNamed(
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_22_T_CV, "scale": SIG_22_T_M}
-        ),
-        core.MarginalNamed(
-            "sigma_11_c_{}".format(i),
+           )
+        marginals["sigma_11_c_{}".format(i)] = core.MarginalNamed(
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_11_C_CV, "scale": SIG_11_C_M}
-        ),
-        core.MarginalNamed(
-            "sigma_22_c_{}".format(i),
+           )
+        marginals["sigma_22_c_{}".format(i)] = core.MarginalNamed(
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_22_C_CV, "scale": SIG_22_C_M}
-        ),
-        core.MarginalNamed(
-            "sigma_12_s_{}".format(i),
+           )
+        marginals["sigma_12_s_{}".format(i)] = core.MarginalNamed(
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_12_M_CV, "scale": SIG_12_M_M}
-        ) \
-     ] for i in range(k)])) + [
-        core.MarginalNamed(
-            "Nx",
-            sign=+1,
-            d_name="norm",
-            d_param={"loc": Nx_M, "scale": Nx_SIG}
         )
-    ]
+
+    marginals["Nx"] = core.MarginalNamed(
+        sign=+1,
+        d_name="norm",
+        d_param={"loc": Nx_M, "scale": Nx_SIG}
+    )
 
     return core.Density(marginals=marginals)
 
@@ -426,7 +414,8 @@ class make_composite_plate_tension(core.Model):
                          "g_22_compression_{}".format(i),
                          "g_12_shear_{}".format(i)] for i in range(k)
                     ])),
-                    "limit states"
+                    "limit states",
+                    0
                 )
             ],
             domain=make_domain(Theta_nom, T_nom=T_nom),
