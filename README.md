@@ -4,11 +4,20 @@
 Implementation of a *grammar of model analysis* (*grama*). See the [documentation](https://py-grama.readthedocs.io/en/latest/) for more info.
 
 # Installation
-Clone this repo, change directories and run:
+Clone this repo, change directories and run the following to install dependencies:
 
 ```bash
-$ python setup.py install
 $ pip install -r requirements.txt
+```
+
+Run the following to install `py_grama`:
+
+```bash
+$ python
+> import sys
+> sys.path.append("path/to/py_grama")
+# Check install
+> import grama
 ```
 
 Note that I also use a fork of `dfply` for many of the examples; suggest cloning and adding [dfply](https://github.com/zdelrosario/dfply) as well. (Note that I'm considering making this `dfply` fork a formal dependency.)
