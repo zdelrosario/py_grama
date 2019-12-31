@@ -9,16 +9,7 @@ Clone this repo, change directories and run the following to install dependencie
 ```bash
 $ pip install -r requirements.txt
 ```
-
-Run the following to install `py_grama`:
-
-```bash
-$ python
-> import sys
-> sys.path.append("path/to/py_grama")
-# Check install
-> import grama
-```
+Add the `py_grama` directory to your PYTHONPATH environment variable to complete the installation, see [here](https://bic-berkeley.github.io/psych-214-fall-2016/using_pythonpath.html) for instructions on how to do this.
 
 Note that I also use a fork of `dfply` for many of the examples; suggest cloning and adding [dfply](https://github.com/zdelrosario/dfply) as well. (Note that I'm considering making this `dfply` fork a formal dependency.)
 
