@@ -15,10 +15,11 @@ import copy
 import numpy as np
 import pandas as pd
 
+import grama as gr
+from grama import pipe, valid_dist, param_dist
+
 from itertools import chain
 from numpy.linalg import cholesky
-from ..transforms import tran_outer
-from ..tools import pipe, valid_dist, param_dist
 from toolz import curry
 
 ## Package settings
@@ -216,7 +217,7 @@ class Marginal(ABC):
 
 ## Named marginal class
 class MarginalNamed(Marginal):
-    """Marginal using a named distribution from core.valid_dist"""
+    """Marginal using a named distribution from gr.valid_dist"""
 
     def __init__(self, d_name=None, d_param=None, **kw):
         super().__init__(**kw)
@@ -560,7 +561,7 @@ class Model:
             if not set(self.var_det).issubset(set(df_det.columns)):
                 raise ValueError("model.var_det not a subset of given columns")
 
-        return tran_outer(df_rand, df_det)
+        return gr.tran_outer(df_rand, df_det)
 
     def var_rand_quantile(self, df_quant):
         """Convert random variable quantiles to input samples

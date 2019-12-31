@@ -10,7 +10,7 @@ __all__ = [
 import numpy as np
 import pandas as pd
 
-from ..tools import pipe
+from grama import pipe
 from toolz import curry
 
 ## DataFrame outer product

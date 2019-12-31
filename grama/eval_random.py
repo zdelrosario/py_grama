@@ -13,8 +13,8 @@ import numpy as np
 import pandas as pd
 import warnings
 
-from .defaults import eval_df
-from ..tools import pipe, custom_formatwarning
+import grama as gr
+from grama import pipe, custom_formatwarning
 from scipy.stats import norm, lognorm
 from toolz import curry
 from pyDOE import lhs
@@ -96,7 +96,7 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
 
         return df_samp
     else:
-        df_res = eval_df(model, df=df_samp, append=append)
+        df_res = gr.eval_df(model, df=df_samp, append=append)
 
         ## Attach metadata
         with warnings.catch_warnings():
@@ -171,7 +171,7 @@ def eval_lhs(
     if skip:
         return df_samp
     else:
-        return eval_df(model, df=df_samp, append=append)
+        return gr.eval_df(model, df=df_samp, append=append)
 
 @pipe
 def ev_lhs(*args, **kwargs):
@@ -304,7 +304,7 @@ def eval_sinews(
         return df_samp
     else:
         ## Apply
-        df_res = eval_df(model, df=df_samp, append=append)
+        df_res = gr.eval_df(model, df=df_samp, append=append)
         ## For autoplot
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -416,7 +416,7 @@ def eval_hybrid(
 
         return df_samp
     else:
-        df_res = eval_df(model, df=df_samp, append=append)
+        df_res = gr.eval_df(model, df=df_samp, append=append)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             df_res._meta = "ev_hybrid_" + plan

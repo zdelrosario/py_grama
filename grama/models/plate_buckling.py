@@ -2,8 +2,7 @@ __all__ = ["make_plate_buckle"]
 
 import numpy as np
 
-from .. import core
-from .. import compositions as cp
+import grama as gr
 
 LOAD      = 0.00128 # Applied load (kips)
 
@@ -26,15 +25,15 @@ def function_buckle_state(x):
     return np.pi * E / 12 / (1 - nu**2) * (t / h)**2 - L
 
 def make_plate_buckle():
-    md = core.Model("Plate Buckling") >> \
-         cp.cp_function(
+    md = gr.Model("Plate Buckling") >> \
+         gr.cp_function(
              fun=function_buckle_state,
              var=["t", "h", "E", "nu", "L"],
              out=["g_buckle"],
              name="limit state"
          ) >> \
-         cp.cp_bounds(t=(0, 2 * THICKNESS), h=(6, 18)) >> \
-         cp.cp_marginals(
+         gr.cp_bounds(t=(0, 2 * THICKNESS), h=(6, 18)) >> \
+         gr.cp_marginals(
              E={"dist": "lognorm", "loc": 1, "s": SIG_LOG_E, "scale": MU_LOG_E},
              nu={"dist": "uniform", "loc": A_NU, "scale": B_NU - A_NU},
              L={

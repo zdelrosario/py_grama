@@ -4,10 +4,8 @@ __all__ = [
 ]
 
 ## Fitting via statsmodels package
-from .. import core
-from .. import evals
-from .. import fitting
-from ..tools import pipe
+import grama as gr
+from grama import pipe
 from toolz import curry
 
 ## Fit a metamodel
@@ -38,7 +36,7 @@ def comp_metamodel(model, n=1, ev=None, ft=None, seed=None):
 
     ## Assign default arguments
     if ev is None:
-        ev = evals.eval_lhs
+        ev = gr.eval_lhs
 
     if ft is None:
         # Linear features for each output
@@ -48,7 +46,7 @@ def comp_metamodel(model, n=1, ev=None, ft=None, seed=None):
             outputs
         ))
 
-        ft = lambda df: fitting.fit_ols(
+        ft = lambda df: gr.fit_ols(
             df,
             formulae=formulae,
             domain=model.domain,

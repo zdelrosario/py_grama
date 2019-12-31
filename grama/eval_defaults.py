@@ -13,8 +13,8 @@ import numpy as np
 import pandas as pd
 import itertools
 
-from .. import core
-from ..tools import pipe
+import grama as gr
+from grama import pipe
 from toolz import curry
 
 ## Default evaluation function

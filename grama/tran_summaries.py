@@ -13,7 +13,7 @@ import re
 import itertools
 import warnings
 
-from ..tools import pipe, custom_formatwarning
+from grama import pipe, custom_formatwarning
 from toolz import curry
 
 warnings.formatwarning = custom_formatwarning

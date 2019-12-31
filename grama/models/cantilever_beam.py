@@ -1,8 +1,7 @@
 __all__ = ["make_cantilever_beam"]
 
 import numpy as np
-from .. import core
-from .. import compositions as cp
+import grama as gr
 from collections import OrderedDict as od
 from numpy import sqrt, array, Inf
 from scipy.stats import norm
@@ -46,33 +45,33 @@ def function_displacement(x):
     )
 
 def make_cantilever_beam():
-    md = core.Model(name = "Cantilever Beam") >> \
-         cp.cp_function(
+    md = gr.Model(name = "Cantilever Beam") >> \
+         gr.cp_function(
              fun=function_area,
              var=["w", "t"],
              out=["c_area"],
              name="cross-sectional area",
              runtime=1.717e-7
          ) >> \
-         cp.cp_function(
+         gr.cp_function(
              fun=function_stress,
              var=["w", "t", "H", "V", "E", "Y"],
              out=["g_stress"],
              name="limit state: stress",
              runtime=8.88e-7
          ) >> \
-         cp.cp_function(
+         gr.cp_function(
              fun=function_displacement,
              var=["w", "t", "H", "V", "E", "Y"],
              out=["g_disp"],
              name="limit state: displacement",
              runtime=3.97e-6
          ) >> \
-         cp.cp_bounds(
+         gr.cp_bounds(
              w=(2, 4),
              t=(2, 4)
          ) >> \
-         cp.cp_marginals(
+         gr.cp_marginals(
              H={"dist": "norm", "loc": MU_H, "scale": TAU_H, "sign": +1},
              V={"dist": "norm", "loc": MU_V, "scale": TAU_V, "sign": +1},
              E={"dist": "norm", "loc": MU_E, "scale": TAU_E, "sign":  0},

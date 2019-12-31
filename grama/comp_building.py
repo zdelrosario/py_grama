@@ -7,10 +7,8 @@ __all__ = [
     "cp_marginals"
 ]
 
-from .. import core
-from .. import evals
-from .. import fitting
-from ..tools import pipe
+import grama as gr
+from grama import pipe
 from toolz import curry
 
 ## Model Building Interface (MBI) tools
@@ -77,7 +75,7 @@ def comp_function(
 
     ## Add new function
     model_new.functions.append(
-        core.Function(fun, var, out, name, runtime)
+        gr.Function(fun, var, out, name, runtime)
     )
 
     model_new.update()
@@ -187,7 +185,7 @@ def comp_marginals(model, **kwargs):
         except KeyError:
             sign = 0
 
-        new_model.density.marginals[key] = core.MarginalNamed(
+        new_model.density.marginals[key] = gr.MarginalNamed(
             sign=sign,
             d_name=dist,
             d_param=value_copy

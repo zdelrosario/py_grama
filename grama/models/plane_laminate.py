@@ -5,7 +5,7 @@ __all__ = ["make_composite_plate_tension"]
 # References:
 # C.T. Sun "Mechanics of Aircraft Structures" (1998)
 
-from .. import core
+import grama as gr
 import numpy as np
 import itertools
 
@@ -293,7 +293,7 @@ def make_domain(Theta_nom, T_nom= T_NOM):
     ])) + [("Nx", [-np.Inf, +np.Inf])]
     bounds = dict(bounds_list)
 
-    return core.Domain(bounds=bounds)
+    return gr.Domain(bounds=bounds)
 
 # Helper function to create density for given ply
 def make_density(Theta_nom, T_nom=T_NOM):
@@ -321,73 +321,73 @@ def make_density(Theta_nom, T_nom=T_NOM):
     ## Create variables for each ply
     marginals = {}
     for i in range(k):
-        marginals["E1_{}".format(i)] = core.MarginalNamed(
+        marginals["E1_{}".format(i)] = gr.MarginalNamed(
             sign=0,
             d_name="lognorm",
             d_param={"loc": 1, "s": E1_CV, "scale": E1_M}
         )
-        marginals["E2_{}".format(i)] = core.MarginalNamed(
+        marginals["E2_{}".format(i)] = gr.MarginalNamed(
             sign=0,
             d_name="lognorm",
             d_param={"loc": 1, "s": E2_CV, "scale": E2_M}
         )
-        marginals["nu12_{}".format(i)] = core.MarginalNamed(
+        marginals["nu12_{}".format(i)] = gr.MarginalNamed(
             sign=0,
             d_name="norm",
             d_param={"loc": nu12_M, "scale": nu12_SIG}
         )
-        marginals["G12_{}".format(i)] = core.MarginalNamed(
+        marginals["G12_{}".format(i)] = gr.MarginalNamed(
             sign=0,
             d_name="lognorm",
             d_param={"loc": 1, "s": G12_CV, "scale": G12_M}
         )
-        marginals["theta_{}".format(i)] = core.MarginalNamed(
+        marginals["theta_{}".format(i)] = gr.MarginalNamed(
             sign=0,
             d_name="uniform",
             d_param={"loc": Theta_nom[i] - THETA_PM, "scale": 2 * THETA_PM}
         )
-        marginals["t_{}".format(i)] = core.MarginalNamed(
+        marginals["t_{}".format(i)] = gr.MarginalNamed(
             sign=0,
             d_name="uniform",
             d_param={"loc": T_nom[i] - T_PM, "scale": 2 * T_PM}
            )
-        marginals["sigma_11_t_{}".format(i)] = core.MarginalNamed(
+        marginals["sigma_11_t_{}".format(i)] = gr.MarginalNamed(
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_11_T_CV, "scale": SIG_11_T_M}
            )
-        marginals["sigma_22_t_{}".format(i)] = core.MarginalNamed(
+        marginals["sigma_22_t_{}".format(i)] = gr.MarginalNamed(
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_22_T_CV, "scale": SIG_22_T_M}
            )
-        marginals["sigma_11_c_{}".format(i)] = core.MarginalNamed(
+        marginals["sigma_11_c_{}".format(i)] = gr.MarginalNamed(
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_11_C_CV, "scale": SIG_11_C_M}
            )
-        marginals["sigma_22_c_{}".format(i)] = core.MarginalNamed(
+        marginals["sigma_22_c_{}".format(i)] = gr.MarginalNamed(
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_22_C_CV, "scale": SIG_22_C_M}
            )
-        marginals["sigma_12_s_{}".format(i)] = core.MarginalNamed(
+        marginals["sigma_12_s_{}".format(i)] = gr.MarginalNamed(
             sign=-1,
             d_name="lognorm",
             d_param={"loc": 1, "s": SIG_12_M_CV, "scale": SIG_12_M_M}
         )
 
-    marginals["Nx"] = core.MarginalNamed(
+    marginals["Nx"] = gr.MarginalNamed(
         sign=+1,
         d_name="norm",
         d_param={"loc": Nx_M, "scale": Nx_SIG}
     )
 
-    return core.Density(marginals=marginals)
+    return gr.Density(marginals=marginals)
 
 ## Model class
 ##################################################
-class make_composite_plate_tension(core.Model):
+class make_composite_plate_tension(gr.Model):
     def __init__(self, Theta_nom, T_nom=T_NOM):
         k = len(Theta_nom)
         deg_int = [int(theta / np.pi * 180) for theta in Theta_nom]
@@ -404,7 +404,7 @@ class make_composite_plate_tension(core.Model):
         super().__init__(
             name=name,
             functions=[
-                core.Function(
+                gr.Function(
                     lambda X: uniaxial_stress_limit(X),
                     make_names(Theta_nom),
                     list(itertools.chain.from_iterable([
