@@ -62,14 +62,14 @@ class TestTools(unittest.TestCase):
         ## Test output shape
         self.assertTrue(
             set(df_res.columns) == set([
-                "var", "mean", "mean_lo", "mean_hi", "std", "std_lo", "std_hi"
+                "var", "mean", "mean_lo", "mean_up", "std", "std_lo", "std_up"
             ])
         )
         self.assertTrue(df_res.shape[0] == 4)
 
         self.assertTrue(
             set(df_sel.columns) == set([
-                "var", "mean", "mean_lo", "mean_hi", "std"
+                "var", "mean", "mean_lo", "mean_up", "std"
             ])
         )
         self.assertTrue(df_sel.shape[0] == 4)

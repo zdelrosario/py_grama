@@ -42,7 +42,7 @@ def tran_bootstrap(
         col_sel (list(string)): Columns to include in bootstrap calculation
 
     Returns:
-        DataFrame: Results of tran(df), plus _lo and _hi columns for
+        DataFrame: Results of tran(df), plus _lo and _up columns for
         numeric columns
 
     References and notes:
@@ -124,17 +124,17 @@ def tran_bootstrap(
         col_numeric
     ))
     col_hi = list(map(
-        lambda s: s + "_hi",
+        lambda s: s + "_up",
         col_numeric
     ))
 
     df_lo = pd.DataFrame(data=theta_lo, columns=col_lo)
     df_hi = pd.DataFrame(data=theta_hi, columns=col_hi)
 
-    df_lo.index = df_base.index
-    df_hi.index = df_base.index
+    df_ci = pd.concat((df_lo, df_hi), axis=1).sort_index(axis=1)
+    df_ci.index = df_base.index
 
-    return pd.concat((df_base, df_lo, df_hi), axis=1)
+    return pd.concat((df_base, df_ci), axis=1)
 
 @pipe
 def tf_bootstrap(*args, **kwargs):
