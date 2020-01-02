@@ -19,17 +19,6 @@ TAU_V  = 100.
 TAU_E  = 1.45e6
 TAU_Y  = 2000.
 
-def function_beam(x):
-    w, t, H, V, E, Y = x
-
-    return array([
-        w * t,
-        Y - 600 * V / w / t**2 - 600 * H / w**2 / t,
-        D_MAX - np.float64(4) * LENGTH**3 / E / w / t * sqrt(
-            V**2 / t**4 + H**2 / w**4
-        )
-    ])
-
 def function_area(x):
     w, t = x
     return w * t

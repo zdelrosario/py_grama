@@ -15,6 +15,7 @@ class TestModels(unittest.TestCase):
         pass
 
     def test_make(self):
+        ## Models build
         md_cantilever_beam = models.make_cantilever_beam()
         md_ishigami = models.make_ishigami()
         md_linear_normal = models.make_linear_normal()
@@ -22,3 +23,12 @@ class TestModels(unittest.TestCase):
         md_plate_buckling = models.make_plate_buckle()
         md_poly = models.make_poly()
         md_test = models.make_test()
+
+        ## Models evaluate
+        md_cantilever_beam >> gr.ev_nominal(df_det="nom")
+        md_ishigami >> gr.ev_nominal(df_det="nom")
+        md_linear_normal >> gr.ev_nominal(df_det="nom")
+        md_plane_laminate >> gr.ev_nominal(df_det="nom")
+        md_plate_buckling >> gr.ev_nominal(df_det="nom")
+        md_poly >> gr.ev_nominal(df_det="nom")
+        md_test >> gr.ev_nominal(df_det="nom")
