@@ -5,6 +5,7 @@ import unittest
 from collections import OrderedDict as od
 from context import core
 from context import grama as gr
+from context import models
 from pyDOE import lhs
 
 ##################################################
@@ -201,6 +202,93 @@ class TestRandomSampling(unittest.TestCase):
             check_column_type=False
         )
 
+##################################################
+class TestRandom(unittest.TestCase):
+
+    def setUp(self):
+        self.md = models.make_test()
+
+    def test_monte_carlo(self):
+        df_min = gr.eval_monte_carlo(self.md, df_det="nom")
+        self.assertTrue(df_min.shape == (1, self.md.n_var + self.md.n_out))
+        self.assertTrue(
+            set(df_min.columns) == set(self.md.var + self.md.out)
+        )
+
+        df_seeded = gr.eval_monte_carlo(self.md, df_det="nom", seed=101)
+        df_piped = self.md >> gr.ev_monte_carlo(df_det="nom", seed=101)
+        self.assertTrue(df_seeded.equals(df_piped))
+
+        df_skip = gr.eval_monte_carlo(self.md, df_det="nom", skip=True)
+        self.assertTrue(
+            set(df_skip.columns) == set(self.md.var)
+        )
+
+        df_noappend = gr.eval_monte_carlo(self.md, df_det="nom", append=False)
+        self.assertTrue(
+            set(df_noappend.columns) == set(self.md.out)
+        )
+
+    def test_lhs(self):
+        df_min = gr.eval_lhs(self.md, df_det="nom")
+        self.assertTrue(df_min.shape == (1, self.md.n_var + self.md.n_out))
+        self.assertTrue(
+            set(df_min.columns) == set(self.md.var + self.md.out)
+        )
+
+        df_seeded = gr.eval_lhs(self.md, df_det="nom", seed=101)
+        df_piped = self.md >> gr.ev_lhs(df_det="nom", seed=101)
+        self.assertTrue(df_seeded.equals(df_piped))
+
+        df_skip = gr.eval_lhs(self.md, df_det="nom", skip=True)
+        self.assertTrue(
+            set(df_skip.columns) == set(self.md.var)
+        )
+
+        df_noappend = gr.eval_lhs(self.md, df_det="nom", append=False)
+        self.assertTrue(
+            set(df_noappend.columns) == set(self.md.out)
+        )
+
+    def test_sinews(self):
+        df_min = gr.eval_sinews(self.md, df_det="nom")
+        self.assertTrue(
+            set(df_min.columns) == \
+            set(self.md.var + self.md.out + ["sweep_var", "sweep_ind"])
+        )
+        self.assertTrue(df_min._plot_info["type"] == "sinew_outputs")
+
+        df_seeded = gr.eval_sinews(self.md, df_det="nom", seed=101)
+        df_piped = self.md >> gr.ev_sinews(df_det="nom", seed=101)
+        self.assertTrue(df_seeded.equals(df_piped))
+
+        df_skip = gr.eval_sinews(self.md, df_det="nom", skip=True)
+        self.assertTrue(df_skip._plot_info["type"] == "sinew_inputs")
+
+    def test_hybrid(self):
+        df_min = gr.eval_hybrid(self.md, df_det="nom")
+        self.assertTrue(
+            set(df_min.columns) == \
+            set(self.md.var + self.md.out + ["hybrid_var"])
+        )
+        self.assertTrue(df_min._meta == "ev_hybrid_first")
+
+        df_seeded = gr.eval_hybrid(self.md, df_det="nom", seed=101)
+        df_piped = self.md >> gr.ev_hybrid(df_det="nom", seed=101)
+        self.assertTrue(df_seeded.equals(df_piped))
+
+        df_total = gr.eval_hybrid(self.md, df_det="nom", plan="total")
+        self.assertTrue(
+            set(df_total.columns) == \
+            set(self.md.var + self.md.out + ["hybrid_var"])
+        )
+        self.assertTrue(df_total._meta == "ev_hybrid_total")
+
+        df_skip = gr.eval_hybrid(self.md, df_det="nom", skip=True)
+        self.assertTrue(
+            set(df_skip.columns) == \
+            set(self.md.var + ["hybrid_var"])
+        )
 
 ## Run tests
 if __name__ == "__main__":
