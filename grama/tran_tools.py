@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-from grama import pipe
+from grama import pipe, copy_meta
 from toolz import curry
 from numbers import Integral
 
@@ -97,12 +97,14 @@ def tran_bootstrap(
     for ind in range(n_boot):
         ## Construct resample
         Ib = np.random.choice(n_samples, size=n_samples, replace=True)
-        theta_all[ind] = tran(df.iloc[Ib, ])[col_numeric].values
+        df_tmp = copy_meta(df, df.iloc[Ib, ])
+        theta_all[ind] = tran(df_tmp)[col_numeric].values
 
         ## Internal loop to approximate SE
         for jnd in range(n_sub):
             Isub = Ib[np.random.choice(n_samples, size=n_samples, replace=True)]
-            theta_sub[jnd] = tran(df.iloc[Isub, ])[col_numeric].values
+            df_tmp = copy_meta(df, df.iloc[Isub, ])
+            theta_sub[jnd] = tran(df_tmp)[col_numeric].values
         se_boot_all[ind] = np.std(theta_sub, axis=0)
 
         ## Construct approximate pivot

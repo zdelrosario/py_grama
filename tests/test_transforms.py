@@ -16,12 +16,16 @@ class TestTools(unittest.TestCase):
 
     def test_bootstrap(self):
         df_stang = data.df_stang
+        df_stang._meta = "foo"
 
         def tran_stats(df):
             val = df.select_dtypes(include="number").values
 
             means = np.mean(val, axis=0)
             stds = np.std(val, axis=0)
+
+            # Check metadata propagation
+            self.assertTrue(df._meta == "foo")
 
             return pd.DataFrame(
                 data = {

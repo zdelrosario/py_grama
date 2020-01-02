@@ -1,5 +1,6 @@
 __all__ = [
     "continuous_fit",
+    "copy_meta",
     "custom_formatwarning",
     "df_equal",
     "param_dist",
@@ -237,6 +238,23 @@ param_dist = {
 
 ## Core helper functions
 ##################################################
+## Metadata copy
+def copy_meta(df_source, df_target):
+    """Internal metadata copy tool
+
+    Args:
+        df_source (DataFrame):
+        df_target (DataFrame):
+
+    Returns:
+        DataFrame: df_target with copied metadata
+    """
+    df_target._grouped_by = getattr(df_source, '_grouped_by', None)
+    df_target._plot_info  = getattr(df_source, '_plot_info', None)
+    df_target._meta       = getattr(df_source, '_meta', None)
+
+    return df_target
+
 ## Pipe decorator
 class pipe(object):
     __name__ = "pipe"
@@ -260,9 +278,10 @@ class pipe(object):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             if isinstance(other, pd.DataFrame):
-                other_copy._grouped_by = getattr(other, '_grouped_by', None)
-                other_copy._plot_info = getattr(other, '_plot_info', None)
-                other_copy._meta = getattr(other, '_meta', None)
+                # other_copy._grouped_by = getattr(other, '_grouped_by', None)
+                # other_copy._plot_info = getattr(other, '_plot_info', None)
+                # other_copy._meta = getattr(other, '_meta', None)
+                other_copy = copy_meta(other, other_copy)
 
         result = self.function(other_copy)
 
