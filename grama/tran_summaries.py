@@ -137,6 +137,9 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
         I_normalized = list(map(lambda s: s[0] == "S", df_res[typename]))
         df_res = df_res[I_normalized]
 
+    ## Fill NaN's
+    df_res.fillna(value=0, inplace=True)
+
     return df_res
 
 @pipe
