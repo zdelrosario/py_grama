@@ -21,12 +21,7 @@ warnings.formatwarning = custom_formatwarning
 ## Compute Sobol' indices
 # --------------------------------------------------
 @curry
-def tran_sobol(
-        df,
-        varname="hybrid_var",
-        typename="ind",
-        digits=2
-):
+def tran_sobol(df, typename="ind", digits=2, full=False):
     """Post-process results from gr.eval_hybrid()
 
     Estimate Sobol' indices based on hybrid point evaluations (Sobol', 1999).
@@ -34,9 +29,9 @@ def tran_sobol(
 
     Args:
         df (DataFrame): Hybrid point results from gr.eval_hybrid()
-        varname (str): Column name to give for sweep variable; default="hybrid_var"
         typename (str): Name to give index type column in results
         digits (int): Number of digits for rounding reported results
+        full (bool): Return un-normalized indices and variance?
 
     Returns:
         DataFrame: Sobol' indices
@@ -61,71 +56,67 @@ def tran_sobol(
         >>> df_total >> gr.tf_sobol()
 
     """
-    if not (varname in df.columns):
-        raise ValueError("{} not in df.columns".format(varname))
-
     ## Determine plan from dataframe metadata
     metadata = df._meta
-    if "ev_hybrid" in metadata:
-        plan = metadata[10:]
+    if metadata["type"] == "eval_hybrid":
+        plan     = metadata["plan"]
+        varname  = metadata["varname"]
+        var_rand = metadata["var_rand"]
+        out      = metadata["out"]
     else:
         raise ValueError("df not hybrid points!")
 
-    ## Setup
-    v_model = list(filter(
-        lambda s: s != "_",
-        df[[varname]].drop_duplicates()[varname]
-    ))
-    v_drop = v_model + [varname]
-    n_in = len(v_model)
-    I_base  = (df[varname] == "_")
+    ## Check invariants
+    if not (varname in df.columns):
+        raise ValueError("{} not in df.columns".format(varname))
 
-    df_var = pd.DataFrame(df.drop(columns=v_drop).var()).transpose()
+    ## Setup
+    I_base  = (df[varname] == "_")
+    df_var = pd.DataFrame(df[out].var()).transpose()
     df_var[typename] = "var"
 
     df_res = df_var.copy()
 
     if plan == "first":
-        mu_base = df.drop(columns=v_drop)[I_base].mean()
+        mu_base = df[out][I_base].mean()
 
-        for i_var in range(n_in):
-            I_var = (df[varname] == v_model[i_var])
+        for i_var, var in enumerate(var_rand):
+            I_var = (df[varname] == var)
 
-            mu_var = df.drop(columns=v_drop)[I_var].mean()
+            mu_var = df[out][I_var].mean()
             mu_tot = 0.5 * (mu_base + mu_var)
             s2_var = (
-                df[I_base].drop(columns=v_drop).reset_index(drop=True).mul(
-                    df[I_var].drop(columns=v_drop).reset_index(drop=True)
+                df[out][I_base].reset_index(drop=True).mul(
+                    df[out][I_var].reset_index(drop=True)
                 )
             ).mean()
 
             df_tau = pd.DataFrame(s2_var - mu_tot**2).transpose()
-            df_tau[typename] = "T_" + v_model[i_var]
+            df_tau[typename] = "T_" + var
 
-            df_index = df_tau.drop(columns=typename) \
-                             .reset_index(drop=True) \
-                             .truediv(df_var.drop(columns=typename))
-            df_index[typename] = "S_" + v_model[i_var]
+            df_index = df_tau[out].reset_index(drop=True) \
+                                  .truediv(df_var.drop(columns=typename))
+            df_index[typename] = "S_" + var
 
             df_res = pd.concat((df_res, df_tau, df_index))
 
     elif plan == "total":
-        for i_var in range(n_in):
-            I_var = (df[varname] == v_model[i_var])
+        for i_var, var in enumerate(var_rand):
+            I_var = (df[varname] == var)
             s2_var = (
                 (
-                    df[I_base].drop(columns=v_drop).reset_index(drop=True) - \
-                    df[I_var].drop(columns=v_drop).reset_index(drop=True)
+                    df[out][I_base].reset_index(drop=True) - \
+                    df[out][I_var].reset_index(drop=True)
                 )**2
             ).mean() * 0.5
 
             df_tau = pd.DataFrame(s2_var).transpose()
-            df_tau[typename] = "T_" + v_model[i_var]
+            df_tau[typename] = "T_" + var
 
             df_index = df_tau.drop(columns=typename) \
                              .reset_index(drop=True) \
                              .truediv(df_var.drop(columns=typename))
-            df_index[typename] = "T_" + v_model[i_var]
+            df_index[typename] = "T_" + var
 
             df_res = pd.concat((df_res, df_tau, df_index))
     else:
@@ -140,6 +131,11 @@ def tran_sobol(
         typename,
         inplace=True
     )
+
+    ## Filter, if necessary
+    if not full:
+        I_normalized = list(map(lambda s: s[0] == "S", df_res[typename]))
+        df_res = df_res[I_normalized]
 
     return df_res
 

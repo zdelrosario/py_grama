@@ -412,14 +412,26 @@ def eval_hybrid(
     if skip:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_samp._meta = "ev_hybrid_" + plan
+            df_samp._meta = dict(
+                type="eval_hybrid",
+                varname=varname,
+                plan=plan,
+                var_rand=model.var_rand,
+                out=model.out
+            )
 
         return df_samp
     else:
         df_res = gr.eval_df(model, df=df_samp, append=append)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_res._meta = "ev_hybrid_" + plan
+            df_res._meta = dict(
+                type="eval_hybrid",
+                varname=varname,
+                plan=plan,
+                var_rand=model.var_rand,
+                out=model.out
+            )
 
         return df_res
 

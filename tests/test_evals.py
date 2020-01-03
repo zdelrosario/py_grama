@@ -271,7 +271,7 @@ class TestRandom(unittest.TestCase):
             set(df_min.columns) == \
             set(self.md.var + self.md.out + ["hybrid_var"])
         )
-        self.assertTrue(df_min._meta == "ev_hybrid_first")
+        self.assertTrue(df_min._meta["type"] == "eval_hybrid")
 
         df_seeded = gr.eval_hybrid(self.md, df_det="nom", seed=101)
         df_piped = self.md >> gr.ev_hybrid(df_det="nom", seed=101)
@@ -282,7 +282,7 @@ class TestRandom(unittest.TestCase):
             set(df_total.columns) == \
             set(self.md.var + self.md.out + ["hybrid_var"])
         )
-        self.assertTrue(df_total._meta == "ev_hybrid_total")
+        self.assertTrue(df_total._meta["type"] == "eval_hybrid")
 
         df_skip = gr.eval_hybrid(self.md, df_det="nom", skip=True)
         self.assertTrue(

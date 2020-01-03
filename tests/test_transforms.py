@@ -6,6 +6,7 @@ import sys
 
 from context import grama as gr
 from context import data
+from context import models
 
 ## Test transform tools
 ##################################################
@@ -162,4 +163,39 @@ class TestReshape(unittest.TestCase):
             self.df_spreaded_drop.equals(
                 gr.tran_spread(self.df_long, "key", "value", drop=True)
             )
+        )
+
+class TestSummaries(unittest.TestCase):
+
+    def setUp(self):
+        self.md = models.make_test()
+
+    def test_sobol(self):
+        ## Minimal
+        df_first = gr.eval_hybrid(self.md, df_det="nom")
+        df_sobol = gr.tran_sobol(df_first)
+        self.assertTrue(
+            set(df_sobol.columns) == set(["y0", "ind"])
+        )
+        self.assertTrue(
+            set(df_sobol["ind"]) == set(["S_x0", "S_x1"])
+        )
+
+        ## Full
+        df_full = gr.tran_sobol(df_first, full=True)
+        self.assertTrue(
+            set(df_full.columns) == set(["y0", "ind"])
+        )
+        self.assertTrue(
+            set(df_full["ind"]) == set(["S_x0", "S_x1", "T_x0", "T_x1", "var"])
+        )
+
+        ## Total order
+        df_total = gr.eval_hybrid(self.md, df_det="nom", plan="total")
+        df_sobol_total = gr.tran_sobol(df_total)
+        self.assertTrue(
+            set(df_sobol.columns) == set(["y0", "ind"])
+        )
+        self.assertTrue(
+            set(df_sobol["ind"]) == set(["S_x0", "S_x1"])
         )
