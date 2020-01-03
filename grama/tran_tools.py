@@ -22,9 +22,9 @@ from numbers import Integral
 def tran_bootstrap(
         df,
         tran=None,
-        n_boot=1000,
+        n_boot=500,
         n_sub=25,
-        con=0.99,
+        con=0.90,
         col_sel=None,
         seed=None
 ):
