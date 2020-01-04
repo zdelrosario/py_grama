@@ -165,6 +165,7 @@ class TestReshape(unittest.TestCase):
             )
         )
 
+# --------------------------------------------------
 class TestSummaries(unittest.TestCase):
 
     def setUp(self):
@@ -199,3 +200,91 @@ class TestSummaries(unittest.TestCase):
         self.assertTrue(
             set(df_sobol["ind"]) == set(["S_x0", "S_x1"])
         )
+
+# --------------------------------------------------
+class TestAsub(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_asub(self):
+        df_data = pd.DataFrame(dict(
+            Df_Dx=[1/np.sqrt(2)] * 2,
+            Df_Dy=[1/np.sqrt(2)] * 2
+        ))
+        df_true = pd.DataFrame(dict(
+            x=[+1/np.sqrt(2), +1/np.sqrt(2)],
+            y=[+1/np.sqrt(2), -1/np.sqrt(2)],
+            out=["f", "f"],
+            lam=[1, 0]
+        ))
+
+        df_res = gr.tran_asub(df_data)
+
+        ## Entries correct
+        angles = gr.tran_angles(df_true[["x", "y"]], df_res[["x", "y"]])
+        self.assertTrue(np.allclose(angles, [0, 0]))
+
+        ## Expected columns
+        self.assertTrue(set(df_res.columns) == set(df_true.columns))
+
+        df_piped = df_data >> gr.tf_asub()
+        self.assertTrue(df_res.equals(df_piped))
+
+# --------------------------------------------------
+class TestAngles(unittest.TestCase):
+    def setUp(self):
+        self.df = pd.DataFrame(dict(v=[1, 1]))
+        self.df_v1 = pd.DataFrame(dict(w=[+1, -1]))
+        self.df_v2 = pd.DataFrame(dict(w=[+1, +1]))
+
+    def test_angles(self):
+        theta1 = gr.tran_angles(self.df, self.df_v1)
+        theta2 = gr.tran_angles(self.df, self.df_v2)
+
+        self.assertTrue(np.isclose(theta1, np.pi/2))
+        self.assertTrue(np.isclose(theta2, 0))
+
+        theta_piped = self.df >> gr.tf_angles(self.df_v1)
+        self.assertTrue(np.isclose(theta1, theta_piped))
+
+        with self.assertRaises(ValueError):
+            gr.tran_angles(pd.DataFrame(), self.df_v1)
+
+        with self.assertRaises(ValueError):
+            gr.tran_angles(self.df, pd.DataFrame())
+
+# --------------------------------------------------
+class TestInner(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_inner(self):
+        df = pd.DataFrame(dict(
+            v=[+1, +1],
+            w=[-1, +1]
+        ))
+
+        df_w = pd.DataFrame(dict(
+            v=[1, 0, 1],
+            w=[0, 1, 1],
+            id=["v", "w", "x"]
+        ))
+
+        df_true = df.copy()
+        df_true["dot_v"] = df.v
+        df_true["dot_w"] = df.w
+        df_true["dot_x"] = df.v + df.w
+
+        ##
+        df_noappend = gr.tran_inner(df, df_w, name="id", append=False)
+
+        pd.testing.assert_frame_equal(
+            df_true[["dot_v", "dot_w", "dot_x"]],
+            df_noappend,
+            check_exact=False,
+            check_dtype=False,
+            check_column_type=False
+        )
+
+        df_res = gr.tran_inner(df, df_w, name="id")

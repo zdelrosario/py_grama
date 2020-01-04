@@ -1,4 +1,6 @@
 __all__ = [
+    "tran_angles",
+    "tf_angles",
     "tran_bootstrap",
     "tf_bootstrap",
     "tran_outer",
@@ -11,13 +13,15 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_numeric_dtype
 
 from grama import pipe, copy_meta
 from toolz import curry
 from numbers import Integral
+from pandas.api.types import is_numeric_dtype
+from scipy.linalg import subspace_angles
 
 ## Bootstrap utility
+# --------------------------------------------------
 @curry
 def tran_bootstrap(
         df,
@@ -36,9 +40,9 @@ def tran_bootstrap(
     Args:
         df (DataFrame): Data to bootstrap
         tran (grama tran_ function): Transform procedure which generates statistic
-        n_boot (numeric): Monte Carlo resamples for bootstrap, default = 1000
-        n_sub (numeric): Nested resamples to estimate SE, default = 25
-        con (float): Confidence level, default = 0.99
+        n_boot (numeric): Monte Carlo resamples for bootstrap
+        n_sub (numeric): Nested resamples to estimate SE
+        con (float): Confidence level
         col_sel (list(string)): Columns to include in bootstrap calculation
 
     Returns:
@@ -141,6 +145,7 @@ def tf_bootstrap(*args, **kwargs):
     return tran_bootstrap(*args, **kwargs)
 
 ## DataFrame outer product
+# --------------------------------------------------
 @curry
 def tran_outer(df, df_outer):
     """Outer merge
@@ -228,3 +233,40 @@ def tran_spread(df, key, value, fill=np.nan, drop=False):
 @pipe
 def tf_spread(*args, **kwargs):
     return tran_spread(*args, **kwargs)
+
+## Assess subspace angles
+# --------------------------------------------------
+def tran_angles(df, df2):
+    """Subspace angles
+
+    Compute the subspace angles between two matrices. A wrapper for
+    scipy.linalg.subspace_angles that corrects for column ordering. Row ordering
+    is assumed.
+
+    Args:
+        df (DataFrame): First matrix to compare
+        df2 (DataFrame): Second matrix to compare
+
+    Returns:
+        np.array: Array of angles (in radians)
+
+    Examples:
+
+        >>> import grama as gr
+        >>> import pandas as pd
+        >>> df = pd.DataFrame(dict(v=[+1, +1]))
+        >>> df_v1 = pd.DataFrame(dict(w=[+1, -1]))
+        >>> df_v2 = pd.DataFrame(dict(w=[+1, +1]))
+        >>> theta1 = angles(df, df_v1)
+        >>> theta2 = angles(df, df_v2)
+
+    """
+    ## Compute subspace angles
+    A1 = df.values
+    A2 = df2.values
+
+    return subspace_angles(A1, A2)
+
+@pipe
+def tf_angles(*args, **kwargs):
+    return tran_angles(*args, **kwargs)

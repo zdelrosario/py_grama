@@ -219,7 +219,7 @@ def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
         prefix (str): Name prefix for resulting inner product columns;
             default="dot"
         name (str): Name of identity column in df_weights or None
-        append (bool): Append new data to original DataFrame?; default=False
+        append (bool): Append new data to original DataFrame?
 
     Returns:
         DataFrame: Results of inner products
@@ -292,7 +292,7 @@ def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
         df_res = pd.DataFrame(data=dot, columns=names)
 
     if append:
-        df_res = df.join(df_res)
+        df_res = pd.concat((df.reset_index(drop=True), df_res), axis=1)
 
     return df_res
 
