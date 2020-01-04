@@ -270,13 +270,12 @@ class TestInner(unittest.TestCase):
             w=[0, 1, 1],
             id=["v", "w", "x"]
         ))
-
         df_true = df.copy()
         df_true["dot_v"] = df.v
         df_true["dot_w"] = df.w
         df_true["dot_x"] = df.v + df.w
 
-        ##
+        ## Core functionality
         df_noappend = gr.tran_inner(df, df_w, name="id", append=False)
 
         pd.testing.assert_frame_equal(
@@ -288,3 +287,45 @@ class TestInner(unittest.TestCase):
         )
 
         df_res = gr.tran_inner(df, df_w, name="id")
+        pd.testing.assert_frame_equal(
+            df_true,
+            df_res,
+            check_exact=False,
+            check_dtype=False,
+            check_column_type=False
+        )
+
+        ## Pipe
+        df_piped = df >> gr.tf_inner(df_w, name="id")
+        self.assertTrue(df_res.equals(df_piped))
+
+        ## Small weights
+        df_w_small = pd.DataFrame(dict(v=[1], w=[1]))
+        df_true_small = df.copy()
+        df_true_small["dot"] = df.v + df.w
+
+        df_res_small = gr.tran_inner(df, df_w_small)
+        pd.testing.assert_frame_equal(
+            df_true_small,
+            df_res_small,
+            check_exact=False,
+            check_dtype=False,
+            check_column_type=False
+        )
+
+
+        ## No name column
+        df_w_noname = df_w.drop("id", axis=1)
+        df_true_noname = df.copy()
+        df_true_noname["dot0"] = df.v
+        df_true_noname["dot1"] = df.w
+        df_true_noname["dot2"] = df.v + df.w
+
+        df_res_noname = gr.tran_inner(df, df_w_noname)
+        pd.testing.assert_frame_equal(
+            df_true_noname,
+            df_res_noname,
+            check_exact=False,
+            check_dtype=False,
+            check_column_type=False
+        )
