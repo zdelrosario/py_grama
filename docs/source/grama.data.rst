@@ -1,13 +1,13 @@
-grama.misc package
+grama.data package
 ==================
 
 Submodules
 ----------
 
-grama.misc.datasets module
+grama.data.datasets module
 --------------------------
 
-.. automodule:: grama.misc.datasets
+.. automodule:: grama.data.datasets
    :members:
    :undoc-members:
    :show-inheritance:
@@ -16,7 +16,7 @@ grama.misc.datasets module
 Module contents
 ---------------
 
-.. automodule:: grama.misc
+.. automodule:: grama.data
    :members:
    :undoc-members:
    :show-inheritance:
