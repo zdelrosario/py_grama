@@ -1,7 +1,3 @@
-__all__ = [
-    "df_stang"
-]
-
 import os
 import pandas as pd
 from pathlib import Path
