@@ -34,6 +34,40 @@ def function_displacement(x):
     )
 
 def make_cantilever_beam():
+    """Cantilever beam
+
+    A standard reliability test-case, often used for benchmarking reliability
+    analysis and design algorithms.
+
+    Generally used in the following optimization problem:
+
+        min_{w,t} c_area
+
+        s.t.      P[g_stress <= 0] <= 1.35e-3
+
+                  P[g_disp <= 0] <= 1.35e-3
+
+                  1 <= w, t <= 4
+
+    Deterministic Variables:
+        w: Beam width
+        t: Beam thickness
+    Random Variables:
+        H: Horizontal applied force
+        V: Vertical applied force
+        E: Elastic modulus
+        Y: Yield stress
+    Outputs:
+        c_area: Cost; beam cross-sectional area
+        g_stress: Limit state; stress
+        g_disp: Limit state; tip displacement
+
+    References:
+        Wu, Y.-T., Shin, Y., Sues, R., and Cesare, M., "Safety-factor based approach for probability-based design optimization," American Institute of Aeronautics and Astronautics, Seattle, Washington, April 2001.
+        Sues, R., Aminpour, M., and Shin, Y., "Reliability-based Multi-Disciplinary Optimiation for Aerospace Systems," American Institute of Aeronautics and Astronautics, Seattle, Washington, April 2001.
+
+    """
+
     md = gr.Model(name = "Cantilever Beam") >> \
          gr.cp_function(
              fun=function_area,
