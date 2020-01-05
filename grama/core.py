@@ -268,6 +268,10 @@ class Copula(ABC):
     def sample(self, n=1):
         pass
 
+    @abstractmethod
+    def summary(self):
+        pass
+
 class CopulaIndependence(Copula):
     def __init__(self, var_rand):
         """Constructor
@@ -310,6 +314,9 @@ class CopulaIndependence(Copula):
             data=np.random.random((n, len(self.var_rand))),
             columns=self.var_rand
         )
+
+    def summary(self):
+        return "Independence copula"
 
 class CopulaGaussian(Copula):
     def __init__(self, df_corr):
@@ -395,6 +402,9 @@ class CopulaGaussian(Copula):
             data=quantiles,
             columns=self.var_rand
         )
+
+    def summary(self):
+        return "Gaussian copula with correlations:\n{}".format(self.df_corr)
 
 ## Density parent class
 class Density:
@@ -544,6 +554,12 @@ class Density:
 
     def summary_marginal(self, var):
         return "{0:}: {1:}".format(var, self.marginals[var].summary())
+
+    def summary_copula(self):
+        if not (self.copula is None):
+            return self.copula.summary()
+        else:
+            return None
 
 # Model parent class
 class Model:
@@ -809,6 +825,8 @@ class Model:
                 print("      {}".format(self.density.summary_marginal(key)))
         except AttributeError:
             pass
+        print("    copula:")
+        print("        {}".format(self.density.summary_copula()))
 
         print("  functions:")
         for function in self.functions:
