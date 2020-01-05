@@ -382,8 +382,12 @@ def make_density(Theta_nom, T_nom=T_NOM):
         d_name="norm",
         d_param={"loc": Nx_M, "scale": Nx_SIG}
     )
+    var_rand = list(marginals.keys())
 
-    return gr.Density(marginals=marginals)
+    return gr.Density(
+        marginals=marginals,
+        copula=gr.CopulaIndependence(var_rand)
+    )
 
 ## Model class
 ##################################################

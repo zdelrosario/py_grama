@@ -55,6 +55,7 @@ def make_ishigami():
             x1={"dist": "uniform", "loc": -np.pi, "scale": 2 * np.pi},
             x2={"dist": "uniform", "loc": -np.pi, "scale": 2 * np.pi},
             x3={"dist": "uniform", "loc": -np.pi, "scale": 2 * np.pi}
-        )
+        ) >> \
+        gr.cp_copula_independence()
 
     return md

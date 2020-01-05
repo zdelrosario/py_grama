@@ -99,6 +99,7 @@ def make_cantilever_beam():
              V={"dist": "norm", "loc": MU_V, "scale": TAU_V, "sign": +1},
              E={"dist": "norm", "loc": MU_E, "scale": TAU_E, "sign":  0},
              Y={"dist": "norm", "loc": MU_Y, "scale": TAU_Y, "sign": -1}
-         )
+         ) >> \
+         gr.cp_copula_independence()
 
     return md

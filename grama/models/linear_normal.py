@@ -19,6 +19,7 @@ def make_linear_normal():
          gr.cp_marginals(
              x0={"dist": "norm", "loc": 0, "scale": 1, "sign":+1},
              x1={"dist": "norm", "loc": 0, "scale": 1, "sign":+1}
-         )
+         ) >> \
+         gr.cp_copula_independence()
 
     return md

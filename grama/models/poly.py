@@ -13,6 +13,7 @@ def make_poly():
              x0={"dist": "uniform", "loc": -1, "scale": 2},
              x1={"dist": "uniform", "loc": -1, "scale": 2},
              x2={"dist": "uniform", "loc": -1, "scale": 2}
-         )
+         ) >> \
+         gr.cp_copula_independence()
 
     return md
