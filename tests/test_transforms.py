@@ -105,6 +105,16 @@ class TestTools(unittest.TestCase):
             check_column_type=False
         )
 
+    def test_gauss_copula(self):
+        md = gr.Model() >> \
+             gr.cp_marginals(
+                 E=gr.continuous_fit(data.df_stang.E, "norm"),
+                 mu=gr.continuous_fit(data.df_stang.mu, "beta"),
+                 thick=gr.continuous_fit(data.df_stang.thick, "uniform")
+             )
+        df_corr = gr.tran_copula_corr(data.df_stang, model=md)
+
+
 # --------------------------------------------------
 class TestReshape(unittest.TestCase):
     def setUp(self):

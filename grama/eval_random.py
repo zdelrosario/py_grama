@@ -63,13 +63,13 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
         n = int(n)
 
     ## Draw samples
-    df_quant = pd.DataFrame(
+    df_pr = pd.DataFrame(
         data=np.random.random((n, model.n_var_rand)),
         columns=model.var_rand
     )
 
     ## Convert samples to desired marginals
-    df_rand = model.var_rand_quantile(df_quant)
+    df_rand = model.density.pr2sample(df_pr)
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
@@ -164,7 +164,7 @@ def eval_lhs(
     )
 
     ## Convert samples to desired marginals
-    df_rand = model.var_rand_quantile(df_quant)
+    df_rand = model.density.pr2sample(df_quant)
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
@@ -275,8 +275,8 @@ def eval_sinews(
                 Q_all[ind_end-1, i_input] = 1 - 1 / n_density / 10
 
     ## Assemble sampling plan
-    df_quant = pd.DataFrame(data=Q_all, columns=model.var_rand)
-    df_rand = model.var_rand_quantile(df_quant)
+    df_pr = pd.DataFrame(data=Q_all, columns=model.var_rand)
+    df_rand = model.density.pr2sample(df_pr)
     df_rand[varname] = C_var
     df_rand[indname] = C_ind
     ## Construct outer-product DOE
@@ -402,9 +402,9 @@ def eval_hybrid(
         C_var[i_start:i_end] = [model.var_rand[i_in]] * n
 
     ## Construct sampling plan
-    df_quant = pd.DataFrame(data=Q_all, columns=model.var_rand)
+    df_pr = pd.DataFrame(data=Q_all, columns=model.var_rand)
     ## Convert samples to desired marginals
-    df_rand = model.var_rand_quantile(df_quant)
+    df_rand = model.density.pr2sample(df_pr)
     df_rand[varname] = C_var
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)

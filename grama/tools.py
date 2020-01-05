@@ -336,7 +336,7 @@ def continuous_fit(data, dist, name=True, sign=None):
     Examples:
 
         >>> import grama as gr
-        >>> from grama.misc import df_stang
+        >>> from grama.data import df_stang
         >>> param_E  = gr.continuous_fit(df_stang.E, "norm")
         >>> param_mu = gr.continuous_fit(df_stang.mu, "beta")
         >>> md = gr.Model("Marginal Example") >> \

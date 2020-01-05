@@ -123,12 +123,6 @@ class TestModel(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.model_3d.var_outer(self.df_2d, df_det=self.df_2d)
 
-    def test_var_rand_quantile(self):
-        ## TODO: Copula tests
-
-        with self.assertRaises(ValueError):
-            self.model_2d.var_rand_quantile(self.df_wrong)
-
     ## Test re-ordering issues
 
     def test_2d_output_names(self):
@@ -154,21 +148,10 @@ class TestModel(unittest.TestCase):
         """Checks that model.sample_quantile() evaluates correctly.
         """
         self.assertTrue(
-            self.model_2d.var_rand_quantile(self.df_median_in).equals(
+            self.model_2d.density.pr2sample(self.df_median_in).equals(
                 self.df_median_out
             )
         )
-
-    ## TODO: Once copula model implemented
-    # def test_quantile_corr(self):
-    #     """Checks that model.sample_quantile() evaluates correctly with copula model.
-    #     """
-    #     self.assertTrue(
-    #         np.all(
-    #             self.model_2d_corr.sample_quantile(np.array([[0.5, 0.5]])) == \
-    #             np.array([0.0, 0.5])
-    #         )
-    #     )
 
 class TestEvalDf(unittest.TestCase):
     """Test implementation of eval_df()
@@ -211,6 +194,7 @@ class TestMarginal(unittest.TestCase):
         )
 
 
+# --------------------------------------------------
 class TestDomain(unittest.TestCase):
 
     def setUp(self):
@@ -228,6 +212,71 @@ class TestDomain(unittest.TestCase):
             self.domain.bound_summary("y").find("unbounded") > -1
         )
 
+# --------------------------------------------------
+class TestDensity(unittest.TestCase):
+
+    def setUp(self):
+        self.density = gr.Density(
+            marginals=dict(
+                x=gr.MarginalNamed(
+                    d_name="uniform",
+                    d_param={"loc":-1, "scale": 2}
+                ),
+                y=gr.MarginalNamed(
+                    d_name="uniform",
+                    d_param={"loc":-1, "scale": 2}
+                )
+            ),
+            copula=gr.CopulaGaussian(
+                pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
+            )
+        )
+
+    def test_CopulaIndependence(self):
+        copula = gr.CopulaIndependence(var_rand=["x", "y"])
+        df_res = copula.sample(seed=101)
+
+        self.assertTrue(set(df_res.columns) == set(["x", "y"]))
+
+    def test_CopulaGaussian(self):
+        df_corr = pd.DataFrame(dict(
+            var1=["x"],
+            var2=["y"],
+            corr=[0.5]
+        ))
+        Sigma_h = np.linalg.cholesky(np.array([[1.0, 0.5], [0.5, 1.0]]))
+        copula = gr.CopulaGaussian(df_corr=df_corr)
+        df_res = copula.sample(seed=101)
+
+        self.assertTrue(np.isclose(copula.Sigma_h, Sigma_h).all)
+        self.assertTrue(set(df_res.columns) == set(["x", "y"]))
+
+        ## Test raises
+        df_corr_invalid = pd.DataFrame(dict(
+            var1=["x", "x"],
+            var2=["y", "z"],
+            corr=[0, 0]
+        ))
+
+        with self.assertRaises(ValueError):
+            gr.CopulaGaussian(df_corr=df_corr_invalid)
+
+    def test_conversion(self):
+        df_pr_true = pd.DataFrame(dict(x=[0.5], y=[0.5]))
+        df_sp_true = pd.DataFrame(dict(x=[0.0], y=[0.0]))
+
+        df_pr_res = self.density.sample2pr(df_sp_true)
+        df_sp_res = self.density.pr2sample(df_pr_true)
+
+        self.assertTrue(df_pr_true.equals(df_pr_res))
+        self.assertTrue(df_sp_true.equals(df_sp_res))
+
+    def test_sampling(self):
+        df_sample = self.density.sample(n=1, seed=101)
+
+        self.assertTrue(set(df_sample.columns) == set(["x", "y"]))
+
+# --------------------------------------------------
 class TestFunction(unittest.TestCase):
 
     def setUp(self):

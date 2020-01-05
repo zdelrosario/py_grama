@@ -3,6 +3,8 @@ __all__ = [
     "tf_angles",
     "tran_bootstrap",
     "tf_bootstrap",
+    "tran_copula_corr",
+    "tf_copula_corr",
     "tran_outer",
     "tf_outer",
     "tran_gather",
@@ -19,6 +21,7 @@ from toolz import curry
 from numbers import Integral
 from pandas.api.types import is_numeric_dtype
 from scipy.linalg import subspace_angles
+from scipy.stats import norm
 
 ## Bootstrap utility
 # --------------------------------------------------
@@ -270,3 +273,65 @@ def tran_angles(df, df2):
 @pipe
 def tf_angles(*args, **kwargs):
     return tran_angles(*args, **kwargs)
+
+## Compute Gaussian copula correlations from data
+# --------------------------------------------------
+def tran_copula_corr(df, model=None, density=None):
+    """Compute Gaussian copula correlations from data
+
+    Convenience function to fit a Gaussian copula (correlations) based on data
+    and pre-fitted marginals. Intended for use with gr.comp_copula_gaussian().
+    Must provide either `model` or `density`.
+
+    Args:
+        df (DataFrame): Matrix of data for correlation estimation
+        model (gr.Model): Model with defined marginals
+        density (gr.Density): Density with defined marginals
+
+    Returns:
+        DataFrame: Correlation data ready for use with gr.comp_copula_gaussian()
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.data import df_stang
+        >>> md = gr.Model() >> \
+        >>>     gr.cp_marginals(
+        >>>         E=gr.continuous_fit(df_stang.E, "norm"),
+        >>>         mu=gr.continuous_fit(df_stang.mu, "beta"),
+        >>>         thick=gr.continuous_fit(df_stang.thick, "norm")
+        >>>     )
+        >>> df_corr = gr.tran_copula_corr(df_stang, model=md)
+
+    """
+    if density is None:
+        density = model.density
+
+    ## Check invariants
+    if not set(density.marginals.keys()).issubset(set(df.columns)):
+        raise ValueError("df must have columns for all var_rand")
+
+    ## Convert data
+    df_res = density.sample2pr(df)
+    df_norm = df_res.apply(norm.ppf)
+
+    ## Compute correlations
+    df_mat = df_norm.corr()
+    Ind = np.triu_indices(len(density.marginals), 1)
+
+    ## Arrange
+    var_rand = df_mat.columns
+    var1_all = []
+    var2_all = []
+    corr_all = []
+
+    for i, j in zip(Ind[0], Ind[1]):
+        var1_all.append(var_rand[i])
+        var2_all.append(var_rand[j])
+        corr_all.append(df_mat.iloc[i, j])
+
+    return pd.DataFrame(dict(var1=var1_all, var2=var2_all, corr=corr_all))
+
+@pipe
+def tf_copula_corr(*args, **kwargs):
+    return tran_copula_corr(*args, **kwargs)

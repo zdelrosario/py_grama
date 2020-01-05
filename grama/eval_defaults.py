@@ -71,9 +71,9 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
     quantiles = np.ones((1, model.n_var_rand)) * 0.5 # Median
 
     ## Convert samples to desired marginals
-    df_quant = pd.DataFrame(data=quantiles, columns=model.var_rand)
+    df_pr = pd.DataFrame(data=quantiles, columns=model.var_rand)
     ## Convert samples to desired marginals
-    df_rand = model.var_rand_quantile(df_quant)
+    df_rand = model.density.pr2sample(df_pr)
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
@@ -225,9 +225,9 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
     quantiles = np.atleast_2d(quantiles)
 
     ## Draw samples
-    df_quant = pd.DataFrame(data=quantiles, columns=model.var_rand)
+    df_pr = pd.DataFrame(data=quantiles, columns=model.var_rand)
     ## Convert samples to desired marginals
-    df_rand = model.var_rand_quantile(df_quant)
+    df_rand = model.density.pr2sample(df_pr)
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)
 

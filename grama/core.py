@@ -2,6 +2,8 @@
 # Zachary del Rosario, March 2019
 
 __all__ = [
+    "CopulaIndependence",
+    "CopulaGaussian",
     "Domain",
     "Density",
     "Function",
@@ -266,18 +268,89 @@ class Copula(ABC):
     def sample(self, n=1):
         pass
 
-class CopulaGaussian(ABC):
-    def __init__(self, R):
+class CopulaIndependence(Copula):
+    def __init__(self, var_rand):
+        """Constructor
+
+        Args:
+            var_rand (ind): Number of random variables
+
+        Returns:
+            gr.CopulaIndependence: Independence copula
+
+        """
+        self.var_rand = var_rand
+
+    def copy(self):
+        """Copy
+
+        Returns:
+            gr.CopulaIndependence: Copy of present copula
+
+        """
+        cop = CopulaIndependence(var_rand=self.var_rand)
+
+        return cop
+
+    def sample(self, n=1, seed=None):
+        """Draw samples from copula
+
+        Args:
+            n (int): Number of samples
+            seed (int): Random seed
+
+        Returns:
+            pd.DataFrame: Independent samples
+        """
+        ## Set seed only if given
+        if seed is not None:
+            np.random.seed(seed)
+
+        return pd.DataFrame(
+            data=np.random.random((n, len(self.var_rand))),
+            columns=self.var_rand
+        )
+
+class CopulaGaussian(Copula):
+    def __init__(self, df_corr):
         """Constructor
 
         Args:
             self (gr.CopulaGaussian):
-            R (np.array): Correlation structure
+            df_corr (DataFrame): Pairwise correlations provided as
+                off-diagonal upper-triangular entries. Must have columns
+                ["var1", "var2", "corr"]. Zero-correlation entires must
+                be provided.
 
         Returns:
-            gr.CopulaGaussian
+            gr.CopulaGaussian: Gaussian copula
+
         """
-        self.R = R
+        ## Assemble data
+        df_corr.sort_values(["var1", "var2"], inplace=True)
+        df_summary = df_corr.set_index(["var1", "var2"]) \
+                            .count(level="var1") \
+                            .sort_values("corr", ascending=False)
+        var_rand = list(df_summary.index) + [df_corr.var2.iloc[-1]]
+        n_var_rand = df_summary.iloc[0, 0] + 1
+        Ind_upper = np.triu_indices(n_var_rand, 1)
+        ## Check invariants
+        if len(var_rand) != n_var_rand:
+            raise ValueError("Invalid set of correlations provided")
+        if len(Ind_upper[0]) != len(df_corr["corr"]):
+            raise ValueError("Invalid set of correlations provided")
+
+        ## Build correlation structure
+        Sigma            = np.eye(n_var_rand)
+        Sigma[Ind_upper] = df_corr["corr"].values
+        Sigma            = Sigma + \
+                           (Sigma - np.eye(n_var_rand)).T
+        Sigma_h          = cholesky(Sigma)
+
+        self.df_corr = df_corr
+        self.var_rand = var_rand
+        self.Sigma   = Sigma
+        self.Sigma_h = Sigma_h
 
     def copy(self):
         """Copy
@@ -286,23 +359,42 @@ class CopulaGaussian(ABC):
             self (gr.CopulaGaussian):
 
         Returns:
-            gr.CopulaGaussian
+            gr.CopulaGaussian:
         """
-        cop = CopulaGaussian(R=self.R)
+        cop = CopulaGaussian(df_corr=self.df_corr.copy())
 
         return cop
 
-    def sample(self, n=1):
-        """Draw samples
+    def sample(self, n=1, seed=None):
+        """Draw samples from copula
+
+        Draw samples according to gaussian copula dependence structure.
 
         Args:
             self (gr.CopulaGaussian):
             n (int): Number of samples to draw
 
         Returns:
-            np.array:
-        """
+            np.array: Copula samples
 
+        """
+        ## Set seed only if given
+        if seed is not None:
+            np.random.seed(seed)
+
+        ## Generate correlated samples
+        gaussian_samples = np.random.multivariate_normal(
+            mean=[0] * len(self.var_rand),
+            cov=self.Sigma,
+            size=n
+        )
+        ## Convert to uniform marginals
+        quantiles = valid_dist["norm"].cdf(gaussian_samples)
+
+        return pd.DataFrame(
+            data=quantiles,
+            columns=self.var_rand
+        )
 
 ## Density parent class
 class Density:
@@ -324,7 +416,6 @@ class Density:
         Args:
             marginals (dict): Dictionary of gr.Marginal objects
             copula (gr.Copula): Copula object
-                NOT IMPLEMENTED
 
         Returns:
             gr.Density: grama density
@@ -342,12 +433,114 @@ class Density:
         except AttributeError:
             new_marginals = {}
 
+        try:
+            new_copula = self.copula.copy()
+        except AttributeError:
+            new_copula = None
+
         new_density = Density(
             marginals=new_marginals,
-            copula=copy.deepcopy(self.copula)
+            copula=new_copula
         )
 
         return new_density
+
+    def pr2sample(self, df_prval):
+        """Convert CDF probabilities to samples
+
+        Convert random variable CDF probabilities to random variable samples.
+        Ignores dependence structure.
+
+        Args:
+            df_prval (DataFrame): Values \in [0,1]
+
+        Returns:
+            DataFrame: Variable samples (quantiles)
+
+        @pre df_prval.shape[1] == len(self.var_rand)
+        @post result.shape[1] == len(self.var_rand)
+
+        """
+        try:
+            var_rand = list(self.marginals.keys())
+        except AttributeError:
+            var_rand = []
+
+        ## Variables to convert
+        var_comp = list(set(var_rand).intersection(set(df_prval.columns)))
+        if len(var_comp) == 0:
+            raise ValueError(
+                "Intersection of df_prval.columns and var_rand must be nonempty"
+            )
+
+        samples = np.zeros(df_prval[var_comp].shape)
+        ## Ensure correct column ordering
+        prval = df_prval[var_comp].values
+
+        ## Apply appropriate marginal
+        for ind in range(len(var_comp)):
+            ## Map with inverse density
+            var = var_comp[ind]
+            samples[:, ind] = self.marginals[var].q(prval[:, ind])
+
+        return pd.DataFrame(data=samples, columns=var_comp)
+
+    def sample2pr(self, df_sample):
+        """Convert samples to CDF probabilities
+
+        Convert random variable samples to CDF probabilities. Ignores dependence
+        structure.
+
+        Args:
+            df_sample (DataFrame): Values \in [0,1]
+
+        Returns:
+            DataFrame: Variable samples (quantiles)
+
+        @pre df_sample.shape[1] == len(self.var_rand)
+        @post result.shape[1] == len(self.var_rand)
+
+        """
+        try:
+            var_rand = list(self.marginals.keys())
+        except AttributeError:
+            var_rand = []
+
+        ## Variables to convert
+        var_comp = list(set(var_rand).intersection(set(df_sample.columns)))
+        if len(var_comp) == 0:
+            raise ValueError(
+                "Intersection of df_sample.columns and var_rand must be nonempty"
+            )
+
+        prval = np.zeros(df_sample[var_comp].shape)
+        ## Ensure correct column ordering
+        sample = df_sample[var_comp].values
+
+        ## Apply appropriate marginal
+        for ind in range(len(var_comp)):
+            ## Map with inverse density
+            var = var_comp[ind]
+            prval[:, ind] = self.marginals[var].p(sample[:, ind])
+
+        return pd.DataFrame(data=prval, columns=var_comp)
+
+    def sample(self, n=1, seed=None):
+        """Draw samples from joint density
+
+        Draw samples according to joint density using marginal and copula
+        information.
+
+        Args:
+            n (int): Number of samples to draw
+            seed (int): random seed to use
+
+        Returns:
+            DataFrame: Joint density samples
+
+        """
+        df_pr = self.copula.sample(n=n, seed=seed)
+        return self.pr2sample(df_pr)
 
     def summary_marginal(self, var):
         return "{0:}: {1:}".format(var, self.marginals[var].summary())
@@ -562,49 +755,6 @@ class Model:
                 raise ValueError("model.var_det not a subset of given columns")
 
         return gr.tran_outer(df_rand, df_det)
-
-    def var_rand_quantile(self, df_quant):
-        """Convert random variable quantiles to input samples
-
-        Args:
-            df_quant (DataFrame): Values \in [0,1]
-
-        Returns:
-            DataFrame: Variable quantiles
-
-        @pre df_quant.shape[1] == n_var_rand
-        @post df_samp.shape[1] == n_var_rand
-        """
-        ## Check invariant; given columns must be equal to var_rand
-        if (set(self.var_rand) != set(df_quant.columns)):
-            raise ValueError("Quantile columns must equal model var_rand")
-
-        samples = np.zeros(df_quant.shape)
-        ## Ensure correct column ordering
-        quantiles = df_quant[self.var_rand].values
-
-        ## Perform copula conversion, if necessary
-        if self.density.copula is not None:
-            raise NotImplementedError
-            ## Build correlation structure
-            Sigma                                = np.eye(self.n_in)
-            Sigma[np.triu_indices(self.n_in, 1)] = self.density.pdf_corr
-            Sigma                                = Sigma + \
-                                                   (Sigma - np.eye(self.n_in)).T
-            Sigma_h                              = cholesky(Sigma)
-            ## Convert samples
-            gaussian_samples = np.dot(norm.ppf(quantiles), Sigma_h.T)
-            ## Convert to uniform marginals
-            quantiles = norm.cdf(gaussian_samples)
-        ## Skip if no dependence structure
-
-        ## Apply appropriate marginal
-        for ind in range(len(self.var_rand)):
-            ## Map with inverse density
-            var = self.var_rand[ind]
-            samples[:, ind] = self.density.marginals[var].q(quantiles[:, ind])
-
-        return pd.DataFrame(data=samples, columns=self.var_rand)
 
     def name_corr(self):
         """Name the correlation elements

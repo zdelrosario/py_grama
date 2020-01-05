@@ -90,19 +90,19 @@ class TestDefaults(unittest.TestCase):
             quantiles=[0.1, 0.1]
         )
 
-        self.assertTrue(np.allclose(self.df_2d_qe, df_res))
+        gr.df_equal(self.df_2d_qe, df_res)
 
         ## Repeat scalar value
-        self.assertTrue(np.allclose(
+        gr.df_equal(
             self.df_2d_qe,
             gr.eval_conservative(self.model_2d, quantiles=0.1)
-        ))
+        )
 
         ## Pass-through
-        self.assertTrue(np.allclose(
+        gr.df_equal(
             self.df_2d_qe.drop(["f", "g"], axis=1),
             gr.eval_conservative(self.model_2d, quantiles=0.1, skip=True)
-        ))
+        )
 
 ##################################################
 class TestRandomSampling(unittest.TestCase):
@@ -127,35 +127,17 @@ class TestRandomSampling(unittest.TestCase):
         df_truth = pd.DataFrame(data=lhs(2, samples=n), columns=["x0", "x1"])
         df_truth["y0"] = df_truth["x0"]
 
-        pd.testing.assert_frame_equal(
-            df_res,
-            df_truth,
-            check_exact=False,
-            check_dtype=False,
-            check_column_type=False
-        )
+        gr.df_equal(df_res, df_truth)
 
         ## Rounding
         df_round = gr.eval_lhs(self.md_2d, n=n+0.1, df_det="nom", seed=101)
 
-        pd.testing.assert_frame_equal(
-            df_round,
-            df_truth,
-            check_exact=False,
-            check_dtype=False,
-            check_column_type=False
-        )
+        gr.df_equal(df_round, df_truth)
 
         ## Pass-through
         df_pass = gr.eval_lhs(self.md_2d, n=n, skip=True, df_det="nom", seed=101)
 
-        pd.testing.assert_frame_equal(
-            df_pass,
-            df_truth[["x0", "x1"]],
-            check_exact=False,
-            check_dtype=False,
-            check_column_type=False
-        )
+        gr.df_equal(df_pass, df_truth[["x0", "x1"]])
 
     def test_monte_carlo(self):
         ## Accurate
@@ -166,24 +148,12 @@ class TestRandomSampling(unittest.TestCase):
         df_truth = pd.DataFrame({"x0": np.random.random(n)})
         df_truth["y0"] = df_truth["x0"]
 
-        pd.testing.assert_frame_equal(
-            df_res,
-            df_truth,
-            check_exact=False,
-            check_dtype=False,
-            check_column_type=False
-        )
+        gr.df_equal(df_res, df_truth)
 
         ## Rounding
         df_round = gr.eval_monte_carlo(self.md, n=n+0.1, df_det="nom", seed=101)
 
-        pd.testing.assert_frame_equal(
-            df_round,
-            df_truth,
-            check_exact=False,
-            check_dtype=False,
-            check_column_type=False
-        )
+        gr.df_equal(df_round, df_truth)
 
         ## Pass-through
         df_pass = gr.eval_monte_carlo(
@@ -194,13 +164,7 @@ class TestRandomSampling(unittest.TestCase):
             seed=101
         )
 
-        pd.testing.assert_frame_equal(
-            df_pass[["x0"]],
-            df_truth[["x0"]],
-            check_exact=False,
-            check_dtype=False,
-            check_column_type=False
-        )
+        gr.df_equal(df_pass[["x0"]], df_truth[["x0"]])
 
 ##################################################
 class TestRandom(unittest.TestCase):

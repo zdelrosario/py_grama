@@ -180,3 +180,26 @@ class TestMBI(unittest.TestCase):
         ## Invariant raises
         with self.assertRaises(NotImplementedError):
             gr.comp_marginals(self.md, x={})
+
+    def test_comp_copula(self):
+        md_incomplete = gr.comp_marginals(
+            self.md,
+            x={"dist": "uniform", "loc": -1, "scale": 2},
+            y={"dist": "uniform", "loc": -1, "scale": 2}
+        )
+
+        with self.assertRaises(AttributeError):
+            md_incomplete.sample()
+
+        ## Independence copula
+        md_independence = gr.comp_copula_independence(md_incomplete)
+        df_ind = md_independence.density.sample()
+        self.assertTrue(set(df_ind.columns) == set(["x", "y"]))
+
+        ## Gaussian copula
+        md_gaussian = gr.comp_copula_gaussian(
+            md_incomplete,
+            pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
+        )
+        df_gau = md_gaussian.density.sample()
+        self.assertTrue(set(df_gau.columns) == set(["x", "y"]))

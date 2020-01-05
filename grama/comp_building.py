@@ -3,6 +3,10 @@ __all__ = [
     "cp_function",
     "comp_bounds",
     "cp_bounds",
+    "comp_copula_independence",
+    "cp_copula_independence",
+    "comp_copula_gaussian",
+    "cp_copula_gaussian",
     "comp_marginals",
     "cp_marginals"
 ]
@@ -21,7 +25,7 @@ def comp_function(
 ):
     """Add a function to a model
 
-    Composition: Add a function to an existing model.
+    Composition. Add a function to an existing model.
 
     Args:
         model (gr.model): Model to compose
@@ -91,7 +95,7 @@ def cp_function(*args, **kwargs):
 def comp_bounds(model, **kwargs):
     """Add variable bounds to a model
 
-    Composition: Add variable bounds to an existing model. Bounds are specified
+    Composition. Add variable bounds to an existing model. Bounds are specified
     by iterable; the model variable name is specified by the keyword argument
     name.
 
@@ -139,7 +143,7 @@ def cp_bounds(*args, **kwargs):
 def comp_marginals(model, **kwargs):
     """Add marginals to a model
 
-    Composition: Add marginals to an existing model. Marginals are specified by
+    Composition. Add marginals to an existing model. Marginals are specified by
     dictionary entries; the model variable name is specified by the keyword
     argument name.
 
@@ -197,3 +201,112 @@ def comp_marginals(model, **kwargs):
 @pipe
 def cp_marginals(*args, **kwargs):
     return comp_marginals(*args, **kwargs)
+
+# Add copula
+##################################################
+@curry
+def comp_copula_independence(model):
+    """Add an independence copula to model
+
+    Composition. Add an independence copula to an existing model.
+
+    NOTE: Independence of random variables is a *very* strong assumption!
+    Recommend using comp_copula_gaussian instead.
+
+    Args:
+        model (gr.model): Model to modify
+
+    Returns:
+        gr.model: Model with independence copula
+
+        >>> import grama as gr
+        >>> md = gr.Model() >> \
+        >>>     cp_marginals(
+        >>>         x0={"dist": "norm", "loc": 0, "scale": 1}
+        >>>     ) >> \
+        >>>     cp_copula_independence()
+
+    """
+    new_model = model.copy()
+    new_model.density = gr.Density(
+        marginals=model.density.marginals,
+        copula=gr.CopulaIndependence(new_model.var_rand)
+    )
+    new_model.update()
+
+    return new_model
+
+@pipe
+def cp_copula_independence(*args, **kwargs):
+    return comp_copula_independence(*args, **kwargs)
+
+# -------------------------
+@curry
+def comp_copula_gaussian(model, df_corr=None, df_data=None):
+    """Add a Gaussian copula to model
+
+    Composition. Add a gaussian copula to an existing model.
+
+    Args:
+        model (gr.model): Model to modify
+        df_corr (DataFrame): Correlation information
+        df_data (DataFrame): Data for automated fitting
+
+    Returns:
+        gr.model: Model with Gaussian copula
+
+    Examples:
+
+        >>> import grama as gr
+        >>> ## Manual assignment
+        >>> md = gr.Model() >> \
+        >>>     cp_marginals(
+        >>>         x0={"dist": "norm", "loc": 0, "scale": 1}
+        >>>         x1={"dist": "uniform", "loc": -1, "scale": 2}
+        >>>     ) >> \
+        >>>     cp_copula_gaussian(
+        >>>         df_corr=pd.DataFrame(dict(
+        >>>             var1=["x0"],
+        >>>             var2=["x1"],
+        >>>             corr=[0.5]
+        >>>         ))
+        >>>     )
+        >>> ## Automated fitting
+        >>> from grama.data import df_stang
+        >>> md = gr.Model() >> \
+        >>>     gr.cp_marginals(
+        >>>         E=gr.continuous_fit(df_stang.E, "norm"),
+        >>>         mu=gr.continuous_fit(df_stang.mu, "beta"),
+        >>>         thick=gr.continuous_fit(df_stang.thick, "norm")
+        >>>     ) >> \
+        >>>     gr.cp_copula_gaussian(df_data=df_stang)
+
+    """
+    if not (df_corr is None):
+        new_model = model.copy()
+        new_model.density = gr.Density(
+            marginals=model.density.marginals,
+            copula=gr.CopulaGaussian(df_corr)
+        )
+        new_model.update()
+
+        return new_model
+
+    elif not (df_data is None):
+        new_model = model.copy()
+        df_corr = gr.tran_copula_corr(df_data, model=new_model)
+
+        new_model.density = gr.Density(
+            marginals=model.density.marginals,
+            copula=gr.CopulaGaussian(df_corr)
+        )
+        new_model.update()
+
+        return new_model
+
+    else:
+        raise ValueError("Must provide df_corr or df_data")
+
+@pipe
+def cp_copula_gaussian(*args, **kwargs):
+    return comp_copula_gaussian(*args, **kwargs)
