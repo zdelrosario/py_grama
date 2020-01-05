@@ -35,7 +35,9 @@ def eval_df(model, df=None, append=True):
 
     """
     if df is None:
-        raise ValueError("No input df given!")
+        raise ValueError("No input df given")
+    if len(model.functions) == 0:
+        raise ValueError("Given model has no functions")
 
     df_res = model.evaluate_df(df)
 

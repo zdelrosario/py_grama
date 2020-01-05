@@ -137,21 +137,20 @@ class TestModel(unittest.TestCase):
         """Checks that re-ordering of inputs handled properly
         """
         self.assertTrue(
-            self.df_2d.equals(
-                self.res_2d.loc[:, self.df_2d.columns]
-            )
+            gr.df_equal(self.df_2d, self.res_2d.loc[:, self.df_2d.columns])
         )
-
-    ## Test quantile evaluation
 
     def test_quantile(self):
         """Checks that model.sample_quantile() evaluates correctly.
         """
-        self.assertTrue(
-            self.model_2d.density.pr2sample(self.df_median_in).equals(
-                self.df_median_out
-            )
-        )
+        df_res = self.model_2d.density.pr2sample(self.df_median_in)
+
+        self.assertTrue(gr.df_equal(df_res, self.df_median_out))
+
+    def test_empty_functions(self):
+        md = gr.Model() >> gr.cp_bounds(x=[-1, +1])
+        with self.assertRaises(ValueError):
+            gr.eval_nominal(md)
 
 class TestEvalDf(unittest.TestCase):
     """Test implementation of eval_df()
@@ -268,8 +267,8 @@ class TestDensity(unittest.TestCase):
         df_pr_res = self.density.sample2pr(df_sp_true)
         df_sp_res = self.density.pr2sample(df_pr_true)
 
-        self.assertTrue(df_pr_true.equals(df_pr_res))
-        self.assertTrue(df_sp_true.equals(df_sp_res))
+        self.assertTrue(gr.df_equal(df_pr_true, df_pr_res))
+        self.assertTrue(gr.df_equal(df_sp_true, df_sp_res))
 
     def test_sampling(self):
         df_sample = self.density.sample(n=1, seed=101)

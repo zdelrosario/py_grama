@@ -19,6 +19,7 @@ def make_test():
          gr.cp_marginals(
              x0={"dist": "uniform", "loc": -1, "scale": 2},
              x1={"dist": "uniform", "loc": -1, "scale": 2}
-         )
+         ) >> \
+         gr.cp_copula_independence()
 
     return md

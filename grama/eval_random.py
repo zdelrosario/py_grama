@@ -63,13 +63,7 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
         n = int(n)
 
     ## Draw samples
-    df_pr = pd.DataFrame(
-        data=np.random.random((n, model.n_var_rand)),
-        columns=model.var_rand
-    )
-
-    ## Convert samples to desired marginals
-    df_rand = model.density.pr2sample(df_pr)
+    df_rand = model.density.sample(n=n, seed=seed)
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)
 

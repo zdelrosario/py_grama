@@ -36,7 +36,10 @@ class TestDefaults(unittest.TestCase):
                 )
             ],
             domain=domain_2d,
-            density=gr.Density(marginals=marginals)
+            density=gr.Density(
+                marginals=marginals,
+                copula=gr.CopulaIndependence(var_rand=["x"])
+            )
         )
 
         ## Correct results
@@ -58,13 +61,11 @@ class TestDefaults(unittest.TestCase):
         df_res = gr.eval_nominal(self.model_2d)
 
         ## Accurate
-        self.assertTrue(
-            np.allclose(self.df_2d_nominal, df_res)
-        )
+        self.assertTrue(gr.df_equal(self.df_2d_nominal, df_res))
 
         ## Pass-through
         self.assertTrue(
-            np.allclose(
+            gr.df_equal(
                 self.df_2d_nominal.drop(["f", "g"], axis=1),
                 gr.eval_nominal(self.model_2d, skip=True)
             )
@@ -90,33 +91,37 @@ class TestDefaults(unittest.TestCase):
             quantiles=[0.1, 0.1]
         )
 
-        gr.df_equal(self.df_2d_qe, df_res)
+        self.assertTrue(gr.df_equal(self.df_2d_qe, df_res, close=True))
 
         ## Repeat scalar value
-        gr.df_equal(
+        self.assertTrue(gr.df_equal(
             self.df_2d_qe,
-            gr.eval_conservative(self.model_2d, quantiles=0.1)
-        )
+            gr.eval_conservative(self.model_2d, quantiles=0.1),
+            close=True
+        ))
 
         ## Pass-through
-        gr.df_equal(
+        self.assertTrue(gr.df_equal(
             self.df_2d_qe.drop(["f", "g"], axis=1),
-            gr.eval_conservative(self.model_2d, quantiles=0.1, skip=True)
-        )
+            gr.eval_conservative(self.model_2d, quantiles=0.1, skip=True),
+            close=True
+        ))
 
 ##################################################
 class TestRandomSampling(unittest.TestCase):
     def setUp(self):
-        self.md = gr.Model() >> \
-                  gr.cp_function(fun=lambda x: x, var=1, out=1) >> \
-                  gr.cp_marginals(x0={"dist": "uniform", "loc": 0, "scale": 1})
+        self.md = gr.Model() >>\
+                  gr.cp_function(fun=lambda x: x, var=1, out=1) >>\
+                  gr.cp_marginals(x0={"dist": "uniform", "loc": 0, "scale": 1}) >>\
+                  gr.cp_copula_independence()
 
         self.md_2d = gr.Model() >> \
                   gr.cp_function(fun=lambda x: x[0], var=2, out=1) >> \
                   gr.cp_marginals(
                       x0={"dist": "uniform", "loc": 0, "scale": 1},
                       x1={"dist": "uniform", "loc": 0, "scale": 1}
-                  )
+                  ) >>\
+                  gr.cp_copula_independence()
 
     def test_lhs(self):
         ## Accurate
@@ -127,17 +132,17 @@ class TestRandomSampling(unittest.TestCase):
         df_truth = pd.DataFrame(data=lhs(2, samples=n), columns=["x0", "x1"])
         df_truth["y0"] = df_truth["x0"]
 
-        gr.df_equal(df_res, df_truth)
+        self.assertTrue(gr.df_equal(df_res, df_truth))
 
         ## Rounding
         df_round = gr.eval_lhs(self.md_2d, n=n+0.1, df_det="nom", seed=101)
 
-        gr.df_equal(df_round, df_truth)
+        self.assertTrue(gr.df_equal(df_round, df_truth))
 
         ## Pass-through
         df_pass = gr.eval_lhs(self.md_2d, n=n, skip=True, df_det="nom", seed=101)
 
-        gr.df_equal(df_pass, df_truth[["x0", "x1"]])
+        self.assertTrue(gr.df_equal(df_pass, df_truth[["x0", "x1"]]))
 
     def test_monte_carlo(self):
         ## Accurate
@@ -148,12 +153,12 @@ class TestRandomSampling(unittest.TestCase):
         df_truth = pd.DataFrame({"x0": np.random.random(n)})
         df_truth["y0"] = df_truth["x0"]
 
-        gr.df_equal(df_res, df_truth)
+        self.assertTrue(gr.df_equal(df_res, df_truth))
 
         ## Rounding
         df_round = gr.eval_monte_carlo(self.md, n=n+0.1, df_det="nom", seed=101)
 
-        gr.df_equal(df_round, df_truth)
+        self.assertTrue(gr.df_equal(df_round, df_truth))
 
         ## Pass-through
         df_pass = gr.eval_monte_carlo(
@@ -164,7 +169,7 @@ class TestRandomSampling(unittest.TestCase):
             seed=101
         )
 
-        gr.df_equal(df_pass[["x0"]], df_truth[["x0"]])
+        self.assertTrue(gr.df_equal(df_pass[["x0"]], df_truth[["x0"]]))
 
 ##################################################
 class TestRandom(unittest.TestCase):

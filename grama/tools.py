@@ -297,7 +297,7 @@ class pipe(object):
         return pipe(lambda x: self.function(x, *args, **kwargs))
 
 ## DataFrame equality checker
-def df_equal(df1, df2):
+def df_equal(df1, df2, close=False):
     """Check DataFrame equality
 
     Check that two dataframes have the same columns and values. Allow column
@@ -315,7 +315,19 @@ def df_equal(df1, df2):
     if not set(df1.columns) == set(df2.columns):
         return False
 
-    return df1[df2.columns].equals(df2)
+    if close:
+        try:
+            pd.testing.assert_frame_equal(
+                df1[df2.columns],
+                df2,
+                check_dtype=False,
+                check_exact=False
+            )
+            return True
+        except:
+            return False
+    else:
+        return df1[df2.columns].equals(df2)
 
 ## Fit a named scipy.stats distribution
 def continuous_fit(data, dist, name=True, sign=None):
