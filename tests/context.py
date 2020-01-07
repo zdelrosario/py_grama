@@ -6,3 +6,4 @@ import grama
 import grama.core as core
 import grama.models as models
 import grama.data as data
+import grama.fit as fit
