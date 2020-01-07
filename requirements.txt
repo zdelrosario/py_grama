@@ -6,3 +6,4 @@ seaborn
 scipy
 statsmodels
 toolz
+scikit-learn
