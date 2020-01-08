@@ -14,7 +14,7 @@ $ cd py_grama/
 $ pip install -r requirements.txt
 $ pip install .
 # Check install
-# python
+$ python
 > import grama
 ```
 
