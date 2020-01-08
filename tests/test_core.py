@@ -231,6 +231,12 @@ class TestDensity(unittest.TestCase):
             )
         )
 
+    def test_copula_warning(self):
+        md = gr.Model()
+
+        with self.assertRaises(ValueError):
+            md.density.sample()
+
     def test_CopulaIndependence(self):
         copula = gr.CopulaIndependence(var_rand=["x", "y"])
         df_res = copula.sample(seed=101)

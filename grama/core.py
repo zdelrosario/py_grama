@@ -549,7 +549,16 @@ class Density:
             DataFrame: Joint density samples
 
         """
-        df_pr = self.copula.sample(n=n, seed=seed)
+        if not (self.copula is None):
+            df_pr = self.copula.sample(n=n, seed=seed)
+        else:
+            raise ValueError(
+                "\n" + \
+                "Present model copula must be defined for sampling.\n" + \
+                "Use CopulaIndependence only when inputs can be guaranteed\n" + \
+                "independent. See the Documentation chapter on Random\n" + \
+                "Variable Modeling for more information."
+            )
         return self.pr2sample(df_pr)
 
     def summary_marginal(self, var):
