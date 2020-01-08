@@ -12,6 +12,7 @@ Welcome to py_grama's documentation!
 
    source/overview
    source/language
+   source/rv_modeling
    source/modules
 
 .. autosummary::
