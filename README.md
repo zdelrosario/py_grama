@@ -6,14 +6,15 @@ Implementation of a *grammar of model analysis* (*grama*). See the [documentatio
 **Note**: This is *pre-release software*, contents subject to change!
 
 # Installation
-Clone this repo, change directories and run the following to install dependencies:
+Clone this repo, change directories and run the following to install dependencies. (Note: I recommend [Anaconda](https://www.anaconda.com/distribution/) as a Python distribution; it takes care of most of the dependencies.)
 
 ```bash
-$ cd /path/to/py_grama
+$ git clone git@github.com:zdelrosario/py_grama.git
+$ cd py_grama/
 $ pip install -r requirements.txt
 $ pip install .
 # Check install
-# python
+$ python
 > import grama
 ```
 
