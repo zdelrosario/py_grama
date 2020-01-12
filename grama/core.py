@@ -476,6 +476,10 @@ class Density:
         except AttributeError:
             var_rand = []
 
+        ## Empty case
+        if len(var_rand) == 0:
+            return pd.DataFrame()
+
         ## Variables to convert
         var_comp = list(set(var_rand).intersection(set(df_prval.columns)))
         if len(var_comp) == 0:
@@ -515,6 +519,10 @@ class Density:
             var_rand = list(self.marginals.keys())
         except AttributeError:
             var_rand = []
+
+        ## Empty case
+        if len(var_rand) == 0:
+            return pd.DataFrame()
 
         ## Variables to convert
         var_comp = list(set(var_rand).intersection(set(df_sample.columns)))
@@ -779,6 +787,11 @@ class Model:
             if not set(self.var_det).issubset(set(df_det.columns)):
                 raise ValueError("model.var_det not a subset of given columns")
 
+        ## Pass-through if no var_rand
+        if self.n_var_rand == 0:
+            return df_det
+
+        ## Outer product if both det and rand exist
         return gr.tran_outer(df_rand, df_det)
 
     def name_corr(self):

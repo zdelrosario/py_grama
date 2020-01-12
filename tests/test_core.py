@@ -114,6 +114,23 @@ class TestModel(unittest.TestCase):
         )
 
     def test_var_outer(self):
+        ## Test pass-throughs
+        df_test = pd.DataFrame(dict(x0=[0]))
+        md_no_rand = gr.Model() >> \
+                     gr.cp_function(
+                         fun=lambda x: x,
+                         var=1,
+                         out=1
+                     )
+        md_no_rand.var_outer(pd.DataFrame(), df_det="nom")
+
+        md_no_det = md_no_rand >> \
+                    gr.cp_marginals(
+                        x0={"dist": "uniform", "loc": 0, "scale": 1}
+                    )
+        md_no_det.var_outer(df_test, df_det="nom")
+
+        ## Test assertions
         with self.assertRaises(ValueError):
             self.model_3d.var_outer(self.df_2d)
 
