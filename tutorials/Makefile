@@ -7,7 +7,8 @@ all: ${TARS}
 	./sep.py $<
 
 strip:
-	nbstripout *.ipynb
+	nbstripout *solution.ipynb
+	nbstripout *assignment.ipynb
 
 .PHONY: clean
 clean:
