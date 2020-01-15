@@ -16,3 +16,7 @@ class TestData(unittest.TestCase):
 
     def test_make(self):
         df_stang = data.df_stang
+
+    def test_install(self):
+        # Only works if grama installed locally!
+        from grama.data import df_stang
