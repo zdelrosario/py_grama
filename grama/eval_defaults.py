@@ -95,7 +95,7 @@ def eval_grad_fd(
         model,
         h=1e-8,
         df_base=None,
-        varsdiff=None,
+        var=None,
         append=True,
         skip=False
 ):
@@ -109,8 +109,8 @@ def eval_grad_fd(
         h (numeric): finite difference stepsize,
             single (scalar): or per-input (np.array)
         df_base (DataFrame): Base-points for gradient calculations
-        varsdiff (list(str)): list of variables to differentiate
-            NOT IMPLEMENTED
+        var (list(str) or string): list of variables to differentiate,
+            or flag; "rand" for var_rand, "det" for var_det
         append (bool): Append results to base point inputs?
         skip (bool): Skip evaluation?
 
@@ -121,45 +121,74 @@ def eval_grad_fd(
          (h.shape[0] == df_base.shape[1])
 
     """
-    ## TODO
-    if not (varsdiff is None):
-        raise NotImplementedError("varsdiff non-default not implemented")
+    ## Check invariants
+    if not set(model.var).issubset(set(df_base.columns)):
+        raise ValueError("model.var must be subset of df_base.columns")
+    if var is None:
+        var = model.var
+    elif isinstance(var, str):
+        if var == "rand":
+            var = model.var_rand
+        elif var == "det":
+            var = model.var_det
+        else:
+            raise ValueError("var flag not recognized; use 'rand' or 'det'")
+    else:
+        if not set(var).issubset(set(model.var)):
+            raise ValueError("var must be subset of model.var")
+    var_fix = list(set(model.var).difference(set(var)))
+
     ## TODO
     if skip == True:
         raise NotImplementedError("skip not implemented")
 
     ## Build stencil
-    stencil = np.eye(model.n_var) * h
+    n_var = len(var)
+    stencil = np.eye(n_var) * h
     stepscale = np.tile(np.atleast_2d(0.5/h).T, (1, model.n_out))
 
     outputs = model.out
     nested_labels = [
         list(map(lambda s_out: "D" + s_out + "_D" + s_var, outputs)) \
-        for s_var in model.var
+        for s_var in var
     ]
     grad_labels = list(itertools.chain.from_iterable(nested_labels))
 
     ## Loop over df_base
     results = [] # TODO: Preallocate?
     for row_i in range(df_base.shape[0]):
+        ## Evaluate
         df_left = eval_df(
             model,
-            pd.DataFrame(
-                columns=model.var,
-                data=-stencil + df_base[model.var].iloc[[row_i]].values
+            pd.concat(
+                (
+                    pd.DataFrame(
+                        columns=var,
+                        data=-stencil + df_base[var].iloc[[row_i]].values
+                    ),
+                    df_base[var_fix]
+                ),
+                axis=1
             ),
-            append = False
+            append=False
         )
 
         df_right = eval_df(
             model,
-            pd.DataFrame(
-                columns=model.var,
-                data=+stencil + df_base[model.var].iloc[[row_i]].values
+            pd.concat(
+                (
+                    pd.DataFrame(
+                        columns=var,
+                        data=+stencil + df_base[var].iloc[[row_i]].values
+                    ),
+                    df_base[var_fix]
+                ),
+                axis=1
             ),
-            append = False
+            append=False
         )
 
+        ## Compute differences
         res = (stepscale * (df_right[outputs] - df_left[outputs]).values).flatten()
 
         df_grad = pd.DataFrame(

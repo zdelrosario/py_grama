@@ -71,9 +71,10 @@ class TestDefaults(unittest.TestCase):
             )
         )
 
-    def test_grad_fd_accurate(self):
-        """Checks the FD is accurate
+    def test_grad_fd(self):
+        """Checks the FD code
         """
+        ## Accuracy
         df_grad = gr.eval_grad_fd(
             self.model_2d,
             df_base=self.df_2d_nominal,
@@ -83,6 +84,46 @@ class TestDefaults(unittest.TestCase):
         self.assertTrue(
             np.allclose(df_grad[self.df_2d_grad.columns], self.df_2d_grad)
         )
+
+        ## Subset
+        df_grad_sub = gr.eval_grad_fd(
+            self.model_2d,
+            df_base=self.df_2d_nominal,
+            var=["x"],
+            append=False
+        )
+
+        self.assertTrue(set(df_grad_sub.columns) == set(["Df_Dx", "Dg_Dx"]))
+
+        ## Flags
+        md_test = gr.Model() >> \
+                  gr.cp_function(
+                      fun=lambda x: x[0] + x[1],
+                      var=2,
+                      out=1
+                  ) >> \
+                  gr.cp_marginals(
+                      x0={"dist": "norm", "loc": 0, "scale": 1}
+                  )
+        # df_base = pd.DataFrame(dict(x0=[0, 1], x1=[0, 1]))
+        df_base = pd.DataFrame(dict(x0=[0], x1=[0]))
+
+        df_rand = gr.eval_grad_fd(
+            md_test,
+            df_base=df_base,
+            var="rand",
+            append=False
+        )
+        self.assertTrue(set(df_rand.columns) == set(["Dy0_Dx0"]))
+
+        df_det = gr.eval_grad_fd(
+            md_test,
+            df_base=df_base,
+            var="det",
+            append=False
+        )
+        self.assertTrue(set(df_det.columns) == set(["Dy0_Dx1"]))
+
 
     def test_conservative(self):
         ## Accuracy
