@@ -139,6 +139,7 @@ def fit_gp(
     if not (md is None):
         domain = md.domain
         density = md.density
+        outputs = md.out
 
     ## Check invariants
     if not set(outputs).issubset(set(df.columns)):
