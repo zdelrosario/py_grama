@@ -116,7 +116,7 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
             df_index = df_tau.drop(columns=typename) \
                              .reset_index(drop=True) \
                              .truediv(df_var.drop(columns=typename))
-            df_index[typename] = "T_" + var
+            df_index[typename] = "S_" + var
 
             df_res = pd.concat((df_res, df_tau, df_index))
     else:
