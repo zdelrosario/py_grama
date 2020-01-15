@@ -334,7 +334,7 @@ def eval_hybrid(
     estimates.
 
     Args:
-        model (gr.Model): Model to evaluate
+        model (gr.Model): Model to evaluate; must have CopulaIndependence
         n (numeric): Number of points along each sweep
         plan (str): Sobol' index to compute; plan={"first", "total"}
         seed (int): Random seed to use
@@ -362,6 +362,13 @@ def eval_hybrid(
         >>> df_total >> gr.tf_sobol()
 
     """
+    ## Check invariants
+    if not isinstance(model.density.copula, gr.CopulaIndependence):
+        raise ValueError(
+            "model must have CopulaIndependence structure;\n" + \
+            "Sobol' indices only defined for independent variables"
+        )
+
     ## Set seed only if given
     if seed is not None:
         np.random.seed(seed)

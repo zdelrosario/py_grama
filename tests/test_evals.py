@@ -312,6 +312,11 @@ class TestRandom(unittest.TestCase):
             set(self.md.var + ["hybrid_var"])
         )
 
+        ## Raises
+        md_buckle = models.make_plate_buckle()
+        with self.assertRaises(ValueError):
+            gr.eval_hybrid(md_buckle, df_det="nom")
+
 ## Run tests
 if __name__ == "__main__":
     unittest.main()
