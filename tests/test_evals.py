@@ -98,15 +98,19 @@ class TestDefaults(unittest.TestCase):
         ## Flags
         md_test = gr.Model() >> \
                   gr.cp_function(
-                      fun=lambda x: x[0] + x[1],
+                      fun=lambda x: x[0] + x[1]**2,
                       var=2,
                       out=1
                   ) >> \
                   gr.cp_marginals(
                       x0={"dist": "norm", "loc": 0, "scale": 1}
                   )
-        # df_base = pd.DataFrame(dict(x0=[0, 1], x1=[0, 1]))
-        df_base = pd.DataFrame(dict(x0=[0], x1=[0]))
+        df_base = pd.DataFrame(dict(x0=[0, 1], x1=[0, 1]))
+        ## Multiple base points
+        df_true = pd.DataFrame(dict(
+            Dy0_Dx0=[1, 1],
+            Dy0_Dx1=[0, 2]
+        ))
 
         df_rand = gr.eval_grad_fd(
             md_test,
@@ -114,7 +118,11 @@ class TestDefaults(unittest.TestCase):
             var="rand",
             append=False
         )
-        self.assertTrue(set(df_rand.columns) == set(["Dy0_Dx0"]))
+        self.assertTrue(gr.df_equal(
+            df_true[["Dy0_Dx0"]],
+            df_rand,
+            close=True
+        ))
 
         df_det = gr.eval_grad_fd(
             md_test,
@@ -122,7 +130,11 @@ class TestDefaults(unittest.TestCase):
             var="det",
             append=False
         )
-        self.assertTrue(set(df_det.columns) == set(["Dy0_Dx1"]))
+        self.assertTrue(gr.df_equal(
+            df_true[["Dy0_Dx1"]],
+            df_det,
+            close=True
+        ))
 
 
     def test_conservative(self):

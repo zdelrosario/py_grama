@@ -160,45 +160,35 @@ def eval_grad_fd(
         ## Evaluate
         df_left = eval_df(
             model,
-            pd.concat(
-                (
-                    pd.DataFrame(
-                        columns=var,
-                        data=-stencil + df_base[var].iloc[[row_i]].values
-                    ),
-                    df_base[var_fix]
+            gr.tran_outer(
+                pd.DataFrame(
+                    columns=var,
+                    data=-stencil + df_base[var].iloc[[row_i]].values
                 ),
-                axis=1
+                df_base[var_fix].iloc[[row_i]]
             ),
             append=False
         )
 
         df_right = eval_df(
             model,
-            pd.concat(
-                (
-                    pd.DataFrame(
-                        columns=var,
-                        data=+stencil + df_base[var].iloc[[row_i]].values
-                    ),
-                    df_base[var_fix]
+            gr.tran_outer(
+                pd.DataFrame(
+                    columns=var,
+                    data=+stencil + df_base[var].iloc[[row_i]].values
                 ),
-                axis=1
+                df_base[var_fix].iloc[[row_i]]
             ),
             append=False
         )
 
         ## Compute differences
         res = (stepscale * (df_right[outputs] - df_left[outputs]).values).flatten()
-
-        df_grad = pd.DataFrame(
-            columns=grad_labels,
-            data=[res]
-        )
+        df_grad = pd.DataFrame(columns=grad_labels, data=[res])
 
         results.append(df_grad)
 
-    return pd.concat(results)
+    return pd.concat(results).reset_index(drop=True)
 
 @pipe
 def ev_grad_fd(*args, **kwargs):
