@@ -4,8 +4,8 @@ __all__ = [
 ]
 
 ## Fitting via statsmodels package
-import pandas as pd
-import numpy as np
+from numpy import zeros
+from pandas import DataFrame
 import statsmodels.formula.api as smf
 
 import grama as gr
@@ -53,10 +53,10 @@ def fit_ols(df, formulae=[""], domain=None, density=None):
 
     def fit_all(df_new):
         n_obs_new, _ = df_new.shape
-        result = np.zeros((n_obs_new, n_out))
+        result = zeros((n_obs_new, n_out))
         for ind in range(n_out):
             result[:, ind] = fits[ind].predict(df_new)
-        return pd.DataFrame(data=result, columns=outputs)
+        return DataFrame(data=result, columns=outputs)
 
     ## Construct model
     return gr.model_vectorized(

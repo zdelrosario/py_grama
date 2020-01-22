@@ -5,11 +5,12 @@ __all__ = [
 ]
 
 import grama as gr
+
 from grama import pipe
 from toolz import curry
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
+from pandas import melt
+from seaborn import pairplot, FacetGrid, relplot
+from matplotlib.pyplot import hist
 
 ## Function-specific plot functions
 ##################################################
@@ -23,7 +24,7 @@ def plot_monte_carlo_inputs(df, var_rand=None):
         raise ValueError("Must provide input columns list as keyword var_rand")
 
     ## Plot
-    return sns.pairplot(data=df, vars=var_rand)
+    return pairplot(data=df, vars=var_rand)
 
 @pipe
 def pt_monte_carlo_inputs(*args, **kwargs):
@@ -40,8 +41,8 @@ def plot_monte_carlo_outputs(df, out=None):
     df_gathered = gr.tran_gather(df, "key", "out", out)
 
     ## Faceted histograms
-    g = sns.FacetGrid(df_gathered, col="key", sharex=False, sharey=False)
-    g.map(plt.hist, "out")
+    g = FacetGrid(df_gathered, col="key", sharex=False, sharey=False)
+    g.map(hist, "out")
 
     return g
 
@@ -60,7 +61,7 @@ def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
         raise ValueError("Must provide input columns list as keyword var")
 
     ## Plot
-    return sns.pairplot(data=df, vars=var, hue=sweep_ind)
+    return pairplot(data=df, vars=var, hue=sweep_ind)
 
 @pipe
 def pt_sinew_inputs(*args, **kwargs):
@@ -79,7 +80,7 @@ def plot_sinew_outputs(df, var=None, out=None, sweep_ind="sweep_ind", sweep_var=
     ## Prepare data
     # Gather inputs
     id_vars = [col for col in df.columns if col not in var]
-    df_tmp = pd.melt(
+    df_tmp = melt(
         df,
         id_vars,
         var,
@@ -89,7 +90,7 @@ def plot_sinew_outputs(df, var=None, out=None, sweep_ind="sweep_ind", sweep_var=
 
     # Gather outputs
     id_vars = [col for col in df_tmp.columns if col not in out]
-    df_plot = pd.melt(
+    df_plot = melt(
         df_tmp,
         id_vars,
         out,
@@ -101,7 +102,7 @@ def plot_sinew_outputs(df, var=None, out=None, sweep_ind="sweep_ind", sweep_var=
     df_plot = df_plot[df_plot[sweep_var] == df_plot["_var"]]
 
     # Plot
-    return sns.relplot(
+    return relplot(
         data=df_plot,
         x="_x",
         y="_y",

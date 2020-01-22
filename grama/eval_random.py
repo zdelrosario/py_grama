@@ -9,8 +9,11 @@ __all__ = [
     "ev_hybrid"
 ]
 
-import numpy as np
-import pandas as pd
+from numpy import tile, linspace, zeros, isfinite
+from numpy.random import random
+from numpy.random import seed as set_seed
+from pandas import DataFrame
+
 import warnings
 
 import grama as gr
@@ -55,7 +58,7 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
     """
     ## Set seed only if given
     if seed is not None:
-        np.random.seed(seed)
+        set_seed(seed)
 
     ## Ensure sample count is int
     if not isinstance(n, Integral):
@@ -144,7 +147,7 @@ def eval_lhs(
     """
     ## Set seed only if given
     if seed is not None:
-        np.random.seed(seed)
+        set_seed(seed)
 
     ## Ensure sample count is int
     if not isinstance(n, Integral):
@@ -152,7 +155,7 @@ def eval_lhs(
         n = int(n)
 
     ## Draw samples
-    df_quant = pd.DataFrame(
+    df_quant = DataFrame(
         data=lhs(model.n_var_rand, samples=n),
         columns=model.var_rand
     )
@@ -223,7 +226,7 @@ def eval_sinews(
     """
     ## Set seed only if given
     if seed is not None:
-        np.random.seed(seed)
+        set_seed(seed)
 
     ## Ensure sample count is int
     if not isinstance(n_density, Integral):
@@ -234,12 +237,12 @@ def eval_sinews(
         n_sweeps = int(n_sweeps)
 
     ## Build quantile sweep data
-    q_random = np.tile(
-        np.random.random((1, model.n_var_rand, n_sweeps)),
+    q_random = tile(
+        random((1, model.n_var_rand, n_sweeps)),
         (n_density, 1, 1)
     )
-    q_dense  = np.linspace(0, 1, num=n_density)
-    Q_all    = np.zeros(
+    q_dense  = linspace(0, 1, num=n_density)
+    Q_all    = zeros(
         (n_density * n_sweeps * model.n_var_rand, model.n_var_rand)
     )
     C_var    = ["tmp"] * (n_density * n_sweeps * model.n_var_rand)
@@ -259,17 +262,17 @@ def eval_sinews(
             C_ind[ind_start:ind_end] = [i_sweep] * n_density
 
             ## Modify endpoints for infinite support
-            if not np.isfinite(
+            if not isfinite(
                     model.density.marginals[model.var_rand[i_input]].q(0)
             ):
                 Q_all[ind_start, i_input] = 1 / n_density / 10
-            if not np.isfinite(
+            if not isfinite(
                     model.density.marginals[model.var_rand[i_input]].q(1)
             ):
                 Q_all[ind_end-1, i_input] = 1 - 1 / n_density / 10
 
     ## Assemble sampling plan
-    df_pr = pd.DataFrame(data=Q_all, columns=model.var_rand)
+    df_pr = DataFrame(data=Q_all, columns=model.var_rand)
     df_rand = model.density.pr2sample(df_pr)
     df_rand[varname] = C_var
     df_rand[indname] = C_ind
@@ -371,18 +374,18 @@ def eval_hybrid(
 
     ## Set seed only if given
     if seed is not None:
-        np.random.seed(seed)
+        set_seed(seed)
 
     if not isinstance(n, Integral):
         print("eval_hybrid() is rounding n...")
         n = int(n)
 
     ## Draw hybrid points
-    X = np.random.random((n, model.n_var_rand))
-    Z = np.random.random((n, model.n_var_rand))
+    X = random((n, model.n_var_rand))
+    Z = random((n, model.n_var_rand))
 
     ## Reserve space
-    Q_all = np.zeros((n * (model.n_var_rand + 1), model.n_var_rand))
+    Q_all = zeros((n * (model.n_var_rand + 1), model.n_var_rand))
     Q_all[:n] = X # Base samples
     C_var = ["_"] * (n * (model.n_var_rand + 1))
 
@@ -403,7 +406,7 @@ def eval_hybrid(
         C_var[i_start:i_end] = [model.var_rand[i_in]] * n
 
     ## Construct sampling plan
-    df_pr = pd.DataFrame(data=Q_all, columns=model.var_rand)
+    df_pr = DataFrame(data=Q_all, columns=model.var_rand)
     ## Convert samples to desired marginals
     df_rand = model.density.pr2sample(df_pr)
     df_rand[varname] = C_var

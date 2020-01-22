@@ -9,8 +9,8 @@ __all__ = [
     "ev_conservative"
 ]
 
-import numpy as np
-import pandas as pd
+from numpy import ones, eye, tile, atleast_2d
+from pandas import DataFrame, concat
 import itertools
 
 import grama as gr
@@ -42,7 +42,7 @@ def eval_df(model, df=None, append=True):
     df_res = model.evaluate_df(df)
 
     if append:
-        df_res = pd.concat([df.reset_index(drop=True), df_res], axis=1)
+        df_res = concat([df.reset_index(drop=True), df_res], axis=1)
 
     return df_res
 
@@ -70,10 +70,10 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
 
     """
     ## Draw from underlying gaussian
-    quantiles = np.ones((1, model.n_var_rand)) * 0.5 # Median
+    quantiles = ones((1, model.n_var_rand)) * 0.5 # Median
 
     ## Convert samples to desired marginals
-    df_pr = pd.DataFrame(data=quantiles, columns=model.var_rand)
+    df_pr = DataFrame(data=quantiles, columns=model.var_rand)
     ## Convert samples to desired marginals
     df_rand = model.density.pr2sample(df_pr)
     ## Construct outer-product DOE
@@ -107,7 +107,7 @@ def eval_grad_fd(
     Args:
         model (gr.Model): Model to differentiate
         h (numeric): finite difference stepsize,
-            single (scalar): or per-input (np.array)
+            single (scalar): or per-input (array)
         df_base (DataFrame): Base-points for gradient calculations
         var (list(str) or string): list of variables to differentiate,
             or flag; "rand" for var_rand, "det" for var_det
@@ -144,8 +144,8 @@ def eval_grad_fd(
 
     ## Build stencil
     n_var = len(var)
-    stencil = np.eye(n_var) * h
-    stepscale = np.tile(np.atleast_2d(0.5/h).T, (1, model.n_out))
+    stencil = eye(n_var) * h
+    stepscale = tile(atleast_2d(0.5/h).T, (1, model.n_out))
 
     outputs = model.out
     nested_labels = [
@@ -161,7 +161,7 @@ def eval_grad_fd(
         df_left = eval_df(
             model,
             gr.tran_outer(
-                pd.DataFrame(
+                DataFrame(
                     columns=var,
                     data=-stencil + df_base[var].iloc[[row_i]].values
                 ),
@@ -173,7 +173,7 @@ def eval_grad_fd(
         df_right = eval_df(
             model,
             gr.tran_outer(
-                pd.DataFrame(
+                DataFrame(
                     columns=var,
                     data=+stencil + df_base[var].iloc[[row_i]].values
                 ),
@@ -184,11 +184,11 @@ def eval_grad_fd(
 
         ## Compute differences
         res = (stepscale * (df_right[outputs] - df_left[outputs]).values).flatten()
-        df_grad = pd.DataFrame(columns=grad_labels, data=[res])
+        df_grad = DataFrame(columns=grad_labels, data=[res])
 
         results.append(df_grad)
 
-    return pd.concat(results).reset_index(drop=True)
+    return concat(results).reset_index(drop=True)
 
 @pipe
 def ev_grad_fd(*args, **kwargs):
@@ -243,10 +243,10 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
         ].sign \
         for i in range(model.n_var_rand)
     ]
-    quantiles = np.atleast_2d(quantiles)
+    quantiles = atleast_2d(quantiles)
 
     ## Draw samples
-    df_pr = pd.DataFrame(data=quantiles, columns=model.var_rand)
+    df_pr = DataFrame(data=quantiles, columns=model.var_rand)
     ## Convert samples to desired marginals
     df_rand = model.density.pr2sample(df_pr)
     ## Construct outer-product DOE
