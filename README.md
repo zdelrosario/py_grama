@@ -7,6 +7,12 @@ Implementation of a *grammar of model analysis* (*grama*). See the [documentatio
 Grama is a *grammar of model analysis*---a domain-specific language embedded in Python that supports building and analyzing models with quantified uncertainties. This language is heavily inspired by the [Tidyverse](https://www.tidyverse.org/). Grama provides convenient syntax for building a model (with functions and distributions), generating data, and visualizing results. The purpose of this language is to support scientists and engineers learning to handle uncertainty, and to improve documentation + reproducibility of results.
 
 # Installation
+Quick install:
+
+```bash
+# pip install py-grama
+```
+
 For a manual install clone this repo, change directories and run the following to install dependencies. (Note: I recommend [Anaconda](https://www.anaconda.com/distribution/) as a Python distribution; it takes care of most of the dependencies.)
 
 ```bash
@@ -14,7 +20,11 @@ $ git clone git@github.com:zdelrosario/py_grama.git
 $ cd py_grama/
 $ pip install -r requirements.txt
 $ pip install .
-# Check install
+```
+
+Run the following to check your install:
+
+```bash
 $ python
 > import grama
 ```
