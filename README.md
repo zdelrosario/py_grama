@@ -10,7 +10,7 @@ Grama is a *grammar of model analysis*---a domain-specific language embedded in 
 Quick install:
 
 ```bash
-# pip install py-grama
+$ pip install py-grama
 ```
 
 For a manual install clone this repo, change directories and run the following to install dependencies. (Note: I recommend [Anaconda](https://www.anaconda.com/distribution/) as a Python distribution; it takes care of most of the dependencies.)
