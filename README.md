@@ -3,10 +3,11 @@
 
 Implementation of a *grammar of model analysis* (*grama*). See the [documentation](https://py-grama.readthedocs.io/en/latest/) for more info.
 
-**Note**: This is *pre-release software*, contents subject to change!
+# Overview
+Grama is a *grammar of model analysis*---a domain-specific language embedded in Python that supports building and analyzing models with quantified uncertainties. This language is heavily inspired by the [Tidyverse](https://www.tidyverse.org/). Grama provides convenient syntax for building a model (with functions and distributions), generating data, and visualizing results. The purpose of this language is to support scientists and engineers learning to handle uncertainty, and to improve documentation + reproducibility of results.
 
 # Installation
-Clone this repo, change directories and run the following to install dependencies. (Note: I recommend [Anaconda](https://www.anaconda.com/distribution/) as a Python distribution; it takes care of most of the dependencies.)
+For a manual install clone this repo, change directories and run the following to install dependencies. (Note: I recommend [Anaconda](https://www.anaconda.com/distribution/) as a Python distribution; it takes care of most of the dependencies.)
 
 ```bash
 $ git clone git@github.com:zdelrosario/py_grama.git
@@ -17,8 +18,6 @@ $ pip install .
 $ python
 > import grama
 ```
-
-Note that I also use a fork of `dfply` for many of the examples; suggest cloning and adding [dfply](https://github.com/zdelrosario/dfply) as well. (Note that I'm considering making this `dfply` fork a formal dependency.)
 
 # Quick Tour
 `py_grama` has tools for both *building* and *analyzing* models. For a quick look at functionality, see the following notebooks:
