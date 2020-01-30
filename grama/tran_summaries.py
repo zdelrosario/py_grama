@@ -7,8 +7,10 @@ __all__ = [
     "tf_inner"
 ]
 
-import numpy as np
-import pandas as pd
+from numpy import round, dot
+from numpy.linalg import svd
+from pandas import concat, DataFrame
+
 import re
 import itertools
 import warnings
@@ -72,7 +74,7 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
 
     ## Setup
     I_base  = (df[varname] == "_")
-    df_var = pd.DataFrame(df[out].var()).transpose()
+    df_var = DataFrame(df[out].var()).transpose()
     df_var[typename] = "var"
 
     df_res = df_var.copy()
@@ -91,14 +93,14 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
                 )
             ).mean()
 
-            df_tau = pd.DataFrame(s2_var - mu_tot**2).transpose()
+            df_tau = DataFrame(s2_var - mu_tot**2).transpose()
             df_tau[typename] = "T_" + var
 
             df_index = df_tau[out].reset_index(drop=True) \
                                   .truediv(df_var.drop(columns=typename))
             df_index[typename] = "S_" + var
 
-            df_res = pd.concat((df_res, df_tau, df_index))
+            df_res = concat((df_res, df_tau, df_index))
 
     elif plan == "total":
         for i_var, var in enumerate(var_rand):
@@ -110,7 +112,7 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
                 )**2
             ).mean() * 0.5
 
-            df_tau = pd.DataFrame(s2_var).transpose()
+            df_tau = DataFrame(s2_var).transpose()
             df_tau[typename] = "T_" + var
 
             df_index = df_tau.drop(columns=typename) \
@@ -118,14 +120,14 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
                              .truediv(df_var.drop(columns=typename))
             df_index[typename] = "S_" + var
 
-            df_res = pd.concat((df_res, df_tau, df_index))
+            df_res = concat((df_res, df_tau, df_index))
     else:
         raise ValueError("plan `{}` not valid".format(plan))
 
     ## Post-process
     outputs = df_res.drop(typename, axis=1).columns
     df_res[outputs] = df_res[outputs].apply(
-        lambda row: np.round(row, decimals=digits)
+        lambda row: round(row, decimals=digits)
     )
     df_res.sort_values(
         typename,
@@ -189,9 +191,9 @@ def tran_asub(df, prefix="D", outvar="out", lamvar="lam"):
     ## Loop
     for output in outputs:
         bool_test = list(map(lambda s: s == output, all_outputs))
-        U, s, Vh = np.linalg.svd(df.loc[:, bool_test].values)
+        U, s, Vh = svd(df.loc[:, bool_test].values)
 
-        df_tmp = pd.DataFrame(
+        df_tmp = DataFrame(
             data=Vh,
             columns=list(itertools.compress(all_inputs, bool_test))
         )
@@ -199,7 +201,7 @@ def tran_asub(df, prefix="D", outvar="out", lamvar="lam"):
         df_tmp[outvar] = [output] * len(s)
         list_df.append(df_tmp)
 
-    return pd.concat(list_df).reset_index(drop=True)
+    return concat(list_df).reset_index(drop=True)
 
 @pipe
 def tf_asub(*args, **kwargs):
@@ -271,28 +273,28 @@ def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
     comm = list(set(df_weights.columns).difference(diff))
 
     ## Compute inner products
-    dot = np.dot(df[comm].values, df_weights[comm].values.T)
+    dot_prod = dot(df[comm].values, df_weights[comm].values.T)
 
     ## Construct output dataframe
     if df_weights.shape[0] == 1:
-        df_res = pd.DataFrame(data = {prefix: dot.flatten()})
+        df_res = DataFrame(data = {prefix: dot_prod.flatten()})
 
     elif df_weights.shape[0] > 1:
         if name is None:
             names = list(map(
                 lambda i: prefix + str(i),
-                range(dot.shape[1])
+                range(dot_prod.shape[1])
             ))
         else:
             names = list(map(
                 lambda i: prefix + "_" + df_weights[name].values[i],
-                range(dot.shape[1])
+                range(dot_prod.shape[1])
             ))
 
-        df_res = pd.DataFrame(data=dot, columns=names)
+        df_res = DataFrame(data=dot_prod, columns=names)
 
     if append:
-        df_res = pd.concat((df.reset_index(drop=True), df_res), axis=1)
+        df_res = concat((df.reset_index(drop=True), df_res), axis=1)
 
     return df_res
 

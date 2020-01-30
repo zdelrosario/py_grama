@@ -13,8 +13,10 @@ __all__ = [
     "tf_spread"
 ]
 
-import numpy as np
-import pandas as pd
+from numpy import zeros, std, quantile, nan, triu_indices
+from numpy.random import choice
+from numpy.random import seed as set_seed
+from pandas import concat, DataFrame, melt
 
 from grama import pipe, copy_meta
 from toolz import curry
@@ -65,7 +67,7 @@ def tran_bootstrap(
     """
     ## Set seed only if given
     if seed is not None:
-        np.random.seed(seed)
+        set_seed(seed)
 
     ## Ensure sample count is int
     if not isinstance(n_boot, Integral):
@@ -95,33 +97,33 @@ def tran_bootstrap(
     alpha = (1 - con) / 2
     theta_hat = df_base[col_numeric].values
 
-    theta_all   = np.zeros((n_boot, n_row, n_col))
-    se_boot_all = np.zeros((n_boot, n_row, n_col))
-    z_all       = np.zeros((n_boot, n_row, n_col))
-    theta_sub   = np.zeros((n_sub,  n_row, n_col))
+    theta_all   = zeros((n_boot, n_row, n_col))
+    se_boot_all = zeros((n_boot, n_row, n_col))
+    z_all       = zeros((n_boot, n_row, n_col))
+    theta_sub   = zeros((n_sub,  n_row, n_col))
 
     ## Main loop
     for ind in range(n_boot):
         ## Construct resample
-        Ib = np.random.choice(n_samples, size=n_samples, replace=True)
+        Ib = choice(n_samples, size=n_samples, replace=True)
         df_tmp = copy_meta(df, df.iloc[Ib, ])
         theta_all[ind] = tran(df_tmp)[col_numeric].values
 
         ## Internal loop to approximate SE
         for jnd in range(n_sub):
-            Isub = Ib[np.random.choice(n_samples, size=n_samples, replace=True)]
+            Isub = Ib[choice(n_samples, size=n_samples, replace=True)]
             df_tmp = copy_meta(df, df.iloc[Isub, ])
             theta_sub[jnd] = tran(df_tmp)[col_numeric].values
-        se_boot_all[ind] = np.std(theta_sub, axis=0)
+        se_boot_all[ind] = std(theta_sub, axis=0)
 
         ## Construct approximate pivot
         z_all[ind] = (theta_all[ind] - theta_hat) / se_boot_all[ind]
 
     ## Compute bootstrap table
-    t_lo, t_hi = np.quantile(z_all, q=[1 - alpha, alpha], axis=0)
+    t_lo, t_hi = quantile(z_all, q=[1 - alpha, alpha], axis=0)
 
     ## Estimate bootstrap intervals
-    se = np.std(theta_all, axis=0)
+    se = std(theta_all, axis=0)
     theta_lo = theta_hat - t_lo * se
     theta_hi = theta_hat - t_hi * se
 
@@ -135,13 +137,13 @@ def tran_bootstrap(
         col_numeric
     ))
 
-    df_lo = pd.DataFrame(data=theta_lo, columns=col_lo)
-    df_hi = pd.DataFrame(data=theta_hi, columns=col_hi)
+    df_lo = DataFrame(data=theta_lo, columns=col_lo)
+    df_hi = DataFrame(data=theta_hi, columns=col_hi)
 
-    df_ci = pd.concat((df_lo, df_hi), axis=1).sort_index(axis=1)
+    df_ci = concat((df_lo, df_hi), axis=1).sort_index(axis=1)
     df_ci.index = df_base.index
 
-    return pd.concat((df_base, df_ci), axis=1)
+    return concat((df_base, df_ci), axis=1)
 
 @pipe
 def tf_bootstrap(*args, **kwargs):
@@ -180,10 +182,10 @@ def tran_outer(df, df_outer):
     list_df = []
 
     for ind in range(df_outer.shape[0]):
-        df_rep = pd.concat([df_outer.iloc[[ind]]] * n_rows, ignore_index=True)
-        list_df.append(pd.concat((df, df_rep), axis=1))
+        df_rep = concat([df_outer.iloc[[ind]]] * n_rows, ignore_index=True)
+        list_df.append(concat((df, df_rep), axis=1))
 
-    return pd.concat(list_df, ignore_index=True)
+    return concat(list_df, ignore_index=True)
 
 @pipe
 def tf_outer(*args, **kwargs):
@@ -201,7 +203,7 @@ def tran_gather(df, key, value, cols):
     var_name = key
     value_name = value
 
-    return pd.melt(
+    return melt(
         df,
         id_vars,
         id_values,
@@ -214,7 +216,7 @@ def tf_gather(*args, **kwargs):
     return tran_gather(*args, **kwargs)
 
 @curry
-def tran_spread(df, key, value, fill=np.nan, drop=False):
+def tran_spread(df, key, value, fill=nan, drop=False):
     """Makes a DataFrame wider by spreading columns.
 
     """
@@ -252,7 +254,7 @@ def tran_angles(df, df2):
         df2 (DataFrame): Second matrix to compare
 
     Returns:
-        np.array: Array of angles (in radians)
+        array: Array of angles (in radians)
 
     Examples:
 
@@ -318,7 +320,7 @@ def tran_copula_corr(df, model=None, density=None):
 
     ## Compute correlations
     df_mat = df_norm.corr()
-    Ind = np.triu_indices(len(density.marginals), 1)
+    Ind = triu_indices(len(density.marginals), 1)
 
     ## Arrange
     var_rand = df_mat.columns
@@ -331,7 +333,7 @@ def tran_copula_corr(df, model=None, density=None):
         var2_all.append(var_rand[j])
         corr_all.append(df_mat.iloc[i, j])
 
-    return pd.DataFrame(dict(var1=var1_all, var2=var2_all, corr=corr_all))
+    return DataFrame(dict(var1=var1_all, var2=var2_all, corr=corr_all))
 
 @pipe
 def tf_copula_corr(*args, **kwargs):

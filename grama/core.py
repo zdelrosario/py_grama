@@ -14,8 +14,12 @@ __all__ = [
 
 from abc import ABC, abstractmethod
 import copy
-import numpy as np
-import pandas as pd
+# import numpy as np
+# import pandas as pd
+from numpy import zeros, triu_indices, eye, array
+from numpy.random import random, multivariate_normal
+from numpy.random import seed as set_seed
+from pandas import DataFrame, concat
 
 import grama as gr
 from grama import pipe, valid_dist, param_dist
@@ -92,12 +96,12 @@ class Function:
 
         ## Set up output
         n_rows  = df.shape[0]
-        results = np.zeros((n_rows, len(self.out)))
+        results = zeros((n_rows, len(self.out)))
         for ind in range(n_rows):
             results[ind] = self.func(df.loc[ind, self.var])
 
         ## Package output as DataFrame
-        return pd.DataFrame(data=results, columns=self.out)
+        return DataFrame(data=results, columns=self.out)
 
     def summary(self):
         """Returns a summary string
@@ -304,14 +308,14 @@ class CopulaIndependence(Copula):
             seed (int): Random seed
 
         Returns:
-            pd.DataFrame: Independent samples
+            DataFrame: Independent samples
         """
         ## Set seed only if given
         if seed is not None:
-            np.random.seed(seed)
+            set_seed(seed)
 
-        return pd.DataFrame(
-            data=np.random.random((n, len(self.var_rand))),
+        return DataFrame(
+            data=random((n, len(self.var_rand))),
             columns=self.var_rand
         )
 
@@ -340,7 +344,7 @@ class CopulaGaussian(Copula):
                             .sort_values("corr", ascending=False)
         var_rand = list(df_summary.index) + [df_corr.var2.iloc[-1]]
         n_var_rand = df_summary.iloc[0, 0] + 1
-        Ind_upper = np.triu_indices(n_var_rand, 1)
+        Ind_upper = triu_indices(n_var_rand, 1)
         ## Check invariants
         if len(var_rand) != n_var_rand:
             raise ValueError("Invalid set of correlations provided")
@@ -348,10 +352,10 @@ class CopulaGaussian(Copula):
             raise ValueError("Invalid set of correlations provided")
 
         ## Build correlation structure
-        Sigma            = np.eye(n_var_rand)
+        Sigma            = eye(n_var_rand)
         Sigma[Ind_upper] = df_corr["corr"].values
         Sigma            = Sigma + \
-                           (Sigma - np.eye(n_var_rand)).T
+                           (Sigma - eye(n_var_rand)).T
         Sigma_h          = cholesky(Sigma)
 
         self.df_corr = df_corr
@@ -382,15 +386,15 @@ class CopulaGaussian(Copula):
             n (int): Number of samples to draw
 
         Returns:
-            np.array: Copula samples
+            array: Copula samples
 
         """
         ## Set seed only if given
         if seed is not None:
-            np.random.seed(seed)
+            set_seed(seed)
 
         ## Generate correlated samples
-        gaussian_samples = np.random.multivariate_normal(
+        gaussian_samples = multivariate_normal(
             mean=[0] * len(self.var_rand),
             cov=self.Sigma,
             size=n
@@ -398,7 +402,7 @@ class CopulaGaussian(Copula):
         ## Convert to uniform marginals
         quantiles = valid_dist["norm"].cdf(gaussian_samples)
 
-        return pd.DataFrame(
+        return DataFrame(
             data=quantiles,
             columns=self.var_rand
         )
@@ -478,7 +482,7 @@ class Density:
 
         ## Empty case
         if len(var_rand) == 0:
-            return pd.DataFrame()
+            return DataFrame()
 
         ## Variables to convert
         var_comp = list(set(var_rand).intersection(set(df_prval.columns)))
@@ -487,7 +491,7 @@ class Density:
                 "Intersection of df_prval.columns and var_rand must be nonempty"
             )
 
-        samples = np.zeros(df_prval[var_comp].shape)
+        samples = zeros(df_prval[var_comp].shape)
         ## Ensure correct column ordering
         prval = df_prval[var_comp].values
 
@@ -497,7 +501,7 @@ class Density:
             var = var_comp[ind]
             samples[:, ind] = self.marginals[var].q(prval[:, ind])
 
-        return pd.DataFrame(data=samples, columns=var_comp)
+        return DataFrame(data=samples, columns=var_comp)
 
     def sample2pr(self, df_sample):
         """Convert samples to CDF probabilities
@@ -522,7 +526,7 @@ class Density:
 
         ## Empty case
         if len(var_rand) == 0:
-            return pd.DataFrame()
+            return DataFrame()
 
         ## Variables to convert
         var_comp = list(set(var_rand).intersection(set(df_sample.columns)))
@@ -531,7 +535,7 @@ class Density:
                 "Intersection of df_sample.columns and var_rand must be nonempty"
             )
 
-        prval = np.zeros(df_sample[var_comp].shape)
+        prval = zeros(df_sample[var_comp].shape)
         ## Ensure correct column ordering
         sample = df_sample[var_comp].values
 
@@ -541,7 +545,7 @@ class Density:
             var = var_comp[ind]
             prval[:, ind] = self.marginals[var].p(sample[:, ind])
 
-        return pd.DataFrame(data=prval, columns=var_comp)
+        return DataFrame(data=prval, columns=var_comp)
 
     def sample(self, n=1, seed=None):
         """Draw samples from joint density
@@ -733,7 +737,7 @@ class Model:
             else:
                 data[var] = [0.]
 
-        return pd.DataFrame(data=data)
+        return DataFrame(data=data)
 
     def evaluate_df(self, df):
         """Evaluate function using an input dataframe
@@ -754,7 +758,7 @@ class Model:
         for func in self.functions:
             list_df.append(func.eval(df))
 
-        return pd.concat(list_df, axis=1)
+        return concat(list_df, axis=1)
 
     def var_outer(self, df_rand, df_det=None):
         """Outer product of random and deterministic samples
@@ -810,7 +814,7 @@ class Model:
 
         ## Access matrix of names
         corr_names = dict()
-        corr_ind = np.triu_indices(self.n_in, 1)
+        corr_ind = triu_indices(self.n_in, 1)
         for knd in range(len(corr_ind[0])):
             ind = corr_ind[0][knd]
             jnd = corr_ind[1][knd]
