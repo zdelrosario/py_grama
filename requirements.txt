@@ -2,7 +2,7 @@ matplotlib
 numpy
 pandas
 pyDOE
-seaborn
+seaborn>=0.9
 scipy
 statsmodels
 toolz
