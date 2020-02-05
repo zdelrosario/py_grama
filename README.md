@@ -1,5 +1,5 @@
 # py_grama
-[![Documentation Status](https://readthedocs.org/projects/py_grama/badge/?version=latest)](https://py_grama.readthedocs.io/en/latest/?badge=latest) [![Build Status](https://travis-ci.org/zdelrosario/py_grama.png?branch=master)](https://travis-ci.org/zdelrosario/py_grama) [![codecov](https://codecov.io/gh/zdelrosario/py_grama/branch/master/graph/badge.svg)](https://codecov.io/gh/zdelrosario/py_grama)
+[![PyPI version](https://badge.fury.io/py/py-grama.svg)](https://badge.fury.io/py/py-grama) [![Documentation Status](https://readthedocs.org/projects/py_grama/badge/?version=latest)](https://py_grama.readthedocs.io/en/latest/?badge=latest) [![Build Status](https://travis-ci.org/zdelrosario/py_grama.png?branch=master)](https://travis-ci.org/zdelrosario/py_grama) [![codecov](https://codecov.io/gh/zdelrosario/py_grama/branch/master/graph/badge.svg)](https://codecov.io/gh/zdelrosario/py_grama)
 
 Implementation of a *grammar of model analysis* (*grama*). See the [documentation](https://py-grama.readthedocs.io/en/latest/) for more info.
 
@@ -10,7 +10,7 @@ Grama is a *grammar of model analysis*---a domain-specific language embedded in 
 Quick install:
 
 ```bash
-# pip install py-grama
+$ pip install py-grama
 ```
 
 For a manual install clone this repo, change directories and run the following to install dependencies. (Note: I recommend [Anaconda](https://www.anaconda.com/distribution/) as a Python distribution; it takes care of most of the dependencies.)
