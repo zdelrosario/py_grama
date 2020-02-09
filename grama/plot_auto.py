@@ -42,7 +42,8 @@ def plot_monte_carlo_outputs(df, out=None):
 
     ## Faceted histograms
     g = FacetGrid(df_gathered, col="key", sharex=False, sharey=False)
-    g.map(hist, "out")
+    g.map(hist, "out") \
+     .set_axis_labels("Output", "Count")
 
     return g
 
