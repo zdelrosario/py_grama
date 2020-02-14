@@ -151,7 +151,7 @@ def eval_lhs(
 
     ## Ensure sample count is int
     if not isinstance(n, Integral):
-        print("eval_monte_carlo() is rounding n...")
+        print("eval_lhs() is rounding n...")
         n = int(n)
 
     ## Draw samples
@@ -221,7 +221,7 @@ def eval_sinews(
         >>> df_design >> gr.pt_auto()
         >>> # Vis results
         >>> df_sinew = md >> gr.ev_sinews(df_det="nom")
-        >>> df_sinew >> gr.pt_auto()
+        >>> df_sinew >> gr.plt_auto()
 
     """
     ## Set seed only if given
