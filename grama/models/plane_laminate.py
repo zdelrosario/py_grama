@@ -226,16 +226,16 @@ def uniaxial_stress_limit(X):
     Param     = Y[:, 0:4]  # [E1, E2, nu12, G12]
     Theta     = Y[:, 4]
     T         = Y[:, 5]
-    Sigma_max = Y[:, 6:11] # [sig_11_t, sig_11_c, sig_22_t, sig_22_c, sig_12_s]
+    Sigma_max = Y[:, 6:11] # [sig_11_t, sig_22_t, sig_11_c, sig_22_c, sig_12_s]
 
     ## Evaluate stress [\sigma_11, \sigma_22, \sigma_12]_i
     Stresses = Nx * uniaxial_stresses(Param, Theta, T)
 
     ## Construct limit state
     g_limit = np.zeros((k, 5))
-    g_limit[:, (0,1)] = +Sigma_max[:, (0,1)] - Stresses[:, (0,1)]
-    g_limit[:, (2,3)] = +Sigma_max[:, (2,3)] + Stresses[:, (0,1)]
-    g_limit[:, 4]     = +Sigma_max[:, 4]     - np.abs(Stresses[:, 2])
+    g_limit[:, (0,1)] = +1 - Stresses[:, (0,1)] / Sigma_max[:, (0,1)]
+    g_limit[:, (2,3)] = +1 - Stresses[:, (0,1)] / Sigma_max[:, (2,3)] # since sig_11_c, sig_22_c > 0
+    g_limit[:, 4]     = +1 - np.abs(Stresses[:, 2]) / Sigma_max[:, 4]
 
     return g_limit.flatten()
 
@@ -462,6 +462,6 @@ if __name__ == "__main__":
     stress_uniaxial = uniaxial_stresses(Param, Theta, T)
 
     ## Test model
-    model = model_composite_plate_tension(
+    model = make_composite_plate_tension(
         Theta_nom = [0]
     )
