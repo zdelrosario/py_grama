@@ -234,7 +234,7 @@ def uniaxial_stress_limit(X):
     ## Construct limit state
     g_limit = np.zeros((k, 5))
     g_limit[:, (0,1)] = +1 - Stresses[:, (0,1)] / Sigma_max[:, (0,1)]
-    g_limit[:, (2,3)] = +1 - Stresses[:, (0,1)] / Sigma_max[:, (2,3)] # since sig_11_c, sig_22_c > 0
+    g_limit[:, (2,3)] = +1 + Stresses[:, (0,1)] / Sigma_max[:, (2,3)]
     g_limit[:, 4]     = +1 - np.abs(Stresses[:, 2]) / Sigma_max[:, 4]
 
     return g_limit.flatten()
