@@ -151,7 +151,7 @@ def eval_lhs(
 
     ## Ensure sample count is int
     if not isinstance(n, Integral):
-        print("eval_monte_carlo() is rounding n...")
+        print("eval_lhs() is rounding n...")
         n = int(n)
 
     ## Draw samples
