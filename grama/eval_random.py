@@ -221,7 +221,7 @@ def eval_sinews(
         >>> df_design >> gr.pt_auto()
         >>> # Vis results
         >>> df_sinew = md >> gr.ev_sinews(df_det="nom")
-        >>> df_sinew >> gr.plt_auto()
+        >>> df_sinew >> gr.pt_auto()
 
     """
     ## Set seed only if given
