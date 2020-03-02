@@ -28,3 +28,10 @@ class TestMisc(unittest.TestCase):
 
         self.assertTrue(gr.df_equal(df1, df1))
         self.assertTrue(gr.df_equal(df1, df2) == False)
+
+    def test_df_make(self):
+        df_true = pd.DataFrame(dict(x=[0,1], y=[0,0], z=[1,1]))
+        df_res = gr.df_make(x=[0,1], y=[0], z=1)
+
+        with self.assertRaises(ValueError):
+            gr.df_make(x=[1,2,3], y=[1,2])

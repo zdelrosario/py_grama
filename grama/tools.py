@@ -3,6 +3,7 @@ __all__ = [
     "copy_meta",
     "custom_formatwarning",
     "df_equal",
+    "df_make",
     "param_dist",
     "pipe",
     "valid_dist"
@@ -295,6 +296,65 @@ class pipe(object):
 
     def __call__(self, *args, **kwargs):
         return pipe(lambda x: self.function(x, *args, **kwargs))
+
+## Safe length-checker
+def safelen(x):
+    try:
+        return len(x)
+    except TypeError:
+        return 1
+
+## DataFrame constructor utility
+def df_make(**kwargs):
+    """Construct a DataFrame
+
+    Helper function to construct a DataFrame.
+
+    Keyword Args:
+        varname (iterable): Column for constructed dataframe; column
+                            name inferred from variable name.
+    Returns:
+        DataFrame: Constructed DataFrame
+
+    Preconditions:
+        All provided iterables must have identical length or be of
+        length one.
+
+        All provided variable names (keyword arguments) must be distinct.
+
+    Examples:
+        A common use-case is to use df_make() to pass values to
+        the df_det keyword argument succinctly;
+
+        >>> import grama as gr
+        >>> from models import make_test
+        >>> md = make_test()
+        >>> md >> \
+        >>>     gr.ev_monte_carlo(
+        >>>         n=1e3,
+        >>>         df_det=gr.df_make(x2=[1, 2])
+        >>>     )
+
+    """
+    ## Check lengths
+    lengths = [safelen(v) for v in kwargs.values()]
+    length_max = max(lengths)
+
+    if not all([(l == length_max) | (l == 1) for l in lengths]):
+        raise ValueError("Column lengths must be identical or one.")
+
+    ## Construct dataframe
+    df_res = pd.DataFrame()
+    for key in kwargs.keys():
+        try:
+            if len(kwargs[key]) > 1:
+                df_res[key] = kwargs[key]
+            else:
+                df_res[key] = [kwargs[key][0]] * length_max
+        except TypeError:
+            df_res[key] = [kwargs[key]] * length_max
+
+    return df_res
 
 ## DataFrame equality checker
 def df_equal(df1, df2, close=False):
