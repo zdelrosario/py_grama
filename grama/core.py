@@ -9,14 +9,15 @@ __all__ = [
     "Function",
     "FunctionVectorized",
     "MarginalNamed",
-    "Model"
+    "Model",
 ]
 
 from abc import ABC, abstractmethod
 import copy
+
 # import numpy as np
 # import pandas as pd
-from numpy import zeros, triu_indices, eye, array
+from numpy import zeros, triu_indices, eye, array, Inf, NaN
 from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
 from pandas import DataFrame, concat
@@ -29,7 +30,7 @@ from numpy.linalg import cholesky
 from toolz import curry
 
 ## Package settings
-RUNTIME_LOWER = 1 # Cutoff threshold for runtime messages
+RUNTIME_LOWER = 1  # Cutoff threshold for runtime messages
 
 ## Core functions
 ##################################################
@@ -41,6 +42,7 @@ class Function:
     full model's inputs and outputs.
 
     """
+
     def __init__(self, func, var, out, name, runtime):
         """Function constructor
 
@@ -71,7 +73,7 @@ class Function:
             copy.deepcopy(self.var),
             copy.deepcopy(self.out),
             copy.deepcopy(self.name),
-            runtime=self.runtime
+            runtime=self.runtime,
         )
         return func_new
 
@@ -91,11 +93,13 @@ class Function:
         ## Check invariant; model inputs must be subset of df columns
         if not set(self.var).issubset(set(df.columns)):
             raise ValueError(
-                "Model function `{}` var not a subset of given columns".format(self.name)
+                "Model function `{}` var not a subset of given columns".format(
+                    self.name
+                )
             )
 
         ## Set up output
-        n_rows  = df.shape[0]
+        n_rows = df.shape[0]
         results = zeros((n_rows, len(self.out)))
         for ind in range(n_rows):
             results[ind] = self.func(df.loc[ind, self.var])
@@ -107,6 +111,7 @@ class Function:
         """Returns a summary string
         """
         return "{0:}: {1:} -> {2:}".format(self.name, self.var, self.out)
+
 
 class FunctionVectorized(Function):
     def eval(self, df):
@@ -129,13 +134,10 @@ class FunctionVectorized(Function):
     def copy(self):
         """Make a copy"""
         func_new = FunctionVectorized(
-            self.func,
-            self.var,
-            self.out,
-            self.name,
-            self.runtime
+            self.func, self.var, self.out, self.name, self.runtime
         )
         return func_new
+
 
 # Domain parent class
 class Domain:
@@ -145,6 +147,7 @@ class Domain:
     functions, it defines the mathematical domain of a model.
 
     """
+
     def __init__(self, bounds=None, feasible=None):
         """Constructor
 
@@ -168,32 +171,49 @@ class Domain:
         if bounds is None:
             bounds = {}
 
-        self.bounds   = bounds
+        self.bounds = bounds
         self.feasible = feasible
         self.var = bounds.keys()
 
     def copy(self):
         new_domain = Domain(
-            bounds=copy.deepcopy(self.bounds),
-            feasible=copy.deepcopy(self.feasible)
+            bounds=copy.deepcopy(self.bounds), feasible=copy.deepcopy(self.feasible)
         )
 
         return new_domain
 
-    def bound_summary(self, bound):
-        if bound in self.bounds.keys():
+    def get_bound(self, var):
+        if var in self.bounds.keys():
+            return (self.bounds[var][0], self.bounds[var][1])
+        else:
+            return (-Inf, +Inf)
+
+    def get_width(self, var):
+        if var in self.bounds.keys():
+            return self.bounds[var][1] - self.bounds[var][0]
+        else:
+            return +Inf
+
+    def get_nominal(self, var):
+        if var in self.bounds.keys():
+            return 0.5 * (self.bounds[var][1] + self.bounds[var][0])
+        else:
+            return NaN
+
+    def bound_summary(self, var):
+        if var in self.bounds.keys():
             return "{0:}: [{1:}, {2:}]".format(
-                bound,
-                self.bounds[bound][0],
-                self.bounds[bound][1],
+                var, self.bounds[var][0], self.bounds[var][1],
             )
         else:
-            return "{0:}: (unbounded)".format(bound)
+            return "{0:}: (unbounded)".format(var)
+
 
 # Marginal parent class
 class Marginal(ABC):
     """Parent class for marginal distributions
     """
+
     def __init__(self, sign=0):
         self.sign = sign
 
@@ -221,6 +241,7 @@ class Marginal(ABC):
     def summary(self):
         pass
 
+
 ## Named marginal class
 class MarginalNamed(Marginal):
     """Marginal using a named distribution from gr.valid_dist"""
@@ -233,9 +254,7 @@ class MarginalNamed(Marginal):
 
     def copy(self):
         new_marginal = MarginalNamed(
-            sign=self.sign,
-            d_name=self.d_name,
-            d_param=copy.deepcopy(self.d_param)
+            sign=self.sign, d_name=self.d_name, d_param=copy.deepcopy(self.d_param)
         )
 
         return new_marginal
@@ -256,10 +275,12 @@ class MarginalNamed(Marginal):
     def summary(self):
         return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, self.d_param)
 
+
 ## Copula base class
 class Copula(ABC):
     """Parent class for copulas
     """
+
     @abstractmethod
     def __init__(self):
         pass
@@ -275,6 +296,7 @@ class Copula(ABC):
     @abstractmethod
     def summary(self):
         pass
+
 
 class CopulaIndependence(Copula):
     def __init__(self, var_rand):
@@ -314,13 +336,11 @@ class CopulaIndependence(Copula):
         if seed is not None:
             set_seed(seed)
 
-        return DataFrame(
-            data=random((n, len(self.var_rand))),
-            columns=self.var_rand
-        )
+        return DataFrame(data=random((n, len(self.var_rand))), columns=self.var_rand)
 
     def summary(self):
         return "Independence copula"
+
 
 class CopulaGaussian(Copula):
     def __init__(self, df_corr):
@@ -339,9 +359,11 @@ class CopulaGaussian(Copula):
         """
         ## Assemble data
         df_corr.sort_values(["var1", "var2"], inplace=True)
-        df_summary = df_corr.set_index(["var1", "var2"]) \
-                            .count(level="var1") \
-                            .sort_values("corr", ascending=False)
+        df_summary = (
+            df_corr.set_index(["var1", "var2"])
+            .count(level="var1")
+            .sort_values("corr", ascending=False)
+        )
         var_rand = list(df_summary.index) + [df_corr.var2.iloc[-1]]
         n_var_rand = df_summary.iloc[0, 0] + 1
         Ind_upper = triu_indices(n_var_rand, 1)
@@ -352,15 +374,14 @@ class CopulaGaussian(Copula):
             raise ValueError("Invalid set of correlations provided")
 
         ## Build correlation structure
-        Sigma            = eye(n_var_rand)
+        Sigma = eye(n_var_rand)
         Sigma[Ind_upper] = df_corr["corr"].values
-        Sigma            = Sigma + \
-                           (Sigma - eye(n_var_rand)).T
-        Sigma_h          = cholesky(Sigma)
+        Sigma = Sigma + (Sigma - eye(n_var_rand)).T
+        Sigma_h = cholesky(Sigma)
 
         self.df_corr = df_corr
         self.var_rand = var_rand
-        self.Sigma   = Sigma
+        self.Sigma = Sigma
         self.Sigma_h = Sigma_h
 
     def copy(self):
@@ -395,20 +416,16 @@ class CopulaGaussian(Copula):
 
         ## Generate correlated samples
         gaussian_samples = multivariate_normal(
-            mean=[0] * len(self.var_rand),
-            cov=self.Sigma,
-            size=n
+            mean=[0] * len(self.var_rand), cov=self.Sigma, size=n
         )
         ## Convert to uniform marginals
         quantiles = valid_dist["norm"].cdf(gaussian_samples)
 
-        return DataFrame(
-            data=quantiles,
-            columns=self.var_rand
-        )
+        return DataFrame(data=quantiles, columns=self.var_rand)
 
     def summary(self):
         return "Gaussian copula with correlations:\n{}".format(self.df_corr)
+
 
 ## Density parent class
 class Density:
@@ -421,6 +438,7 @@ class Density:
         domain.var + [functions.var] - density.marginals.keys()
 
     """
+
     def __init__(self, marginals=None, copula=None):
         """Constructor
 
@@ -452,10 +470,7 @@ class Density:
         except AttributeError:
             new_copula = None
 
-        new_density = Density(
-            marginals=new_marginals,
-            copula=new_copula
-        )
+        new_density = Density(marginals=new_marginals, copula=new_copula)
 
         return new_density
 
@@ -565,11 +580,11 @@ class Density:
             df_pr = self.copula.sample(n=n, seed=seed)
         else:
             raise ValueError(
-                "\n" + \
-                "Present model copula must be defined for sampling.\n" + \
-                "Use CopulaIndependence only when inputs can be guaranteed\n" + \
-                "independent. See the Documentation chapter on Random\n" + \
-                "Variable Modeling for more information."
+                "\n"
+                + "Present model copula must be defined for sampling.\n"
+                + "Use CopulaIndependence only when inputs can be guaranteed\n"
+                + "independent. See the Documentation chapter on Random\n"
+                + "Variable Modeling for more information."
             )
         return self.pr2sample(df_pr)
 
@@ -582,17 +597,14 @@ class Density:
         else:
             return None
 
+
 # Model parent class
 class Model:
     """Parent class for grama models.
     """
 
     def __init__(
-            self,
-            name=None,
-            functions=None,
-            domain=None,
-            density=None,
+        self, name=None, functions=None, domain=None, density=None,
     ):
         """Constructor
 
@@ -637,10 +649,10 @@ class Model:
         if density is None:
             density = Density()
 
-        self.name      = name
+        self.name = name
         self.functions = functions
-        self.domain    = domain
-        self.density   = density
+        self.domain = domain
+        self.density = density
 
         self.update()
 
@@ -656,28 +668,26 @@ class Model:
 
         """
         ## Compute list of outputs
-        self.out = list(set().union(
-            *[f.out for f in self.functions]
-        ))
+        self.out = list(set().union(*[f.out for f in self.functions]))
 
         ## Compute list of variables and parameters
-        self.var = list(set().union(
-            *[f.var for f in self.functions]
-        ).union(set(self.domain.var)))
+        self.var = list(
+            set().union(*[f.var for f in self.functions]).union(set(self.domain.var))
+        )
 
         try:
             self.var_rand = list(self.density.marginals.keys())
         except AttributeError:
             self.var_rand = []
-        self.var_det  = list(set(self.var).difference(self.var_rand))
+        self.var_det = list(set(self.var).difference(self.var_rand))
 
         ## TODO parameters
 
         ## Convenience constants
-        self.n_var      = len(self.var)
+        self.n_var = len(self.var)
         self.n_var_rand = len(self.var_rand)
-        self.n_var_det  = len(self.var_det)
-        self.n_out      = len(self.out)
+        self.n_var_det = len(self.var_det)
+        self.n_out = len(self.out)
 
     def runtime(self, n):
         """Estimate runtime
@@ -729,13 +739,7 @@ class Model:
         data = {}
 
         for var in self.var_det:
-            if var in self.domain.bounds.keys():
-                data[var] = [0.5 * (
-                        self.domain.bounds[var][0] + \
-                        self.domain.bounds[var][1]
-                )]
-            else:
-                data[var] = [0.]
+            data[var] = [self.domain.get_nominal(var)]
 
         return DataFrame(data=data)
 
@@ -806,10 +810,7 @@ class Model:
         corr_mat = []
         for ind in range(self.n_in):
             corr_mat.append(
-                list(map(
-                    lambda s: s + "," + self.domain.var[ind],
-                    self.domain.var
-                ))
+                list(map(lambda s: s + "," + self.domain.var[ind], self.domain.var))
             )
 
         ## Access matrix of names
@@ -826,10 +827,10 @@ class Model:
         """Make a copy of this model
         """
         new_model = Model(
-            name      = self.name,
-            functions = copy.deepcopy(self.functions),
-            domain    = self.domain.copy(),
-            density   = self.density.copy()
+            name=self.name,
+            functions=copy.deepcopy(self.functions),
+            domain=self.domain.copy(),
+            density=self.density.copy(),
         )
         new_model.update()
 

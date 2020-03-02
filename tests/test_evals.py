@@ -10,36 +10,25 @@ from pyDOE import lhs
 
 ##################################################
 class TestDefaults(unittest.TestCase):
-
     def setUp(self):
         # 2D identity model with permuted df inputs
-        domain_2d = gr.Domain(bounds={"x": [-1., +1], "y": [0., 1.]})
+        domain_2d = gr.Domain(bounds={"x": [-1.0, +1], "y": [0.0, 1.0]})
         marginals = {}
         marginals["x"] = gr.MarginalNamed(
-            d_name="uniform",
-            d_param={"loc":-1, "scale": 2}
+            d_name="uniform", d_param={"loc": -1, "scale": 2}
         )
         marginals["y"] = gr.MarginalNamed(
-            sign=-1,
-            d_name="uniform",
-            d_param={"loc": 0, "scale": 1}
+            sign=-1, d_name="uniform", d_param={"loc": 0, "scale": 1}
         )
 
         self.model_2d = gr.Model(
             functions=[
-                gr.Function(
-                    lambda x: [x[0], x[1]],
-                    ["x", "y"],
-                    ["f", "g"],
-                    "test",
-                    0
-                )
+                gr.Function(lambda x: [x[0], x[1]], ["x", "y"], ["f", "g"], "test", 0)
             ],
             domain=domain_2d,
             density=gr.Density(
-                marginals=marginals,
-                copula=gr.CopulaIndependence(var_rand=["x"])
-            )
+                marginals=marginals, copula=gr.CopulaIndependence(var_rand=["x"])
+            ),
         )
 
         ## Correct results
@@ -67,7 +56,7 @@ class TestDefaults(unittest.TestCase):
         self.assertTrue(
             gr.df_equal(
                 self.df_2d_nominal.drop(["f", "g"], axis=1),
-                gr.eval_nominal(self.model_2d, skip=True)
+                gr.eval_nominal(self.model_2d, skip=True),
             )
         )
 
@@ -76,109 +65,82 @@ class TestDefaults(unittest.TestCase):
         """
         ## Accuracy
         df_grad = gr.eval_grad_fd(
-            self.model_2d,
-            df_base=self.df_2d_nominal,
-            append=False
+            self.model_2d, df_base=self.df_2d_nominal, append=False
         )
 
-        self.assertTrue(
-            np.allclose(df_grad[self.df_2d_grad.columns], self.df_2d_grad)
-        )
+        self.assertTrue(np.allclose(df_grad[self.df_2d_grad.columns], self.df_2d_grad))
 
         ## Subset
         df_grad_sub = gr.eval_grad_fd(
-            self.model_2d,
-            df_base=self.df_2d_nominal,
-            var=["x"],
-            append=False
+            self.model_2d, df_base=self.df_2d_nominal, var=["x"], append=False
         )
 
         self.assertTrue(set(df_grad_sub.columns) == set(["Df_Dx", "Dg_Dx"]))
 
         ## Flags
-        md_test = gr.Model() >> \
-                  gr.cp_function(
-                      fun=lambda x: x[0] + x[1]**2,
-                      var=2,
-                      out=1
-                  ) >> \
-                  gr.cp_marginals(
-                      x0={"dist": "norm", "loc": 0, "scale": 1}
-                  )
+        md_test = (
+            gr.Model()
+            >> gr.cp_function(fun=lambda x: x[0] + x[1] ** 2, var=2, out=1)
+            >> gr.cp_marginals(x0={"dist": "norm", "loc": 0, "scale": 1})
+        )
         df_base = pd.DataFrame(dict(x0=[0, 1], x1=[0, 1]))
         ## Multiple base points
-        df_true = pd.DataFrame(dict(
-            Dy0_Dx0=[1, 1],
-            Dy0_Dx1=[0, 2]
-        ))
+        df_true = pd.DataFrame(dict(Dy0_Dx0=[1, 1], Dy0_Dx1=[0, 2]))
 
-        df_rand = gr.eval_grad_fd(
-            md_test,
-            df_base=df_base,
-            var="rand",
-            append=False
-        )
-        self.assertTrue(gr.df_equal(
-            df_true[["Dy0_Dx0"]],
-            df_rand,
-            close=True
-        ))
+        df_rand = gr.eval_grad_fd(md_test, df_base=df_base, var="rand", append=False)
+        self.assertTrue(gr.df_equal(df_true[["Dy0_Dx0"]], df_rand, close=True))
 
-        df_det = gr.eval_grad_fd(
-            md_test,
-            df_base=df_base,
-            var="det",
-            append=False
-        )
-        self.assertTrue(gr.df_equal(
-            df_true[["Dy0_Dx1"]],
-            df_det,
-            close=True
-        ))
-
+        df_det = gr.eval_grad_fd(md_test, df_base=df_base, var="det", append=False)
+        self.assertTrue(gr.df_equal(df_true[["Dy0_Dx1"]], df_det, close=True))
 
     def test_conservative(self):
         ## Accuracy
-        df_res = gr.eval_conservative(
-            self.model_2d,
-            quantiles=[0.1, 0.1]
-        )
+        df_res = gr.eval_conservative(self.model_2d, quantiles=[0.1, 0.1])
 
         self.assertTrue(gr.df_equal(self.df_2d_qe, df_res, close=True))
 
         ## Repeat scalar value
-        self.assertTrue(gr.df_equal(
-            self.df_2d_qe,
-            gr.eval_conservative(self.model_2d, quantiles=0.1),
-            close=True
-        ))
+        self.assertTrue(
+            gr.df_equal(
+                self.df_2d_qe,
+                gr.eval_conservative(self.model_2d, quantiles=0.1),
+                close=True,
+            )
+        )
 
         ## Pass-through
-        self.assertTrue(gr.df_equal(
-            self.df_2d_qe.drop(["f", "g"], axis=1),
-            gr.eval_conservative(self.model_2d, quantiles=0.1, skip=True),
-            close=True
-        ))
+        self.assertTrue(
+            gr.df_equal(
+                self.df_2d_qe.drop(["f", "g"], axis=1),
+                gr.eval_conservative(self.model_2d, quantiles=0.1, skip=True),
+                close=True,
+            )
+        )
+
 
 ##################################################
 class TestRandomSampling(unittest.TestCase):
     def setUp(self):
-        self.md = gr.Model() >>\
-                  gr.cp_function(fun=lambda x: x, var=1, out=1) >>\
-                  gr.cp_marginals(x0={"dist": "uniform", "loc": 0, "scale": 1}) >>\
-                  gr.cp_copula_independence()
+        self.md = (
+            gr.Model()
+            >> gr.cp_function(fun=lambda x: x, var=1, out=1)
+            >> gr.cp_marginals(x0={"dist": "uniform", "loc": 0, "scale": 1})
+            >> gr.cp_copula_independence()
+        )
 
-        self.md_2d = gr.Model() >> \
-                  gr.cp_function(fun=lambda x: x[0], var=2, out=1) >> \
-                  gr.cp_marginals(
-                      x0={"dist": "uniform", "loc": 0, "scale": 1},
-                      x1={"dist": "uniform", "loc": 0, "scale": 1}
-                  ) >>\
-                  gr.cp_copula_independence()
+        self.md_2d = (
+            gr.Model()
+            >> gr.cp_function(fun=lambda x: x[0], var=2, out=1)
+            >> gr.cp_marginals(
+                x0={"dist": "uniform", "loc": 0, "scale": 1},
+                x1={"dist": "uniform", "loc": 0, "scale": 1},
+            )
+            >> gr.cp_copula_independence()
+        )
 
     def test_lhs(self):
         ## Accurate
-        n=2
+        n = 2
         df_res = gr.eval_lhs(self.md_2d, n=n, df_det="nom", seed=101)
 
         np.random.seed(101)
@@ -188,7 +150,7 @@ class TestRandomSampling(unittest.TestCase):
         self.assertTrue(gr.df_equal(df_res, df_truth))
 
         ## Rounding
-        df_round = gr.eval_lhs(self.md_2d, n=n+0.1, df_det="nom", seed=101)
+        df_round = gr.eval_lhs(self.md_2d, n=n + 0.1, df_det="nom", seed=101)
 
         self.assertTrue(gr.df_equal(df_round, df_truth))
 
@@ -199,7 +161,7 @@ class TestRandomSampling(unittest.TestCase):
 
     def test_monte_carlo(self):
         ## Accurate
-        n=2
+        n = 2
         df_res = gr.eval_monte_carlo(self.md, n=n, df_det="nom", seed=101)
 
         np.random.seed(101)
@@ -209,74 +171,67 @@ class TestRandomSampling(unittest.TestCase):
         self.assertTrue(gr.df_equal(df_res, df_truth))
 
         ## Rounding
-        df_round = gr.eval_monte_carlo(self.md, n=n+0.1, df_det="nom", seed=101)
+        df_round = gr.eval_monte_carlo(self.md, n=n + 0.1, df_det="nom", seed=101)
 
         self.assertTrue(gr.df_equal(df_round, df_truth))
 
         ## Pass-through
-        df_pass = gr.eval_monte_carlo(
-            self.md,
-            n=n,
-            skip=True,
-            df_det="nom",
-            seed=101
-        )
+        df_pass = gr.eval_monte_carlo(self.md, n=n, skip=True, df_det="nom", seed=101)
 
         self.assertTrue(gr.df_equal(df_pass[["x0"]], df_truth[["x0"]]))
 
+
 ##################################################
 class TestRandom(unittest.TestCase):
-
     def setUp(self):
         self.md = models.make_test()
+
+        self.md_mixed = (
+            gr.Model()
+            >> gr.cp_function(fun=lambda x: x[0], var=3, out=1)
+            >> gr.cp_bounds(x2=(0, 1))
+            >> gr.cp_marginals(
+                x0={"dist": "uniform", "loc": 0, "scale": 1},
+                x1={"dist": "uniform", "loc": 0, "scale": 1},
+            )
+            >> gr.cp_copula_independence()
+        )
 
     def test_monte_carlo(self):
         df_min = gr.eval_monte_carlo(self.md, df_det="nom")
         self.assertTrue(df_min.shape == (1, self.md.n_var + self.md.n_out))
-        self.assertTrue(
-            set(df_min.columns) == set(self.md.var + self.md.out)
-        )
+        self.assertTrue(set(df_min.columns) == set(self.md.var + self.md.out))
 
         df_seeded = gr.eval_monte_carlo(self.md, df_det="nom", seed=101)
         df_piped = self.md >> gr.ev_monte_carlo(df_det="nom", seed=101)
         self.assertTrue(df_seeded.equals(df_piped))
 
         df_skip = gr.eval_monte_carlo(self.md, df_det="nom", skip=True)
-        self.assertTrue(
-            set(df_skip.columns) == set(self.md.var)
-        )
+        self.assertTrue(set(df_skip.columns) == set(self.md.var))
 
         df_noappend = gr.eval_monte_carlo(self.md, df_det="nom", append=False)
-        self.assertTrue(
-            set(df_noappend.columns) == set(self.md.out)
-        )
+        self.assertTrue(set(df_noappend.columns) == set(self.md.out))
 
     def test_lhs(self):
         df_min = gr.eval_lhs(self.md, df_det="nom")
         self.assertTrue(df_min.shape == (1, self.md.n_var + self.md.n_out))
-        self.assertTrue(
-            set(df_min.columns) == set(self.md.var + self.md.out)
-        )
+        self.assertTrue(set(df_min.columns) == set(self.md.var + self.md.out))
 
         df_seeded = gr.eval_lhs(self.md, df_det="nom", seed=101)
         df_piped = self.md >> gr.ev_lhs(df_det="nom", seed=101)
         self.assertTrue(df_seeded.equals(df_piped))
 
         df_skip = gr.eval_lhs(self.md, df_det="nom", skip=True)
-        self.assertTrue(
-            set(df_skip.columns) == set(self.md.var)
-        )
+        self.assertTrue(set(df_skip.columns) == set(self.md.var))
 
         df_noappend = gr.eval_lhs(self.md, df_det="nom", append=False)
-        self.assertTrue(
-            set(df_noappend.columns) == set(self.md.out)
-        )
+        self.assertTrue(set(df_noappend.columns) == set(self.md.out))
 
     def test_sinews(self):
         df_min = gr.eval_sinews(self.md, df_det="nom")
         self.assertTrue(
-            set(df_min.columns) == \
-            set(self.md.var + self.md.out + ["sweep_var", "sweep_ind"])
+            set(df_min.columns)
+            == set(self.md.var + self.md.out + ["sweep_var", "sweep_ind"])
         )
         self.assertTrue(df_min._plot_info["type"] == "sinew_outputs")
 
@@ -287,11 +242,12 @@ class TestRandom(unittest.TestCase):
         df_skip = gr.eval_sinews(self.md, df_det="nom", skip=True)
         self.assertTrue(df_skip._plot_info["type"] == "sinew_inputs")
 
+        df_mixed = gr.eval_sinews(self.md_mixed, df_det="swp")
+
     def test_hybrid(self):
         df_min = gr.eval_hybrid(self.md, df_det="nom")
         self.assertTrue(
-            set(df_min.columns) == \
-            set(self.md.var + self.md.out + ["hybrid_var"])
+            set(df_min.columns) == set(self.md.var + self.md.out + ["hybrid_var"])
         )
         self.assertTrue(df_min._meta["type"] == "eval_hybrid")
 
@@ -301,21 +257,18 @@ class TestRandom(unittest.TestCase):
 
         df_total = gr.eval_hybrid(self.md, df_det="nom", plan="total")
         self.assertTrue(
-            set(df_total.columns) == \
-            set(self.md.var + self.md.out + ["hybrid_var"])
+            set(df_total.columns) == set(self.md.var + self.md.out + ["hybrid_var"])
         )
         self.assertTrue(df_total._meta["type"] == "eval_hybrid")
 
         df_skip = gr.eval_hybrid(self.md, df_det="nom", skip=True)
-        self.assertTrue(
-            set(df_skip.columns) == \
-            set(self.md.var + ["hybrid_var"])
-        )
+        self.assertTrue(set(df_skip.columns) == set(self.md.var + ["hybrid_var"]))
 
         ## Raises
         md_buckle = models.make_plate_buckle()
         with self.assertRaises(ValueError):
             gr.eval_hybrid(md_buckle, df_det="nom")
+
 
 ## Run tests
 if __name__ == "__main__":
