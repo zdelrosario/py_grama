@@ -10,12 +10,12 @@ try:
 except ModuleNotFoundError:
     raise ModuleNotFoundError("module sklearn not found")
 
-import pandas as pd
-import numpy as np
 import grama as gr
 
 from grama import pipe
+from pandas import DataFrame
 from toolz import curry
+from warnings import filterwarnings
 
 ## Helper functions and classes
 # --------------------------------------------------
@@ -75,7 +75,7 @@ class FunctionGPR(gr.Function):
         df_std = standardize_cols(df, self.ser_min_in, self.ser_max_in, self.var)
         y = self.gpr.predict(df_std[self.var])
         return restore_cols(
-            pd.DataFrame(data=y, columns=self.out),
+            DataFrame(data=y, columns=self.out),
             self.ser_min_out,
             self.ser_max_out,
             self.out
@@ -105,6 +105,7 @@ def fit_gp(
         density=None,
         kernel=None,
         seed=None,
+        suppress_warnings=True,
         n_restart=5,
         alpha=1e-10
 ):
@@ -133,6 +134,9 @@ def fit_gp(
         - Wrapper for sklearn.gaussian_process.GaussianProcessRegressor
 
     """
+    if suppress_warnings:
+        filterwarnings("ignore")
+
     n_obs, n_in = df.shape
 
     ## Infer fitting metadata, if available
