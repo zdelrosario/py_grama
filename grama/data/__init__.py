@@ -14,9 +14,30 @@ Datasets:
 
         ang (degrees): Angle of test to alloy roll direction
 
+    df_diamonds: Diamond characteristics and prices. Columns:
+        carat:
+
+        cut:
+
+        color:
+
+        clarity:
+
+        depth:
+
+        table:
+
+        price:
+
+        x:
+
+        y:
+
+        z:
+
 References:
     Stang, Greenspan, and Newman, "Poisson's ratio of some structural alloys for
     large strains" (1946) U.S. Department of Commerce National Bureau of Standards
 """
 
-from .datasets import df_stang
+from .datasets import df_stang, df_diamonds

@@ -1,8 +1,4 @@
-__all__ = [
-    "plot_auto",
-    "pt_auto",
-    "plot_list"
-]
+__all__ = ["plot_auto", "pt_auto", "plot_list"]
 
 import grama as gr
 
@@ -26,9 +22,11 @@ def plot_monte_carlo_inputs(df, var_rand=None):
     ## Plot
     return pairplot(data=df, vars=var_rand)
 
+
 @pipe
 def pt_monte_carlo_inputs(*args, **kwargs):
     return plot_monte_carlo_inputs(*args, **kwargs)
+
 
 @curry
 def plot_monte_carlo_outputs(df, out=None):
@@ -38,18 +36,19 @@ def plot_monte_carlo_outputs(df, out=None):
         raise ValueError("Must provide input columns list as keyword out")
 
     ## Gather data
-    df_gathered = gr.tran_gather(df, "key", "out", out)
+    df_gathered = df >> gr.tf_gather("key", "out", out)
 
     ## Faceted histograms
     g = FacetGrid(df_gathered, col="key", sharex=False, sharey=False)
-    g.map(hist, "out") \
-     .set_axis_labels("Output", "Count")
+    g.map(hist, "out").set_axis_labels("Output", "Count")
 
     return g
+
 
 @pipe
 def pt_monte_carlo_outputs(*args, **kwargs):
     return plot_monte_carlo_outputs(*args, **kwargs)
+
 
 ## Sinew plots
 # --------------------------------------------------
@@ -64,12 +63,16 @@ def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
     ## Plot
     return pairplot(data=df, vars=var, hue=sweep_ind)
 
+
 @pipe
 def pt_sinew_inputs(*args, **kwargs):
     return plot_sinew_inputs(*args, **kwargs)
 
+
 @curry
-def plot_sinew_outputs(df, var=None, out=None, sweep_ind="sweep_ind", sweep_var="sweep_var"):
+def plot_sinew_outputs(
+    df, var=None, out=None, sweep_ind="sweep_ind", sweep_var="sweep_var"
+):
     """
     Construct sinew plot
     """
@@ -81,23 +84,11 @@ def plot_sinew_outputs(df, var=None, out=None, sweep_ind="sweep_ind", sweep_var=
     ## Prepare data
     # Gather inputs
     id_vars = [col for col in df.columns if col not in var]
-    df_tmp = melt(
-        df,
-        id_vars,
-        var,
-        "_var",
-        "_x"
-    )
+    df_tmp = melt(df, id_vars, var, "_var", "_x")
 
     # Gather outputs
     id_vars = [col for col in df_tmp.columns if col not in out]
-    df_plot = melt(
-        df_tmp,
-        id_vars,
-        out,
-        "_out",
-        "_y"
-    )
+    df_plot = melt(df_tmp, id_vars, out, "_out", "_y")
 
     # Filter off-sweep values
     df_plot = df_plot[df_plot[sweep_var] == df_plot["_var"]]
@@ -111,7 +102,7 @@ def plot_sinew_outputs(df, var=None, out=None, sweep_ind="sweep_ind", sweep_var=
         col="_var",
         row="_out",
         kind="line",
-        facet_kws=dict(sharex=False, sharey=False)
+        facet_kws=dict(sharex=False, sharey=False),
     )
 
 
@@ -119,14 +110,16 @@ def plot_sinew_outputs(df, var=None, out=None, sweep_ind="sweep_ind", sweep_var=
 def pt_sinew_outputs(*args, **kwargs):
     return plot_sinew_outputs(*args, **kwargs)
 
+
 ## Autoplot dispatcher
 ## ##################################################
 plot_list = {
     "sinew_inputs": plot_sinew_inputs,
     "sinew_outputs": plot_sinew_outputs,
     "monte_carlo_inputs": plot_monte_carlo_inputs,
-    "monte_carlo_outputs": plot_monte_carlo_outputs
+    "monte_carlo_outputs": plot_monte_carlo_outputs,
 }
+
 
 @curry
 def plot_auto(df):
@@ -145,7 +138,11 @@ def plot_auto(df):
     try:
         d = df._plot_info
     except AttributeError:
-        raise AttributeError("'{}' object has no attribute _plot_info. Use plot_auto() for grama outputs only.".format('DataFrame'))
+        raise AttributeError(
+            "'{}' object has no attribute _plot_info. Use plot_auto() for grama outputs only.".format(
+                "DataFrame"
+            )
+        )
 
     try:
         plot_fcn = plot_list[d["type"]]
@@ -154,6 +151,7 @@ def plot_auto(df):
     plt_kwargs = {key: value for key, value in d.items() if key != "type"}
 
     return plot_fcn(df, **plt_kwargs)
+
 
 @pipe
 def pt_auto(*args, **kwargs):
