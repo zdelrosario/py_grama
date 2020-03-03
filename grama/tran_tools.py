@@ -7,10 +7,6 @@ __all__ = [
     "tf_copula_corr",
     "tran_outer",
     "tf_outer",
-    "tran_gather",
-    "tf_gather",
-    "tran_spread",
-    "tf_spread"
 ]
 
 from numpy import zeros, std, quantile, nan, triu_indices
@@ -29,13 +25,7 @@ from scipy.stats import norm
 # --------------------------------------------------
 @curry
 def tran_bootstrap(
-        df,
-        tran=None,
-        n_boot=500,
-        n_sub=25,
-        con=0.90,
-        col_sel=None,
-        seed=None
+    df, tran=None, n_boot=500, n_sub=25, con=0.90, col_sel=None, seed=None
 ):
     """Estimate bootstrap confidence intervals
 
@@ -81,14 +71,9 @@ def tran_bootstrap(
     df_base = tran(df)
 
     ## Select columns for bootstrap
-    col_numeric = list(
-        df_base.select_dtypes(include="number")
-               .columns
-    )
+    col_numeric = list(df_base.select_dtypes(include="number").columns)
     if not (col_sel is None):
-        col_numeric = list(
-            set(col_numeric).intersection(set(col_sel))
-        )
+        col_numeric = list(set(col_numeric).intersection(set(col_sel)))
 
     ## Setup
     n_samples = df.shape[0]
@@ -97,22 +82,22 @@ def tran_bootstrap(
     alpha = (1 - con) / 2
     theta_hat = df_base[col_numeric].values
 
-    theta_all   = zeros((n_boot, n_row, n_col))
+    theta_all = zeros((n_boot, n_row, n_col))
     se_boot_all = zeros((n_boot, n_row, n_col))
-    z_all       = zeros((n_boot, n_row, n_col))
-    theta_sub   = zeros((n_sub,  n_row, n_col))
+    z_all = zeros((n_boot, n_row, n_col))
+    theta_sub = zeros((n_sub, n_row, n_col))
 
     ## Main loop
     for ind in range(n_boot):
         ## Construct resample
         Ib = choice(n_samples, size=n_samples, replace=True)
-        df_tmp = copy_meta(df, df.iloc[Ib, ])
+        df_tmp = copy_meta(df, df.iloc[Ib,])
         theta_all[ind] = tran(df_tmp)[col_numeric].values
 
         ## Internal loop to approximate SE
         for jnd in range(n_sub):
             Isub = Ib[choice(n_samples, size=n_samples, replace=True)]
-            df_tmp = copy_meta(df, df.iloc[Isub, ])
+            df_tmp = copy_meta(df, df.iloc[Isub,])
             theta_sub[jnd] = tran(df_tmp)[col_numeric].values
         se_boot_all[ind] = std(theta_sub, axis=0)
 
@@ -128,14 +113,8 @@ def tran_bootstrap(
     theta_hi = theta_hat - t_hi * se
 
     ## Assemble output data
-    col_lo = list(map(
-        lambda s: s + "_lo",
-        col_numeric
-    ))
-    col_hi = list(map(
-        lambda s: s + "_up",
-        col_numeric
-    ))
+    col_lo = list(map(lambda s: s + "_lo", col_numeric))
+    col_hi = list(map(lambda s: s + "_up", col_numeric))
 
     df_lo = DataFrame(data=theta_lo, columns=col_lo)
     df_hi = DataFrame(data=theta_hi, columns=col_hi)
@@ -145,9 +124,11 @@ def tran_bootstrap(
 
     return concat((df_base, df_ci), axis=1)
 
+
 @pipe
 def tf_bootstrap(*args, **kwargs):
     return tran_bootstrap(*args, **kwargs)
+
 
 ## DataFrame outer product
 # --------------------------------------------------
@@ -187,58 +168,11 @@ def tran_outer(df, df_outer):
 
     return concat(list_df, ignore_index=True)
 
+
 @pipe
 def tf_outer(*args, **kwargs):
     return tran_outer(*args, **kwargs)
 
-## Reshape functions
-# --------------------------------------------------
-@curry
-def tran_gather(df, key, value, cols):
-    """Makes a DataFrame longer by gathering columns.
-
-    """
-    id_vars = [col for col in df.columns if col not in cols]
-    id_values = cols
-    var_name = key
-    value_name = value
-
-    return melt(
-        df,
-        id_vars,
-        id_values,
-        var_name=var_name,
-        value_name=value_name
-    )
-
-@pipe
-def tf_gather(*args, **kwargs):
-    return tran_gather(*args, **kwargs)
-
-@curry
-def tran_spread(df, key, value, fill=nan, drop=False):
-    """Makes a DataFrame wider by spreading columns.
-
-    """
-    index = [col for col in df.columns if ((col != key) and (col != value))]
-
-    df_new = df.pivot_table(
-        index=index,
-        columns=key,
-        values=value,
-        fill_value=fill
-    ).reset_index()
-
-    ## Drop extraneous info
-    df_new = df_new.rename_axis(None, axis=1)
-    if drop:
-        df_new.drop("index", axis=1, inplace=True)
-
-    return df_new
-
-@pipe
-def tf_spread(*args, **kwargs):
-    return tran_spread(*args, **kwargs)
 
 ## Assess subspace angles
 # --------------------------------------------------
@@ -273,9 +207,11 @@ def tran_angles(df, df2):
 
     return subspace_angles(A1, A2)
 
+
 @pipe
 def tf_angles(*args, **kwargs):
     return tran_angles(*args, **kwargs)
+
 
 ## Compute Gaussian copula correlations from data
 # --------------------------------------------------
@@ -334,6 +270,7 @@ def tran_copula_corr(df, model=None, density=None):
         corr_all.append(df_mat.iloc[i, j])
 
     return DataFrame(dict(var1=var1_all, var2=var2_all, corr=corr_all))
+
 
 @pipe
 def tf_copula_corr(*args, **kwargs):

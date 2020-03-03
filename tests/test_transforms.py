@@ -11,7 +11,6 @@ from context import models
 ## Test transform tools
 ##################################################
 class TestTools(unittest.TestCase):
-
     def setUp(self):
         pass
 
@@ -29,49 +28,34 @@ class TestTools(unittest.TestCase):
             self.assertTrue(df._meta == "foo")
 
             return pd.DataFrame(
-                data = {
+                data={
                     "var": df.select_dtypes(include="number").columns,
                     "mean": means,
-                    "std": stds
+                    "std": stds,
                 }
             )
 
         df_res = gr.tran_bootstrap(
-            df_stang,
-            tran=tran_stats,
-            n_boot=3e0,
-            n_sub=3e0,
-            seed=101
+            df_stang, tran=tran_stats, n_boot=3e0, n_sub=3e0, seed=101
         )
 
         df_sel = gr.tran_bootstrap(
-            df_stang,
-            tran=tran_stats,
-            n_boot=3e0,
-            n_sub=3e0,
-            seed=101,
-            col_sel=["mean"]
+            df_stang, tran=tran_stats, n_boot=3e0, n_sub=3e0, seed=101, col_sel=["mean"]
         )
 
         df_piped = df_stang >> gr.tf_bootstrap(
-            tran=tran_stats,
-            n_boot=3e0,
-            n_sub=3e0,
-            seed=101
+            tran=tran_stats, n_boot=3e0, n_sub=3e0, seed=101
         )
 
         ## Test output shape
         self.assertTrue(
-            set(df_res.columns) == set([
-                "var", "mean", "mean_lo", "mean_up", "std", "std_lo", "std_up"
-            ])
+            set(df_res.columns)
+            == set(["var", "mean", "mean_lo", "mean_up", "std", "std_lo", "std_up"])
         )
         self.assertTrue(df_res.shape[0] == 4)
 
         self.assertTrue(
-            set(df_sel.columns) == set([
-                "var", "mean", "mean_lo", "mean_up", "std"
-            ])
+            set(df_sel.columns) == set(["var", "mean", "mean_lo", "mean_up", "std"])
         )
         self.assertTrue(df_sel.shape[0] == 4)
 
@@ -79,13 +63,10 @@ class TestTools(unittest.TestCase):
         self.assertTrue(gr.df_equal(df_res, df_piped))
 
     def test_outer(self):
-        df = pd.DataFrame(dict(x=[1,2]))
-        df_outer = pd.DataFrame(dict(y=[3,4]))
+        df = pd.DataFrame(dict(x=[1, 2]))
+        df_outer = pd.DataFrame(dict(y=[3, 4]))
 
-        df_true = pd.DataFrame(dict(
-            x=[1,2,1,2],
-            y=[3,3,4,4]
-        ))
+        df_true = pd.DataFrame(dict(x=[1, 2, 1, 2], y=[3, 3, 4, 4]))
 
         df_res = gr.tran_outer(df, df_outer)
         df_piped = df >> gr.tf_outer(df_outer)
@@ -95,89 +76,27 @@ class TestTools(unittest.TestCase):
             df_res,
             check_exact=False,
             check_dtype=False,
-            check_column_type=False
+            check_column_type=False,
         )
         pd.testing.assert_frame_equal(
             df_piped,
             df_res,
             check_exact=False,
             check_dtype=False,
-            check_column_type=False
+            check_column_type=False,
         )
 
     def test_gauss_copula(self):
-        md = gr.Model() >> \
-             gr.cp_marginals(
-                 E=gr.continuous_fit(data.df_stang.E, "norm"),
-                 mu=gr.continuous_fit(data.df_stang.mu, "beta"),
-                 thick=gr.continuous_fit(data.df_stang.thick, "uniform")
-             )
+        md = gr.Model() >> gr.cp_marginals(
+            E=gr.continuous_fit(data.df_stang.E, "norm"),
+            mu=gr.continuous_fit(data.df_stang.mu, "beta"),
+            thick=gr.continuous_fit(data.df_stang.thick, "uniform"),
+        )
         df_corr = gr.tran_copula_corr(data.df_stang, model=md)
 
 
 # --------------------------------------------------
-class TestReshape(unittest.TestCase):
-    def setUp(self):
-        ## Transpose test
-        self.df_rownames = pd.DataFrame({
-            "rowname": ["a", "b"],
-            "x":       [0, 1],
-            "y":       [2, 3],
-        })
-        self.df_transposed = pd.DataFrame({
-            "rowname": ["x", "y"],
-            "a":       [ 0, 2],
-            "b":       [ 1, 3]
-        })
-
-        ## Gather test
-        self.df_wide = pd.DataFrame({
-            "a": [0],
-            "b": [1]
-        })
-        self.df_gathered = pd.DataFrame({
-            "key": ["a", "b"],
-            "value": [0, 1]
-        })
-
-        ## Spread test
-        self.df_long = pd.DataFrame({
-            "key":   ["a", "b"],
-            "value": [  0,   1]
-        })
-        self.df_spreaded = pd.DataFrame({
-            "index": ["value"], "a": [0], "b": [1]
-        })
-        self.df_spreaded_drop = pd.DataFrame({
-            "a": [0], "b": [1]
-        })
-
-    def test_gather(self):
-        df_res = gr.tran_gather(self.df_wide, "key", "value", ["a", "b"])
-        self.assertTrue(self.df_gathered.equals(df_res))
-
-        ## Test pipe
-        df_piped = self.df_wide >> gr.tf_gather("key", "value", ["a", "b"])
-        self.assertTrue(df_res.equals(df_piped))
-
-    def test_spread(self):
-        df_res = gr.tran_spread(self.df_long, "key", "value")
-        self.assertTrue(self.df_spreaded.equals(df_res))
-
-        ## Test pipe
-        df_piped = self.df_long >> gr.tf_spread("key", "value")
-        self.assertTrue(df_res.equals(df_piped))
-
-        ## Test with drop
-        self.assertTrue(
-            self.df_spreaded_drop.equals(
-                gr.tran_spread(self.df_long, "key", "value", drop=True)
-            )
-        )
-
-# --------------------------------------------------
 class TestSummaries(unittest.TestCase):
-
     def setUp(self):
         self.md = models.make_test()
 
@@ -185,18 +104,12 @@ class TestSummaries(unittest.TestCase):
         ## Minimal
         df_first = gr.eval_hybrid(self.md, df_det="nom")
         df_sobol = gr.tran_sobol(df_first)
-        self.assertTrue(
-            set(df_sobol.columns) == set(["y0", "ind"])
-        )
-        self.assertTrue(
-            set(df_sobol["ind"]) == set(["S_x0", "S_x1"])
-        )
+        self.assertTrue(set(df_sobol.columns) == set(["y0", "ind"]))
+        self.assertTrue(set(df_sobol["ind"]) == set(["S_x0", "S_x1"]))
 
         ## Full
         df_full = gr.tran_sobol(df_first, full=True)
-        self.assertTrue(
-            set(df_full.columns) == set(["y0", "ind"])
-        )
+        self.assertTrue(set(df_full.columns) == set(["y0", "ind"]))
         self.assertTrue(
             set(df_full["ind"]) == set(["S_x0", "S_x1", "T_x0", "T_x1", "var"])
         )
@@ -204,30 +117,27 @@ class TestSummaries(unittest.TestCase):
         ## Total order
         df_total = gr.eval_hybrid(self.md, df_det="nom", plan="total")
         df_sobol_total = gr.tran_sobol(df_total)
-        self.assertTrue(
-            set(df_sobol.columns) == set(["y0", "ind"])
-        )
-        self.assertTrue(
-            set(df_sobol["ind"]) == set(["S_x0", "S_x1"])
-        )
+        self.assertTrue(set(df_sobol.columns) == set(["y0", "ind"]))
+        self.assertTrue(set(df_sobol["ind"]) == set(["S_x0", "S_x1"]))
+
 
 # --------------------------------------------------
 class TestAsub(unittest.TestCase):
-
     def setUp(self):
         pass
 
     def test_asub(self):
-        df_data = pd.DataFrame(dict(
-            Df_Dx=[1/np.sqrt(2)] * 2,
-            Df_Dy=[1/np.sqrt(2)] * 2
-        ))
-        df_true = pd.DataFrame(dict(
-            x=[+1/np.sqrt(2), +1/np.sqrt(2)],
-            y=[+1/np.sqrt(2), -1/np.sqrt(2)],
-            out=["f", "f"],
-            lam=[1, 0]
-        ))
+        df_data = pd.DataFrame(
+            dict(Df_Dx=[1 / np.sqrt(2)] * 2, Df_Dy=[1 / np.sqrt(2)] * 2)
+        )
+        df_true = pd.DataFrame(
+            dict(
+                x=[+1 / np.sqrt(2), +1 / np.sqrt(2)],
+                y=[+1 / np.sqrt(2), -1 / np.sqrt(2)],
+                out=["f", "f"],
+                lam=[1, 0],
+            )
+        )
 
         df_res = gr.tran_asub(df_data)
 
@@ -241,6 +151,7 @@ class TestAsub(unittest.TestCase):
         df_piped = df_data >> gr.tf_asub()
         self.assertTrue(df_res.equals(df_piped))
 
+
 # --------------------------------------------------
 class TestAngles(unittest.TestCase):
     def setUp(self):
@@ -252,7 +163,7 @@ class TestAngles(unittest.TestCase):
         theta1 = gr.tran_angles(self.df, self.df_v1)
         theta2 = gr.tran_angles(self.df, self.df_v2)
 
-        self.assertTrue(np.isclose(theta1, np.pi/2))
+        self.assertTrue(np.isclose(theta1, np.pi / 2))
         self.assertTrue(np.isclose(theta2, 0))
 
         theta_piped = self.df >> gr.tf_angles(self.df_v1)
@@ -264,22 +175,16 @@ class TestAngles(unittest.TestCase):
         with self.assertRaises(ValueError):
             gr.tran_angles(self.df, pd.DataFrame())
 
+
 # --------------------------------------------------
 class TestInner(unittest.TestCase):
     def setUp(self):
         pass
 
     def test_inner(self):
-        df = pd.DataFrame(dict(
-            v=[+1, +1],
-            w=[-1, +1]
-        ))
+        df = pd.DataFrame(dict(v=[+1, +1], w=[-1, +1]))
 
-        df_w = pd.DataFrame(dict(
-            v=[1, 0, 1],
-            w=[0, 1, 1],
-            id=["v", "w", "x"]
-        ))
+        df_w = pd.DataFrame(dict(v=[1, 0, 1], w=[0, 1, 1], id=["v", "w", "x"]))
         df_true = df.copy()
         df_true["dot_v"] = df.v
         df_true["dot_w"] = df.w
@@ -293,7 +198,7 @@ class TestInner(unittest.TestCase):
             df_noappend,
             check_exact=False,
             check_dtype=False,
-            check_column_type=False
+            check_column_type=False,
         )
 
         df_res = gr.tran_inner(df, df_w, name="id")
@@ -302,7 +207,7 @@ class TestInner(unittest.TestCase):
             df_res,
             check_exact=False,
             check_dtype=False,
-            check_column_type=False
+            check_column_type=False,
         )
 
         ## Pipe
@@ -320,9 +225,8 @@ class TestInner(unittest.TestCase):
             df_res_small,
             check_exact=False,
             check_dtype=False,
-            check_column_type=False
+            check_column_type=False,
         )
-
 
         ## No name column
         df_w_noname = df_w.drop("id", axis=1)
@@ -337,5 +241,5 @@ class TestInner(unittest.TestCase):
             df_res_noname,
             check_exact=False,
             check_dtype=False,
-            check_column_type=False
+            check_column_type=False,
         )

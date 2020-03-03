@@ -7,3 +7,6 @@ path_grama = path_this.parents[1]
 
 # Stang (tidy form)
 df_stang = read_csv(Path(path_grama / "data/stang_long.csv"))
+
+# Stang (tidy form)
+df_diamonds = read_csv(Path(path_grama / "data/diamonds.csv"))
