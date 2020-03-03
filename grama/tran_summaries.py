@@ -1,10 +1,12 @@
 __all__ = [
-    "tran_sobol",
-    "tf_sobol",
     "tran_asub",
     "tf_asub",
+    "tran_describe",
+    "tf_describe",
     "tran_inner",
-    "tf_inner"
+    "tf_inner",
+    "tran_sobol",
+    "tf_sobol",
 ]
 
 from numpy import round, dot
@@ -61,10 +63,10 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
     ## Determine plan from dataframe metadata
     metadata = df._meta
     if metadata["type"] == "eval_hybrid":
-        plan     = metadata["plan"]
-        varname  = metadata["varname"]
+        plan = metadata["plan"]
+        varname = metadata["varname"]
         var_rand = metadata["var_rand"]
-        out      = metadata["out"]
+        out = metadata["out"]
     else:
         raise ValueError("df not hybrid points!")
 
@@ -73,7 +75,7 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
         raise ValueError("{} not in df.columns".format(varname))
 
     ## Setup
-    I_base  = (df[varname] == "_")
+    I_base = df[varname] == "_"
     df_var = DataFrame(df[out].var()).transpose()
     df_var[typename] = "var"
 
@@ -83,41 +85,47 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
         mu_base = df[out][I_base].mean()
 
         for i_var, var in enumerate(var_rand):
-            I_var = (df[varname] == var)
+            I_var = df[varname] == var
 
             mu_var = df[out][I_var].mean()
             mu_tot = 0.5 * (mu_base + mu_var)
             s2_var = (
-                df[out][I_base].reset_index(drop=True).mul(
-                    df[out][I_var].reset_index(drop=True)
-                )
+                df[out][I_base]
+                .reset_index(drop=True)
+                .mul(df[out][I_var].reset_index(drop=True))
             ).mean()
 
-            df_tau = DataFrame(s2_var - mu_tot**2).transpose()
+            df_tau = DataFrame(s2_var - mu_tot ** 2).transpose()
             df_tau[typename] = "T_" + var
 
-            df_index = df_tau[out].reset_index(drop=True) \
-                                  .truediv(df_var.drop(columns=typename))
+            df_index = (
+                df_tau[out]
+                .reset_index(drop=True)
+                .truediv(df_var.drop(columns=typename))
+            )
             df_index[typename] = "S_" + var
 
             df_res = concat((df_res, df_tau, df_index))
 
     elif plan == "total":
         for i_var, var in enumerate(var_rand):
-            I_var = (df[varname] == var)
+            I_var = df[varname] == var
             s2_var = (
                 (
-                    df[out][I_base].reset_index(drop=True) - \
-                    df[out][I_var].reset_index(drop=True)
-                )**2
+                    df[out][I_base].reset_index(drop=True)
+                    - df[out][I_var].reset_index(drop=True)
+                )
+                ** 2
             ).mean() * 0.5
 
             df_tau = DataFrame(s2_var).transpose()
             df_tau[typename] = "T_" + var
 
-            df_index = df_tau.drop(columns=typename) \
-                             .reset_index(drop=True) \
-                             .truediv(df_var.drop(columns=typename))
+            df_index = (
+                df_tau.drop(columns=typename)
+                .reset_index(drop=True)
+                .truediv(df_var.drop(columns=typename))
+            )
             df_index[typename] = "S_" + var
 
             df_res = concat((df_res, df_tau, df_index))
@@ -126,13 +134,8 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
 
     ## Post-process
     outputs = df_res.drop(typename, axis=1).columns
-    df_res[outputs] = df_res[outputs].apply(
-        lambda row: round(row, decimals=digits)
-    )
-    df_res.sort_values(
-        typename,
-        inplace=True
-    )
+    df_res[outputs] = df_res[outputs].apply(lambda row: round(row, decimals=digits))
+    df_res.sort_values(typename, inplace=True)
 
     ## Filter, if necessary
     if not full:
@@ -144,9 +147,11 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
 
     return df_res
 
+
 @pipe
 def tf_sobol(*args, **kwargs):
     return tran_sobol(*args, **kwargs)
+
 
 ## Linear algebra tools
 ##################################################
@@ -194,8 +199,7 @@ def tran_asub(df, prefix="D", outvar="out", lamvar="lam"):
         U, s, Vh = svd(df.loc[:, bool_test].values)
 
         df_tmp = DataFrame(
-            data=Vh,
-            columns=list(itertools.compress(all_inputs, bool_test))
+            data=Vh, columns=list(itertools.compress(all_inputs, bool_test))
         )
         df_tmp[lamvar] = s
         df_tmp[outvar] = [output] * len(s)
@@ -203,9 +207,11 @@ def tran_asub(df, prefix="D", outvar="out", lamvar="lam"):
 
     return concat(list_df).reset_index(drop=True)
 
+
 @pipe
 def tf_asub(*args, **kwargs):
     return tran_asub(*args, **kwargs)
+
 
 # --------------------------------------------------
 ## Inner product
@@ -277,19 +283,18 @@ def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
 
     ## Construct output dataframe
     if df_weights.shape[0] == 1:
-        df_res = DataFrame(data = {prefix: dot_prod.flatten()})
+        df_res = DataFrame(data={prefix: dot_prod.flatten()})
 
     elif df_weights.shape[0] > 1:
         if name is None:
-            names = list(map(
-                lambda i: prefix + str(i),
-                range(dot_prod.shape[1])
-            ))
+            names = list(map(lambda i: prefix + str(i), range(dot_prod.shape[1])))
         else:
-            names = list(map(
-                lambda i: prefix + "_" + df_weights[name].values[i],
-                range(dot_prod.shape[1])
-            ))
+            names = list(
+                map(
+                    lambda i: prefix + "_" + df_weights[name].values[i],
+                    range(dot_prod.shape[1]),
+                )
+            )
 
         df_res = DataFrame(data=dot_prod, columns=names)
 
@@ -298,6 +303,29 @@ def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
 
     return df_res
 
+
 @pipe
 def tf_inner(*args, **kwargs):
     return tran_inner(*args, **kwargs)
+
+
+# --------------------------------------------------
+## Describe
+@curry
+def tran_describe(df):
+    """
+    Describe a dataframe
+
+    Args:
+        df (DataFrame): Data to describe
+
+    Returns:
+        (Summary)
+
+    """
+    return df.describe()
+
+
+@pipe
+def tf_describe(*args, **kwargs):
+    return tran_describe(*args, **kwargs)
