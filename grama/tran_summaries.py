@@ -43,6 +43,10 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
     Notes:
         - Index type ["first", "total"] is inferred from input df._meta;
           this is assigned by gr.eval_hybrid().
+        - Index normalization coded in the "ind" column;
+          S: Normalized index
+          T: Un-normalized index
+          var: Total variance
 
     References:
         I.M. Sobol', "Sensitivity Estimates for Nonlinear Mathematical Models"
