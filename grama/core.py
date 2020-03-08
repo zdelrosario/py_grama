@@ -336,7 +336,7 @@ class MarginalGKDE(Marginal):
                     lambda x: val - self.p(x),
                     bracket=self.bracket,
                     method="bisect",
-                    atol=self.atol,
+                    xtol=self.atol,
                 )
                 return sol.root
 
