@@ -324,7 +324,7 @@ class MarginalGKDE(Marginal):
 
     ## Summary
     def summary(self):
-        return "({0:+}) KDE n={1:}, f={2:}".format(
+        return "({0:+}) KDE n={1:}, f={2:4.3e}".format(
             self.sign, self.kde.dataset.shape[1], self.kde.factor
         )
 
