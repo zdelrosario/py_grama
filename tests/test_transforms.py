@@ -88,9 +88,9 @@ class TestTools(unittest.TestCase):
 
     def test_gauss_copula(self):
         md = gr.Model() >> gr.cp_marginals(
-            E=gr.continuous_fit(data.df_stang.E, "norm"),
-            mu=gr.continuous_fit(data.df_stang.mu, "beta"),
-            thick=gr.continuous_fit(data.df_stang.thick, "uniform"),
+            E=gr.marg_named(data.df_stang.E, "norm"),
+            mu=gr.marg_named(data.df_stang.mu, "beta"),
+            thick=gr.marg_named(data.df_stang.thick, "uniform"),
         )
         df_corr = gr.tran_copula_corr(data.df_stang, model=md)
 

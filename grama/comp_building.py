@@ -282,9 +282,9 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
         >>> from grama.data import df_stang
         >>> md = gr.Model() >> \
         >>>     gr.cp_marginals(
-        >>>         E=gr.continuous_fit(df_stang.E, "norm"),
-        >>>         mu=gr.continuous_fit(df_stang.mu, "beta"),
-        >>>         thick=gr.continuous_fit(df_stang.thick, "norm")
+        >>>         E=gr.marg_named(df_stang.E, "norm"),
+        >>>         mu=gr.marg_named(df_stang.mu, "beta"),
+        >>>         thick=gr.marg_named(df_stang.thick, "norm")
         >>>     ) >> \
         >>>     gr.cp_copula_gaussian(df_data=df_stang)
 
