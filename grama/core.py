@@ -284,13 +284,29 @@ class MarginalNamed(Marginal):
 class MarginalGKDE(Marginal):
     """Marginal using scipy.stats.gaussian_kde"""
 
-    def __init__(self, kde, **kw):
+    def __init__(self, kde, atol=1e-6, **kw):
         super().__init__(**kw)
 
         self.kde = kde
+        self.atol = atol
+
+        ## Calibrate the quantile brackets based on desired accuracy
+        bracket = [npmin(self.kde.dataset), npmax(self.kde.dataset)]
+
+        sol_lo = root_scalar(
+            lambda x: atol - self.p(x), x0=bracket[0], x1=bracket[1], method="secant"
+        )
+        sol_hi = root_scalar(
+            lambda x: 1 - atol - self.p(x),
+            x0=bracket[0],
+            x1=bracket[1],
+            method="secant",
+        )
+
+        self.bracket = [sol_lo.root, sol_hi.root]
 
     def copy(self):
-        new_marginal = MarginalGKDE(kde=copy.deepcopy(self.kde))
+        new_marginal = MarginalGKDE(kde=copy.deepcopy(self.kde), atol=self.atol,)
 
         return new_marginal
 
@@ -307,25 +323,41 @@ class MarginalGKDE(Marginal):
 
     ## Quantile function
     def q(self, p):
-        bracket = [npmin(self.kde.dataset), npmax(self.kde.dataset)]
+        p_bnd = self.p(self.bracket)
 
+        ## Create scalar solver
+        def qscalar(val):
+            if val <= p_bnd[0]:
+                return self.bracket[0]
+            elif val >= p_bnd[1]:
+                return self.bracket[1]
+            else:
+                sol = root_scalar(
+                    lambda x: val - self.p(x),
+                    bracket=self.bracket,
+                    method="bisect",
+                    xtol=self.atol,
+                )
+                return sol.root
+
+        ## Iterate over all given values
         try:
             res = zeros(len(p))
             for i in range(len(p)):
-                sol = root_scalar(
-                    lambda x: p[i] - self.p(x), bracket=bracket, method="bisect"
-                )
-                res[i] = sol.root
+                res[i] = qscalar(p[i])
         except TypeError:
-            sol = root_scalar(lambda x: p - self.p(x), bracket=bracket, method="bisect")
-            res = sol.root
+            res = qscalar(p)
 
         return res
 
     ## Summary
     def summary(self):
-        return "({0:+}) KDE n={1:}, f={2:}".format(
+        p_bnd = self.p(self.bracket)
+
+        return "({0:+}) gaussian KDE, n={1:}, f={2:2.1e}, ".format(
             self.sign, self.kde.dataset.shape[1], self.kde.factor
+        ) + "b=[{0:2.1e}, {1:2.1e}], a={2:1.0e}".format(
+            self.bracket[0], self.bracket[1], self.atol
         )
 
 

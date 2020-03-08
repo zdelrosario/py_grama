@@ -1,19 +1,23 @@
 __all__ = [
-    "continuous_fit",
     "copy_meta",
     "custom_formatwarning",
     "df_equal",
     "df_make",
+    "marg_gkde",
+    "marg_named",
     "param_dist",
     "pipe",
-    "valid_dist"
+    "valid_dist",
 ]
 
+import grama as gr
 import pandas as pd
 import warnings
 
 from functools import wraps
 from numbers import Integral
+
+from scipy.stats import gaussian_kde
 
 from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime
 from scipy.stats import bradford, burr, burr12, cauchy, chi, chi2, cosine
@@ -72,7 +76,7 @@ valid_dist = {
     "gamma": gamma,
     "gengamma": gengamma,
     "genhalflogistic": genhalflogistic,
-# "geninvgauss": geninvgauss,
+    # "geninvgauss": geninvgauss,
     "gilbrat": gilbrat,
     "gompertz": gompertz,
     "gumbel_r": gumbel_r,
@@ -99,7 +103,7 @@ valid_dist = {
     "loggamma": loggamma,
     "loglaplace": loglaplace,
     "lognorm": lognorm,
-# "loguniform": loguniform,
+    # "loguniform": loguniform,
     "lomax": lomax,
     "maxwell": maxwell,
     "mielke": mielke,
@@ -132,7 +136,7 @@ valid_dist = {
     "wald": wald,
     "weibull_min": weibull_min,
     "weibull_max": weibull_max,
-    "wrapcauchy": wrapcauchy
+    "wrapcauchy": wrapcauchy,
 }
 
 param_dist = {
@@ -250,11 +254,12 @@ def copy_meta(df_source, df_target):
     Returns:
         DataFrame: df_target with copied metadata
     """
-    df_target._grouped_by = getattr(df_source, '_grouped_by', None)
-    df_target._plot_info  = getattr(df_source, '_plot_info', None)
-    df_target._meta       = getattr(df_source, '_meta', None)
+    df_target._grouped_by = getattr(df_source, "_grouped_by", None)
+    df_target._plot_info = getattr(df_source, "_plot_info", None)
+    df_target._meta = getattr(df_source, "_meta", None)
 
     return df_target
+
 
 ## Pipe decorator
 class pipe(object):
@@ -291,11 +296,16 @@ class pipe(object):
         return result
 
     def __repr__(self):
-        return self.__name__ + ": " + self.function.__name__ + \
-            "\n Did you mean to use a full-prefix verb?"
+        return (
+            self.__name__
+            + ": "
+            + self.function.__name__
+            + "\n Did you mean to use a full-prefix verb?"
+        )
 
     def __call__(self, *args, **kwargs):
         return pipe(lambda x: self.function(x, *args, **kwargs))
+
 
 ## Safe length-checker
 def safelen(x):
@@ -303,6 +313,7 @@ def safelen(x):
         return len(x)
     except TypeError:
         return 1
+
 
 ## DataFrame constructor utility
 def df_make(**kwargs):
@@ -356,6 +367,7 @@ def df_make(**kwargs):
 
     return df_res
 
+
 ## DataFrame equality checker
 def df_equal(df1, df2, close=False):
     """Check DataFrame equality
@@ -378,10 +390,7 @@ def df_equal(df1, df2, close=False):
     if close:
         try:
             pd.testing.assert_frame_equal(
-                df1[df2.columns],
-                df2,
-                check_dtype=False,
-                check_exact=False
+                df1[df2.columns], df2, check_dtype=False, check_exact=False
             )
             return True
         except:
@@ -389,8 +398,9 @@ def df_equal(df1, df2, close=False):
     else:
         return df1[df2.columns].equals(df2)
 
+
 ## Fit a named scipy.stats distribution
-def continuous_fit(data, dist, name=True, sign=None):
+def marg_named(data, dist, name=True, sign=None):
     """Fit scipy.stats continuous distirbution
 
     Fits a named scipy.stats continuous distribution. Intended to be used to
@@ -409,30 +419,64 @@ def continuous_fit(data, dist, name=True, sign=None):
 
         >>> import grama as gr
         >>> from grama.data import df_stang
-        >>> param_E  = gr.continuous_fit(df_stang.E, "norm")
-        >>> param_mu = gr.continuous_fit(df_stang.mu, "beta")
-        >>> md = gr.Model("Marginal Example") >> \
-        >>>     gr.cp_marginals(E=param_E, mu=param_mu)
+        >>>     gr.cp_marginals(
+        >>>         E=gr.marg_named(df_stang.E, "norm"),
+        >>>         mu=gr.marg_named(df_stang.mu, "beta")
+        >>>     )
         >>> md.printpretty()
 
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        res = valid_dist[dist].fit(data)
+        param = valid_dist[dist].fit(data)
 
-    res = dict(zip(param_dist[dist], res))
-
-    if name:
-        res["dist"] = dist
+    param = dict(zip(param_dist[dist], param))
 
     if sign is not None:
         if not (sign in [-1, 0, +1]):
             raise ValueError("Invalid `sign`")
-        res["sign"] = sign
+    else:
+        sign = 0
 
-    return res
+    return gr.MarginalNamed(sign=sign, d_name=dist, d_param=param)
+
+
+## Fit a gaussian kernel density estimate (KDE) to data
+def marg_gkde(data, sign=None):
+    """Fit a gaussian KDE to data
+
+    Fits a gaussian kernel density estimate (KDE) to data.
+
+    Args:
+        data (iterable): Data for fit
+        sign (bool): Include sign? (Optional)
+
+    Returns:
+        gr.MarginalGKDE: Marginal distribution
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.data import df_stang
+        >>> md = gr.Model("Marginal Example") >> \
+        >>>     gr.cp_marginals(
+        >>>         E=gr.marg_gkde(df_stang.E),
+        >>>         mu=gr.marg_gkde(df_stang.mu)
+        >>>     )
+        >>> md.printpretty()
+
+    """
+    kde = gaussian_kde(data)
+    if sign is not None:
+        if not (sign in [-1, 0, +1]):
+            raise ValueError("Invalid `sign`")
+    else:
+        sign = 0
+
+    return gr.MarginalGKDE(kde, sign=sign)
+
 
 ## Monkey-patched warning fcn
 def custom_formatwarning(msg, *args, **kwargs):
     # ignore everything except the message
-    return "Warning: " + str(msg) + '\n'
+    return "Warning: " + str(msg) + "\n"

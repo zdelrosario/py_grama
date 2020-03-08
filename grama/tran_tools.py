@@ -236,9 +236,9 @@ def tran_copula_corr(df, model=None, density=None):
         >>> from grama.data import df_stang
         >>> md = gr.Model() >> \
         >>>     gr.cp_marginals(
-        >>>         E=gr.continuous_fit(df_stang.E, "norm"),
-        >>>         mu=gr.continuous_fit(df_stang.mu, "beta"),
-        >>>         thick=gr.continuous_fit(df_stang.thick, "norm")
+        >>>         E=gr.marg_named(df_stang.E, "norm"),
+        >>>         mu=gr.marg_named(df_stang.mu, "beta"),
+        >>>         thick=gr.marg_named(df_stang.thick, "norm")
         >>>     )
         >>> df_corr = gr.tran_copula_corr(df_stang, model=md)
 
