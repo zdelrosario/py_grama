@@ -25,12 +25,12 @@ class TestMarginals(unittest.TestCase):
     def test_marginals(self):
         median = np.median(data.df_stang.E)
 
-        l_gkde = self.mg_gkde.l(np.array([10000, 10400, 10800]))
-        p_gkde = self.mg_gkde.p(np.array([10000, 10400, 10800]))
-        q_gkde = self.mg_gkde.q(np.array([0.25, 0.50, 0.75]))
+        l_gkde = self.mg_gkde.l(np.array([1, 10000, 10400, 10800, 1e6]))
+        p_gkde = self.mg_gkde.p(np.array([1, 10000, 10400, 10800, 1e6]))
+        q_gkde = self.mg_gkde.q(np.array([0.0, 0.25, 0.50, 0.75, 1.0]))
         self.mg_gkde.summary()
 
-        self.assertTrue(np.isclose(q_gkde[1], median, atol=0, rtol=0.05))
+        self.assertTrue(np.isclose(q_gkde[2], median, atol=0, rtol=0.05))
 
         l_norm = self.mg_norm.l(np.array([10000, 10400, 10800]))
         p_norm = self.mg_norm.p(np.array([10000, 10400, 10800]))
