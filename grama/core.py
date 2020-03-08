@@ -8,18 +8,22 @@ __all__ = [
     "Density",
     "Function",
     "FunctionVectorized",
+    "Marginal",
     "MarginalNamed",
+    "MarginalGKDE",
     "Model",
 ]
 
 from abc import ABC, abstractmethod
 import copy
 
-# import numpy as np
-# import pandas as pd
-from numpy import zeros, triu_indices, eye, array, Inf, NaN
+from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN
+from numpy import min as npmin
+from numpy import max as npmax
 from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
+from scipy.linalg import det
+from scipy.optimize import root_scalar
 from pandas import DataFrame, concat
 
 import grama as gr
@@ -276,6 +280,55 @@ class MarginalNamed(Marginal):
         return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, self.d_param)
 
 
+## Gaussian KDE marginal class
+class MarginalGKDE(Marginal):
+    """Marginal using scipy.stats.gaussian_kde"""
+
+    def __init__(self, kde, **kw):
+        super().__init__(**kw)
+
+        self.kde = kde
+
+    def copy(self):
+        new_marginal = MarginalGKDE(kde=copy.deepcopy(self.kde))
+
+        return new_marginal
+
+    ## Likelihood function
+    def l(self, x):
+        return self.kde.pdf(x)
+
+    ## Cumulative density function
+    def p(self, x):
+        try:
+            return array([self.kde.integrate_box_1d(-Inf, v) for v in x])
+        except TypeError:
+            return self.kde.integrate_box_1d(-Inf, x)
+
+    ## Quantile function
+    def q(self, p):
+        bracket = [npmin(self.kde.dataset), npmax(self.kde.dataset)]
+
+        try:
+            res = zeros(len(p))
+            for i in range(len(p)):
+                sol = root_scalar(
+                    lambda x: p[i] - self.p(x), bracket=bracket, method="bisect"
+                )
+                res[i] = sol.root
+        except TypeError:
+            sol = root_scalar(lambda x: p - self.p(x), bracket=bracket, method="bisect")
+            res = sol.root
+
+        return res
+
+    ## Summary
+    def summary(self):
+        return "({0:+}) KDE n={1:}, f={2:}".format(
+            self.sign, self.kde.dataset.shape[1], self.kde.factor
+        )
+
+
 ## Copula base class
 class Copula(ABC):
     """Parent class for copulas
@@ -291,6 +344,10 @@ class Copula(ABC):
 
     @abstractmethod
     def sample(self, n=1):
+        pass
+
+    @abstractmethod
+    def l(self, u):
         pass
 
     @abstractmethod
@@ -338,6 +395,18 @@ class CopulaIndependence(Copula):
 
         return DataFrame(data=random((n, len(self.var_rand))), columns=self.var_rand)
 
+    def l(self, u):
+        """Density function
+
+        Args:
+            u (array-like):
+
+        Returns:
+            array:
+
+        """
+        return ones(u.shape[0])
+
     def summary(self):
         return "Independence copula"
 
@@ -378,6 +447,8 @@ class CopulaGaussian(Copula):
         Sigma[Ind_upper] = df_corr["corr"].values
         Sigma = Sigma + (Sigma - eye(n_var_rand)).T
         Sigma_h = cholesky(Sigma)
+
+        ## Build density quantities
 
         self.df_corr = df_corr
         self.var_rand = var_rand
@@ -422,6 +493,17 @@ class CopulaGaussian(Copula):
         quantiles = valid_dist["norm"].cdf(gaussian_samples)
 
         return DataFrame(data=quantiles, columns=self.var_rand)
+
+    def l(self, x):
+        """Density function
+
+        Args:
+            x (array-like):
+
+        Returns:
+            array:
+
+        """
 
     def summary(self):
         return "Gaussian copula with correlations:\n{}".format(self.df_corr)
