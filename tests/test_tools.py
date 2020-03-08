@@ -28,12 +28,14 @@ class TestMarginals(unittest.TestCase):
         l_gkde = self.mg_gkde.l(np.array([10000, 10400, 10800]))
         p_gkde = self.mg_gkde.p(np.array([10000, 10400, 10800]))
         q_gkde = self.mg_gkde.q(np.array([0.25, 0.50, 0.75]))
+        self.mg_gkde.summary()
 
         self.assertTrue(np.isclose(q_gkde[1], median, atol=0, rtol=0.05))
 
         l_norm = self.mg_norm.l(np.array([10000, 10400, 10800]))
         p_norm = self.mg_norm.p(np.array([10000, 10400, 10800]))
         q_norm = self.mg_norm.q(np.array([0.25, 0.50, 0.75]))
+        self.mg_norm.summary()
 
         self.assertTrue(np.isclose(q_norm[1], median, atol=0, rtol=0.05))
 

@@ -435,6 +435,8 @@ def marg_named(data, dist, name=True, sign=None):
     if sign is not None:
         if not (sign in [-1, 0, +1]):
             raise ValueError("Invalid `sign`")
+    else:
+        sign = 0
 
     return gr.MarginalNamed(sign=sign, d_name=dist, d_param=param)
 
@@ -470,6 +472,7 @@ def marg_gkde(data, sign=None):
             raise ValueError("Invalid `sign`")
     else:
         sign = 0
+
     return gr.MarginalGKDE(kde, sign=sign)
 
 
