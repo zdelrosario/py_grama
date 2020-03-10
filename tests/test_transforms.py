@@ -129,6 +129,11 @@ class TestSummaries(unittest.TestCase):
             x0=[1, 2, 3],
             x1=[3, 4, 5]
         ))
+        df_scaled = pd.DataFrame(dict(
+            x0=[1, 2, 3],
+            x1=[1, 3, 5]
+        ))
+
         df_true = pd.DataFrame(dict(
             lam=[2, 0],
             x0=[1/np.sqrt(2), 1/np.sqrt(2)],
@@ -148,6 +153,10 @@ class TestSummaries(unittest.TestCase):
         ## Offset data should not affect results
         df_pca_off = df_offset >> gr.tf_pca()
         self.assertTrue(gr.df_equal(df_pca, df_pca_off))
+
+        ## Check standardized form
+        df_pca_scaled = df_test >> gr.tf_pca(standardize=True)
+        self.assertTrue(gr.df_equal(df_pca, df_pca_scaled))
 
 # --------------------------------------------------
 class TestAsub(unittest.TestCase):

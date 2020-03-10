@@ -163,7 +163,7 @@ def tf_sobol(*args, **kwargs):
 ##################################################
 ## Principal Component Analysis (PCA)
 @curry
-def tran_pca(df, var=None, lamvar="lam"):
+def tran_pca(df, var=None, lamvar="lam", standardize=False):
     """Principal Component Analysis
 
     Compute principal directions and eigenvalues for a dataset. Can specify
@@ -173,6 +173,7 @@ def tran_pca(df, var=None, lamvar="lam"):
         df (DataFrame): Data to analyze
         var (list of str or None): List of columns to analyze
         lambvar (str): Name to give eigenvalue column; default="lam"
+        standardize (bool): Standardize columns? default=False
 
     Returns:
         DataFrame: principal directions and eigenvalues
@@ -197,7 +198,10 @@ def tran_pca(df, var=None, lamvar="lam"):
 
     ## Setup
     X = df[var].values
-    U, s, Vh = svd(X - df[var].mean().values)
+    if standardize:
+        U, s, Vh = svd( (X - df[var].mean().values) / df[var].std().values )
+    else:
+        U, s, Vh = svd(X - df[var].mean().values)
 
     df_tmp = DataFrame(data=Vh, columns=var)
     df_tmp[lamvar] = s
