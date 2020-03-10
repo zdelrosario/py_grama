@@ -355,8 +355,8 @@ class MarginalGKDE(Marginal):
     def summary(self):
         p_bnd = self.p(self.bracket)
 
-        return "({0:+}) gaussian KDE, n={1:}, f={2:2.1e}, ".format(
-            self.sign, self.kde.dataset.shape[1], self.kde.factor
+        return "({0:+}) gaussian KDE, n={1:2.1f}/{2:}, f={3:2.1e}, ".format(
+            self.sign, self.kde.neff, self.kde.dataset.shape[1], self.kde.factor
         ) + "b=[{0:2.1e}, {1:2.1e}], a={2:1.0e}".format(
             self.bracket[0], self.bracket[1], self.atol
         )
