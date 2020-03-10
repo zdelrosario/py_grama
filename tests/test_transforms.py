@@ -125,12 +125,17 @@ class TestSummaries(unittest.TestCase):
             x0=[1, 2, 3],
             x1=[1, 2, 3]
         ))
+        df_offset = pd.DataFrame(dict(
+            x0=[1, 2, 3],
+            x1=[3, 4, 5]
+        ))
         df_true = pd.DataFrame(dict(
             lam=[2, 0],
             x0=[1/np.sqrt(2), 1/np.sqrt(2)],
             x1=[1/np.sqrt(2),-1/np.sqrt(2)]
         ))
 
+        ## Check correctness
         df_pca = df_test >> gr.tf_pca()
 
         self.assertTrue(
@@ -139,6 +144,10 @@ class TestSummaries(unittest.TestCase):
                 df_pca.lam
             )
         )
+
+        ## Offset data should not affect results
+        df_pca_off = df_offset >> gr.tf_pca()
+        self.assertTrue(gr.df_equal(df_pca, df_pca_off))
 
 # --------------------------------------------------
 class TestAsub(unittest.TestCase):
