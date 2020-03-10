@@ -32,6 +32,7 @@ from grama import pipe, valid_dist, param_dist
 from itertools import chain
 from numpy.linalg import cholesky
 from toolz import curry
+import warnings
 
 ## Package settings
 RUNTIME_LOWER = 1  # Cutoff threshold for runtime messages
@@ -478,7 +479,14 @@ class CopulaGaussian(Copula):
         Sigma = eye(n_var_rand)
         Sigma[Ind_upper] = df_corr["corr"].values
         Sigma = Sigma + (Sigma - eye(n_var_rand)).T
-        Sigma_h = cholesky(Sigma)
+        try:
+            Sigma_h = cholesky(Sigma)
+        except LinAlgError:
+            warnings.warn(
+                "Correlation structure is not positive-definite",
+                RuntimeWarning
+            )
+            Sigma_h = None
 
         ## Build density quantities
 
