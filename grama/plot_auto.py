@@ -137,7 +137,9 @@ plot_list = {
 def plot_auto(df):
     """Automagic plotting
 
-    Convenience tool for various grama outputs.
+    Convenience tool for various grama outputs. Prints delegated plotting
+    function, which can be called manually with different arguments for
+    more tailored plotting.
 
     Args:
         df (DataFrame): Data output from appropriate grama routine. See
