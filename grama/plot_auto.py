@@ -1,4 +1,16 @@
-__all__ = ["plot_auto", "pt_auto", "plot_list"]
+__all__ = [
+    "plot_scatter_inputs",
+    "pt_scatter_inputs",
+    "plot_scatter_outputs",
+    "pt_scatter_outputs",
+    "plot_sinew_inputs",
+    "pt_sinew_inputs",
+    "plot_sinew_outputs",
+    "pt_sinew_outputs",
+    "plot_auto",
+    "pt_auto",
+    "plot_list"
+]
 
 import grama as gr
 
@@ -13,7 +25,7 @@ from matplotlib.pyplot import hist
 ## Monte Carlo
 # --------------------------------------------------
 @curry
-def plot_monte_carlo_inputs(df, var_rand=None):
+def plot_scatter_inputs(df, var_rand=None):
     """Inspect the design
     """
     if var_rand is None:
@@ -24,12 +36,12 @@ def plot_monte_carlo_inputs(df, var_rand=None):
 
 
 @pipe
-def pt_monte_carlo_inputs(*args, **kwargs):
-    return plot_monte_carlo_inputs(*args, **kwargs)
+def pt_scatter_inputs(*args, **kwargs):
+    return plot_scatter_inputs(*args, **kwargs)
 
 
 @curry
-def plot_monte_carlo_outputs(df, out=None):
+def plot_scatter_outputs(df, out=None):
     """Construct histograms
     """
     if out is None:
@@ -46,8 +58,8 @@ def plot_monte_carlo_outputs(df, out=None):
 
 
 @pipe
-def pt_monte_carlo_outputs(*args, **kwargs):
-    return plot_monte_carlo_outputs(*args, **kwargs)
+def pt_scatter_outputs(*args, **kwargs):
+    return plot_scatter_outputs(*args, **kwargs)
 
 
 ## Sinew plots
@@ -116,8 +128,8 @@ def pt_sinew_outputs(*args, **kwargs):
 plot_list = {
     "sinew_inputs": plot_sinew_inputs,
     "sinew_outputs": plot_sinew_outputs,
-    "monte_carlo_inputs": plot_monte_carlo_inputs,
-    "monte_carlo_outputs": plot_monte_carlo_outputs,
+    "monte_carlo_inputs": plot_scatter_inputs,
+    "monte_carlo_outputs": plot_scatter_outputs,
 }
 
 
@@ -125,7 +137,9 @@ plot_list = {
 def plot_auto(df):
     """Automagic plotting
 
-    Convenience tool for various grama outputs.
+    Convenience tool for various grama outputs. Prints delegated plotting
+    function, which can be called manually with different arguments for
+    more tailored plotting.
 
     Args:
         df (DataFrame): Data output from appropriate grama routine. See
@@ -149,6 +163,8 @@ def plot_auto(df):
     except KeyError:
         raise KeyError("'{}' Plot type not implemented.".format(d["type"]))
     plt_kwargs = {key: value for key, value in d.items() if key != "type"}
+
+    print("Calling {0:}....".format(plot_fcn.__name__))
 
     return plot_fcn(df, **plt_kwargs)
 
