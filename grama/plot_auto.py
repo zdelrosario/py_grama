@@ -162,6 +162,8 @@ def plot_auto(df):
         raise KeyError("'{}' Plot type not implemented.".format(d["type"]))
     plt_kwargs = {key: value for key, value in d.items() if key != "type"}
 
+    print("Calling {0:}....".format(plot_fcn.__name__))
+
     return plot_fcn(df, **plt_kwargs)
 
 
