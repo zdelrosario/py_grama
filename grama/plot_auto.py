@@ -128,8 +128,8 @@ def pt_sinew_outputs(*args, **kwargs):
 plot_list = {
     "sinew_inputs": plot_sinew_inputs,
     "sinew_outputs": plot_sinew_outputs,
-    "scatter_inputs": plot_scatter_inputs,
-    "scatter_outputs": plot_scatter_outputs,
+    "monte_carlo_inputs": plot_scatter_inputs,
+    "monte_carlo_outputs": plot_scatter_outputs,
 }
 
 
