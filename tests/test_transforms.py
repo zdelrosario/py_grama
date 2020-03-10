@@ -120,6 +120,25 @@ class TestSummaries(unittest.TestCase):
         self.assertTrue(set(df_sobol.columns) == set(["y0", "ind"]))
         self.assertTrue(set(df_sobol["ind"]) == set(["S_x0", "S_x1"]))
 
+    def test_pca(self):
+        df_test = pd.DataFrame(dict(
+            x0=[1, 2, 3],
+            x1=[1, 2, 3]
+        ))
+        df_true = pd.DataFrame(dict(
+            lam=[2, 0],
+            x0=[1/np.sqrt(2), 1/np.sqrt(2)],
+            x1=[1/np.sqrt(2),-1/np.sqrt(2)]
+        ))
+
+        df_pca = df_test >> gr.tf_pca()
+
+        self.assertTrue(
+            np.allclose(
+                df_true.lam,
+                df_pca.lam
+            )
+        )
 
 # --------------------------------------------------
 class TestAsub(unittest.TestCase):

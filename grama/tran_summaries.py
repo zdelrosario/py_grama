@@ -5,6 +5,8 @@ __all__ = [
     "tf_describe",
     "tran_inner",
     "tf_inner",
+    "tran_pca",
+    "tf_pca",
     "tran_sobol",
     "tf_sobol",
 ]
@@ -159,6 +161,53 @@ def tf_sobol(*args, **kwargs):
 
 ## Linear algebra tools
 ##################################################
+## Principal Component Analysis (PCA)
+@curry
+def tran_pca(df, var=None, lamvar="lam"):
+    """Principal Component Analysis
+
+    Compute principal directions and eigenvalues for a dataset. Can specify
+    columns to analyze, or just analyze all numerical columns.
+
+    Args:
+        df (DataFrame): Data to analyze
+        var (list of str or None): List of columns to analyze
+        lambvar (str): Name to give eigenvalue column; default="lam"
+
+    Returns:
+        DataFrame: principal directions and eigenvalues
+
+    References:
+        TODO
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.data import df_stang
+        >>> df_pca = df_stang >> gr.tf_pca()
+
+    """
+    ## Handle variable selection
+    columns_numeric = list(df.select_dtypes('number').columns)
+    if var is None:
+        var = columns_numeric
+    else:
+        if not set(var).issubset(set(columns_numeric)):
+            raise ValueError("`var` must be a subset of numeric df.columns")
+
+    ## Setup
+    X = df[var].values
+    U, s, Vh = svd(X - df[var].mean().values)
+
+    df_tmp = DataFrame(data=Vh, columns=var)
+    df_tmp[lamvar] = s
+
+    return df_tmp[[lamvar] + var]
+
+@pipe
+def tf_pca(*args, **kwargs):
+    return tran_pca(*args, **kwargs)
+
 ## Gradient principal directions (AS)
 @curry
 def tran_asub(df, prefix="D", outvar="out", lamvar="lam"):
