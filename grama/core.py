@@ -22,7 +22,7 @@ from numpy import min as npmin
 from numpy import max as npmax
 from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
-from scipy.linalg import det
+from scipy.linalg import det, LinAlgError
 from scipy.optimize import root_scalar
 from pandas import DataFrame, concat
 
