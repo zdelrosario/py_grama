@@ -110,6 +110,31 @@ class TestMBI(unittest.TestCase):
                 var=["foo"],
                 out=None
             )
+        ## DAG invariant checks
+        with self.assertRaises(ValueError):
+            self.md >> \
+                gr.cp_function(
+                    fun=lambda x: x[0],
+                    var=["y0"],
+                    out=1
+                ) >> \
+                gr.cp_function(
+                    fun=lambda x: x[0],
+                    var=1,
+                    out=["y0"]
+                )
+        with self.assertRaises(ValueError):
+            self.md >> \
+                gr.cp_function(
+                    fun=lambda x: x[0],
+                    var=1,
+                    out=["y0"]
+                ) >> \
+                gr.cp_function(
+                    fun=lambda x: x[0],
+                    var=1,
+                    out=["y0"]
+                )
 
     def test_comp_bounds(self):
         """Test comp_bounds()"""
