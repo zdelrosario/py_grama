@@ -8,7 +8,7 @@ __all__ = [
     "comp_copula_gaussian",
     "cp_copula_gaussian",
     "comp_marginals",
-    "cp_marginals"
+    "cp_marginals",
 ]
 
 import grama as gr
@@ -20,9 +20,7 @@ from toolz import curry
 # Add a lambda function
 # -------------------------
 @curry
-def comp_function(
-        model, fun=None, var=None, out=None, name=None, runtime=0
-):
+def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
     """Add a function to a model
 
     Composition. Add a function to an existing model.
@@ -77,17 +75,23 @@ def comp_function(
     elif out is None:
         raise ValueError("`out` must be list or int")
 
+    # Check DAG invariants
+    if len(set(out).intersection(set(model.var))) > 0:
+        raise ValueError("`out` must not intersect model.var")
+    if len(set(out).intersection(set(model.out))) > 0:
+        raise ValueError("`out` must not intersect model.out")
+
     ## Add new function
-    model_new.functions.append(
-        gr.Function(fun, var, out, name, runtime)
-    )
+    model_new.functions.append(gr.Function(fun, var, out, name, runtime))
 
     model_new.update()
     return model_new
 
+
 @pipe
 def cp_function(*args, **kwargs):
     return comp_function(*args, **kwargs)
+
 
 # Add bounds
 # -------------------------
@@ -133,9 +137,11 @@ def comp_bounds(model, **kwargs):
     new_model.update()
     return new_model
 
+
 @pipe
 def cp_bounds(*args, **kwargs):
     return comp_bounds(*args, **kwargs)
+
 
 # Add marginals
 # -------------------------
@@ -182,7 +188,9 @@ def comp_marginals(model, **kwargs):
         try:
             dist = value_copy.pop("dist")
         except KeyError:
-            raise NotImplementedError("Non-named marginals not implemented; please provide a valid 'dist' key")
+            raise NotImplementedError(
+                "Non-named marginals not implemented; please provide a valid 'dist' key"
+            )
 
         try:
             sign = value_copy.pop("sign")
@@ -190,17 +198,17 @@ def comp_marginals(model, **kwargs):
             sign = 0
 
         new_model.density.marginals[key] = gr.MarginalNamed(
-            sign=sign,
-            d_name=dist,
-            d_param=value_copy
+            sign=sign, d_name=dist, d_param=value_copy
         )
 
     new_model.update()
     return new_model
 
+
 @pipe
 def cp_marginals(*args, **kwargs):
     return comp_marginals(*args, **kwargs)
+
 
 # Add copula
 ##################################################
@@ -230,15 +238,17 @@ def comp_copula_independence(model):
     new_model = model.copy()
     new_model.density = gr.Density(
         marginals=model.density.marginals,
-        copula=gr.CopulaIndependence(new_model.var_rand)
+        copula=gr.CopulaIndependence(new_model.var_rand),
     )
     new_model.update()
 
     return new_model
 
+
 @pipe
 def cp_copula_independence(*args, **kwargs):
     return comp_copula_independence(*args, **kwargs)
+
 
 # -------------------------
 @curry
@@ -285,8 +295,7 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
     if not (df_corr is None):
         new_model = model.copy()
         new_model.density = gr.Density(
-            marginals=model.density.marginals,
-            copula=gr.CopulaGaussian(df_corr)
+            marginals=model.density.marginals, copula=gr.CopulaGaussian(df_corr)
         )
         new_model.update()
 
@@ -297,8 +306,7 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
         df_corr = gr.tran_copula_corr(df_data, model=new_model)
 
         new_model.density = gr.Density(
-            marginals=model.density.marginals,
-            copula=gr.CopulaGaussian(df_corr)
+            marginals=model.density.marginals, copula=gr.CopulaGaussian(df_corr)
         )
         new_model.update()
 
@@ -306,6 +314,7 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
 
     else:
         raise ValueError("Must provide df_corr or df_data")
+
 
 @pipe
 def cp_copula_gaussian(*args, **kwargs):

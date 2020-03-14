@@ -173,7 +173,7 @@ class Domain:
 
         self.bounds = bounds
         self.feasible = feasible
-        self.var = bounds.keys()
+        self.var = list(bounds.keys())
 
     def copy(self):
         new_domain = Domain(
@@ -667,13 +667,21 @@ class Model:
         - self.density defines the random variables
 
         """
-        ## Compute list of outputs
-        self.out = list(set().union(*[f.out for f in self.functions]))
+        ## Initialize
+        self.var = self.domain.var.copy()
+        self.out = []
 
-        ## Compute list of variables and parameters
-        self.var = list(
-            set().union(*[f.var for f in self.functions]).union(set(self.domain.var))
-        )
+        # ## Compute list of outputs
+        # self.out = list(set().union(*[f.out for f in self.functions]))
+
+        # ## Compute list of variables and parameters
+        # self.var = list(
+        #     set().union(*[f.var for f in self.functions]).union(set(self.domain.var))
+        # )
+        for fun in self.functions:
+            self.var = list(set(self.var).union(set(fun.var).difference(set(self.out))))
+
+            self.out = list(set(self.out).union(set(fun.out)))
 
         try:
             self.var_rand = list(self.density.marginals.keys())
@@ -757,12 +765,13 @@ class Model:
         if not set(self.var).issubset(set(df.columns)):
             raise ValueError("Model inputs not a subset of given columns")
 
-        list_df = []
+        df_tmp = df.copy()
         ## Evaluate each function
         for func in self.functions:
-            list_df.append(func.eval(df))
+            ## Concatenate to make intermediate results available
+            df_tmp = concat((df_tmp, func.eval(df_tmp)), axis=1)
 
-        return concat(list_df, axis=1)
+        return df_tmp[self.out]
 
     def var_outer(self, df_rand, df_det=None):
         """Outer product of random and deterministic samples
