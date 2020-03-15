@@ -27,14 +27,7 @@ from itertools import chain
 from numpy.linalg import cholesky
 from toolz import curry
 import warnings
-
-## Import networkx, if installed
-try:
-    import networkx as nx
-
-    NETWORKX_INSTALLED = True
-except ImportError:
-    NETWORKX_INSTALLED = False
+import networkx as nx
 
 ## Package settings
 RUNTIME_LOWER = 1  # Cutoff threshold for runtime messages
@@ -876,61 +869,44 @@ class Model:
     def make_dag(self):
         """Generate a DAG for the model
         """
-        if NETWORKX_INSTALLED:
-            G = nx.DiGraph()
-            ## Inputs-to-Functions
-            for f in self.functions:
-                i_var = set(self.var).intersection(set(f.var))
+        G = nx.DiGraph()
+        ## Inputs-to-Functions
+        for f in self.functions:
+            i_var = set(self.var).intersection(set(f.var))
+            if len(i_var) > 0:
+                s_var = "{}".format(i_var)
+                G.add_edge("(Inputs)", f.name, label=s_var)
+        ## Function-to-Function
+        for i0 in range(len(self.functions)):
+            for i1 in range(i0 + 1, len(self.functions)):
+                f0 = self.functions[i0]
+                f1 = self.functions[i1]
+                i_var = set(f0.var).intersection(set(f1.var))
                 if len(i_var) > 0:
                     s_var = "{}".format(i_var)
-                    G.add_edge("(Inputs)", f.name, label=s_var)
-            ## Function-to-Function
-            for i0 in range(len(self.functions)):
-                for i1 in range(i0 + 1, len(self.functions)):
-                    f0 = self.functions[i0]
-                    f1 = self.functions[i1]
-                    i_var = set(f0.var).intersection(set(f1.var))
-                    if len(i_var) > 0:
-                        s_var = "{}".format(i_var)
-                        G.add_edge(f0.name, f1.name, label=s_var)
+                    G.add_edge(f0.name, f1.name, label=s_var)
 
-            ## Functions-to-Outputs
-            for f in self.functions:
-                i_out = set(self.out).intersection(set(f.out))
-                if len(i_out) > 0:
-                    s_out = "{}".format(i_out)
-                    G.add_edge(f.name, "(Outputs)", label=s_out)
+        ## Functions-to-Outputs
+        for f in self.functions:
+            i_out = set(self.out).intersection(set(f.out))
+            if len(i_out) > 0:
+                s_out = "{}".format(i_out)
+                G.add_edge(f.name, "(Outputs)", label=s_out)
 
-            return G
-        else:
-            warnings.warn(
-                "Must have `networkx` package to construct DAG. Install with\n"
-                + "pip install networkx"
-            )
-
-            return None
+        return G
 
     def show_dag(self):
         """Generate and show a DAG for the model
         """
         from matplotlib.pyplot import show as pltshow
 
-        if NETWORKX_INSTALLED:
-            G = self.make_dag()
+        G = self.make_dag()
 
-            ## Plotting
-            edge_labels = dict(
-                [((u, v,), d["label"]) for u, v, d in G.edges(data=True)]
-            )
+        ## Plotting
+        edge_labels = dict([((u, v,), d["label"]) for u, v, d in G.edges(data=True)])
 
-            pos = nx.planar_layout(G)
+        pos = nx.planar_layout(G)
 
-            nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
-            nx.draw(G, pos, with_labels=True)
-            pltshow()
-
-        else:
-            warnings.warn(
-                "Must have `networkx` package to visualize DAG. Install with\n"
-                + "pip install networkx"
-            )
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+        nx.draw(G, pos, with_labels=True)
+        pltshow()
