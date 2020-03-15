@@ -17,7 +17,7 @@ __all__ = [
 from abc import ABC, abstractmethod
 import copy
 
-from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN
+from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt
 from numpy import min as npmin
 from numpy import max as npmax
 from numpy.random import random, multivariate_normal
@@ -33,6 +33,7 @@ from itertools import chain
 from numpy.linalg import cholesky
 from toolz import curry
 import warnings
+import networkx as nx
 
 ## Package settings
 RUNTIME_LOWER = 1  # Cutoff threshold for runtime messages
@@ -178,7 +179,7 @@ class Domain:
 
         self.bounds = bounds
         self.feasible = feasible
-        self.var = bounds.keys()
+        self.var = list(bounds.keys())
 
     def copy(self):
         new_domain = Domain(
@@ -789,13 +790,15 @@ class Model:
         - self.density defines the random variables
 
         """
-        ## Compute list of outputs
-        self.out = list(set().union(*[f.out for f in self.functions]))
+        ## Initialize
+        self.var = self.domain.var.copy()
+        self.out = []
 
-        ## Compute list of variables and parameters
-        self.var = list(
-            set().union(*[f.var for f in self.functions]).union(set(self.domain.var))
-        )
+        ## Construct var and out, respecting DAG properties
+        for fun in self.functions:
+            self.var = list(set(self.var).union(set(fun.var).difference(set(self.out))))
+
+            self.out = list(set(self.out).union(set(fun.out)))
 
         try:
             self.var_rand = list(self.density.marginals.keys())
@@ -879,12 +882,13 @@ class Model:
         if not set(self.var).issubset(set(df.columns)):
             raise ValueError("Model inputs not a subset of given columns")
 
-        list_df = []
+        df_tmp = df.copy()
         ## Evaluate each function
         for func in self.functions:
-            list_df.append(func.eval(df))
+            ## Concatenate to make intermediate results available
+            df_tmp = concat((df_tmp, func.eval(df_tmp)), axis=1)
 
-        return concat(list_df, axis=1)
+        return df_tmp[self.out]
 
     def var_outer(self, df_rand, df_det=None):
         """Outer product of random and deterministic samples
@@ -945,6 +949,8 @@ class Model:
 
         return corr_names
 
+    ## Infrastructure
+    # -------------------------
     def copy(self):
         """Make a copy of this model
         """
@@ -958,6 +964,8 @@ class Model:
 
         return new_model
 
+    ## Model information
+    # -------------------------
     def printpretty(self):
         """Formatted print of model attributes
         """
@@ -980,3 +988,77 @@ class Model:
         print("  functions:")
         for function in self.functions:
             print("    {}".format(function.summary()))
+
+    def make_dag(self):
+        """Generate a DAG for the model
+        """
+        G = nx.DiGraph()
+        ## Inputs-to-Functions
+        for f in self.functions:
+            i_var = set(self.var).intersection(set(f.var))
+            if len(i_var) > 0:
+                s_var = "{}".format(i_var)
+                G.add_edge("(Inputs)", f.name, label=s_var)
+        ## Function-to-Function
+        for i0 in range(len(self.functions)):
+            for i1 in range(i0 + 1, len(self.functions)):
+                f0 = self.functions[i0]
+                f1 = self.functions[i1]
+                i_var = set(f0.out).intersection(set(f1.var))
+                if len(i_var) > 0:
+                    s_var = "{}".format(i_var)
+                    G.add_edge(f0.name, f1.name, label=s_var)
+
+        ## Functions-to-Outputs
+        for f in self.functions:
+            i_out = set(self.out).intersection(set(f.out))
+            if len(i_out) > 0:
+                s_out = "{}".format(i_out)
+                G.add_edge(f.name, "(Outputs)", label=s_out)
+
+        return G
+
+    def show_dag(self):
+        """Generate and show a DAG for the model
+        """
+        from matplotlib.pyplot import show as pltshow
+
+        G = self.make_dag()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            ## Plotting
+            edge_labels = dict(
+                [((u, v,), d["label"]) for u, v, d in G.edges(data=True)]
+            )
+            n = len(self.functions)
+
+            ## Manual layout
+            if n == 1:
+                pos = {
+                    "(Inputs)": [-0.5, +0.5],
+                    "(Outputs)": [+0.5, -0.5],
+                }
+                pos[self.functions[0].name] = [+0.5, +0.5]
+            ## Optimized layout
+            else:
+                try:
+                    ## Planar, if possible
+                    pos = nx.planar_layout(G)
+                except nx.NetworkXException:
+                    ## Scaled spring layout
+                    pos = nx.spring_layout(
+                        G,
+                        k=0.6 * n,
+                        pos={
+                            "(Inputs)": [-0.5 * n, +0.5 * n],
+                            "(Outputs)": [+0.5 * n, -0.5 * n],
+                        },
+                        fixed=["(Inputs)", "(Outputs)"],
+                        threshold=1e-6,
+                        iterations=100,
+                    )
+
+            nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+            nx.draw(G, pos, node_size=1000, with_labels=True)
+            pltshow()

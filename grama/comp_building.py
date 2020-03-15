@@ -52,12 +52,15 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
     """
     model_new = model.copy()
 
-    # Check inputs
+    # Check invariants
     if fun is None:
         raise ValueError("`fun` must be a valid function")
 
     if name is None:
-        name = fun.__name__
+        name = "f{}".format(len(model.functions))
+    else:
+        if name in [f.name for f in model.functions]:
+            raise ValueError("`name` must be unique")
 
     # Create variable names, if necessary
     if isinstance(var, int):
@@ -75,10 +78,16 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
     elif out is None:
         raise ValueError("`out` must be list or int")
 
+    # Check DAG invariants
+    if len(set(out).intersection(set(model.var))) > 0:
+        raise ValueError("`out` must not intersect model.var")
+    if len(set(out).intersection(set(model.out))) > 0:
+        raise ValueError("`out` must not intersect model.out")
+
     ## Add new function
     model_new.functions.append(gr.Function(fun, var, out, name, runtime))
-
     model_new.update()
+
     return model_new
 
 

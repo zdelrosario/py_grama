@@ -7,3 +7,4 @@ scipy
 statsmodels
 toolz
 scikit-learn
+networkx
