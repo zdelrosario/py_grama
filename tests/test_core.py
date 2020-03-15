@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 import unittest
+import networkx as nx
 
 from context import grama as gr
 from context import models
@@ -14,35 +15,26 @@ class TestModel(unittest.TestCase):
 
     def setUp(self):
         # Default model
-        self.df_wrong = pd.DataFrame(data={"z" : [0., 1.]})
+        self.df_wrong = pd.DataFrame(data={"z": [0.0, 1.0]})
 
         # 2D identity model with permuted df inputs
-        domain_2d = gr.Domain(bounds={"x": [-1., +1.], "y": [0., 1.]})
+        domain_2d = gr.Domain(bounds={"x": [-1.0, +1.0], "y": [0.0, 1.0]})
         marginals = {}
         marginals["x"] = gr.MarginalNamed(
-            d_name="uniform",
-            d_param={"loc":-1, "scale": 2}
+            d_name="uniform", d_param={"loc": -1, "scale": 2}
         )
         marginals["y"] = gr.MarginalNamed(
-            sign=-1,
-            d_name="uniform",
-            d_param={"loc": 0, "scale": 1}
+            sign=-1, d_name="uniform", d_param={"loc": 0, "scale": 1}
         )
 
         self.model_2d = gr.Model(
             functions=[
-                gr.Function(
-                    lambda x: [x[0], x[1]],
-                    ["x", "y"],
-                    ["x", "y"],
-                    "test",
-                    0
-                )
+                gr.Function(lambda x: [x[0], x[1]], ["x", "y"], ["x", "y"], "test", 0)
             ],
             domain=domain_2d,
-            density=gr.Density(marginals=marginals)
+            density=gr.Density(marginals=marginals),
         )
-        self.df_2d = pd.DataFrame(data = {"y": [0.], "x": [+1.]})
+        self.df_2d = pd.DataFrame(data={"y": [0.0], "x": [+1.0]})
         self.res_2d = self.model_2d.evaluate_df(self.df_2d)
 
         self.df_median_in = pd.DataFrame({"x": [0.5], "y": [0.5]})
@@ -51,33 +43,17 @@ class TestModel(unittest.TestCase):
         self.model_3d = gr.Model(
             functions=[
                 gr.Function(
-                    lambda x: x[0] + x[1] + x[2],
-                    ["x", "y", "z"],
-                    ["f"],
-                    "test",
-                    0
+                    lambda x: x[0] + x[1] + x[2], ["x", "y", "z"], ["f"], "test", 0
                 )
             ],
-            density=gr.Density(marginals=marginals)
+            density=gr.Density(marginals=marginals),
         )
 
         ## Timing check
         self.model_slow = gr.Model(
             functions=[
-                gr.Function(
-                    lambda x: x,
-                    ["x"],
-                    ["y"],
-                    "f0",
-                    1
-                ),
-                gr.Function(
-                    lambda x: x,
-                    ["x"],
-                    ["y"],
-                    "f1",
-                    1
-                )
+                gr.Function(lambda x: x, ["x"], ["y"], "f0", 1),
+                gr.Function(lambda x: x, ["x"], ["y"], "f1", 1),
             ]
         )
 
@@ -97,9 +73,7 @@ class TestModel(unittest.TestCase):
 
         ## Slow function returns string message
         msg = self.model_slow.runtime_message(pd.DataFrame({"x": [0]}))
-        self.assertTrue(
-            isinstance(msg, str)
-        )
+        self.assertTrue(isinstance(msg, str))
 
     ## Basic functionality with default arguments
 
@@ -107,27 +81,17 @@ class TestModel(unittest.TestCase):
         """Checks that proper exception is thrown if evaluate(df) passed a
         DataFrame without the proper columns.
         """
-        self.assertRaises(
-            ValueError,
-            self.model_2d.evaluate_df,
-            self.df_wrong
-        )
+        self.assertRaises(ValueError, self.model_2d.evaluate_df, self.df_wrong)
 
     def test_var_outer(self):
         ## Test pass-throughs
         df_test = pd.DataFrame(dict(x0=[0]))
-        md_no_rand = gr.Model() >> \
-                     gr.cp_function(
-                         fun=lambda x: x,
-                         var=1,
-                         out=1
-                     )
+        md_no_rand = gr.Model() >> gr.cp_function(fun=lambda x: x, var=1, out=1)
         md_no_rand.var_outer(pd.DataFrame(), df_det="nom")
 
-        md_no_det = md_no_rand >> \
-                    gr.cp_marginals(
-                        x0={"dist": "uniform", "loc": 0, "scale": 1}
-                    )
+        md_no_det = md_no_rand >> gr.cp_marginals(
+            x0={"dist": "uniform", "loc": 0, "scale": 1}
+        )
         md_no_det.var_outer(df_test, df_det="nom")
 
         ## Test assertions
@@ -146,16 +110,13 @@ class TestModel(unittest.TestCase):
         """Checks that proper output names are assigned to resulting DataFrame
         """
         self.assertEqual(
-            set(self.model_2d.evaluate_df(self.df_2d).columns),
-            set(self.model_2d.out)
+            set(self.model_2d.evaluate_df(self.df_2d).columns), set(self.model_2d.out)
         )
 
     def test_2d_identity(self):
         """Checks that re-ordering of inputs handled properly
         """
-        self.assertTrue(
-            gr.df_equal(self.df_2d, self.res_2d.loc[:, self.df_2d.columns])
-        )
+        self.assertTrue(gr.df_equal(self.df_2d, self.res_2d.loc[:, self.df_2d.columns]))
 
     def test_quantile(self):
         """Checks that model.sample_quantile() evaluates correctly.
@@ -169,27 +130,42 @@ class TestModel(unittest.TestCase):
         with self.assertRaises(ValueError):
             gr.eval_nominal(md)
 
+    ## Test DAG construction
+
+    def test_dag(self):
+        md = (
+            gr.Model()
+            >> gr.cp_function(lambda x: x, var=1, out=1)
+            >> gr.cp_function(lambda x: x[0] + x[1], var=["x0", "y0"], out=1)
+        )
+
+        G_true = nx.DiGraph()
+        G_true.add_edge("(Inputs)", "f0", label="{x0}")
+        G_true.add_edge("f0", "(Outputs)", label="{y0}")
+        G_true.add_edge("(Inputs)", "f1", label="{x0}")
+        G_true.add_edge("f0", "f1", label="{y0}")
+        G_true.add_edge("f1", "(Outputs)", label="{y1}")
+
+        self.assertTrue(nx.is_isomorphic(md.make_dag(), G_true))
+
+
 class TestEvalDf(unittest.TestCase):
     """Test implementation of eval_df()
     """
+
     def setUp(self):
         self.model = models.make_test()
 
     def test_catch_no_df(self):
         """Checks that eval_df() raises when no input df is given.
         """
-        self.assertRaises(
-            ValueError,
-            gr.eval_df,
-            self.model
-        )
+        self.assertRaises(ValueError, gr.eval_df, self.model)
+
 
 class TestMarginal(unittest.TestCase):
-
     def setUp(self):
         self.marginal_named = gr.MarginalNamed(
-            d_name="norm",
-            d_param={"loc": 0, "scale": 1}
+            d_name="norm", d_param={"loc": 0, "scale": 1}
         )
 
     def test_fcn(self):
@@ -197,22 +173,15 @@ class TestMarginal(unittest.TestCase):
         ## Invoke summary
         self.marginal_named.summary()
 
-        self.assertTrue(
-            self.marginal_named.l(0.5) == norm.pdf(0.5)
-        )
+        self.assertTrue(self.marginal_named.l(0.5) == norm.pdf(0.5))
 
-        self.assertTrue(
-            self.marginal_named.p(0.5) == norm.cdf(0.5)
-        )
+        self.assertTrue(self.marginal_named.p(0.5) == norm.cdf(0.5))
 
-        self.assertTrue(
-            self.marginal_named.q(0.5) == norm.ppf(0.5)
-        )
+        self.assertTrue(self.marginal_named.q(0.5) == norm.ppf(0.5))
 
 
 # --------------------------------------------------
 class TestDomain(unittest.TestCase):
-
     def setUp(self):
         self.domain = gr.Domain(bounds={"x": (0, 1)})
 
@@ -224,28 +193,20 @@ class TestDomain(unittest.TestCase):
         self.domain.bound_summary("x")
 
         ## Invoke summary;
-        self.assertTrue(
-            self.domain.bound_summary("y").find("unbounded") > -1
-        )
+        self.assertTrue(self.domain.bound_summary("y").find("unbounded") > -1)
+
 
 # --------------------------------------------------
 class TestDensity(unittest.TestCase):
-
     def setUp(self):
         self.density = gr.Density(
             marginals=dict(
-                x=gr.MarginalNamed(
-                    d_name="uniform",
-                    d_param={"loc":-1, "scale": 2}
-                ),
-                y=gr.MarginalNamed(
-                    d_name="uniform",
-                    d_param={"loc":-1, "scale": 2}
-                )
+                x=gr.MarginalNamed(d_name="uniform", d_param={"loc": -1, "scale": 2}),
+                y=gr.MarginalNamed(d_name="uniform", d_param={"loc": -1, "scale": 2}),
             ),
             copula=gr.CopulaGaussian(
                 pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
-            )
+            ),
         )
 
     def test_copula_warning(self):
@@ -261,11 +222,7 @@ class TestDensity(unittest.TestCase):
         self.assertTrue(set(df_res.columns) == set(["x", "y"]))
 
     def test_CopulaGaussian(self):
-        df_corr = pd.DataFrame(dict(
-            var1=["x"],
-            var2=["y"],
-            corr=[0.5]
-        ))
+        df_corr = pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
         Sigma_h = np.linalg.cholesky(np.array([[1.0, 0.5], [0.5, 1.0]]))
         copula = gr.CopulaGaussian(df_corr=df_corr)
         df_res = copula.sample(seed=101)
@@ -274,11 +231,9 @@ class TestDensity(unittest.TestCase):
         self.assertTrue(set(df_res.columns) == set(["x", "y"]))
 
         ## Test raises
-        df_corr_invalid = pd.DataFrame(dict(
-            var1=["x", "x"],
-            var2=["y", "z"],
-            corr=[0, 0]
-        ))
+        df_corr_invalid = pd.DataFrame(
+            dict(var1=["x", "x"], var2=["y", "z"], corr=[0, 0])
+        )
 
         with self.assertRaises(ValueError):
             gr.CopulaGaussian(df_corr=df_corr_invalid)
@@ -298,25 +253,13 @@ class TestDensity(unittest.TestCase):
 
         self.assertTrue(set(df_sample.columns) == set(["x", "y"]))
 
+
 # --------------------------------------------------
 class TestFunction(unittest.TestCase):
-
     def setUp(self):
-        self.fcn = gr.Function(
-            lambda x: x,
-            ["x"],
-            ["x"],
-            "test",
-            0
-        )
+        self.fcn = gr.Function(lambda x: x, ["x"], ["x"], "test", 0)
 
-        self.fcn_vec = gr.FunctionVectorized(
-            lambda df: df,
-            ["x"],
-            ["x"],
-            "test",
-            0
-        )
+        self.fcn_vec = gr.FunctionVectorized(lambda df: df, ["x"], ["x"], "test", 0)
 
         self.df = pd.DataFrame({"x": [0]})
 
@@ -330,9 +273,7 @@ class TestFunction(unittest.TestCase):
         self.assertTrue(self.fcn.name == fcn_copy.name)
 
         pd.testing.assert_frame_equal(
-            self.df,
-            self.fcn.eval(self.df),
-            check_dtype=False
+            self.df, self.fcn.eval(self.df), check_dtype=False
         )
 
         with self.assertRaises(ValueError):
@@ -349,9 +290,7 @@ class TestFunction(unittest.TestCase):
         self.assertTrue(self.fcn_vec.name == fcn_copy.name)
 
         pd.testing.assert_frame_equal(
-            self.df,
-            self.fcn_vec.eval(self.df),
-            check_dtype=False
+            self.df, self.fcn_vec.eval(self.df), check_dtype=False
         )
 
 
