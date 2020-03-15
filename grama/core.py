@@ -8,16 +8,22 @@ __all__ = [
     "Density",
     "Function",
     "FunctionVectorized",
+    "Marginal",
     "MarginalNamed",
+    "MarginalGKDE",
     "Model",
 ]
 
 from abc import ABC, abstractmethod
 import copy
 
-from numpy import zeros, triu_indices, eye, array, Inf, NaN, sqrt
+from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt
+from numpy import min as npmin
+from numpy import max as npmax
 from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
+from scipy.linalg import det, LinAlgError
+from scipy.optimize import root_scalar
 from pandas import DataFrame, concat
 
 import grama as gr
@@ -276,6 +282,87 @@ class MarginalNamed(Marginal):
         return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, self.d_param)
 
 
+## Gaussian KDE marginal class
+class MarginalGKDE(Marginal):
+    """Marginal using scipy.stats.gaussian_kde"""
+
+    def __init__(self, kde, atol=1e-6, **kw):
+        super().__init__(**kw)
+
+        self.kde = kde
+        self.atol = atol
+
+        ## Calibrate the quantile brackets based on desired accuracy
+        bracket = [npmin(self.kde.dataset), npmax(self.kde.dataset)]
+
+        sol_lo = root_scalar(
+            lambda x: atol - self.p(x), x0=bracket[0], x1=bracket[1], method="secant"
+        )
+        sol_hi = root_scalar(
+            lambda x: 1 - atol - self.p(x),
+            x0=bracket[0],
+            x1=bracket[1],
+            method="secant",
+        )
+
+        self.bracket = [sol_lo.root, sol_hi.root]
+
+    def copy(self):
+        new_marginal = MarginalGKDE(kde=copy.deepcopy(self.kde), atol=self.atol,)
+
+        return new_marginal
+
+    ## Likelihood function
+    def l(self, x):
+        return self.kde.pdf(x)
+
+    ## Cumulative density function
+    def p(self, x):
+        try:
+            return array([self.kde.integrate_box_1d(-Inf, v) for v in x])
+        except TypeError:
+            return self.kde.integrate_box_1d(-Inf, x)
+
+    ## Quantile function
+    def q(self, p):
+        p_bnd = self.p(self.bracket)
+
+        ## Create scalar solver
+        def qscalar(val):
+            if val <= p_bnd[0]:
+                return self.bracket[0]
+            elif val >= p_bnd[1]:
+                return self.bracket[1]
+            else:
+                sol = root_scalar(
+                    lambda x: val - self.p(x),
+                    bracket=self.bracket,
+                    method="bisect",
+                    xtol=self.atol,
+                )
+                return sol.root
+
+        ## Iterate over all given values
+        try:
+            res = zeros(len(p))
+            for i in range(len(p)):
+                res[i] = qscalar(p[i])
+        except TypeError:
+            res = qscalar(p)
+
+        return res
+
+    ## Summary
+    def summary(self):
+        p_bnd = self.p(self.bracket)
+
+        return "({0:+}) gaussian KDE, n={1:2.1f}/{2:}, f={3:2.1e}, ".format(
+            self.sign, self.kde.neff, self.kde.dataset.shape[1], self.kde.factor
+        ) + "b=[{0:2.1e}, {1:2.1e}], a={2:1.0e}".format(
+            self.bracket[0], self.bracket[1], self.atol
+        )
+
+
 ## Copula base class
 class Copula(ABC):
     """Parent class for copulas
@@ -291,6 +378,10 @@ class Copula(ABC):
 
     @abstractmethod
     def sample(self, n=1):
+        pass
+
+    @abstractmethod
+    def l(self, u):
         pass
 
     @abstractmethod
@@ -338,6 +429,18 @@ class CopulaIndependence(Copula):
 
         return DataFrame(data=random((n, len(self.var_rand))), columns=self.var_rand)
 
+    def l(self, u):
+        """Density function
+
+        Args:
+            u (array-like):
+
+        Returns:
+            array:
+
+        """
+        return ones(u.shape[0])
+
     def summary(self):
         return "Independence copula"
 
@@ -377,7 +480,16 @@ class CopulaGaussian(Copula):
         Sigma = eye(n_var_rand)
         Sigma[Ind_upper] = df_corr["corr"].values
         Sigma = Sigma + (Sigma - eye(n_var_rand)).T
-        Sigma_h = cholesky(Sigma)
+        try:
+            Sigma_h = cholesky(Sigma)
+        except LinAlgError:
+            warnings.warn(
+                "Correlation structure is not positive-definite",
+                RuntimeWarning
+            )
+            Sigma_h = None
+
+        ## Build density quantities
 
         self.df_corr = df_corr
         self.var_rand = var_rand
@@ -422,6 +534,17 @@ class CopulaGaussian(Copula):
         quantiles = valid_dist["norm"].cdf(gaussian_samples)
 
         return DataFrame(data=quantiles, columns=self.var_rand)
+
+    def l(self, x):
+        """Density function
+
+        Args:
+            x (array-like):
+
+        Returns:
+            array:
+
+        """
 
     def summary(self):
         return "Gaussian copula with correlations:\n{}".format(self.df_corr)

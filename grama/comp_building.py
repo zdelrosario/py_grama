@@ -152,19 +152,16 @@ def cp_bounds(*args, **kwargs):
 def comp_marginals(model, **kwargs):
     """Add marginals to a model
 
-    Composition. Add marginals to an existing model. Marginals are specified by
-    dictionary entries; the model variable name is specified by the keyword
-    argument name.
+    Composition. Add marginals to an existing model. Marginals are specified
+    either by dictionary entries or by gr.Marginal() object. The model variable
+    name is specified by the keyword argument name.
 
     Args:
         model (gr.model): Model to modify
-        var (dict): Marginal information
+        var (dict OR gr.Marginal): Marginal information
 
     Returns:
         gr.model: Model with new marginals
-
-    TODO:
-    - Implement marginals other than MarginalNamed
 
     Examples:
 
@@ -187,22 +184,28 @@ def comp_marginals(model, **kwargs):
     for key, value in kwargs.items():
         value_copy = value.copy()
 
-        ## Check for named marginal
-        try:
-            dist = value_copy.pop("dist")
-        except KeyError:
-            raise NotImplementedError(
-                "Non-named marginals not implemented; please provide a valid 'dist' key"
+        ## Handle dictionary input
+        if isinstance(value_copy, dict):
+            ## Check for named marginal
+            try:
+                dist = value_copy.pop("dist")
+            except KeyError:
+                raise NotImplementedError(
+                    "Must give distribution name when using dict input"
+                )
+
+            try:
+                sign = value_copy.pop("sign")
+            except KeyError:
+                sign = 0
+
+            new_model.density.marginals[key] = gr.MarginalNamed(
+                sign=sign, d_name=dist, d_param=value_copy
             )
 
-        try:
-            sign = value_copy.pop("sign")
-        except KeyError:
-            sign = 0
-
-        new_model.density.marginals[key] = gr.MarginalNamed(
-            sign=sign, d_name=dist, d_param=value_copy
-        )
+        ## Handle Marginal input
+        if isinstance(value_copy, gr.Marginal):
+            new_model.density.marginals[key] = value_copy
 
     new_model.update()
     return new_model
@@ -288,9 +291,9 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
         >>> from grama.data import df_stang
         >>> md = gr.Model() >> \
         >>>     gr.cp_marginals(
-        >>>         E=gr.continuous_fit(df_stang.E, "norm"),
-        >>>         mu=gr.continuous_fit(df_stang.mu, "beta"),
-        >>>         thick=gr.continuous_fit(df_stang.thick, "norm")
+        >>>         E=gr.marg_named(df_stang.E, "norm"),
+        >>>         mu=gr.marg_named(df_stang.mu, "beta"),
+        >>>         thick=gr.marg_named(df_stang.thick, "norm")
         >>>     ) >> \
         >>>     gr.cp_copula_gaussian(df_data=df_stang)
 

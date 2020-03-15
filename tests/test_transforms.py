@@ -88,9 +88,9 @@ class TestTools(unittest.TestCase):
 
     def test_gauss_copula(self):
         md = gr.Model() >> gr.cp_marginals(
-            E=gr.continuous_fit(data.df_stang.E, "norm"),
-            mu=gr.continuous_fit(data.df_stang.mu, "beta"),
-            thick=gr.continuous_fit(data.df_stang.thick, "uniform"),
+            E=gr.marg_named(data.df_stang.E, "norm"),
+            mu=gr.marg_named(data.df_stang.mu, "beta"),
+            thick=gr.marg_named(data.df_stang.thick, "uniform"),
         )
         df_corr = gr.tran_copula_corr(data.df_stang, model=md)
 
@@ -120,6 +120,43 @@ class TestSummaries(unittest.TestCase):
         self.assertTrue(set(df_sobol.columns) == set(["y0", "ind"]))
         self.assertTrue(set(df_sobol["ind"]) == set(["S_x0", "S_x1"]))
 
+    def test_pca(self):
+        df_test = pd.DataFrame(dict(
+            x0=[1, 2, 3],
+            x1=[1, 2, 3]
+        ))
+        df_offset = pd.DataFrame(dict(
+            x0=[1, 2, 3],
+            x1=[3, 4, 5]
+        ))
+        df_scaled = pd.DataFrame(dict(
+            x0=[1, 2, 3],
+            x1=[1, 3, 5]
+        ))
+
+        df_true = pd.DataFrame(dict(
+            lam=[2, 0],
+            x0=[1/np.sqrt(2), 1/np.sqrt(2)],
+            x1=[1/np.sqrt(2),-1/np.sqrt(2)]
+        ))
+
+        ## Check correctness
+        df_pca = df_test >> gr.tf_pca()
+
+        self.assertTrue(
+            np.allclose(
+                df_true.lam,
+                df_pca.lam
+            )
+        )
+
+        ## Offset data should not affect results
+        df_pca_off = df_offset >> gr.tf_pca()
+        self.assertTrue(gr.df_equal(df_pca, df_pca_off))
+
+        ## Check standardized form
+        df_pca_scaled = df_test >> gr.tf_pca(standardize=True)
+        self.assertTrue(gr.df_equal(df_pca, df_pca_scaled))
 
 # --------------------------------------------------
 class TestAsub(unittest.TestCase):
