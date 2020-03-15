@@ -15,8 +15,6 @@ __all__ = [
 from abc import ABC, abstractmethod
 import copy
 
-# import numpy as np
-# import pandas as pd
 from numpy import zeros, triu_indices, eye, array, Inf, NaN
 from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
@@ -28,6 +26,15 @@ from grama import pipe, valid_dist, param_dist
 from itertools import chain
 from numpy.linalg import cholesky
 from toolz import curry
+import warnings
+
+## Import networkx, if installed
+try:
+    import networkx as nx
+
+    NETWORKX_INSTALLED = True
+except ImportError:
+    NETWORKX_INSTALLED = False
 
 ## Package settings
 RUNTIME_LOWER = 1  # Cutoff threshold for runtime messages
@@ -671,13 +678,7 @@ class Model:
         self.var = self.domain.var.copy()
         self.out = []
 
-        # ## Compute list of outputs
-        # self.out = list(set().union(*[f.out for f in self.functions]))
-
-        # ## Compute list of variables and parameters
-        # self.var = list(
-        #     set().union(*[f.var for f in self.functions]).union(set(self.domain.var))
-        # )
+        ## Construct var and out, respecting DAG properties
         for fun in self.functions:
             self.var = list(set(self.var).union(set(fun.var).difference(set(self.out))))
 
@@ -832,6 +833,8 @@ class Model:
 
         return corr_names
 
+    ## Infrastructure
+    # -------------------------
     def copy(self):
         """Make a copy of this model
         """
@@ -845,6 +848,8 @@ class Model:
 
         return new_model
 
+    ## Model information
+    # -------------------------
     def printpretty(self):
         """Formatted print of model attributes
         """
@@ -867,3 +872,65 @@ class Model:
         print("  functions:")
         for function in self.functions:
             print("    {}".format(function.summary()))
+
+    def make_dag(self):
+        """Generate a DAG for the model
+        """
+        if NETWORKX_INSTALLED:
+            G = nx.DiGraph()
+            ## Inputs-to-Functions
+            for f in self.functions:
+                i_var = set(self.var).intersection(set(f.var))
+                if len(i_var) > 0:
+                    s_var = "{}".format(i_var)
+                    G.add_edge("(Inputs)", f.name, label=s_var)
+            ## Function-to-Function
+            for i0 in range(len(self.functions)):
+                for i1 in range(i0 + 1, len(self.functions)):
+                    f0 = self.functions[i0]
+                    f1 = self.functions[i1]
+                    i_var = set(f0.var).intersection(set(f1.var))
+                    if len(i_var) > 0:
+                        s_var = "{}".format(i_var)
+                        G.add_edge(f0.name, f1.name, label=s_var)
+
+            ## Functions-to-Outputs
+            for f in self.functions:
+                i_out = set(self.out).intersection(set(f.out))
+                if len(i_out) > 0:
+                    s_out = "{}".format(i_out)
+                    G.add_edge(f.name, "(Outputs)", label=s_out)
+
+            return G
+        else:
+            warnings.warn(
+                "Must have `networkx` package to construct DAG. Install with\n"
+                + "pip install networkx"
+            )
+
+            return None
+
+    def show_dag(self):
+        """Generate and show a DAG for the model
+        """
+        from matplotlib.pyplot import show as pltshow
+
+        if NETWORKX_INSTALLED:
+            G = self.make_dag()
+
+            ## Plotting
+            edge_labels = dict(
+                [((u, v,), d["label"]) for u, v, d in G.edges(data=True)]
+            )
+
+            pos = nx.planar_layout(G)
+
+            nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+            nx.draw(G, pos, with_labels=True)
+            pltshow()
+
+        else:
+            warnings.warn(
+                "Must have `networkx` package to visualize DAG. Install with\n"
+                + "pip install networkx"
+            )
