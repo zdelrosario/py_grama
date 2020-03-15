@@ -881,7 +881,7 @@ class Model:
             for i1 in range(i0 + 1, len(self.functions)):
                 f0 = self.functions[i0]
                 f1 = self.functions[i1]
-                i_var = set(f0.var).intersection(set(f1.var))
+                i_var = set(f0.out).intersection(set(f1.var))
                 if len(i_var) > 0:
                     s_var = "{}".format(i_var)
                     G.add_edge(f0.name, f1.name, label=s_var)
@@ -902,11 +902,14 @@ class Model:
 
         G = self.make_dag()
 
-        ## Plotting
-        edge_labels = dict([((u, v,), d["label"]) for u, v, d in G.edges(data=True)])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            ## Plotting
+            edge_labels = dict(
+                [((u, v,), d["label"]) for u, v, d in G.edges(data=True)]
+            )
+            pos = nx.planar_layout(G)
 
-        pos = nx.planar_layout(G)
-
-        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
-        nx.draw(G, pos, with_labels=True)
-        pltshow()
+            nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+            nx.draw(G, pos, node_size=1000, with_labels=True)
+            pltshow()
