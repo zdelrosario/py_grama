@@ -15,7 +15,7 @@ __all__ = [
 from abc import ABC, abstractmethod
 import copy
 
-from numpy import zeros, triu_indices, eye, array, Inf, NaN
+from numpy import zeros, triu_indices, eye, array, Inf, NaN, sqrt
 from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
 from pandas import DataFrame, concat
@@ -908,7 +908,33 @@ class Model:
             edge_labels = dict(
                 [((u, v,), d["label"]) for u, v, d in G.edges(data=True)]
             )
-            pos = nx.planar_layout(G)
+            n = len(self.functions)
+
+            ## Manual layout
+            if n == 1:
+                pos = {
+                    "(Inputs)": [-0.5, +0.5],
+                    "(Outputs)": [+0.5, -0.5],
+                }
+                pos[self.functions[0].name] = [+0.5, +0.5]
+            ## Optimized layout
+            else:
+                try:
+                    ## Planar, if possible
+                    pos = nx.planar_layout(G)
+                except nx.NetworkXException:
+                    ## Scaled spring layout
+                    pos = nx.spring_layout(
+                        G,
+                        k=0.6 * n,
+                        pos={
+                            "(Inputs)": [-0.5 * n, +0.5 * n],
+                            "(Outputs)": [+0.5 * n, -0.5 * n],
+                        },
+                        fixed=["(Inputs)", "(Outputs)"],
+                        threshold=1e-6,
+                        iterations=100,
+                    )
 
             nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
             nx.draw(G, pos, node_size=1000, with_labels=True)
