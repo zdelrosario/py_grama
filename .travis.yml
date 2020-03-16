@@ -6,6 +6,7 @@ install:
 
 script:
  - cd tests; coverage run -m unittest discover
+ - cd tutorials; coverage run -m unittest discover
 
 after_success:
  - cd tests; codecov
