@@ -78,11 +78,28 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
     elif out is None:
         raise ValueError("`out` must be list or int")
 
+    # Check for var / out name collisions
+    if len(set(var).intersection(set(out))) > 0:
+        raise ValueError(
+            "`var` and `out` must have empty intersection.\n"
+            + "Rename a variable or output."
+        )
+
     # Check DAG invariants
     if len(set(out).intersection(set(model.var))) > 0:
-        raise ValueError("`out` must not intersect model.var")
+        raise ValueError(
+            "`out` must not intersect model.var\n"
+            + "    Check if you 1. Mistakenly re-used a\n"
+            + "    variable name as an output, or 2. Mis-\n"
+            + "    ordered connected functions."
+        )
     if len(set(out).intersection(set(model.out))) > 0:
-        raise ValueError("`out` must not intersect model.out")
+        raise ValueError(
+            "`out` must not intersect model.out\n"
+            + "    Check if you 1. Mistakenly re-used an\n"
+            + "    output name, or 2. Mis-ordered connected\n"
+            + "    functions."
+        )
 
     ## Add new function
     model_new.functions.append(gr.Function(fun, var, out, name, runtime))
