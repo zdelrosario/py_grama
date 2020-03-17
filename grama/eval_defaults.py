@@ -6,7 +6,7 @@ __all__ = [
     "eval_grad_fd",
     "ev_grad_fd",
     "eval_conservative",
-    "ev_conservative"
+    "ev_conservative",
 ]
 
 from numpy import ones, eye, tile, atleast_2d
@@ -21,7 +21,7 @@ from toolz import curry
 # --------------------------------------------------
 @curry
 def eval_df(model, df=None, append=True):
-    """Evaluate model at given values
+    r"""Evaluate model at given values
 
     Evaluates a given model at a given dataframe.
 
@@ -32,6 +32,14 @@ def eval_df(model, df=None, append=True):
 
     Returns:
         DataFrame: Results of model evaluation
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.models import make_test
+        >>> md = make_test()
+        >>> df = gr.df_make(x0=0, x1=1, x2=2)
+        >>> md >> gr.ev_df(df=df)
 
     """
     if df is None:
@@ -46,15 +54,17 @@ def eval_df(model, df=None, append=True):
 
     return df_res
 
+
 @pipe
 def ev_df(*args, **kwargs):
     return eval_df(*args, **kwargs)
+
 
 ## Nominal evaluation
 # --------------------------------------------------
 @curry
 def eval_nominal(model, df_det=None, append=True, skip=False):
-    """Evaluate model at nominal values
+    r"""Evaluate model at nominal values
 
     Evaluates a given model at a model nominal conditions (median).
 
@@ -63,14 +73,21 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
         df_det (DataFrame): Deterministic levels for evaluation; use "nom"
             for nominal deterministic levels.
         append (bool): Append results to nominal inputs?
-        skip (bool): Skip evaluation?
+        skip (bool): Skip evaluation of the functions?
 
     Returns:
         DataFrame: Results of nominal model evaluation or unevaluated design
 
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.models import make_test
+        >>> md = make_test()
+        >>> md >> gr.ev_nominal(df_det="nom")
+
     """
     ## Draw from underlying gaussian
-    quantiles = ones((1, model.n_var_rand)) * 0.5 # Median
+    quantiles = ones((1, model.n_var_rand)) * 0.5  # Median
 
     ## Convert samples to desired marginals
     df_pr = DataFrame(data=quantiles, columns=model.var_rand)
@@ -84,22 +101,17 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
     else:
         return eval_df(model, df=df_samp, append=append)
 
+
 @pipe
 def ev_nominal(*args, **kwargs):
     return eval_nominal(*args, **kwargs)
 
+
 ## Gradient finite-difference evaluation
 # --------------------------------------------------
 @curry
-def eval_grad_fd(
-        model,
-        h=1e-8,
-        df_base=None,
-        var=None,
-        append=True,
-        skip=False
-):
-    """Finite-difference gradient approximation
+def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False):
+    r"""Finite-difference gradient approximation
 
     Evaluates a given model with a central-difference stencil to approximate the
     gradient.
@@ -112,13 +124,22 @@ def eval_grad_fd(
         var (list(str) or string): list of variables to differentiate,
             or flag; "rand" for var_rand, "det" for var_det
         append (bool): Append results to base point inputs?
-        skip (bool): Skip evaluation?
+        skip (bool): Skip evaluation of the functions?
 
     Returns:
         DataFrame: Gradient approximation or unevaluated design
 
     @pre (not isinstance(h, collections.Sequence)) |
          (h.shape[0] == df_base.shape[1])
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.models import make_cantilever_beam
+        >>> md = make_cantilever_beam()
+        >>> df_nom = md >> gr.ev_nominal(df_det="nom")
+        >>> df_grad = md >> gr.ev_grad_fd(df_base=df_nom)
+        >>> df_grad >> gr.tf_gather("var", "val", gr.everything())
 
     """
     ## Check invariants
@@ -145,41 +166,38 @@ def eval_grad_fd(
     ## Build stencil
     n_var = len(var)
     stencil = eye(n_var) * h
-    stepscale = tile(atleast_2d(0.5/h).T, (1, model.n_out))
+    stepscale = tile(atleast_2d(0.5 / h).T, (1, model.n_out))
 
     outputs = model.out
     nested_labels = [
-        list(map(lambda s_out: "D" + s_out + "_D" + s_var, outputs)) \
-        for s_var in var
+        list(map(lambda s_out: "D" + s_out + "_D" + s_var, outputs)) for s_var in var
     ]
     grad_labels = list(itertools.chain.from_iterable(nested_labels))
 
     ## Loop over df_base
-    results = [] # TODO: Preallocate?
+    results = []  # TODO: Preallocate?
     for row_i in range(df_base.shape[0]):
         ## Evaluate
         df_left = eval_df(
             model,
             gr.tran_outer(
                 DataFrame(
-                    columns=var,
-                    data=-stencil + df_base[var].iloc[[row_i]].values
+                    columns=var, data=-stencil + df_base[var].iloc[[row_i]].values
                 ),
-                df_base[var_fix].iloc[[row_i]]
+                df_base[var_fix].iloc[[row_i]],
             ),
-            append=False
+            append=False,
         )
 
         df_right = eval_df(
             model,
             gr.tran_outer(
                 DataFrame(
-                    columns=var,
-                    data=+stencil + df_base[var].iloc[[row_i]].values
+                    columns=var, data=+stencil + df_base[var].iloc[[row_i]].values
                 ),
-                df_base[var_fix].iloc[[row_i]]
+                df_base[var_fix].iloc[[row_i]],
             ),
-            append=False
+            append=False,
         )
 
         ## Compute differences
@@ -190,15 +208,17 @@ def eval_grad_fd(
 
     return concat(results).reset_index(drop=True)
 
+
 @pipe
 def ev_grad_fd(*args, **kwargs):
     return eval_grad_fd(*args, **kwargs)
+
 
 ## Conservative quantile evaluation
 # --------------------------------------------------
 @curry
 def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=False):
-    """Evaluates a given model at conservative input quantiles
+    r"""Evaluates a given model at conservative input quantiles
 
     Uses model specifications to determine the "conservative" direction
     for each input, and evaluates the model at the desired quantile.
@@ -218,10 +238,17 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
         df_det (DataFrame): Deterministic levels for evaluation; use "nom"
             for nominal deterministic levels.
         append (bool): Append results to conservative inputs?
-        skip (bool): Skip evaluation?
+        skip (bool): Skip evaluation of the functions?
 
     Returns:
         DataFrame: Conservative evaluation or unevaluated design
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.models import make_plate_buckle
+        >>> md = make_plate_buckle()
+        >>> md >> gr.ev_conservative(df_det="nom")
 
     """
     ## Default behavior
@@ -238,9 +265,7 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
 
     ## Modify quantiles for conservative directions
     quantiles = [
-        0.5 + (0.5 - quantiles[i]) * model.density.marginals[
-            model.var_rand[i]
-        ].sign \
+        0.5 + (0.5 - quantiles[i]) * model.density.marginals[model.var_rand[i]].sign
         for i in range(model.n_var_rand)
     ]
     quantiles = atleast_2d(quantiles)
@@ -256,6 +281,7 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
         return df_samp
     else:
         return eval_df(model, df=df_samp, append=append)
+
 
 @pipe
 def ev_conservative(*args, **kwargs):

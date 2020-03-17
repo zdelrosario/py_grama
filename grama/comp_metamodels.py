@@ -1,7 +1,4 @@
-__all__ = [
-    "comp_metamodel",
-    "cp_metamodel"
-]
+__all__ = ["comp_metamodel", "cp_metamodel"]
 
 ## Fitting via statsmodels package
 import grama as gr
@@ -12,7 +9,7 @@ from toolz import curry
 # --------------------------------------------------
 @curry
 def comp_metamodel(model, n=1, ev=None, ft=None, seed=None):
-    """Create a metamodel
+    r"""Create a metamodel
 
     Composition: Create a metamodel from an existing model. This convenience
     function essentially applies a recipe of Evaluation followed by Fitting.
@@ -31,7 +28,7 @@ def comp_metamodel(model, n=1, ev=None, ft=None, seed=None):
 
     """
     ## Extract model information
-    inputs  = model.domain.inputs
+    inputs = model.domain.inputs
     outputs = model.outputs
 
     ## Assign default arguments
@@ -41,16 +38,10 @@ def comp_metamodel(model, n=1, ev=None, ft=None, seed=None):
     if ft is None:
         # Linear features for each output
         sum_inputs = "+".join(inputs)
-        formulae = list(map(
-            lambda output: output + "~" + sum_inputs,
-            outputs
-        ))
+        formulae = list(map(lambda output: output + "~" + sum_inputs, outputs))
 
         ft = lambda df: gr.fit_ols(
-            df,
-            formulae=formulae,
-            domain=model.domain,
-            density=model.density
+            df, formulae=formulae, domain=model.domain, density=model.density
         )
 
     ## Generate data
@@ -60,6 +51,7 @@ def comp_metamodel(model, n=1, ev=None, ft=None, seed=None):
     model = ft(df_results)
 
     return model
+
 
 @pipe
 def cp_metamodel(*args, **kwargs):

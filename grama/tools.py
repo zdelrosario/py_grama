@@ -248,8 +248,8 @@ def copy_meta(df_source, df_target):
     """Internal metadata copy tool
 
     Args:
-        df_source (DataFrame):
-        df_target (DataFrame):
+        df_source (DataFrame): Original dataframe
+        df_target (DataFrame): Target dataframe; receives metadata
 
     Returns:
         DataFrame: df_target with copied metadata
@@ -317,7 +317,7 @@ def safelen(x):
 
 ## DataFrame constructor utility
 def df_make(**kwargs):
-    """Construct a DataFrame
+    r"""Construct a DataFrame
 
     Helper function to construct a DataFrame.
 
@@ -401,7 +401,7 @@ def df_equal(df1, df2, close=False):
 
 ## Fit a named scipy.stats distribution
 def marg_named(data, dist, name=True, sign=None):
-    """Fit scipy.stats continuous distirbution
+    r"""Fit scipy.stats continuous distirbution
 
     Fits a named scipy.stats continuous distribution. Intended to be used to
     define a marginal distribution from data.
@@ -443,7 +443,7 @@ def marg_named(data, dist, name=True, sign=None):
 
 ## Fit a gaussian kernel density estimate (KDE) to data
 def marg_gkde(data, sign=None):
-    """Fit a gaussian KDE to data
+    r"""Fit a gaussian KDE to data
 
     Fits a gaussian kernel density estimate (KDE) to data.
 

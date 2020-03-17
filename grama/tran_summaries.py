@@ -28,7 +28,7 @@ warnings.formatwarning = custom_formatwarning
 # --------------------------------------------------
 @curry
 def tran_sobol(df, typename="ind", digits=2, full=False):
-    """Post-process results from gr.eval_hybrid()
+    r"""Post-process results from gr.eval_hybrid()
 
     Estimate Sobol' indices based on hybrid point evaluations (Sobol', 1999).
     Intended as post-processor for gr.eval_hybrid().
@@ -164,7 +164,7 @@ def tf_sobol(*args, **kwargs):
 ## Principal Component Analysis (PCA)
 @curry
 def tran_pca(df, var=None, lamvar="lam", standardize=False):
-    """Principal Component Analysis
+    r"""Principal Component Analysis
 
     Compute principal directions and eigenvalues for a dataset. Can specify
     columns to analyze, or just analyze all numerical columns.
@@ -189,7 +189,7 @@ def tran_pca(df, var=None, lamvar="lam", standardize=False):
 
     """
     ## Handle variable selection
-    columns_numeric = list(df.select_dtypes('number').columns)
+    columns_numeric = list(df.select_dtypes("number").columns)
     if var is None:
         var = columns_numeric
     else:
@@ -199,7 +199,7 @@ def tran_pca(df, var=None, lamvar="lam", standardize=False):
     ## Setup
     X = df[var].values
     if standardize:
-        U, s, Vh = svd( (X - df[var].mean().values) / df[var].std().values )
+        U, s, Vh = svd((X - df[var].mean().values) / df[var].std().values)
     else:
         U, s, Vh = svd(X - df[var].mean().values)
 
@@ -208,14 +208,16 @@ def tran_pca(df, var=None, lamvar="lam", standardize=False):
 
     return df_tmp[[lamvar] + var]
 
+
 @pipe
 def tf_pca(*args, **kwargs):
     return tran_pca(*args, **kwargs)
 
+
 ## Gradient principal directions (AS)
 @curry
 def tran_asub(df, prefix="D", outvar="out", lamvar="lam"):
-    """Active subspace estimator
+    r"""Active subspace estimator
 
     Compute principal directions and eigenvalues for all outputs based on output
     of ev_grad_fd() to estimate the /active subspace/ (Constantine, 2015).
@@ -274,7 +276,7 @@ def tf_asub(*args, **kwargs):
 ## Inner product
 @curry
 def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
-    """Inner products
+    r"""Inner products
 
     Compute inner product of target df with weights defined by df_weights.
 
@@ -370,14 +372,15 @@ def tf_inner(*args, **kwargs):
 ## Describe
 @curry
 def tran_describe(df):
-    """
-    Describe a dataframe
+    """Describe a dataframe
+
+    Synonym for Pandas df.describe()
 
     Args:
         df (DataFrame): Data to describe
 
     Returns:
-        (Summary)
+        Printed summary
 
     """
     return df.describe()

@@ -1,15 +1,15 @@
 __all__ = [
-    "plot_scatter_inputs",
-    "pt_scatter_inputs",
-    "plot_scatter_outputs",
-    "pt_scatter_outputs",
+    "plot_scattermat",
+    "pt_scattermat",
+    "plot_hists",
+    "pt_hists",
     "plot_sinew_inputs",
     "pt_sinew_inputs",
     "plot_sinew_outputs",
     "pt_sinew_outputs",
     "plot_auto",
     "pt_auto",
-    "plot_list"
+    "plot_list",
 ]
 
 import grama as gr
@@ -25,24 +25,66 @@ from matplotlib.pyplot import hist
 ## Monte Carlo
 # --------------------------------------------------
 @curry
-def plot_scatter_inputs(df, var_rand=None):
-    """Inspect the design
+def plot_scattermat(df, var=None):
+    r"""Create a scatterplot matrix
+
+    Create a scatterplot matrix. Often used to visualize a design (set of inputs
+    points) before evaluating the functions.
+
+    Args:
+        var (list of strings): Variables to plot
+
+    Returns:
+        DataFrame: Results of evaluation or unevaluated design
+
+    Examples:
+
+        >>> import grama as gr
+        >>> import matplotlib.pyplot as plt
+        >>> from grama.models import make_cantilever_beam
+        >>> md = make_cantilever_beam()
+        >>> md >> \
+        >>>     gr.ev_monte_carlo(n=100, df_det="nom", skip=True) >> \
+        >>>     gr.pt_scattermat(var=md.var)
+        >>> plt.show()
+
     """
-    if var_rand is None:
-        raise ValueError("Must provide input columns list as keyword var_rand")
+    if var is None:
+        raise ValueError("Must provide input columns list as keyword var")
 
     ## Plot
-    return pairplot(data=df, vars=var_rand)
+    return pairplot(data=df, vars=var)
 
 
 @pipe
-def pt_scatter_inputs(*args, **kwargs):
-    return plot_scatter_inputs(*args, **kwargs)
+def pt_scattermat(*args, **kwargs):
+    return plot_scattermat(*args, **kwargs)
 
 
 @curry
-def plot_scatter_outputs(df, out=None):
-    """Construct histograms
+def plot_hists(df, out=None):
+    r"""Construct histograms
+
+    Create a set of histograms. Often used to visualize the results of random
+    sampling for multiple outputs.
+
+    Args:
+        out (list of strings): Variables to plot
+
+    Returns:
+        Seaborn histogram plot
+
+    Examples:
+
+        >>> import grama as gr
+        >>> import matplotlib.pyplot as plt
+        >>> from grama.models import make_cantilever_beam
+        >>> md = make_cantilever_beam()
+        >>> md >> \
+        >>>     gr.ev_monte_carlo(n=100, df_det="nom") >> \
+        >>>     gr.pt_hists(out=md.out)
+        >>> plt.show()
+
     """
     if out is None:
         raise ValueError("Must provide input columns list as keyword out")
@@ -58,16 +100,38 @@ def plot_scatter_outputs(df, out=None):
 
 
 @pipe
-def pt_scatter_outputs(*args, **kwargs):
-    return plot_scatter_outputs(*args, **kwargs)
+def pt_hists(*args, **kwargs):
+    return plot_hists(*args, **kwargs)
 
 
 ## Sinew plots
 # --------------------------------------------------
 @curry
 def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
-    """
-    Inspect the design
+    r"""Inspect a sinew design
+
+    Create a scatterplot matrix with hues. Often used to visualize a sinew
+    design before evaluating the model functions.
+
+    Args:
+        df (Pandas DataFrame): Input design data
+        var (list of strings): Variables to plot
+        sweep_ind (string): Sweep index column in df
+
+    Returns:
+        Seaborn scatterplot matrix
+
+    Examples:
+
+        >>> import grama as gr
+        >>> import matplotlib.pyplot as plt
+        >>> from grama.models import make_cantilever_beam
+        >>> md = make_cantilever_beam()
+        >>> md >> \
+        >>>     gr.ev_sinews(df_det="swp", skip=True) >> \
+        >>>     gr.pt_sinew_inputs(var=md.var)
+        >>> plt.show()
+
     """
     if var is None:
         raise ValueError("Must provide input columns list as keyword var")
@@ -85,8 +149,32 @@ def pt_sinew_inputs(*args, **kwargs):
 def plot_sinew_outputs(
     df, var=None, out=None, sweep_ind="sweep_ind", sweep_var="sweep_var"
 ):
-    """
-    Construct sinew plot
+    r"""Construct sinew plot
+
+    Create a relational lineplot with hues. Often used to visualize the outputs
+    of a sinew design.
+
+    Args:
+        df (Pandas DataFrame): Input design data with output results
+        var (list of strings): Variables to plot
+        out (list of strings): Outputs to plot
+        sweep_ind (string): Sweep index column in df
+        sweep_var (string): Swept variable column in df
+
+    Returns:
+        Seaborn relational lineplot
+
+    Examples:
+
+        >>> import grama as gr
+        >>> import matplotlib.pyplot as plt
+        >>> from grama.models import make_cantilever_beam
+        >>> md = make_cantilever_beam()
+        >>> md >> \
+        >>>     gr.ev_sinews(df_det="swp") >> \
+        >>>     gr.pt_sinew_inputs(var=md.var, out=md.out)
+        >>> plt.show()
+
     """
     if var is None:
         raise ValueError("Must provide input columns list as keyword arg var")
@@ -128,14 +216,14 @@ def pt_sinew_outputs(*args, **kwargs):
 plot_list = {
     "sinew_inputs": plot_sinew_inputs,
     "sinew_outputs": plot_sinew_outputs,
-    "monte_carlo_inputs": plot_scatter_inputs,
-    "monte_carlo_outputs": plot_scatter_outputs,
+    "monte_carlo_inputs": plot_scattermat,
+    "monte_carlo_outputs": plot_hists,
 }
 
 
 @curry
 def plot_auto(df):
-    """Automagic plotting
+    r"""Automagic plotting
 
     Convenience tool for various grama outputs. Prints delegated plotting
     function, which can be called manually with different arguments for
