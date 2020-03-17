@@ -27,7 +27,7 @@ from scipy.stats import norm
 def tran_bootstrap(
     df, tran=None, n_boot=500, n_sub=25, con=0.90, col_sel=None, seed=None
 ):
-    """Estimate bootstrap confidence intervals
+    r"""Estimate bootstrap confidence intervals
 
     Estimate bootstrap confidence intervals for a given transform. Uses the
     "bootstrap-t" procedure discussed in Efron and Tibshirani (1993).
@@ -45,12 +45,11 @@ def tran_bootstrap(
         numeric columns
 
     References and notes:
-        Efron and Tibshirani (1993)
-
-      "The bootstrap-t procedure... is particularly applicable to location
-       statistics like the sample mean.... The bootstrap-t method, at least in
-       its simple form, cannot be trusted for more general problems, like
-       setting a confidence interval for a correlation coefficient."
+       Efron and Tibshirani (1993) "The bootstrap-t procedure... is
+       particularly applicable to location statistics like the sample mean....
+       The bootstrap-t method, at least in its simple form, cannot be trusted
+       for more general problems, like setting a confidence interval for a
+       correlation coefficient."
 
     Examples:
 
@@ -134,7 +133,7 @@ def tf_bootstrap(*args, **kwargs):
 # --------------------------------------------------
 @curry
 def tran_outer(df, df_outer):
-    """Outer merge
+    r"""Outer merge
 
     Perform an outer-merge on two dataframes.
 
@@ -177,7 +176,7 @@ def tf_outer(*args, **kwargs):
 ## Assess subspace angles
 # --------------------------------------------------
 def tran_angles(df, df2):
-    """Subspace angles
+    r"""Subspace angles
 
     Compute the subspace angles between two matrices. A wrapper for
     scipy.linalg.subspace_angles that corrects for column ordering. Row ordering
@@ -216,7 +215,7 @@ def tf_angles(*args, **kwargs):
 ## Compute Gaussian copula correlations from data
 # --------------------------------------------------
 def tran_copula_corr(df, model=None, density=None):
-    """Compute Gaussian copula correlations from data
+    r"""Compute Gaussian copula correlations from data
 
     Convenience function to fit a Gaussian copula (correlations) based on data
     and pre-fitted marginals. Intended for use with gr.comp_copula_gaussian().

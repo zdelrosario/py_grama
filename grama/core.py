@@ -484,8 +484,7 @@ class CopulaGaussian(Copula):
             Sigma_h = cholesky(Sigma)
         except LinAlgError:
             warnings.warn(
-                "Correlation structure is not positive-definite",
-                RuntimeWarning
+                "Correlation structure is not positive-definite", RuntimeWarning
             )
             Sigma_h = None
 
@@ -729,7 +728,7 @@ class Model:
     def __init__(
         self, name=None, functions=None, domain=None, density=None,
     ):
-        """Constructor
+        r"""Constructor
 
         Construct a grama model. Generally called without arguments; suggested
         procedure is to use gr.building tools to build up the model.

@@ -21,7 +21,7 @@ from toolz import curry
 # -------------------------
 @curry
 def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
-    """Add a function to a model
+    r"""Add a function to a model
 
     Composition. Add a function to an existing model.
 
@@ -100,7 +100,7 @@ def cp_function(*args, **kwargs):
 # -------------------------
 @curry
 def comp_bounds(model, **kwargs):
-    """Add variable bounds to a model
+    r"""Add variable bounds to a model
 
     Composition. Add variable bounds to an existing model. Bounds are specified
     by iterable; the model variable name is specified by the keyword argument
@@ -150,7 +150,7 @@ def cp_bounds(*args, **kwargs):
 # -------------------------
 @curry
 def comp_marginals(model, **kwargs):
-    """Add marginals to a model
+    r"""Add marginals to a model
 
     Composition. Add marginals to an existing model. Marginals are specified
     either by dictionary entries or by gr.Marginal() object. The model variable
@@ -220,7 +220,7 @@ def cp_marginals(*args, **kwargs):
 ##################################################
 @curry
 def comp_copula_independence(model):
-    """Add an independence copula to model
+    r"""Add an independence copula to model
 
     Composition. Add an independence copula to an existing model.
 
@@ -259,7 +259,7 @@ def cp_copula_independence(*args, **kwargs):
 # -------------------------
 @curry
 def comp_copula_gaussian(model, df_corr=None, df_data=None):
-    """Add a Gaussian copula to model
+    r"""Add a Gaussian copula to model
 
     Composition. Add a gaussian copula to an existing model.
 

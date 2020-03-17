@@ -30,7 +30,7 @@ warnings.formatwarning = custom_formatwarning
 # --------------------------------------------------
 @curry
 def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False):
-    """Monte Carlo evaluation
+    r"""Monte Carlo evaluation
 
     Evaluates a given model at a given dataframe. Generates outer product
     with deterministic samples.
@@ -42,7 +42,7 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
             for nominal deterministic levels.
         seed (int): random seed to use
         append (bool): Append results to random values?
-        skip (bool): Skip evaluation?
+        skip (bool): Skip evaluation of the functions?
 
     Returns:
         DataFrame: Results of evaluation or unevaluated design
@@ -87,7 +87,7 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
             warnings.simplefilter("ignore")
             df_samp._plot_info = {
                 "type": "monte_carlo_inputs",
-                "var_rand": model.var_rand,
+                "var": model.var_rand,
             }
 
         return df_samp
@@ -113,7 +113,7 @@ def ev_monte_carlo(*args, **kwargs):
 def eval_lhs(
     model, n=1, df_det=None, seed=None, append=True, skip=False, criterion=None
 ):
-    """Latin Hypercube evaluation
+    r"""Latin Hypercube evaluation
 
     Evaluates a given model on a latin hypercube sample (LHS) using the model's
     density.
@@ -125,7 +125,7 @@ def eval_lhs(
             for nominal deterministic levels.
         seed (int): Random seed to use
         append (bool): Append results to conservative inputs?
-        skip (bool): Skip evaluation?
+        skip (bool): Skip evaluation of the functions?
         criterion (str): flag for LHS sample criterion
             allowable values: None, "center" ("c"), "maxmin" ("m"),
             "centermaxmin" ("cm"), "correlation" ("corr")
@@ -179,7 +179,7 @@ def eval_sinews(
     append=True,
     skip=False,
 ):
-    """Sweep study
+    r"""Sweep study
 
     Perform coordinate sweeps over each model random variable ("sinew" design).
     Use random starting points drawn from the joint density.
@@ -199,7 +199,7 @@ def eval_sinews(
         varname (str): Column name to give for sweep variable; default="sweep_var"
         indname (str): Column name to give for sweep index; default="sweep_ind"
         append (bool): Append results to conservative inputs?
-        skip (bool): Skip evaluation?
+        skip (bool): Skip evaluation of the functions?
 
     Returns:
         DataFrame: Results of evaluation or unevaluated design
@@ -336,7 +336,7 @@ def eval_hybrid(
     append=True,
     skip=False,
 ):
-    """Hybrid points for Sobol' indices
+    r"""Hybrid points for Sobol' indices
 
     Use the "hybrid point" design (Sobol', 1999) to support estimating Sobol'
     indices. Use gr.tran_sobol() to post-process the results and compute
@@ -351,7 +351,7 @@ def eval_hybrid(
             for nominal deterministic levels.
         varname (str): Column name to give for sweep variable; default="hybrid_var"
         append (bool): Append results to conservative inputs?
-        skip (bool): Skip evaluation?
+        skip (bool): Skip evaluation of the functions?
 
     Returns:
         DataFrame: Results of evaluation or unevaluated design
