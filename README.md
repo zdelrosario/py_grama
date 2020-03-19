@@ -32,6 +32,7 @@ $ python
 # Quick Tour
 `py_grama` has tools for both *building* and *analyzing* models. For a quick look at functionality, see the following notebooks:
 
+- [video demo](https://youtu.be/jhyB-jQ7EC8)
 - [model building demo](https://github.com/zdelrosario/py_grama/blob/master/examples/demo/builder_demo.ipynb)
 - [model analysis demo](https://github.com/zdelrosario/py_grama/blob/master/examples/demo/analysis_demo.ipynb)
 
