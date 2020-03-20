@@ -17,13 +17,14 @@ __all__ = [
 from abc import ABC, abstractmethod
 import copy
 
-from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt
+from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, dot
 from numpy import min as npmin
 from numpy import max as npmax
 from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
-from scipy.linalg import det, LinAlgError
+from scipy.linalg import det, LinAlgError, solve
 from scipy.optimize import root_scalar
+from scipy.stats import norm
 from pandas import DataFrame, concat
 
 import grama as gr
@@ -385,6 +386,14 @@ class Copula(ABC):
         pass
 
     @abstractmethod
+    def u2z(self, u):
+        pass
+
+    @abstractmethod
+    def z2u(self, z):
+        pass
+
+    @abstractmethod
     def summary(self):
         pass
 
@@ -440,6 +449,30 @@ class CopulaIndependence(Copula):
 
         """
         return ones(u.shape[0])
+
+    def u2z(self, u):
+        """Transform to standard-normal space
+
+        Args:
+            u (array-like):
+
+        Returns:
+            array:
+
+        """
+        return norm.ppf(u)
+
+    def z2u(self, z):
+        """Transform to uniform-marginal space
+
+        Args:
+            z (array-like):
+
+        Returns:
+            array:
+
+        """
+        return norm.cdf(z)
 
     def summary(self):
         return "Independence copula"
@@ -544,6 +577,33 @@ class CopulaGaussian(Copula):
             array:
 
         """
+
+    def u2z(self, u):
+        """Transform to standard-normal space
+
+        Args:
+            u (array-like):
+
+        Returns:
+            array:
+
+        """
+        N = norm.ppf(u)
+        Z = solve(self.Sigma_h, N)
+
+        return Z
+
+    def z2u(self, z):
+        """Transform to uniform-marginal space
+
+        Args:
+            z (array-like):
+
+        Returns:
+            array:
+
+        """
+        return norm.cdf(dot(self.Sigma_h, z))
 
     def summary(self):
         return "Gaussian copula with correlations:\n{}".format(self.df_corr)
@@ -926,6 +986,100 @@ class Model:
 
         ## Outer product if both det and rand exist
         return gr.tran_outer(df_rand, df_det)
+
+    ## Sample transforms
+    # --------------------------------------------------
+    def x2z(self, x):
+        r"""Transform to standard normal space
+
+        Transform a single vector of random variable values to standard normal
+        space.
+
+        Args:
+            x (array): Single vector of values in var_rand. Order of entries
+                must match self.var_rand
+
+        Returns:
+            array: Single vector of values transformed to standard normal space
+
+        """
+        ## Transform to uniform
+        u = zeros(self.n_var_rand)
+        for i in range(self.n_var_rand):
+            u[i] = self.density.marginals[self.var_rand[i]].p(x[i])
+        ## Transform to standard normal
+        z = self.density.copula.u2z(u)
+
+        return z
+
+    def z2x(self, z):
+        r"""Transform to random variable space
+
+        Transform a single vector of normal values to the model's random
+        variable space.
+
+        Args:
+            z (array): Single vector of standard normal values. Order of entries
+                must match self.var_rand
+
+        Returns:
+            array: Single vector of values transformed to model random variable space
+
+        """
+        ## Correlate and map to uniform
+        u = self.density.copula.z2u(z)
+        ## Transform per marginal
+        x = zeros(self.n_var_rand)
+        for i in range(self.n_var_rand):
+            x[i] = self.density.marginals[self.var_rand[i]].q(u[i])
+
+        return x
+
+    def rand2norm(self, df):
+        r"""Transform random samples to standard normal space
+
+        Transform a DataFrame of random variable samples to standard normal space
+
+        Args:
+            df (DataFrame): Random variable samples; must have columns for all
+                of self.var_rand.
+
+        Returns:
+            DataFrame: Samples in standard-normal space
+        """
+        ## Check invariants
+        if not set(self.var_rand).issubset(set(df.columns)):
+            raise ValueError("model.var_rand must be subset of df.columns")
+
+        data = zeros((df.shape[0], self.n_var_rand))
+        for i in range(df.shape[0]):
+            data[i] = self.x2z(df[self.var_rand].iloc[i].values)
+
+        return DataFrame(data=data, columns=self.var_rand)
+
+    def norm2rand(self, df):
+        r"""Transform standard normal samples to model random variable space
+
+        Transform a DataFrame of standard normal samples to model random
+        variable space.
+
+        Args:
+            df (DataFrame): Random variable samples; must have columns for all
+                of self.var_rand.
+
+        Returns:
+            DataFrame: Samples in standard-normal space
+
+        """
+        ## Check invariants
+        if not set(self.var_rand).issubset(set(df.columns)):
+            raise ValueError("model.var_rand must be subset of df.columns")
+
+        data = zeros((df.shape[0], self.n_var_rand))
+        for i in range(df.shape[0]):
+            data[i] = self.z2x(df[self.var_rand].iloc[i].values)
+
+        return DataFrame(data=data, columns=self.var_rand)
 
     def name_corr(self):
         """Name the correlation elements
