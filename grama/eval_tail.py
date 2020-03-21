@@ -193,7 +193,8 @@ def eval_form_ria(
 
     Args:
         model (gr.Model): Model to analyze
-        limits (list): Target limit states; must be in model.out
+        limits (list): Target limit states; must be in model.out; limit state
+            assumed to be critical at g == 0
         cons (dict or None): Target confidence levels;
             key   = limit state name; must be in model.out
             value = confidence level, \in (0, 1)
