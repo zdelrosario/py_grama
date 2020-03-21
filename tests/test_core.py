@@ -7,6 +7,9 @@ import networkx as nx
 from context import grama as gr
 from context import models
 
+## FD stepsize
+h = 1e-8
+
 ## Core function tests
 ##################################################
 class TestModel(unittest.TestCase):
@@ -130,6 +133,41 @@ class TestModel(unittest.TestCase):
         with self.assertRaises(ValueError):
             gr.eval_nominal(md)
 
+    ## Test sample transforms
+    def test_transforms(self):
+        ## Setup
+        df_corr = pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
+        Sigma_h = np.linalg.cholesky(np.array([[1.0, 0.5], [0.5, 1.0]]))
+
+        md = (
+            gr.Model()
+            >> gr.cp_marginals(
+                x=dict(dist="norm", loc=0, scale=1), y=dict(dist="norm", loc=0, scale=1)
+            )
+            >> gr.cp_copula_gaussian(df_corr=df_corr)
+        )
+
+        ## Transforms invariant
+        z = np.array([0, 0])
+        x = md.z2x(z)
+        zp = md.x2z(x)
+
+        self.assertTrue(np.all(z == zp))
+
+        df_z = gr.df_make(x=0.0, y=0.0)
+        df_x = md.norm2rand(df_z)
+        df_zp = md.rand2norm(df_x)
+
+        self.assertTrue(gr.df_equal(df_z, df_zp))
+
+        ## Jacobian accurate
+        dxdz_fd = np.zeros((2, 2))
+        dxdz_fd[0, :] = (md.z2x(z + np.array([h, 0])) - md.z2x(z)) / h
+        dxdz_fd[1, :] = (md.z2x(z + np.array([0, h])) - md.z2x(z)) / h
+        dxdz_p = md.dxdz(z)
+
+        self.assertTrue(np.allclose(dxdz_fd, dxdz_p))
+
     ## Test DAG construction
 
     def test_dag(self):
@@ -180,10 +218,9 @@ class TestMarginal(unittest.TestCase):
         ## Invoke summary
         self.marginal_named.summary()
 
+        ## Correct values for normal distribution
         self.assertTrue(self.marginal_named.l(0.5) == norm.pdf(0.5))
-
         self.assertTrue(self.marginal_named.p(0.5) == norm.cdf(0.5))
-
         self.assertTrue(self.marginal_named.q(0.5) == norm.ppf(0.5))
 
 
@@ -228,6 +265,21 @@ class TestDensity(unittest.TestCase):
 
         self.assertTrue(set(df_res.columns) == set(["x", "y"]))
 
+        ## Transforms invariant
+        z = np.array([0, 0])
+        u = copula.z2u(z)
+        zp = copula.u2z(u)
+
+        self.assertTrue(np.all(z == zp))
+
+        ## Jacobian accurate
+        dudz_fd = np.zeros((2, 2))
+        dudz_fd[0, :] = (copula.z2u(z + np.array([h, 0])) - copula.z2u(z)) / h
+        dudz_fd[1, :] = (copula.z2u(z + np.array([0, h])) - copula.z2u(z)) / h
+        dudz_p = copula.dudz(z)
+
+        self.assertTrue(np.allclose(dudz_fd, dudz_p))
+
     def test_CopulaGaussian(self):
         df_corr = pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
         Sigma_h = np.linalg.cholesky(np.array([[1.0, 0.5], [0.5, 1.0]]))
@@ -244,6 +296,21 @@ class TestDensity(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             gr.CopulaGaussian(df_corr=df_corr_invalid)
+
+        ## Transforms invariant
+        z = np.array([0, 0])
+        u = copula.z2u(z)
+        zp = copula.u2z(u)
+
+        self.assertTrue(np.all(z == zp))
+
+        ## Jacobian accurate
+        dudz_fd = np.zeros((2, 2))
+        dudz_fd[0, :] = (copula.z2u(z + np.array([h, 0])) - copula.z2u(z)) / h
+        dudz_fd[1, :] = (copula.z2u(z + np.array([0, h])) - copula.z2u(z)) / h
+        dudz_p = copula.dudz(z)
+
+        self.assertTrue(np.allclose(dudz_fd, dudz_p))
 
     def test_conversion(self):
         df_pr_true = pd.DataFrame(dict(x=[0.5], y=[0.5]))
