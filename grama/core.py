@@ -17,7 +17,7 @@ __all__ = [
 from abc import ABC, abstractmethod
 import copy
 
-from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, dot
+from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, dot, diag
 from numpy import min as npmin
 from numpy import max as npmax
 from numpy.random import random, multivariate_normal
@@ -394,6 +394,10 @@ class Copula(ABC):
         pass
 
     @abstractmethod
+    def dudz(self, z):
+        pass
+
+    @abstractmethod
     def summary(self):
         pass
 
@@ -473,6 +477,18 @@ class CopulaIndependence(Copula):
 
         """
         return norm.cdf(z)
+
+    def dudz(self, z):
+        """Jacobian
+
+        Args:
+            z (array-like):
+
+        Returns:
+            array:
+
+        """
+        return diag(norm.pdf(z))
 
     def summary(self):
         return "Independence copula"
@@ -604,6 +620,18 @@ class CopulaGaussian(Copula):
 
         """
         return norm.cdf(dot(self.Sigma_h, z))
+
+    def dudz(self, z):
+        """Jacobian
+
+        Args:
+            z (array-like):
+
+        Returns:
+            array:
+
+        """
+        return dot(self.Sigma_h.T, diag(norm.pdf(dot(self.Sigma_h, z))))
 
     def summary(self):
         return "Gaussian copula with correlations:\n{}".format(self.df_corr)
@@ -1035,6 +1063,31 @@ class Model:
 
         return x
 
+    def dxdz(self, z):
+        r"""Inverse transform jacobian
+
+        Compute jacobian of the inverse transform X = phi^{-1}(Z)
+
+        Args:
+            z (array): Single vector of standard normal values. Order of entries
+                must match self.var_rand
+
+        Returns:
+            2d array: Jacobian of inverse transform
+
+        """
+        ## Setup
+        dudz = self.density.copula.dudz(z)
+
+        x = self.z2x(z)
+        F = zeros(self.n_var_rand)
+        for i in range(self.n_var_rand):
+            F[i] = 1 / self.density.marginals[self.var_rand[i]].l(x[i])
+
+        return dot(dudz, diag(F))
+
+    ## Sample transforms; DataFrame
+    # --------------------------------------------------
     def rand2norm(self, df):
         r"""Transform random samples to standard normal space
 
