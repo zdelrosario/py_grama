@@ -7,6 +7,8 @@ Subpackages
 .. toctree::
 
    grama.data
+   grama.dfply
+   grama.fit
    grama.models
 
 Submodules
@@ -44,6 +46,14 @@ grama.eval\_defaults module
    :undoc-members:
    :show-inheritance:
 
+grama.eval\_mpp module
+----------------------
+
+.. automodule:: grama.eval_mpp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.eval\_random module
 -------------------------
 
@@ -52,10 +62,10 @@ grama.eval\_random module
    :undoc-members:
    :show-inheritance:
 
-grama.fit\_statsmodels module
------------------------------
+grama.eval\_tail module
+-----------------------
 
-.. automodule:: grama.fit_statsmodels
+.. automodule:: grama.eval_tail
    :members:
    :undoc-members:
    :show-inheritance:
@@ -64,6 +74,14 @@ grama.plot\_auto module
 -----------------------
 
 .. automodule:: grama.plot_auto
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+grama.string\_helpers module
+----------------------------
+
+.. automodule:: grama.string_helpers
    :members:
    :undoc-members:
    :show-inheritance:
@@ -88,6 +106,14 @@ grama.tran\_tools module
 ------------------------
 
 .. automodule:: grama.tran_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+grama.try\_gpr module
+---------------------
+
+.. automodule:: grama.try_gpr
    :members:
    :undoc-members:
    :show-inheritance:

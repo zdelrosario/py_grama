@@ -71,10 +71,8 @@ def eval_form_pma(
           often beneficial to scale your limit state to keep values near unity.
 
     References:
-        [1] Tu, Choi, and Park, "A new study on reliability-based design optimization,"
-            Journal of Mechanical Design, 1999
-        [2] del Rosario, Fenrich, and Iaccarino, "Fast precision margin with the
-            first-order reliability method," AIAA Journal, 2019
+        - [1] Tu, Choi, and Park, "A new study on reliability-based design optimization," Journal of Mechanical Design, 1999
+        - [2] del Rosario, Fenrich, and Iaccarino, "Fast precision margin with the first-order reliability method," AIAA Journal, 2019
 
     """
     ## Check invariants
@@ -212,10 +210,8 @@ def eval_form_ria(
           often beneficial to scale your limit state to keep values near unity.
 
     References:
-        [1] Tu, Choi, and Park, "A new study on reliability-based design optimization,"
-            Journal of Mechanical Design, 1999
-        [2] del Rosario, Fenrich, and Iaccarino, "Fast precision margin with the
-            first-order reliability method," AIAA Journal, 2019
+        - [1] Tu, Choi, and Park, "A new study on reliability-based design optimization," Journal of Mechanical Design, 1999
+        - [2] del Rosario, Fenrich, and Iaccarino, "Fast precision margin with the first-order reliability method," AIAA Journal, 2019
 
     """
     ## Check invariants
