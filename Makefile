@@ -11,6 +11,11 @@ coverage:
 	cd tests; coverage html
 	open tests/htmlcov/index.html
 
+autodoc:
+	rm docs/source/grama*
+	rm docs/source/modules.rst
+	cd docs; sphinx-apidoc -o source/ ../grama
+
 dist:
 	python setup.py sdist bdist_wheel
 
