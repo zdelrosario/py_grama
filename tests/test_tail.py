@@ -23,8 +23,8 @@ class TestFORM(unittest.TestCase):
                 out=["g"],
             )
             >> gr.cp_marginals(
-                x0=dict(dist="norm", loc=0, scale=1),
-                x1=dict(dist="norm", loc=0, scale=1),
+                x0=dict(dist="norm", loc=0, scale=1, sign=1),
+                x1=dict(dist="norm", loc=0, scale=1, sign=1),
             )
             >> gr.cp_copula_independence()
         )
@@ -32,9 +32,9 @@ class TestFORM(unittest.TestCase):
     def test_ria(self):
         df_res = self.md >> gr.ev_form_ria(df_det="nom", limits=["g"])
 
-        self.assertTrue(np.allclose(df_res["g"], [self.beta_true], atol=1e-6))
+        self.assertTrue(np.allclose(df_res["g"], [self.beta_true], atol=1e-3))
 
     def test_pma(self):
         df_res = self.md >> gr.ev_form_pma(df_det="nom", betas=dict(g=self.beta_true))
 
-        self.assertTrue(np.allclose(df_res["g"], [0], atol=1e-6))
+        self.assertTrue(np.allclose(df_res["g"], [0], atol=1e-3))

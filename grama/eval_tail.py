@@ -7,7 +7,7 @@ __all__ = [
 
 import grama as gr
 from grama import pipe, custom_formatwarning
-from numpy import argmin, ones, eye, zeros, sqrt, NaN
+from numpy import array, argmin, ones, eye, zeros, sqrt, NaN
 from numpy.linalg import norm as length
 from numpy.random import multivariate_normal
 from pandas import DataFrame, concat
@@ -37,9 +37,9 @@ def eval_form_pma(
     df_corr=None,
     df_det=None,
     append=True,
-    tol=1e-6,
+    tol=1e-3,
     maxiter=25,
-    nrestart=3,
+    nrestart=1,
 ):
     r"""Tail quantile via FORM PMA
 
@@ -120,8 +120,16 @@ def eval_form_pma(
             def con_beta(z):
                 return z.dot(z) - (betas[key]) ** 2
 
+            ## Use conservative direction for initial guess
+            signs = array([
+                model.density.marginals[k].sign for k in model.var_rand
+            ])
+            if length(signs) > 0:
+                z0 = betas[key] * signs / length(signs)
+            else:
+                z0 = betas[key] * ones(model.n_var_rand) / sqrt(model.n_var_rand)
+
             ## Minimize
-            z0 = ones(model.n_var_rand) * betas[key] / sqrt(model.n_var_rand)
             res_all = []
             for jnd in range(nrestart):
                 res = minimize(
@@ -177,9 +185,9 @@ def eval_form_ria(
     df_corr=None,
     df_det=None,
     append=True,
-    tol=1e-6,
+    tol=1e-3,
     maxiter=25,
-    nrestart=3,
+    nrestart=1,
 ):
     r"""Tail reliability via FORM RIA
 
@@ -263,8 +271,16 @@ def eval_form_ria(
 
                 return g
 
+            ## Use conservative direction for initial guess
+            signs = array([
+                model.density.marginals[k].sign for k in model.var_rand
+            ])
+            if length(signs) > 0:
+                z0 = signs / length(signs)
+            else:
+                z0 = ones(model.n_var_rand) / sqrt(model.n_var_rand)
+
             ## Minimize
-            z0 = ones(model.n_var_rand) / sqrt(model.n_var_rand)
             res_all = []
             for jnd in range(nrestart):
                 res = minimize(
