@@ -4,7 +4,7 @@ setup(
     name="py_grama",
     author="Zachary del Rosario",
     author_email="zdelrosario@outlook.com",
-    version="0.1.0",
+    version="0.1.2",
     packages=['grama', 'grama.fit', 'grama.data', 'grama.models'],
     package_data={'grama.data': ['*.csv']},
     license="MIT",
