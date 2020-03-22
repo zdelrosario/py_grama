@@ -25,7 +25,7 @@ def function_area(x):
 
 def function_stress(x):
     w, t, H, V, E, Y = x
-    return Y - 600 * V / w / t**2 - 600 * H / w**2 / t
+    return (Y - 600 * V / w / t**2 - 600 * H / w**2 / t) / MU_Y
 
 def function_displacement(x):
     w, t, H, V, E, Y = x
