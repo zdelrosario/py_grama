@@ -1,6 +1,7 @@
 from .base import *
 from .vector import *
 
+from statsmodels.stats.proportion import proportion_confint
 
 # ------------------------------------------------------------------------------
 # Series summary functions
@@ -16,10 +17,11 @@ def mean(series):
         series (pandas.Series): column to summarize.
     """
 
-    if np.issubdtype(series.dtype, np.number):
-        return series.mean()
-    else:
-        return np.nan
+    # if np.issubdtype(series.dtype, np.number):
+    #     return series.mean()
+    # else:
+    #     return np.nan
+    return series.mean()
 
 
 @make_symbolic
@@ -175,10 +177,11 @@ def median(series):
         series (pandas.Series): column to summarize.
     """
 
-    if np.issubdtype(series.dtype, np.number):
-        return series.median()
-    else:
-        return np.nan
+    # if np.issubdtype(series.dtype, np.number):
+    #     return series.median()
+    # else:
+    #     return np.nan
+    return series.median()
 
 
 @make_symbolic
@@ -189,10 +192,11 @@ def var(series):
     Args:
         series (pandas.Series): column to summarize.
     """
-    if np.issubdtype(series.dtype, np.number):
-        return series.var()
-    else:
-        return np.nan
+    # if np.issubdtype(series.dtype, np.number):
+    #     return series.var()
+    # else:
+    #     return np.nan
+    return series.var()
 
 
 @make_symbolic
@@ -204,7 +208,44 @@ def sd(series):
         series (pandas.Series): column to summarize.
     """
 
-    if np.issubdtype(series.dtype, np.number):
-        return series.std()
+    # if np.issubdtype(series.dtype, np.number):
+    #     return series.std()
+    # else:
+    #     return np.nan
+    return series.std()
+
+
+@make_symbolic
+def binomial_ci(series, alpha=0.05, method="wilson", side="both"):
+    """Returns a binomial confidence interval
+
+    Computes a binomial confidence interval based on boolean data. A symbolic
+    wrapper for statsmodels.stats.proportion.proportion_confint.
+
+    Args:
+        series (pandas.Series): Column to summarize; must be boolean or 0/1.
+        alpha (float): Confidence level; value in (0, 1)
+        method (string): Method for computation. Options:
+            - "normal": asymptotic normal approximation
+            - "agresti_coull": Agresti-Coull interval
+            - "beta": Clopper-Pearson interval based on Beta distribution
+            - "wilson": Wilson score interval
+            - "jeffreys": Jeffreys Bayesian interval
+        side (string): Chosen side of interval
+            - "both": Return a series of tuples
+            - "lo": Return the lower interval bound
+            - "up": Return the upper interval bound
+    """
+    count = series.sum()
+    nobs = len(series)
+
+    lo, up = proportion_confint(count, nobs, alpha=alpha, method=method)
+
+    if side == "both":
+        return (lo, up)
+    elif side == "lo":
+        return lo
+    elif side == "up":
+        return up
     else:
-        return np.nan
+        raise ValueError("side value {} not recognized".format(side))

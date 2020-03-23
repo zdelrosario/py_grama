@@ -66,7 +66,7 @@ from .dfply import summarize_each as tf_summarize_each
 
 # summary_functions.py
 from .dfply import mean, first, last, nth, n, n_distinct, IQR, quant
-from .dfply import colmin, colmax, median, var, sd
+from .dfply import colmin, colmax, median, var, sd, binomial_ci
 
 # transform.py
 from .dfply import mutate as tf_mutate
@@ -83,3 +83,4 @@ from .dfply import percent_rank, row_number
 
 # Add functionality to dfply
 from .string_helpers import *
+from .mutate_helpers import *
