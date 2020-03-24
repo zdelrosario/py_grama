@@ -46,14 +46,6 @@ grama.eval\_defaults module
    :undoc-members:
    :show-inheritance:
 
-grama.eval\_mpp module
-----------------------
-
-.. automodule:: grama.eval_mpp
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 grama.eval\_random module
 -------------------------
 
@@ -66,6 +58,14 @@ grama.eval\_tail module
 -----------------------
 
 .. automodule:: grama.eval_tail
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+grama.mutate\_helpers module
+----------------------------
+
+.. automodule:: grama.mutate_helpers
    :members:
    :undoc-members:
    :show-inheritance:
@@ -94,6 +94,14 @@ grama.tools module
    :undoc-members:
    :show-inheritance:
 
+grama.tran\_shapley module
+--------------------------
+
+.. automodule:: grama.tran_shapley
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.tran\_summaries module
 ----------------------------
 
@@ -106,14 +114,6 @@ grama.tran\_tools module
 ------------------------
 
 .. automodule:: grama.tran_tools
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-grama.try\_gpr module
----------------------
-
-.. automodule:: grama.try_gpr
    :members:
    :undoc-members:
    :show-inheritance:

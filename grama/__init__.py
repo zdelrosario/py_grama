@@ -7,6 +7,7 @@ from .eval_defaults import *
 from .eval_random import *
 from .eval_tail import *
 from .plot_auto import *
+from .tran_shapley import *
 from .tran_summaries import *
 from .tran_tools import *
 
