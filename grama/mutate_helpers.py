@@ -5,6 +5,8 @@ __all__ = [
     "exp",
     "sqrt",
     "pow",
+    "as_integer",
+    "as_float",
 ]
 
 from grama import make_symbolic
@@ -19,6 +21,7 @@ from numpy import power as nppower
 # --------------------------------------------------
 # Mutation helpers
 # --------------------------------------------------
+# Numeric
 @make_symbolic
 def sin(x):
     return npsin(x)
@@ -47,3 +50,12 @@ def sqrt(x):
 @make_symbolic
 def pow(x, p):
     return nppower(x, p)
+
+# Casting
+@make_symbolic
+def as_integer(x):
+    return x.astype(int)
+
+@make_symbolic
+def as_float(x):
+    return x.astype(float)
