@@ -1,6 +1,8 @@
 __all__ = [
     "comp_function",
     "cp_function",
+    "comp_vec_function",
+    "cp_vec_function",
     "comp_bounds",
     "cp_bounds",
     "comp_copula_independence",
@@ -17,38 +19,8 @@ from toolz import curry
 
 ## Model Building Interface (MBI) tools
 ##################################################
-# Add a lambda function
-# -------------------------
-@curry
-def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
-    r"""Add a function to a model
-
-    Composition. Add a function to an existing model.
-
-    Args:
-        model (gr.model): Model to compose
-        fun (function): Function taking R^d -> R^r
-        var (list(string)): List of variable names or number of inputs
-        out (list(string)): List of output names or number of outputs
-        runtime (numeric): Estimated single-eval runtime (in seconds)
-
-    Returns:
-        gr.model: New model with added function
-
-    @pre (len(var) == d) | (var == d)
-    @pre (len(out) == r) | (var == r)
-
-    Examples:
-
-        >>> import grama as gr
-        >>> md = gr.Model("test") >> \
-        >>>     gr.function(
-        >>>         fun=lambda x: x,
-        >>>         var=1,
-        >>>         out=["y"],
-        >>>         name="identity"
-        >>>     )
-
+def _comp_function_data(model, fun, var, out, name, runtime):
+    r"""Internal function builder
     """
     model_new = model.copy()
 
@@ -84,6 +56,49 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
     if len(set(out).intersection(set(model.out))) > 0:
         raise ValueError("`out` must not intersect model.out")
 
+    return fun, var, out, name, runtime
+
+
+# Add a lambda function
+# -------------------------
+@curry
+def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
+    r"""Add a function to a model
+
+    Composition. Add a function to an existing model.
+
+    Args:
+        model (gr.model): Model to compose
+        fun (function): Function taking R^d -> R^r
+        var (list(string)): List of variable names or number of inputs
+        out (list(string)): List of output names or number of outputs
+        runtime (numeric): Estimated single-eval runtime (in seconds)
+
+    Returns:
+        gr.model: New model with added function
+
+    @pre (len(var) == d) | (var == d)
+    @pre (len(out) == r) | (var == r)
+
+    Examples:
+
+        >>> import grama as gr
+        >>> md = gr.Model("test") >> \
+        >>>     gr.function(
+        >>>         fun=lambda x: x,
+        >>>         var=1,
+        >>>         out=["y"],
+        >>>         name="identity"
+        >>>     )
+
+    """
+    model_new = model.copy()
+
+    ## Dispatch to core builder for consistent behavior
+    fun, var, out, name, runtime = _comp_function_data(
+        model, fun, var, out, name, runtime
+    )
+
     ## Add new function
     model_new.functions.append(gr.Function(fun, var, out, name, runtime))
     model_new.update()
@@ -94,6 +109,59 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
 @pipe
 def cp_function(*args, **kwargs):
     return comp_function(*args, **kwargs)
+
+
+# Add vectorized function
+# -------------------------
+@curry
+def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0):
+    r"""Add a vectorized function to a model
+
+    Composition. Add a function to an existing model. Function must be
+    vectorized over DataFrames.
+
+    Args:
+        model (gr.model): Model to compose
+        fun (function): Function taking R^d -> R^r; must be *vectorized* over DataFrames; it must take a DataFrame as input and return a new DataFrame
+        var (list(string)): List of variable names or number of inputs
+        out (list(string)): List of output names or number of outputs
+        runtime (numeric): Estimated single-eval runtime (in seconds)
+
+    Returns:
+        gr.model: New model with added function
+
+    @pre (len(var) == d) | (var == d)
+    @pre (len(out) == r) | (var == r)
+
+    Examples:
+
+        >>> import grama as gr
+        >>> md = gr.Model("test") >> \
+        >>>     gr.function(
+        >>>         fun=lambda x: x,
+        >>>         var=1,
+        >>>         out=["y"],
+        >>>         name="identity"
+        >>>     )
+
+    """
+    model_new = model.copy()
+
+    ## Dispatch to core builder for consistent behavior
+    fun, var, out, name, runtime = _comp_function_data(
+        model, fun, var, out, name, runtime
+    )
+
+    ## Add new vectorized function
+    model_new.functions.append(gr.FunctionVectorized(fun, var, out, name, runtime))
+    model_new.update()
+
+    return model_new
+
+
+@pipe
+def cp_vec_function(*args, **kwargs):
+    return comp_vec_function(*args, **kwargs)
 
 
 # Add bounds
