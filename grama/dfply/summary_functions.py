@@ -216,6 +216,18 @@ def sd(series):
 
 
 @make_symbolic
+def colsum(series):
+    """
+    Returns the sum of values in a series.
+
+    Args:
+        series (pandas.Series): column to summarize.
+    """
+
+    return series.sum()
+
+
+@make_symbolic
 def binomial_ci(series, alpha=0.05, method="wilson", side="both"):
     """Returns a binomial confidence interval
 
