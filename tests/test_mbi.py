@@ -82,6 +82,12 @@ class TestMBI(unittest.TestCase):
                 fun=lambda x: x[0], var=1, out=["y0"]
             ) >> gr.cp_function(fun=lambda x: x[0], var=1, out=["y0"])
 
+        ## Check vectorized builder
+        md_vec = gr.comp_vec_function(self.md, fun=lambda df: df[["x0"]], var=1, out=1)
+        self.assertTrue(
+            gr.df_equal(gr.df_make(x0=0, y0=0), md_vec >> gr.ev_df(df=gr.df_make(x0=0)))
+        )
+
     def test_comp_bounds(self):
         """Test comp_bounds()"""
 

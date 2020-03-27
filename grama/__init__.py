@@ -13,7 +13,8 @@ from .tran_tools import *
 
 # Integrate dfply tools
 # --------------------------------------------------
-from .dfply import Intention, dfdelegate, make_symbolic, var_in, convert_type
+from .dfply import Intention, dfdelegate, make_symbolic, convert_type
+from .dfply import var_in, is_nan, not_nan
 from .dfply import starts_with, ends_with, contains, matches, everything
 from .dfply import num_range, one_of, columns_between, columns_from, columns_to
 
@@ -67,7 +68,7 @@ from .dfply import summarize_each as tf_summarize_each
 
 # summary_functions.py
 from .dfply import mean, first, last, nth, n, n_distinct, IQR, quant
-from .dfply import colmin, colmax, median, var, sd, binomial_ci
+from .dfply import colmin, colmax, colsum, median, var, sd, binomial_ci
 
 # transform.py
 from .dfply import mutate as tf_mutate
