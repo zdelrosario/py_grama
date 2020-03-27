@@ -7,6 +7,7 @@ __all__ = [
     "pow",
     "as_integer",
     "as_float",
+    "as_str",
 ]
 
 from grama import make_symbolic
@@ -59,3 +60,7 @@ def as_integer(x):
 @make_symbolic
 def as_float(x):
     return x.astype(float)
+
+@make_symbolic
+def as_str(x):
+    return x.astype(str)
