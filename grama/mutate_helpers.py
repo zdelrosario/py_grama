@@ -5,7 +5,7 @@ __all__ = [
     "exp",
     "sqrt",
     "pow",
-    "as_integer",
+    "as_int",
     "as_float",
     "as_str",
 ]
@@ -52,14 +52,17 @@ def sqrt(x):
 def pow(x, p):
     return nppower(x, p)
 
+
 # Casting
 @make_symbolic
-def as_integer(x):
+def as_int(x):
     return x.astype(int)
+
 
 @make_symbolic
 def as_float(x):
     return x.astype(float)
+
 
 @make_symbolic
 def as_str(x):
