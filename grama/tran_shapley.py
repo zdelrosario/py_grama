@@ -48,6 +48,7 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20, inds=None):
         >>> import grama as gr
         >>> from grama.data import df_stang
         >>> X = gr.Intention()
+        >>> # Analyze all observations
         >>> (
         >>>     gr.tran_shapley_cohort(
         >>>         df_stang,
@@ -56,6 +57,19 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20, inds=None):
         >>>     )
         >>>     >> gr.tf_bind_cols(df_stang)
         >>>     >> gr.tf_filter(X.E_thick < 0)
+        >>> )
+        >>> # Compute subset of values
+        >>> (
+        >>>     gr.tran_shapley_cohort(
+        >>>         df_stang,
+        >>>         var=["thick", "ang"],
+        >>>         out=["E"],
+        >>>         inds=(
+        >>>             df_stang
+        >>>             >> gr.tf_filter(X.thick > 0.08)
+        >>>         ).index
+        >>>     )
+        >>>     >> gr.tf_bind_cols(df_stang)
         >>> )
 
     """
