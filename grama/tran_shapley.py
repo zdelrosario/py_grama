@@ -5,7 +5,7 @@ __all__ = [
 
 from grama import pipe
 from itertools import chain, combinations
-from numpy import all, number, sum, zeros
+from numpy import all, number, sum, zeros, empty, NaN
 from pandas import concat, DataFrame
 from scipy.special import comb
 from toolz import curry
@@ -19,27 +19,44 @@ def powerset(iterable):
 
 ## Cohort Shapley
 @curry
-def tran_shapley_cohort(df, var=None, out=None, bins=20):
+def tran_shapley_cohort(df, var=None, out=None, bins=20, inds=None):
     """Compute cohort shapley values
 
-    Assess the impact of each variable on each observation via cohort shapley
-    [1]. Shapley values are a game-theoretic way to assess the importance of
-    input variables (var) on each of a set of outputs (out). Since values are
-    computed on each observation, cohort shapley can distinguish cases where a
-    variable has a positive impact on one observation, and a negative impact on
-    a different observation.
+    Assess the impact of each variable on selected observations via cohort
+    shapley [1]. Shapley values are a game-theoretic way to assess the
+    importance of input variables (var) on each of a set of outputs (out). Since
+    values are computed on each observation, cohort shapley can distinguish
+    cases where a variable has a positive impact on one observation, and a
+    negative impact on a different observation.
 
     Note that cohort shapley is combinatorialy expensive in the number of
-    variables. Use with caution in cases of high dimensionality.
+    variables, and this expense is multiplied by the number of observations. Use
+    with caution in cases of high dimensionality. Consider using the `inds`
+    argument to analyze a small subset of your observations.
 
     Args:
         df (DataFrame): Variable and output data to analyze
         var (list of strings): Input variables
         out (list of strings): Outputs variables
         bins (integer): Number of "bins" to define coordinate refinement distance
+        inds (iterable of indices or None): Indices of rows to analyze
 
     References:
         - [1] Mase, Owen, and Seiler, "Explaining black box decisions by Shapley cohort refinement" (2019) Arxiv
+
+    Examples:
+        >>> import grama as gr
+        >>> from grama.data import df_stang
+        >>> X = gr.Intention()
+        >>> (
+        >>>     gr.tran_shapley_cohort(
+        >>>         df_stang,
+        >>>         var=["thick", "ang"],
+        >>>         out=["E"],
+        >>>     )
+        >>>     >> gr.tf_bind_cols(df_stang)
+        >>>     >> gr.tf_filter(X.E_thick < 0)
+        >>> )
 
     """
     ## Check invariants
@@ -49,6 +66,8 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20):
         raise ValueError("out must be subset of df.columns")
     if len(set(var).intersection(set(out))) != 0:
         raise ValueError("var and out must have empty intersection")
+    if inds is None:
+        inds = range(df.shape[0])
 
     ## Setup
     s = df.shape[0]  # Number of observations (subjects)
@@ -114,16 +133,20 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20):
         """Cohort shapley for all observations, single variable
         """
         poset = powerset(set(range(n)).difference({j}))
-        df_tmp = DataFrame(columns=out, data=zeros((s, len(out))))
+        data = zeros((s, len(out)))
+        df_tmp = DataFrame(columns=out, data=data)
 
         for p in poset:
             den = n * comb(n - 1, len(p))
 
             for t in range(s):
-                t1 = cohort_mean(t, list(set(p).union({j})))
-                t0 = cohort_mean(t, p)
+                if t in inds:
+                    t1 = cohort_mean(t, list(set(p).union({j})))
+                    t0 = cohort_mean(t, p)
 
-                df_tmp.iloc[t] = df_tmp.iloc[t] + (t1 - t0).loc[0] / den
+                    df_tmp.iloc[t] = df_tmp.iloc[t] + (t1 - t0).loc[0] / den
+                else:
+                    df_tmp.iloc[t] = NaN
 
         return df_tmp
 
@@ -131,7 +154,9 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20):
     df_res = DataFrame()
     for j in range(n):
         df_tmp = cohort_shapley(j)
-        df_tmp.columns = [df_tmp.columns[i] + "_" + var[j] for i in range(len(out))]
+        df_tmp.columns = [
+            df_tmp.columns[i] + "_" + var[j] for i in range(len(out))
+        ]
 
         df_res = concat((df_res, df_tmp), axis=1)
 
