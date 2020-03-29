@@ -24,7 +24,7 @@ from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
 from scipy.linalg import det, LinAlgError, solve
 from scipy.optimize import root_scalar
-from scipy.stats import norm
+from scipy.stats import norm, gaussian_kde
 from pandas import DataFrame, concat
 
 import grama as gr
@@ -228,6 +228,11 @@ class Marginal(ABC):
     def copy(self):
         pass
 
+    ## Fitting function
+    @abstractmethod
+    def fit(self, data):
+        pass
+
     ## Likelihood function
     @abstractmethod
     def l(self, x):
@@ -266,6 +271,11 @@ class MarginalNamed(Marginal):
 
         return new_marginal
 
+    ## Fitting function
+    def fit(self, data):
+        param = valid_dist[self.d_name].fit(data)
+        self.d_param = dict(zip(param_dist[dist], param))
+
     ## Likelihood function
     def l(self, x):
         return valid_dist[self.d_name].pdf(x, **self.d_param)
@@ -292,15 +302,25 @@ class MarginalGKDE(Marginal):
 
         self.kde = kde
         self.atol = atol
+        self._set_bracket()
 
+    def copy(self):
+        new_marginal = MarginalGKDE(kde=copy.deepcopy(self.kde), atol=self.atol,)
+
+        return new_marginal
+
+    def _set_bracket(self):
         ## Calibrate the quantile brackets based on desired accuracy
         bracket = [npmin(self.kde.dataset), npmax(self.kde.dataset)]
 
         sol_lo = root_scalar(
-            lambda x: atol - self.p(x), x0=bracket[0], x1=bracket[1], method="secant"
+            lambda x: self.atol - self.p(x),
+            x0=bracket[0],
+            x1=bracket[1],
+            method="secant",
         )
         sol_hi = root_scalar(
-            lambda x: 1 - atol - self.p(x),
+            lambda x: 1 - self.atol - self.p(x),
             x0=bracket[0],
             x1=bracket[1],
             method="secant",
@@ -308,10 +328,10 @@ class MarginalGKDE(Marginal):
 
         self.bracket = [sol_lo.root, sol_hi.root]
 
-    def copy(self):
-        new_marginal = MarginalGKDE(kde=copy.deepcopy(self.kde), atol=self.atol,)
-
-        return new_marginal
+    ## Fitting function
+    def fit(self, data):
+        self.kde = gaussian_kde(data)
+        self._set_bracket()
 
     ## Likelihood function
     def l(self, x):
