@@ -207,7 +207,7 @@ def cp_md_det(*args, **kwargs):
 # Add model as sampled function
 # -------------------------
 @curry
-def comp_md_sample(model, md=None, param=None):
+def comp_md_sample(model, md=None, param=None, rand2out=False):
     r"""Add a Model with sampled evaluation
 
     Composition. Add a model as function to an existing model. Evaluate the
@@ -220,6 +220,7 @@ def comp_md_sample(model, md=None, param=None):
         md (gr.model): Model to add as function
         param (dict): Parameters in md to treat as var; entries must be
             of the form "var": ("param1", "param2", ...)
+        rand2out (bool): Add model's var_rand to outputs (to track values)
 
     Returns:
         gr.model: New model with added function
@@ -256,7 +257,10 @@ def comp_md_sample(model, md=None, param=None):
         )
 
     ## Compute new model var + out
-    out = list(md.out) + list(md.var_rand)
+    if rand2out:
+        out = list(md.out) + list(md.var_rand)
+    else:
+        out = list(md.out)
     var = list(md.var_det) + list(param_dict.keys())
 
     ## Construct evaluator

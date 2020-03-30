@@ -110,7 +110,7 @@ class TestMBI(unittest.TestCase):
         )
 
         self.assertTrue(set(md_sample.var) == {"x0_loc", "x0_scale", "x1"})
-        self.assertTrue(set(md_sample.out) == {"x0", "y0"})
+        self.assertTrue(set(md_sample.out) == {"y0"})
         gr.eval_df(md_sample, df=gr.df_make(x0_loc=0, x0_scale=1, x1=0))
 
     def test_comp_bounds(self):
