@@ -3,6 +3,10 @@ __all__ = [
     "cp_function",
     "comp_vec_function",
     "cp_vec_function",
+    "comp_md_det",
+    "cp_md_det",
+    "comp_md_sample",
+    "cp_md_sample",
     "comp_bounds",
     "cp_bounds",
     "comp_copula_independence",
@@ -13,9 +17,11 @@ __all__ = [
     "cp_marginals",
 ]
 
+from collections import ChainMap
 import grama as gr
 from grama import pipe
 from toolz import curry
+from pandas import concat, DataFrame
 
 ## Model Building Interface (MBI) tools
 ##################################################
@@ -101,8 +107,8 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
 
     ## Add new function
     model_new.functions.append(gr.Function(fun, var, out, name, runtime))
-    model_new.update()
 
+    model_new.update()
     return model_new
 
 
@@ -154,14 +160,138 @@ def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0)
 
     ## Add new vectorized function
     model_new.functions.append(gr.FunctionVectorized(fun, var, out, name, runtime))
-    model_new.update()
 
+    model_new.update()
     return model_new
 
 
 @pipe
 def cp_vec_function(*args, **kwargs):
     return comp_vec_function(*args, **kwargs)
+
+
+# Add model as deterministic function
+# -------------------------
+@curry
+def comp_md_det(model, md=None):
+    r"""Add a Model with deterministic evaluation
+
+    Composition. Add a model as function to an existing model. Evaluate the
+    model deterministically (ignore any random variables).
+
+    Args:
+        model (gr.model): Model to compose
+        md (gr.model): Model to add as function
+
+    Returns:
+        gr.model: New model with added function
+
+    Examples:
+
+    """
+    if md is None:
+        raise ValueError("Must provide `md` argument")
+
+    model_new = model.copy()
+    model_new.functions.append(gr.FunctionModel(md))
+
+    model_new.update()
+    return model_new
+
+
+@pipe
+def cp_md_det(*args, **kwargs):
+    return comp_md_det(*args, **kwargs)
+
+
+# Add model as sampled function
+# -------------------------
+@curry
+def comp_md_sample(model, md=None, param=None, rand2out=False):
+    r"""Add a Model with sampled evaluation
+
+    Composition. Add a model as function to an existing model. Evaluate the
+    model via sampling (one sample per evaluation). Use `param` to turn model
+    parameters into variables of new model. Random variables of composed model
+    are turned into outputs of new model.
+
+    Args:
+        model (gr.model): Model to compose
+        md (gr.model): Model to add as function
+        param (dict): Parameters in md to treat as var; entries must be
+            of the form "var": ("param1", "param2", ...)
+        rand2out (bool): Add model's var_rand to outputs (to track values)
+
+    Returns:
+        gr.model: New model with added function
+
+    Examples:
+
+    """
+    ## Check invariants
+    if md is None:
+        raise ValueError("Must provide `md` argument")
+
+    diff = set(param.keys()).difference(set(md.var_rand))
+    if not len(diff) == 0:
+        raise ValueError(
+            "param must be in md.var_rand;\n"
+            "{{param}} - {{md.var_rand}} = {}".format(diff)
+        )
+
+    ## Setup
+    model_new = model.copy()
+    md_new = md.copy()
+
+    ## Construct parameter mapping
+    if param is None:
+        param_dict = {}
+    else:
+        param_dict = dict(
+            ChainMap(
+                *[
+                    {key + "_" + v: (key, v) for v in values}
+                    for key, values in param.items()
+                ]
+            )
+        )
+
+    ## Compute new model var + out
+    if rand2out:
+        out = list(md.out) + list(md.var_rand)
+    else:
+        out = list(md.out)
+    var = list(md.var_det) + list(param_dict.keys())
+
+    ## Construct evaluator
+    def _ev(md, df):
+        df_res = DataFrame()
+
+        for i in range(df.shape[0]):
+            ## Edit model
+            for var, pair in param_dict.items():
+                md.density.marginals[pair[0]].d_param[pair[1]] = df.iloc[i][var]
+
+            ## Evaluate
+            df_tmp = gr.eval_monte_carlo(
+                md, n=1, df_det=df.iloc[[i]][list(md.var_det)].reset_index(drop=True)
+            )
+
+            ## Concatenate
+            df_res = concat((df_res, df_tmp), axis=0)
+
+        return df_res[out].reset_index(drop=True)
+
+    ## Construct FunctionModel and assign
+    model_new.functions.append(gr.FunctionModel(md_new, ev=_ev, var=var, out=out))
+
+    model_new.update()
+    return model_new
+
+
+@pipe
+def cp_md_sample(*args, **kwargs):
+    return comp_md_sample(*args, **kwargs)
 
 
 # Add bounds

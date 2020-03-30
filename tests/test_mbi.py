@@ -88,6 +88,31 @@ class TestMBI(unittest.TestCase):
             gr.df_equal(gr.df_make(x0=0, y0=0), md_vec >> gr.ev_df(df=gr.df_make(x0=0)))
         )
 
+    def test_comp_model(self):
+        """Test model composition"""
+        md_inner = (
+            gr.Model("inner")
+            >> gr.cp_function(fun=lambda x: x[0] + x[1], var=2, out=1)
+            >> gr.cp_marginals(x0=dict(dist="norm", loc=0, scale=1))
+            >> gr.cp_copula_independence()
+        )
+
+        ## Deterministic composition
+        md_det = gr.Model("outer_det") >> gr.cp_md_det(md=md_inner)
+
+        self.assertTrue(set(md_det.var) == {"x0", "x1"})
+        self.assertTrue(md_det.out == ["y0"])
+        gr.eval_df(md_det, df=gr.df_make(x0=0, x1=0))
+
+        ## Deterministic composition
+        md_sample = gr.Model("outer_det") >> gr.cp_md_sample(
+            md=md_inner, param=dict(x0=("loc", "scale"))
+        )
+
+        self.assertTrue(set(md_sample.var) == {"x0_loc", "x0_scale", "x1"})
+        self.assertTrue(set(md_sample.out) == {"y0"})
+        gr.eval_df(md_sample, df=gr.df_make(x0_loc=0, x0_scale=1, x1=0))
+
     def test_comp_bounds(self):
         """Test comp_bounds()"""
 

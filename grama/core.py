@@ -7,6 +7,7 @@ __all__ = [
     "Domain",
     "Density",
     "Function",
+    "FunctionModel",
     "FunctionVectorized",
     "Marginal",
     "MarginalNamed",
@@ -24,7 +25,7 @@ from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
 from scipy.linalg import det, LinAlgError, solve
 from scipy.optimize import root_scalar
-from scipy.stats import norm
+from scipy.stats import norm, gaussian_kde
 from pandas import DataFrame, concat
 
 import grama as gr
@@ -146,6 +147,71 @@ class FunctionVectorized(Function):
         return func_new
 
 
+class FunctionModel(Function):
+    """gr.Model as gr.Function
+    """
+
+    def __init__(self, md, ev=None, var=None, out=None):
+        """Model-Function constructor
+
+        Construct a grama function from a model. Generally not called directly;
+        preferred usage is through gr.comp_model().
+
+        Args:
+            md (gr.Model): Grama model
+            ev (function): Evaluation function for model; must have signature
+                ev(md, df); must take df with columns matching given `var`
+            var (list): Variables used by ev() to evaluate md. Ignored if
+                default ev used.
+            out (list): Outputs returned by ev(). Ignored if default ev used.
+
+        Returns:
+            gr.Function: grama function
+
+        """
+        self.model = md
+
+        ## Construct default evaluator
+        if ev is None:
+
+            def _ev(md, df):
+                df_res = md.evaluate_df(df)
+                return df_res[md.out]
+
+            self.ev = _ev
+            self.var = self.model.var
+            self.out = self.model.out
+
+        ## Use given evaluator
+        else:
+            self.ev = ev
+            self.var = var
+            self.out = out
+
+        ## Copy model data
+        self.runtime = md.runtime(1)
+        self.name = copy.copy(md.name)
+
+    def eval(self, df):
+        """Evaluate function; DataFrame vectorized
+
+        Evaluate grama model as a function. Modify the parameters before
+
+        Args:
+            df (DataFrame): Input values to evaluate
+
+        Returns:
+            DataFrame: Result values
+
+        """
+        return self.ev(self.model, df)
+
+    def copy(self):
+        """Make a copy"""
+        func_new = FunctionModel(self.model, ev=self.ev, var=self.var, out=self.out)
+        return func_new
+
+
 # Domain parent class
 class Domain:
     """Parent class for input domains
@@ -228,6 +294,11 @@ class Marginal(ABC):
     def copy(self):
         pass
 
+    ## Fitting function
+    @abstractmethod
+    def fit(self, data):
+        pass
+
     ## Likelihood function
     @abstractmethod
     def l(self, x):
@@ -266,6 +337,11 @@ class MarginalNamed(Marginal):
 
         return new_marginal
 
+    ## Fitting function
+    def fit(self, data):
+        param = valid_dist[self.d_name].fit(data)
+        self.d_param = dict(zip(param_dist[dist], param))
+
     ## Likelihood function
     def l(self, x):
         return valid_dist[self.d_name].pdf(x, **self.d_param)
@@ -292,15 +368,25 @@ class MarginalGKDE(Marginal):
 
         self.kde = kde
         self.atol = atol
+        self._set_bracket()
 
+    def copy(self):
+        new_marginal = MarginalGKDE(kde=copy.deepcopy(self.kde), atol=self.atol,)
+
+        return new_marginal
+
+    def _set_bracket(self):
         ## Calibrate the quantile brackets based on desired accuracy
         bracket = [npmin(self.kde.dataset), npmax(self.kde.dataset)]
 
         sol_lo = root_scalar(
-            lambda x: atol - self.p(x), x0=bracket[0], x1=bracket[1], method="secant"
+            lambda x: self.atol - self.p(x),
+            x0=bracket[0],
+            x1=bracket[1],
+            method="secant",
         )
         sol_hi = root_scalar(
-            lambda x: 1 - atol - self.p(x),
+            lambda x: 1 - self.atol - self.p(x),
             x0=bracket[0],
             x1=bracket[1],
             method="secant",
@@ -308,10 +394,10 @@ class MarginalGKDE(Marginal):
 
         self.bracket = [sol_lo.root, sol_hi.root]
 
-    def copy(self):
-        new_marginal = MarginalGKDE(kde=copy.deepcopy(self.kde), atol=self.atol,)
-
-        return new_marginal
+    ## Fitting function
+    def fit(self, data):
+        self.kde = gaussian_kde(data)
+        self._set_bracket()
 
     ## Likelihood function
     def l(self, x):
@@ -1195,41 +1281,96 @@ class Model:
         for function in self.functions:
             print("    {}".format(function.summary()))
 
-    def make_dag(self):
+    def make_dag(self, expand=set()):
         """Generate a DAG for the model
         """
         G = nx.DiGraph()
+
         ## Inputs-to-Functions
         for f in self.functions:
+            # Expand composed models
+            if isinstance(f, FunctionModel) and (f.name in expand):
+                G_ref = f.model.make_dag(expand=expand - {f})
+                G_sub = nx.DiGraph()
+                # Add nodes
+                G_sub.add_node(f.name + ".var")
+                G_sub.add_node(f.name + ".out")
+                for g in f.model.functions:
+                    G_sub.add_node(f.name + "." + g.name)
+                # Add node metadata
+                nx.set_node_attributes(G_sub, f.name, "parent")
+
+                # Add edges
+                for u, v, d in G_ref.edges(data=True):
+                    # Add renamed edge
+                    if u == "(var)":
+                        G_sub.add_edge(f.name + ".var", f.name + "." + v, **d)
+                    elif v == "(out)":
+                        G_sub.add_edge(f.name + "." + u, f.name + ".out", **d)
+                    else:
+                        G_sub.add_edge(f.name + "." + u, f.name + "." + v, **d)
+
+                # Compose the graphs
+                G = nx.compose(G, G_sub)
+
             i_var = set(self.var).intersection(set(f.var))
             if len(i_var) > 0:
                 s_var = "{}".format(i_var)
-                G.add_edge("(Inputs)", f.name, label=s_var)
+                if isinstance(f, FunctionModel) and (f.name in expand):
+                    G.add_edge("(var)", f.name + ".var", label=s_var)
+                else:
+                    G.add_edge("(var)", f.name, label=s_var)
+
         ## Function-to-Function
         for i0 in range(len(self.functions)):
             for i1 in range(i0 + 1, len(self.functions)):
                 f0 = self.functions[i0]
                 f1 = self.functions[i1]
                 i_var = set(f0.out).intersection(set(f1.var))
+
+                ## If connected
                 if len(i_var) > 0:
                     s_var = "{}".format(i_var)
-                    G.add_edge(f0.name, f1.name, label=s_var)
+                    ## Handle composed models
+                    if isinstance(f0, FunctionModel) and (f0.name in expand):
+                        name0 = f0.name + ".out"
+                    else:
+                        name0 = f0.name
+                    if isinstance(f1, FunctionModel) and (f1.name in expand):
+                        name1 = f1.name + ".out"
+                    else:
+                        name1 = f1.name
+
+                    G.add_edge(name0, name1, label=s_var)
 
         ## Functions-to-Outputs
         for f in self.functions:
             i_out = set(self.out).intersection(set(f.out))
+
             if len(i_out) > 0:
                 s_out = "{}".format(i_out)
-                G.add_edge(f.name, "(Outputs)", label=s_out)
+                ## Target composed model's out
+                if isinstance(f, FunctionModel) and (f.name in expand):
+                    G.add_edge(f.name + ".out", "(out)", label=s_out)
+                ## An ordinary function
+                else:
+                    G.add_edge(f.name, "(out)", label=s_out)
+
+            # Add node metadata
+            nx.set_node_attributes(G, {f.name: {"parent": self.name}})
+
+        # Final metadata
+        nx.set_node_attributes(G, {"(var)": {"parent": self.name}})
+        nx.set_node_attributes(G, {"(out)": {"parent": self.name}})
 
         return G
 
-    def show_dag(self):
+    def show_dag(self, expand=set()):
         """Generate and show a DAG for the model
         """
         from matplotlib.pyplot import show as pltshow
 
-        G = self.make_dag()
+        G = self.make_dag(expand=expand)
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -1237,13 +1378,14 @@ class Model:
             edge_labels = dict(
                 [((u, v,), d["label"]) for u, v, d in G.edges(data=True)]
             )
-            n = len(self.functions)
+            n = G.size()
 
             ## Manual layout
-            if n == 1:
+            # if n == 2:
+            if False:
                 pos = {
-                    "(Inputs)": [-0.5, +0.5],
-                    "(Outputs)": [+0.5, -0.5],
+                    "(var)": [-0.5, +0.5],
+                    "(out)": [+0.5, -0.5],
                 }
                 pos[self.functions[0].name] = [+0.5, +0.5]
             ## Optimized layout
@@ -1260,11 +1402,20 @@ class Model:
                             "(Inputs)": [-0.5 * n, +0.5 * n],
                             "(Outputs)": [+0.5 * n, -0.5 * n],
                         },
-                        fixed=["(Inputs)", "(Outputs)"],
+                        fixed=["(var)", "(out)"],
                         threshold=1e-6,
                         iterations=100,
                     )
 
+            # Generate colormap
+            color_map = []
+            for node in G:
+                if G.nodes[node]["parent"] == self.name:
+                    color_map.append("blue")
+                else:
+                    color_map.append("green")
+
+            # Draw
             nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
-            nx.draw(G, pos, node_size=1000, with_labels=True)
+            nx.draw(G, pos, node_size=1000, with_labels=True, node_color=color_map)
             pltshow()
