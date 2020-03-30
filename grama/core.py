@@ -7,6 +7,7 @@ __all__ = [
     "Domain",
     "Density",
     "Function",
+    "FunctionModel",
     "FunctionVectorized",
     "Marginal",
     "MarginalNamed",
@@ -143,6 +144,71 @@ class FunctionVectorized(Function):
         func_new = FunctionVectorized(
             self.func, self.var, self.out, self.name, self.runtime
         )
+        return func_new
+
+
+class FunctionModel(Function):
+    """gr.Model as gr.Function
+    """
+
+    def __init__(self, md, ev=None, var=None, out=None):
+        """Model-Function constructor
+
+        Construct a grama function from a model. Generally not called directly;
+        preferred usage is through gr.comp_model().
+
+        Args:
+            md (gr.Model): Grama model
+            ev (function): Evaluation function for model; must have signature
+                ev(md, df); must take df with columns matching given `var`
+            var (list): Variables used by ev() to evaluate md. Ignored if
+                default ev used.
+            out (list): Outputs returned by ev(). Ignored if default ev used.
+
+        Returns:
+            gr.Function: grama function
+
+        """
+        self.model = md
+
+        ## Construct default evaluator
+        if ev is None:
+
+            def _ev(md, df):
+                df_res = md.evaluate_df(df)
+                return df_res[md.out]
+
+            self.ev = _ev
+            self.var = self.model.var
+            self.out = self.model.out
+
+        ## Use given evaluator
+        else:
+            self.ev = ev
+            self.var = var
+            self.out = out
+
+        ## Copy model data
+        self.runtime = md.runtime(1)
+        self.name = copy.copy(md.name)
+
+    def eval(self, df):
+        """Evaluate function; DataFrame vectorized
+
+        Evaluate grama model as a function. Modify the parameters before
+
+        Args:
+            df (DataFrame): Input values to evaluate
+
+        Returns:
+            DataFrame: Result values
+
+        """
+        return self.ev(self.model, df)
+
+    def copy(self):
+        """Make a copy"""
+        func_new = FunctionModel(self.func, self.model, self.ev, self.var)
         return func_new
 
 
