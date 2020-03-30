@@ -172,7 +172,7 @@ class TestModel(unittest.TestCase):
 
     def test_dag(self):
         md = (
-            gr.Model()
+            gr.Model("model")
             >> gr.cp_function(lambda x: x, var=1, out=1)
             >> gr.cp_function(lambda x: x[0] + x[1], var=["x0", "y0"], out=1)
         )
@@ -183,6 +183,7 @@ class TestModel(unittest.TestCase):
         G_true.add_edge("(var)", "f1", label="{}".format({"x0"}))
         G_true.add_edge("f0", "f1", label="{}".format({"y0"}))
         G_true.add_edge("f1", "(out)", label="{}".format({"y1"}))
+        nx.set_node_attributes(G_true, "model", "parent")
 
         self.assertTrue(
             nx.is_isomorphic(
