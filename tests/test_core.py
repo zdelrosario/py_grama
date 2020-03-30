@@ -178,11 +178,11 @@ class TestModel(unittest.TestCase):
         )
 
         G_true = nx.DiGraph()
-        G_true.add_edge("(Inputs)", "f0", label="{}".format({"x0"}))
-        G_true.add_edge("f0", "(Outputs)", label="{}".format({"y0"}))
-        G_true.add_edge("(Inputs)", "f1", label="{}".format({"x0"}))
+        G_true.add_edge("(var)", "f0", label="{}".format({"x0"}))
+        G_true.add_edge("f0", "(out)", label="{}".format({"y0"}))
+        G_true.add_edge("(var)", "f1", label="{}".format({"x0"}))
         G_true.add_edge("f0", "f1", label="{}".format({"y0"}))
-        G_true.add_edge("f1", "(Outputs)", label="{}".format({"y1"}))
+        G_true.add_edge("f1", "(out)", label="{}".format({"y1"}))
 
         self.assertTrue(
             nx.is_isomorphic(
