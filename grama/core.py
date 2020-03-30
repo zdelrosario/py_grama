@@ -1297,6 +1297,8 @@ class Model:
                 G_sub.add_node(f.name + ".out")
                 for g in f.model.functions:
                     G_sub.add_node(f.name + "." + g.name)
+                # Add node metadata
+                nx.set_node_attributes(G_sub, f.name, "parent")
 
                 # Add edges
                 for u, v, d in G_ref.edges(data=True):
@@ -1354,6 +1356,13 @@ class Model:
                 else:
                     G.add_edge(f.name, "(out)", label=s_out)
 
+            # Add node metadata
+            nx.set_node_attributes(G, {f.name: {"parent": self.name}})
+
+        # Final metadata
+        nx.set_node_attributes(G, {"(var)": {"parent": self.name}})
+        nx.set_node_attributes(G, {"(out)": {"parent": self.name}})
+
         return G
 
     def show_dag(self, expand=set()):
@@ -1398,6 +1407,15 @@ class Model:
                         iterations=100,
                     )
 
+            # Generate colormap
+            color_map = []
+            for node in G:
+                if G.nodes[node]["parent"] == self.name:
+                    color_map.append("blue")
+                else:
+                    color_map.append("green")
+
+            # Draw
             nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
-            nx.draw(G, pos, node_size=1000, with_labels=True)
+            nx.draw(G, pos, node_size=1000, with_labels=True, node_color=color_map)
             pltshow()
