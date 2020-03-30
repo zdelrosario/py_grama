@@ -211,7 +211,9 @@ def comp_md_sample(model, md=None, param=None):
     r"""Add a Model with sampled evaluation
 
     Composition. Add a model as function to an existing model. Evaluate the
-    model via sampling (one sample per evaluation).
+    model via sampling (one sample per evaluation). Use `param` to turn model
+    parameters into variables of new model. Random variables of composed model
+    are turned into outputs of new model.
 
     Args:
         model (gr.model): Model to compose

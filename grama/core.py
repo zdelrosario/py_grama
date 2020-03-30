@@ -208,7 +208,7 @@ class FunctionModel(Function):
 
     def copy(self):
         """Make a copy"""
-        func_new = FunctionModel(self.func, self.model, self.ev, self.var)
+        func_new = FunctionModel(self.model, ev=self.ev, var=self.var, out=self.out)
         return func_new
 
 

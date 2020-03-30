@@ -367,6 +367,27 @@ class TestFunction(unittest.TestCase):
             self.df, self.fcn_vec.eval(self.df), check_dtype=False
         )
 
+    def test_function_model(self):
+        md_base = gr.Model() >> gr.cp_function(
+            fun=lambda x: x, var=1, out=1, name="name", runtime=1
+        )
+
+        ## Base constructor
+        func = gr.FunctionModel(md_base)
+
+        self.assertTrue(md_base.var == func.var)
+        self.assertTrue(md_base.out == func.out)
+        self.assertTrue(md_base.name == func.name)
+        self.assertTrue(md_base.runtime(1) == func.runtime)
+
+        ## Test copy
+        func_copy = func.copy()
+
+        self.assertTrue(func_copy.var == func.var)
+        self.assertTrue(func_copy.out == func.out)
+        self.assertTrue(func_copy.name == func.name)
+        self.assertTrue(func_copy.runtime == func.runtime)
+
 
 ## Run tests
 if __name__ == "__main__":
