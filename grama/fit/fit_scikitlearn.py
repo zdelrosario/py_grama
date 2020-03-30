@@ -1,9 +1,15 @@
-__all__ = ["fit_gp", "ft_gp"]
+__all__ = [
+    "fit_gp",
+    "ft_gp",
+    "fit_kmeans",
+    "ft_kmeans",
+]
 
 ## Fitting via sklearn package
 try:
     from sklearn.gaussian_process import GaussianProcessRegressor
     from sklearn.gaussian_process.kernels import RBF, ConstantKernel as Con
+    from sklearn.cluster import KMeans
 except ModuleNotFoundError:
     raise ModuleNotFoundError("module sklearn not found")
 
@@ -187,3 +193,79 @@ def fit_gp(
 @pipe
 def ft_gp(*args, **kwargs):
     return fit_gp(*args, **kwargs)
+
+
+## Fit kmeans clustering model
+# --------------------------------------------------
+@curry
+def fit_kmeans(
+    df,
+    var=None,
+    colname="cluster_id",
+    n_clusters=8,
+    init="k-means++",
+    n_init=10,
+    max_iter=30,
+    tol=1e-4,
+    precompute_distances="auto",
+    verbose=0,
+    random_state=None,
+):
+    r"""K-means cluster a dataset
+
+
+
+    Args:
+        df (DataFrame): Hybrid point results from gr.eval_hybrid()
+        var (list or None): Variables in df on which to cluster. Use None to
+            cluster on all variables.
+        colname (string): Name of cluster id; will be output in cluster model.
+
+    Returns:
+        gr.Model: Model that labels input data
+
+    Notes:
+        - A wrapper for sklearn.cluster.KMeans
+
+    References:
+        Scikit-learn: Machine Learning in Python, Pedregosa et al. JMLR 12, pp. 2825-2830, 2011.
+
+    Examples:
+
+    """
+    ## Check invariants
+    if var is None:
+        var = list(df.columns).copy()
+    else:
+        var = list(var).copy()
+        diff = set(var).difference(set(df.columns))
+        if len(diff) > 0:
+            raise ValueError(
+                "`var` must be subset of `df.columns`\n" "diff = {}".format(diff)
+            )
+
+    ## Generate clustering
+    kmeans = KMeans(
+        n_clusters=n_clusters,
+        init=init,
+        n_init=n_init,
+        max_iter=max_iter,
+        tol=tol,
+        precompute_distances=precompute_distances,
+        verbose=verbose,
+        random_state=random_state,
+    ).fit(df[var].values)
+
+    ## Build grama model
+    def fun_cluster(df):
+        res = kmeans.predict(df[var].values)
+        return DataFrame(data={colname: res})
+
+    md = gr.Model() >> gr.cp_vec_function(fun=fun_cluster, var=var, out=[colname])
+
+    return md
+
+
+@pipe
+def ft_kmeans(*args, **kwargs):
+    return fit_kmeans(*args, **kwargs)
