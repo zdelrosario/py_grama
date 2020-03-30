@@ -1281,41 +1281,87 @@ class Model:
         for function in self.functions:
             print("    {}".format(function.summary()))
 
-    def make_dag(self):
+    def make_dag(self, expand=set()):
         """Generate a DAG for the model
         """
         G = nx.DiGraph()
+
         ## Inputs-to-Functions
         for f in self.functions:
+            # Expand composed models
+            if isinstance(f, FunctionModel) and (f.name in expand):
+                G_ref = f.model.make_dag(expand=expand - {f})
+                G_sub = nx.DiGraph()
+                # Add nodes
+                G_sub.add_node(f.name + ".var")
+                G_sub.add_node(f.name + ".out")
+                for g in f.model.functions:
+                    G_sub.add_node(f.name + "." + g.name)
+
+                # Add edges
+                for u, v, d in G_ref.edges(data=True):
+                    # Add renamed edge
+                    if u == "(var)":
+                        G_sub.add_edge(f.name + ".var", f.name + "." + v, **d)
+                    elif v == "(out)":
+                        G_sub.add_edge(f.name + "." + u, f.name + ".out", **d)
+                    else:
+                        G_sub.add_edge(f.name + "." + u, f.name + "." + v, **d)
+
+                # Compose the graphs
+                G = nx.compose(G, G_sub)
+
             i_var = set(self.var).intersection(set(f.var))
             if len(i_var) > 0:
                 s_var = "{}".format(i_var)
-                G.add_edge("(Inputs)", f.name, label=s_var)
+                if isinstance(f, FunctionModel) and (f.name in expand):
+                    G.add_edge("(var)", f.name + ".var", label=s_var)
+                else:
+                    G.add_edge("(var)", f.name, label=s_var)
+
         ## Function-to-Function
         for i0 in range(len(self.functions)):
             for i1 in range(i0 + 1, len(self.functions)):
                 f0 = self.functions[i0]
                 f1 = self.functions[i1]
                 i_var = set(f0.out).intersection(set(f1.var))
+
+                ## If connected
                 if len(i_var) > 0:
                     s_var = "{}".format(i_var)
-                    G.add_edge(f0.name, f1.name, label=s_var)
+                    ## Handle composed models
+                    if isinstance(f0, FunctionModel) and (f0.name in expand):
+                        name0 = f0.name + ".out"
+                    else:
+                        name0 = f0.name
+                    if isinstance(f1, FunctionModel) and (f1.name in expand):
+                        name1 = f1.name + ".out"
+                    else:
+                        name1 = f1.name
+
+                    G.add_edge(name0, name1, label=s_var)
 
         ## Functions-to-Outputs
         for f in self.functions:
             i_out = set(self.out).intersection(set(f.out))
+
             if len(i_out) > 0:
                 s_out = "{}".format(i_out)
-                G.add_edge(f.name, "(Outputs)", label=s_out)
+                ## Target composed model's out
+                if isinstance(f, FunctionModel) and (f.name in expand):
+                    G.add_edge(f.name + ".out", "(out)", label=s_out)
+                ## An ordinary function
+                else:
+                    G.add_edge(f.name, "(out)", label=s_out)
 
         return G
 
-    def show_dag(self):
+    def show_dag(self, expand=set()):
         """Generate and show a DAG for the model
         """
         from matplotlib.pyplot import show as pltshow
 
-        G = self.make_dag()
+        G = self.make_dag(expand=expand)
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -1323,13 +1369,14 @@ class Model:
             edge_labels = dict(
                 [((u, v,), d["label"]) for u, v, d in G.edges(data=True)]
             )
-            n = len(self.functions)
+            n = G.size()
 
             ## Manual layout
-            if n == 1:
+            # if n == 2:
+            if False:
                 pos = {
-                    "(Inputs)": [-0.5, +0.5],
-                    "(Outputs)": [+0.5, -0.5],
+                    "(var)": [-0.5, +0.5],
+                    "(out)": [+0.5, -0.5],
                 }
                 pos[self.functions[0].name] = [+0.5, +0.5]
             ## Optimized layout
@@ -1346,7 +1393,7 @@ class Model:
                             "(Inputs)": [-0.5 * n, +0.5 * n],
                             "(Outputs)": [+0.5 * n, -0.5 * n],
                         },
-                        fixed=["(Inputs)", "(Outputs)"],
+                        fixed=["(var)", "(out)"],
                         threshold=1e-6,
                         iterations=100,
                     )
