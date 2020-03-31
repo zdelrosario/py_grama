@@ -13,16 +13,7 @@ except ModuleNotFoundError:
 
 from grama import pipe
 from toolz import curry
-from pandas import concat, DataFrame
-
-"def fun_featurize(df):\n",
-"    ## Featurize\n",
-"    df_tmp = StrToComposition().featurize_dataframe(df, \"FORMULA\")\n",
-"    ep_feat = ElementProperty.from_preset(preset_name=\"magpie\")\n",
-"    df_tmp = ep_feat.featurize_dataframe(df_tmp, col_id=\"composition\")\n",
-"    \n",
-"    ## Return only the Magpie columns\n",
-"    return df_tmp >> gr.tf_select(gr.starts_with(\"Magpie\"))\n",
+from pandas import concat
 
 ## Compute matminer featurization
 # --------------------------------------------------
@@ -51,6 +42,12 @@ def tran_feat_composition(
         Ward, L., Dunn, A., Faghaninia, A., Zimmermann, N. E. R., Bajaj, S., Wang, Q., Montoya, J. H., Chen, J., Bystrom, K., Dylla, M., Chard, K., Asta, M., Persson, K., Snyder, G. J., Foster, I., Jain, A., Matminer: An open source toolkit for materials data mining. Comput. Mater. Sci. 152, 60-69 (2018).
 
     Examples:
+        >>> import grama as gr
+        >>> from grama.tran import tf_feat_composition
+        >>> (
+        >>>     gr.df_make(FORMULA=["C6H12O6"])
+        >>>     >> gr.tf_feat_composition()
+        >>> )
 
     """
     ## Check invariants
