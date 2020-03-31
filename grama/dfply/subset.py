@@ -64,7 +64,7 @@ def mask(df, *args):
         if arg.dtype != bool:
             raise Exception("Arguments must be boolean.")
         mask = mask & arg.reset_index(drop=True)
-    return df[mask.values]
+    return df[mask.values].reset_index(drop=True)
 
 
 filter_by = mask  # alias for mask()
