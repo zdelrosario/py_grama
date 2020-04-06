@@ -13,24 +13,16 @@ class TestFits(unittest.TestCase):
     """
 
     def setUp(self):
-        self.df = pd.DataFrame(dict(
-            x=[0, 1, 2],
-            y=[0, 1, 2],
-            z=[1, 1, 1]
-        ))
+        self.df = pd.DataFrame(dict(x=[0, 1, 2], y=[0, 1, 2], z=[1, 1, 1]))
         self.inputs = ["x"]
         self.outputs = ["y", "z"]
 
     def test_gp(self):
-        md_true = gr.Model() >> \
-                  gr.cp_function(
-                      fun=lambda x: [x, x+1],
-                      var=["x"],
-                      out=["y", "z"]
-                  ) >> \
-                  gr.cp_marginals(
-                      x={"dist": "uniform", "loc": 0, "scale": 2}
-                  )
+        md_true = (
+            gr.Model()
+            >> gr.cp_function(fun=lambda x: [x, x + 1], var=["x"], out=["y", "z"])
+            >> gr.cp_marginals(x={"dist": "uniform", "loc": 0, "scale": 2})
+        )
 
         md_fit = fit.fit_gp(self.df, md=md_true)
         df_res = gr.eval_df(md_fit, self.df[self.inputs])
@@ -43,3 +35,6 @@ class TestFits(unittest.TestCase):
 
         ## Fit copies model data
         self.assertTrue(set(self.outputs) == set(md_true.out))
+
+    def test_rf(self):
+        pass
