@@ -17,24 +17,7 @@ from pandas import concat, DataFrame
 # --------------------------------------------------
 @curry
 def tran_tsne(
-    df,
-    var=None,
-    out="xi",
-    keep=True,
-    append=False,
-    n_dim=2,
-    perplexity=30.0,
-    early_exaggeration=12.0,
-    learning_rate=200.0,
-    n_iter=1000,
-    n_iter_without_progress=300,
-    min_grad_norm=1e-07,
-    metric="euclidean",
-    init="random",
-    verbose=0,
-    random_state=None,
-    method="barnes_hut",
-    angle=0.5,
+    df, var=None, out="xi", keep=True, append=False, n_dim=2, seed=None, **kwargs
 ):
     r"""t-SNE dimension reduction of a dataset
 
@@ -49,11 +32,19 @@ def tran_tsne(
         append (bool): Append results to original columns?
         n_dim (int): Target dimensionality
 
+    Kwargs:
+        n_iter (int): Maximum number of iterations for optimization. As Wattenberg et al. note, this is the most important parameter in using t-SNE. If you see strange "pinched" shapes, increase n_iter.
+        perplexity (int): Usually between 5 and 50. Low perplexity means local variations dominate; High perplexity tends to merge clusters.
+        early_exaggeration (float):
+        learning_rate (float):
+
     Notes:
         - A wrapper for sklearn.manifold.TSNE
 
     References:
         Scikit-learn: Machine Learning in Python, Pedregosa et al. JMLR 12, pp. 2825-2830, 2011.
+
+        Wattenberg, Viegas, and Johnson, "How to use t-SNE effectively" (2016) Distil.pub
 
     Examples:
 
@@ -72,21 +63,9 @@ def tran_tsne(
 
     ## Reduce dimensionality
     df_res = DataFrame(
-        data=TSNE(
-            n_components=n_dim,
-            perplexity=perplexity,
-            early_exaggeration=early_exaggeration,
-            learning_rate=learning_rate,
-            n_iter=n_iter,
-            n_iter_without_progress=n_iter_without_progress,
-            min_grad_norm=min_grad_norm,
-            metric=metric,
-            init="random",
-            verbose=verbose,
-            random_state=random_state,
-            method=method,
-            angle=angle,
-        ).fit_transform(df[var].values),
+        data=TSNE(n_components=n_dim, random_state=seed, **kwargs).fit_transform(
+            df[var].values
+        ),
         columns=[out + "{}".format(i) for i in range(n_dim)],
     )
 

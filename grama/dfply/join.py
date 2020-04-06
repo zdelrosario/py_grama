@@ -280,7 +280,7 @@ def anti_join(df, other, **kwargs):
 
 
 @pipe
-def bind_rows(df, other, join="outer", ignore_index=False):
+def bind_rows(df, other, join="outer", ignore_index=False, reset=True):
     """
     Binds DataFrames "vertically", stacking them together. This is equivalent
     to `pd.concat` with `axis=0`.
@@ -295,10 +295,17 @@ def bind_rows(df, other, join="outer", ignore_index=False):
             drop them.
         ignore_index (bool): Indicates whether to consider pandas indices as
             part of the concatenation (defaults to `False`).
+        reset (bool): Indicates whether to reset the dataframe index after
+            bindin (defaults to `True`).
+
     """
 
     df = pd.concat([df, other], join=join, ignore_index=ignore_index, axis=0)
-    return df
+
+    if reset:
+        return df.reset_index(drop=True)
+    else:
+        return df
 
 
 @pipe

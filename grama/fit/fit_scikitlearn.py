@@ -1,6 +1,8 @@
 __all__ = [
     "fit_gp",
     "ft_gp",
+    "fit_rf",
+    "ft_rf",
     "fit_kmeans",
     "ft_kmeans",
 ]
@@ -10,6 +12,8 @@ try:
     from sklearn.gaussian_process import GaussianProcessRegressor
     from sklearn.gaussian_process.kernels import RBF, ConstantKernel as Con
     from sklearn.cluster import KMeans
+    from sklearn.ensemble import RandomForestRegressor
+
 except ModuleNotFoundError:
     raise ModuleNotFoundError("module sklearn not found")
 
@@ -195,22 +199,112 @@ def ft_gp(*args, **kwargs):
     return fit_gp(*args, **kwargs)
 
 
+## Fit random forest model with sklearn
+# --------------------------------------------------
+@curry
+def fit_rf(
+    df,
+    md=None,
+    var=None,
+    out=None,
+    domain=None,
+    density=None,
+    seed=None,
+    suppress_warnings=True,
+    **kwargs
+):
+    r"""Fit a random forest
+
+    Fit a random forest to given data. Specify inputs and outputs, or inherit
+    from an existing model.
+
+    Args:
+        df (DataFrame): Data for function fitting
+        md (gr.Model): Model from which to inherit metadata
+        var (list(str) or None): List of features or None for all except outputs
+        out (list(str)): List of outputs to fit
+        domain (gr.Domain): Domain for new model
+        density (gr.Density): Density for new model
+        seed (int or None): Random seed for fitting process
+        suppress_warnings (bool): Suppress warnings when fitting?
+
+    Keyword Arguments:
+        n_estimators (int):
+        criterion (int):
+        max_depth (int or None):
+        min_samples_split (int, float):
+        min_samples_leaf (int, float):
+        min_weight_fraction_leaf (float):
+        max_features (int, float, string):
+        max_leaf_nodes (int or None):
+        min_impurity_decrease (float):
+        min_impurity_split (float):
+        bootstrap (bool):
+        oob_score (bool):
+        n_jobs (int or None):
+        random_state (int):
+
+    Returns:
+        gr.Model: A grama model with fitted function(s)
+
+    Notes:
+        - Wrapper for sklearn.ensemble.RandomForestRegressor
+
+    """
+    if suppress_warnings:
+        filterwarnings("ignore")
+
+    n_obs, n_in = df.shape
+
+    ## Infer fitting metadata, if available
+    if not (md is None):
+        domain = md.domain
+        density = md.density
+        out = md.out
+
+    ## Check invariants
+    if not set(out).issubset(set(df.columns)):
+        raise ValueError("out must be subset of df.columns")
+    ## Default input value
+    if var is None:
+        var = list(set(df.columns).difference(set(out)))
+    ## Check more invariants
+    set_inter = set(out).intersection(set(var))
+    if len(set_inter) > 0:
+        raise ValueError(
+            "outputs and inputs must be disjoint; intersect = {}".format(set_inter)
+        )
+    if not set(var).issubset(set(df.columns)):
+        raise ValueError("var must be subset of df.columns")
+
+    ## Construct gaussian process for each output
+    functions = []
+
+    for output in out:
+        rf = RandomForestRegressor(random_state=seed, **kwargs)
+        rf.fit(df[var], df[output])
+        name = "RF"
+
+        def fun_regression(df):
+            df_res = DataFrame({output: rf.predict(df[var])})
+            return df_res
+
+        fun = gr.FunctionVectorized(fun_regression, var, [output], name, 0)
+        functions.append(fun)
+
+    ## Construct model
+    return gr.Model(functions=functions, domain=domain, density=density)
+
+
+@pipe
+def ft_rf(*args, **kwargs):
+    return fit_rf(*args, **kwargs)
+
+
 ## Fit kmeans clustering model
 # --------------------------------------------------
 @curry
-def fit_kmeans(
-    df,
-    var=None,
-    colname="cluster_id",
-    n_clusters=8,
-    init="k-means++",
-    n_init=10,
-    max_iter=30,
-    tol=1e-4,
-    precompute_distances="auto",
-    verbose=0,
-    random_state=None,
-):
+def fit_kmeans(df, var=None, colname="cluster_id", seed=None, **kwargs):
     r"""K-means cluster a dataset
 
 
@@ -220,6 +314,15 @@ def fit_kmeans(
         var (list or None): Variables in df on which to cluster. Use None to
             cluster on all variables.
         colname (string): Name of cluster id; will be output in cluster model.
+
+    Kwargs:
+        n_estimators (int):
+        criterion (string):
+        max_depth (integer or None):
+        min_samples_split (int, float):
+        min_samples_leaf (int, float):
+
+        random_state (int or None):
 
     Returns:
         gr.Model: Model that labels input data
@@ -245,16 +348,7 @@ def fit_kmeans(
             )
 
     ## Generate clustering
-    kmeans = KMeans(
-        n_clusters=n_clusters,
-        init=init,
-        n_init=n_init,
-        max_iter=max_iter,
-        tol=tol,
-        precompute_distances=precompute_distances,
-        verbose=verbose,
-        random_state=random_state,
-    ).fit(df[var].values)
+    kmeans = KMeans(random_state=seed, **kwargs).fit(df[var].values)
 
     ## Build grama model
     def fun_cluster(df):
