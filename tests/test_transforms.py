@@ -7,6 +7,7 @@ import sys
 from context import grama as gr
 from context import data
 from context import models
+from context import tran
 
 ## Test transform tools
 ##################################################
@@ -121,34 +122,22 @@ class TestSummaries(unittest.TestCase):
         self.assertTrue(set(df_sobol["ind"]) == set(["S_x0", "S_x1"]))
 
     def test_pca(self):
-        df_test = pd.DataFrame(dict(
-            x0=[1, 2, 3],
-            x1=[1, 2, 3]
-        ))
-        df_offset = pd.DataFrame(dict(
-            x0=[1, 2, 3],
-            x1=[3, 4, 5]
-        ))
-        df_scaled = pd.DataFrame(dict(
-            x0=[1, 2, 3],
-            x1=[1, 3, 5]
-        ))
+        df_test = pd.DataFrame(dict(x0=[1, 2, 3], x1=[1, 2, 3]))
+        df_offset = pd.DataFrame(dict(x0=[1, 2, 3], x1=[3, 4, 5]))
+        df_scaled = pd.DataFrame(dict(x0=[1, 2, 3], x1=[1, 3, 5]))
 
-        df_true = pd.DataFrame(dict(
-            lam=[2, 0],
-            x0=[1/np.sqrt(2), 1/np.sqrt(2)],
-            x1=[1/np.sqrt(2),-1/np.sqrt(2)]
-        ))
+        df_true = pd.DataFrame(
+            dict(
+                lam=[2, 0],
+                x0=[1 / np.sqrt(2), 1 / np.sqrt(2)],
+                x1=[1 / np.sqrt(2), -1 / np.sqrt(2)],
+            )
+        )
 
         ## Check correctness
         df_pca = df_test >> gr.tf_pca()
 
-        self.assertTrue(
-            np.allclose(
-                df_true.lam,
-                df_pca.lam
-            )
-        )
+        self.assertTrue(np.allclose(df_true.lam, df_pca.lam))
 
         ## Offset data should not affect results
         df_pca_off = df_offset >> gr.tf_pca()
@@ -157,6 +146,7 @@ class TestSummaries(unittest.TestCase):
         ## Check standardized form
         df_pca_scaled = df_test >> gr.tf_pca(standardize=True)
         self.assertTrue(gr.df_equal(df_pca, df_pca_scaled))
+
 
 # --------------------------------------------------
 class TestAsub(unittest.TestCase):
@@ -280,3 +270,32 @@ class TestInner(unittest.TestCase):
             check_dtype=False,
             check_column_type=False,
         )
+
+
+# --------------------------------------------------
+class TestDR(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_tsne(self):
+        ## t-SNE executes successfully
+        df_tsne = (
+            data.df_diamonds >> gr.tf_sample(n=100) >> tran.tf_tsne(var=["x", "y", "z"])
+        )
+
+
+# --------------------------------------------------
+class TestMatminer(unittest.TestCase):
+    def test_magpie_featurizer(self):
+        df_magpie_check = pd.DataFrame(
+            {
+                "MagpieData minimum Number": [1.0],
+                "MagpieData maximum Number": [8.0],
+                "MagpieData range Number": [7.0],
+            }
+        )
+        df_test = gr.df_make(FORMULA=["C6H12O6"])
+
+        df_res = df_test >> tran.tf_feat_composition()
+
+        self.assertTrue(gr.df_equal(df_test, df_res[df_test.columns]))
