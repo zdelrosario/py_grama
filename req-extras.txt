@@ -1,0 +1,4 @@
+matminer
+sklearn
+statsmodels
+pyDOE

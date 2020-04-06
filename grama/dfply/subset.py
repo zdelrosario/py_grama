@@ -25,7 +25,7 @@ def tail(df, n=5):
 
 @dfpipe
 def sample(df, *args, **kwargs):
-    return df.sample(*args, **kwargs)
+    return df.sample(*args, **kwargs).reset_index(drop=True)
 
 
 @pipe
@@ -33,8 +33,8 @@ def sample(df, *args, **kwargs):
 @symbolic_evaluation(eval_as_label=["*"])
 def distinct(df, *args, **kwargs):
     if not args:
-        return df.drop_duplicates(**kwargs)
-    return df.drop_duplicates(list(args), **kwargs)
+        return df.drop_duplicates(**kwargs).reset_index(drop=True)
+    return df.drop_duplicates(list(args), **kwargs).reset_index(drop=True)
 
 
 @dfpipe
@@ -47,9 +47,9 @@ def row_slice(df, indices):
         indices = indices.values
 
     if indices.dtype == bool:
-        return df.loc[indices, :]
+        return df.loc[indices, :].reset_index(drop=True)
     else:
-        return df.iloc[indices, :]
+        return df.iloc[indices, :].reset_index(drop=True)
 
 
 # ------------------------------------------------------------------------------
@@ -85,5 +85,10 @@ def top_n(df, n=None, ascending=True, col=None):
 
 
 @dfpipe
-def pull(df, column=-1):
-    return df.ix[:, column]
+def pull(df, col=-1):
+    if not isinstance(col, pd.Series):
+        col = df.columns[-1]
+    else:
+        col = col._name
+
+    return df[col]

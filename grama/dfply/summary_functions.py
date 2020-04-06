@@ -2,6 +2,7 @@ from .base import *
 from .vector import *
 
 from statsmodels.stats.proportion import proportion_confint
+from numpy import sqrt, power
 
 # ------------------------------------------------------------------------------
 # Series summary functions
@@ -225,6 +226,89 @@ def colsum(series):
     """
 
     return series.sum()
+
+
+@make_symbolic
+def mse(series_pred, series_meas):
+    """Compute MSE
+
+    Returns the mean-square-error (MSE) between predicted and measured
+    values.
+
+    Args:
+        series_pred (pandas.Series): column of predictions
+        series_meas (pandas.Series): column of predictions
+
+    """
+
+    return (series_pred - series_meas).pow(2).mean()
+
+
+@make_symbolic
+def rmse(series_pred, series_meas):
+    """Compute RMSE
+
+    Returns the root-mean-square-error (RMSE) between predicted and measured
+    values.
+
+    Args:
+        series_pred (pandas.Series): column of predictions
+        series_meas (pandas.Series): column of predictions
+
+    """
+
+    return sqrt((series_pred - series_meas).pow(2).mean())
+
+
+@make_symbolic
+def rel_mse(series_pred, series_meas):
+    """Compute MSE
+
+    Returns the relative mean-square-error (MSE) between predicted and measured
+    values.
+
+    Args:
+        series_pred (pandas.Series): column of predictions
+        series_meas (pandas.Series): column of predictions
+
+    """
+
+    return ((series_pred - series_meas) / series_meas).pow(2).mean()
+
+
+@make_symbolic
+def rsq(series_pred, series_meas):
+    """Compute coefficient of determination
+
+    Returns the coefficient of determination (aka R^2) between predicted and
+    measured values.
+
+    Args:
+        series_pred (pandas.Series): column of predictions
+        series_meas (pandas.Series): column of predictions
+
+    """
+
+    return (
+        power(series_pred - series_meas.mean(), 2).sum()
+        / power(series_meas - series_meas.mean(), 2).sum()
+    )
+
+
+@make_symbolic
+def ndme(series_pred, series_meas):
+    """Compute non-dimensional model error
+
+    Returns the non-dimensional model error (NDME) between predicted and
+    measured values.
+
+    Args:
+        series_pred (pandas.Series): column of predictions
+        series_meas (pandas.Series): column of predictions
+
+    """
+
+    return sqrt(1 - rsq(series_pred, series_meas))
 
 
 @make_symbolic

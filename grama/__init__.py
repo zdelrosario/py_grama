@@ -69,6 +69,7 @@ from .dfply import summarize_each as tf_summarize_each
 # summary_functions.py
 from .dfply import mean, first, last, nth, n, n_distinct, IQR, quant
 from .dfply import colmin, colmax, colsum, median, var, sd, binomial_ci
+from .dfply import mse, rmse, ndme, rsq
 
 # transform.py
 from .dfply import mutate as tf_mutate
