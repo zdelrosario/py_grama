@@ -1,10 +1,7 @@
 matplotlib
 numpy>=1.15
 pandas
-pyDOE
 seaborn>=0.9
 scipy
-statsmodels
 toolz
-scikit-learn
 networkx

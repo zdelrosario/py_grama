@@ -1,0 +1,3 @@
+matminer
+sklearn
+statsmodels

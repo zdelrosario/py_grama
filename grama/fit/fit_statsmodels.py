@@ -1,12 +1,14 @@
-__all__ = [
-    "fit_ols",
-    "ft_ols"
-]
+__all__ = ["fit_ols", "ft_ols"]
 
 ## Fitting via statsmodels package
 from numpy import zeros
 from pandas import DataFrame
-import statsmodels.formula.api as smf
+
+try:
+    import statsmodels.formula.api as smf
+
+except ModuleNotFoundError:
+    raise ModuleNotFoundError("module statsmodels not found")
 
 import grama as gr
 from grama import pipe
@@ -40,7 +42,7 @@ def fit_ols(df, formulae=[""], domain=None, density=None):
     n_obs, n_in = df.shape
 
     ## Parse formulae for output names
-    n_out   = len(formulae)
+    n_out = len(formulae)
     outputs = [""] * n_out
     for ind in range(n_out):
         ind_start = formulae[ind].find("~")
@@ -49,7 +51,7 @@ def fit_ols(df, formulae=[""], domain=None, density=None):
     ## Construct fits
     fits = []
     for ind in range(n_out):
-        fits.append(smf.ols(formulae[ind], data = df).fit())
+        fits.append(smf.ols(formulae[ind], data=df).fit())
 
     def fit_all(df_new):
         n_obs_new, _ = df_new.shape
@@ -60,11 +62,9 @@ def fit_ols(df, formulae=[""], domain=None, density=None):
 
     ## Construct model
     return gr.model_vectorized(
-        function=fit_all,
-        outputs=outputs,
-        domain=domain,
-        density=density
+        function=fit_all, outputs=outputs, domain=domain, density=density
     )
+
 
 @pipe
 def ft_ols(*args, **kwargs):
