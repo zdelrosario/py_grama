@@ -9,6 +9,7 @@ setup(
         "grama",
         "grama.data",
         "grama.dfply",
+        "grama.eval",
         "grama.fit",
         "grama.models",
         "grama.tran",
