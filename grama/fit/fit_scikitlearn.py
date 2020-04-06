@@ -307,21 +307,17 @@ def ft_rf(*args, **kwargs):
 def fit_kmeans(df, var=None, colname="cluster_id", seed=None, **kwargs):
     r"""K-means cluster a dataset
 
-
+    Create a cluster-labeling model on a dataset using the K-means algorithm.
 
     Args:
         df (DataFrame): Hybrid point results from gr.eval_hybrid()
         var (list or None): Variables in df on which to cluster. Use None to
             cluster on all variables.
         colname (string): Name of cluster id; will be output in cluster model.
+        seed (int): Random seed for kmeans clustering
 
     Kwargs:
-        n_estimators (int):
-        criterion (string):
-        max_depth (integer or None):
-        min_samples_split (int, float):
-        min_samples_leaf (int, float):
-
+        n_clusters (int): Number of clusters to fit
         random_state (int or None):
 
     Returns:
@@ -334,6 +330,24 @@ def fit_kmeans(df, var=None, colname="cluster_id", seed=None, **kwargs):
         Scikit-learn: Machine Learning in Python, Pedregosa et al. JMLR 12, pp. 2825-2830, 2011.
 
     Examples:
+        >>> import grama as gr
+        >>> from grama.data import df_stang
+        >>> from grama.fit import ft_kmeans
+        >>> X = gr.Intention()
+        >>> md_cluster = (
+        >>>     df_stang
+        >>>     >> ft_kmeans(var=["E", "mu"], n_clusters=2)
+        >>> )
+        >>> (
+        >>>     md_cluster
+        >>>     >> gr.ev_df(df_stang)
+        >>>     >> gr.tf_group_by(X.cluster_id)
+        >>>     >> gr.tf_summarize(
+        >>>         thick_mean=gr.mean(X.thick),
+        >>>         thick_sd=gr.sd(X.thick),
+        >>>         n=gr.n(X.index),
+        >>>     )
+        >>> )
 
     """
     ## Check invariants
