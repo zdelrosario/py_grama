@@ -500,8 +500,8 @@ def marg_hist(data=None, n_bins=None, hist=None, sign=None):
         >>> from grama.data import df_stang
         >>> md = gr.Model("Marginal Example") >> \
         >>>     gr.cp_marginals(
-        >>>         E=gr.marg_histogram(data=df_stang.E),
-        >>>         mu=gr.marg_histogram(df_stang.mu)
+        >>>         E=gr.marg_hist(data=df_stang.E),
+        >>>         mu=gr.marg_hist(df_stang.mu)
         >>>     )
         >>> md.printpretty()
 
