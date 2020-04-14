@@ -11,6 +11,7 @@ __all__ = [
     "FunctionVectorized",
     "Marginal",
     "MarginalNamed",
+    "MarginalHistogram",
     "MarginalGKDE",
     "Model",
 ]
@@ -19,13 +20,14 @@ from abc import ABC, abstractmethod
 import copy
 
 from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, dot, diag
+from numpy import histogram
 from numpy import min as npmin
 from numpy import max as npmax
 from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
 from scipy.linalg import det, LinAlgError, solve
 from scipy.optimize import root_scalar
-from scipy.stats import norm, gaussian_kde
+from scipy.stats import norm, gaussian_kde, rv_histogram
 from pandas import DataFrame, concat
 
 import grama as gr
@@ -357,6 +359,53 @@ class MarginalNamed(Marginal):
     ## Summary
     def summary(self):
         return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, self.d_param)
+
+
+## Histogram marginal class
+class MarginalHistogram(Marginal):
+    """Marginal using a given histogram"""
+
+    def __init__(self, hist=None, **kw):
+        super().__init__(**kw)
+
+        self.hist = copy.copy(hist)
+        if not (self.hist is None):
+            self.dist = rv_histogram(self.hist)
+        else:
+            self.dist = None
+
+    def copy(self):
+        new_marginal = MarginalNamed(sign=self.sign, hist=copy.deepcopy(self.hist))
+
+        return new_marginal
+
+    ## Fitting function
+    def fit(self, data, n_bins=None):
+        if n_bins is None:
+            n_bins = 30
+            warnings.warn(
+                "Default n_bins=30 used; select a better bin count", RuntimeWarning
+            )
+
+        hist = histogram(data, bins=n_bins)
+        self.hist = hist
+        self.dist = rv_histogram(self.hist)
+
+    ## Likelihood function
+    def l(self, x):
+        return self.dist.pdf(x)
+
+    ## Cumulative density function
+    def p(self, x):
+        return self.dist.cdf(x)
+
+    ## Quantile function
+    def q(self, p):
+        return self.dist.ppf(p)
+
+    ## Summary
+    def summary(self):
+        return "({0:+}) {1:}".format(self.sign, self.hist)
 
 
 ## Gaussian KDE marginal class

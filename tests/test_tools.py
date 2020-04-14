@@ -19,8 +19,9 @@ class TestPipe(unittest.TestCase):
 
 class TestMarginals(unittest.TestCase):
     def setUp(self):
-        self.mg_gkde = gr.marg_gkde(data.df_stang.E)
-        self.mg_norm = gr.marg_named(data.df_stang.E, "norm")
+        self.mg_gkde = gr.marg_gkde(data=data.df_stang.E)
+        self.mg_norm = gr.marg_named(data=data.df_stang.E, dist="norm")
+        self.mg_hist = gr.marg_hist(data=data.df_stang.E)
 
     def test_marginals(self):
         median = np.median(data.df_stang.E)
@@ -38,6 +39,13 @@ class TestMarginals(unittest.TestCase):
         self.mg_norm.summary()
 
         self.assertTrue(np.isclose(q_norm[1], median, atol=0, rtol=0.05))
+
+        l_hist = self.mg_hist.l(np.array([10000, 10400, 10800]))
+        p_hist = self.mg_hist.p(np.array([10000, 10400, 10800]))
+        q_hist = self.mg_hist.q(np.array([0.25, 0.50, 0.75]))
+        self.mg_hist.summary()
+
+        self.assertTrue(np.isclose(q_hist[1], median, atol=0, rtol=0.05))
 
 
 class TestMisc(unittest.TestCase):

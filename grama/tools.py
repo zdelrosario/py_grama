@@ -5,6 +5,7 @@ __all__ = [
     "df_make",
     "marg_gkde",
     "marg_named",
+    "marg_hist",
     "param_dist",
     "pipe",
     "valid_dist",
@@ -16,6 +17,7 @@ import warnings
 
 from functools import wraps
 from numbers import Integral
+from numpy import histogram
 
 from scipy.stats import gaussian_kde
 
@@ -400,7 +402,7 @@ def df_equal(df1, df2, close=False):
 
 
 ## Fit a named scipy.stats distribution
-def marg_named(data, dist, name=True, sign=None):
+def marg_named(data=None, dist=None, name=True, sign=None):
     r"""Fit scipy.stats continuous distirbution
 
     Fits a named scipy.stats continuous distribution. Intended to be used to
@@ -442,7 +444,7 @@ def marg_named(data, dist, name=True, sign=None):
 
 
 ## Fit a gaussian kernel density estimate (KDE) to data
-def marg_gkde(data, sign=None):
+def marg_gkde(data=None, sign=None):
     r"""Fit a gaussian KDE to data
 
     Fits a gaussian kernel density estimate (KDE) to data.
@@ -474,6 +476,42 @@ def marg_gkde(data, sign=None):
         sign = 0
 
     return gr.MarginalGKDE(kde, sign=sign)
+
+
+## Fit a histogram
+def marg_hist(data=None, n_bins=None, hist=None, sign=None):
+    r"""Fit a histogram to data
+
+    Fits a histogram to data; returns a Marginal. Must provide either `data` or
+    a full `hist`.
+
+    Args:
+        data (iterable): Data for fit
+        n_bins (int): Number of bins; default used if not provided
+        hist (np.histogram): A manual histogram: tuple of (bin counts, bin edges)
+        sign (bool): Include sign? (Optional)
+
+    Returns:
+        gr.MarginalHistogram: Marginal distribution
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.data import df_stang
+        >>> md = gr.Model("Marginal Example") >> \
+        >>>     gr.cp_marginals(
+        >>>         E=gr.marg_histogram(data=df_stang.E),
+        >>>         mu=gr.marg_histogram(df_stang.mu)
+        >>>     )
+        >>> md.printpretty()
+
+    """
+    if not (hist is None):
+        return gr.MarginalHistogram(hist=hist)
+    else:
+        mg = gr.MarginalHistogram()
+        mg.fit(data, n_bins)
+        return mg
 
 
 ## Monkey-patched warning fcn
