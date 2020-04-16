@@ -7,19 +7,150 @@ __all__ = [
     "tf_copula_corr",
     "tran_outer",
     "tf_outer",
+    "tran_kfolds",
+    "tf_kfolds",
 ]
 
-from numpy import zeros, std, quantile, nan, triu_indices
-from numpy.random import choice
+from collections import ChainMap
+from numpy import arange, ceil, zeros, std, quantile, nan, triu_indices
+from numpy.random import choice, permutation
 from numpy.random import seed as set_seed
 from pandas import concat, DataFrame, melt
 
-from grama import pipe, copy_meta
+from grama import pipe, copy_meta, Intention, mse
+from grama import (
+    tf_bind_cols,
+    tf_filter,
+    tf_summarize,
+    tf_drop,
+    tf_mutate,
+    var_in,
+    ev_df,
+)
+
 from toolz import curry
 from numbers import Integral
 from pandas.api.types import is_numeric_dtype
 from scipy.linalg import subspace_angles
 from scipy.stats import norm
+
+X = Intention()
+
+## k-Fold CV utility
+# --------------------------------------------------
+@curry
+def tran_kfolds(
+    df,
+    k=None,
+    ft=None,
+    summaries=dict(mse=mse),
+    tf=tf_summarize,
+    shuffle=True,
+    seed=None,
+):
+    r"""Perform k-fold CV
+
+    Perform k-fold cross-validation (CV) using a given fitting procedure (ft).
+    Optionally provide
+
+    Args:
+        df (DataFrame): Data to pass to given fitting procedure
+        ft (gr.ft_): Partially-evaluated grama fit function; defines model fitting
+            procedure and outputs to aggregate
+        tf (gr.tf_): Partially-evaluated grama transform function; evaluation of
+            fitted model will be passed to tf and provided with keyword arguments
+            from summaries
+        summaries (dict of functions): Summary functions to pass to tf; will be evaluated
+            for each output of ft. Each summary must have signature summary(f_pred, f_meas)
+        k (int): Number of folds; k=5 to k=10 recommended [1]
+        shuffle (bool): Shuffle the data before CV?
+
+    Notes:
+        - Many grama functions support /partial evaluation/; this allows one to specify things like hyperparameters in fitting functions without providing data and executing the fit. You can take advantage of this functionality to easly do hyperparameter studies.
+
+    Returns:
+        DataFram: Aggregated results within each of k-folds using given model and
+            summary transform
+
+    References:
+        James, Witten, Hastie, and Tibshirani, "An introduction to statistical learning" (2017), Chapter 5. Resampling Methods
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.data import df_stang
+        >>> from grama.fit import ft_rf
+        >>> df_kfolds = (
+        >>>     df_stang
+        >>>     >> gr.tf_kfolds(
+        >>>         k=5,
+        >>>         ft=ft_rf(out=["thick"], var=["E", "mu"]),
+        >>>     )
+
+    """
+    ## Check invariants
+    if ft is None:
+        raise ValueError("Must provide ft keyword argument")
+    if k is None:
+        print("... tran_kfolds is using default k=5")
+        k = 5
+
+    ## Shuffle data indices
+    n = df.shape[0]
+    if shuffle:
+        if seed:
+            set_seed(seed)
+        I = permutation(n)
+    else:
+        I = arange(n)
+    di = int(ceil(n / k))
+    ## Build folds
+    Is = [I[i * di : min((i + 1) * di, n)] for i in range(k)]
+
+    ## Iterate over folds
+    df_res = DataFrame()
+    for i in range(k):
+        ## Train by out-of-fold data
+        md_fit = df >> tf_filter(~var_in(X.index, Is[i])) >> ft
+
+        ## Test by in-fold data
+        df_pred = md_fit >> ev_df(
+            df=df >> tf_filter(var_in(X.index, Is[i])) >> tf_drop(md_fit.out),
+            append=False,
+        )
+
+        # Modify names with suffix
+        out_pred = list(map(lambda s: s + "_pred", md_fit.out))
+        df_pred.rename(mapper=dict(zip(md_fit.out, out_pred)), axis=1, inplace=True)
+
+        ## Specialize summaries for output names
+        summaries_all = ChainMap(
+            *[
+                {
+                    key + "_" + out: fun(X[out + "_pred"], X[out])
+                    for key, fun in summaries.items()
+                }
+                for out in md_fit.out
+            ]
+        )
+
+        ## Aggregate
+        df_summary_tmp = (
+            df_pred
+            >> tf_bind_cols(df[md_fit.out] >> tf_filter(var_in(X.index, Is[i])))
+            >> tf(**summaries_all)
+            >> tf_mutate(_kfold=i)
+        )
+
+        df_res = concat((df_res, df_summary_tmp), axis=0)
+
+    return df_res
+
+
+@pipe
+def tf_kfolds(*args, **kwargs):
+    return tran_kfolds(*args, **kwargs)
+
 
 ## Bootstrap utility
 # --------------------------------------------------
