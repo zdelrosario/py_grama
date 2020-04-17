@@ -1,8 +1,10 @@
 __all__ = [
-    "str_detect",
     "str_count",
+    "str_detect",
+    "str_extract",
     "str_locate",
     "str_replace",
+    "str_sub",
     "str_which",
 ]
 
@@ -49,9 +51,9 @@ def str_locate(string, pattern):
         return [m.start(0) for m in re.finditer(pattern, string)]
 
 
-def _safe_index(l, ind=0):
+def _safe_index(l, i=0):
     try:
-        return l[ind]
+        return l[i]
     except IndexError:
         return NaN
 
@@ -66,7 +68,7 @@ def str_which(string, pattern):
     try:
         if isinstance(string, str):
             raise TypeError
-        return Series([_safe_index(ind) for ind in indices])
+        return Series([_safe_index(inds) for inds in indices])
 
     except TypeError:
         return _safe_index(indices)
@@ -90,10 +92,44 @@ def str_count(string, pattern):
 
 ## Subset strings
 # --------------------------------------------------
+@make_symbolic
+def str_sub(string, start=0, end=None):
+    """Extract substrings"""
+    try:
+        if isinstance(string, str):
+            raise TypeError
+        return Series([s[start:end] for s in string])
+
+    except TypeError:
+        return string[start:end]
+
+
+def _extract_or_empty(string, pattern):
+    match = re.search(pattern, string)
+
+    try:
+        return match.group(0)
+    except AttributeError:
+        return ""
+
+
+@make_symbolic
+def str_extract(string, pattern):
+    """Extract the first regex pattern match"""
+
+    try:
+        if isinstance(string, str):
+            raise TypeError
+        return Series([_extract_or_empty(s, pattern) for s in string])
+
+    except TypeError:
+
+        return _extract_or_empty(string, pattern)
+
 
 ## Mutate string
 # --------------------------------------------------
-def replace_or_none(string, pattern, replacement, ind):
+def _replace_or_none(string, pattern, replacement, ind):
     if not isnan(ind):
         return string[:ind] + replacement + string[ind + len(pattern) :]
     else:
@@ -111,11 +147,11 @@ def str_replace(string, pattern, replacement):
             raise TypeError
         return Series(
             [
-                replace_or_none(string[ind], pattern, replacement, indices[ind])
+                _replace_or_none(string[ind], pattern, replacement, indices[ind])
                 for ind in range(len(indices))
             ]
         )
 
     except TypeError:
 
-        return replace_or_none(string, pattern, replacement, indices)
+        return _replace_or_none(string, pattern, replacement, indices)

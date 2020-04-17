@@ -61,3 +61,32 @@ class TestStringHelpers(unittest.TestCase):
 
         R = gr.str_replace(["foo"], "foo", "bar")
         self.assertTrue(R[0] == "bar")
+
+    def test_str_sub(self):
+        s_base0 = "foofoo"
+        s_sub0 = "foo"
+        s_base1 = "f"
+        s_sub1 = "f"
+
+        S_base0 = ["foofoo", "bar"]
+        S_sub0 = ["foo", "bar"]
+
+        self.assertTrue(gr.str_sub(s_base0, end=3), s_sub0)
+        self.assertTrue(gr.str_sub(s_base1, end=3), s_sub1)
+        self.assertTrue(all(gr.str_sub(S_base0, end=3) == S_sub0))
+
+    def test_str_extract(self):
+        s_base0 = "foo_bar"
+        s_ext0 = "_bar"
+        s_base1 = "foo123"
+        s_ext1 = "123"
+
+        S_base0 = ["foo_bar", "foo_biddy"]
+        S_ext0 = ["_bar", "_biddy"]
+
+        self.assertTrue(gr.str_extract(s_base0, "_\\w+"), s_ext0)
+        self.assertTrue(gr.str_extract(s_base1, "\\d+"), s_ext1)
+
+        res = gr.str_extract(S_base0, "_\\w+")
+        print(res)  ## DEBUG
+        self.assertTrue(all(res == S_ext0))
