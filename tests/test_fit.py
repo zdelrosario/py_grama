@@ -15,17 +15,27 @@ class TestFits(unittest.TestCase):
     """
 
     def setUp(self):
-        ## Regression model
-        self.md_true = (
+        ## Smooth model
+        self.md_smooth = (
             gr.Model()
             >> gr.cp_function(fun=lambda x: [x, x + 1], var=["x"], out=["y", "z"])
             >> gr.cp_marginals(x={"dist": "uniform", "loc": 0, "scale": 2})
             >> gr.cp_copula_independence()
         )
 
-        self.df = pd.DataFrame(dict(x=[0, 1, 2], y=[0, 1, 2], z=[1, 1, 1]))
-        self.inputs = ["x"]
-        self.outputs = ["y", "z"]
+        self.df_smooth = self.md_smooth >> gr.ev_df(df=pd.DataFrame(dict(x=[0, 1, 2])))
+
+        ## Tree model
+        self.md_tree = (
+            gr.Model()
+            >> gr.cp_function(fun=lambda x: [0, x < 5], var=["x"], out=["y", "z"])
+            >> gr.cp_marginals(x={"dist": "uniform", "loc": 0, "scale": 2})
+            >> gr.cp_copula_independence()
+        )
+
+        self.df_tree = self.md_tree >> gr.ev_df(
+            df=pd.DataFrame(dict(x=[0, 1, 2, 7, 8, 9]))
+        )
 
         ## Cluster model
         self.df_cluster = pd.DataFrame(
@@ -38,25 +48,35 @@ class TestFits(unittest.TestCase):
 
     def test_gp(self):
         ## Fit routine creates usable model
-        md_fit = fit.fit_gp(self.df, md=self.md_true)
-        df_res = gr.eval_df(md_fit, self.df[self.inputs])
+        md_fit = fit.fit_gp(self.df_smooth, md=self.md_smooth)
+        df_res = gr.eval_df(md_fit, self.df_smooth[self.md_smooth.var])
 
         ## GP provides std estimates
         # self.assertTrue("y_std" in df_res.columns)
 
         ## GP is an interpolation
-        self.assertTrue(gr.df_equal(df_res, self.df, close=True))
+        self.assertTrue(gr.df_equal(df_res, self.df_smooth, close=True))
 
         ## Fit copies model data
-        self.assertTrue(set(self.outputs) == set(self.md_true.out))
+        self.assertTrue(set(md_fit.var) == set(self.md_smooth.var))
+        self.assertTrue(set(md_fit.out) == set(self.md_smooth.out))
 
     def test_rf(self):
         ## Fit routine creates usable model
-        md_fit = fit.fit_rf(self.df, md=self.md_true,)
-        df_res = gr.eval_df(md_fit, self.df[self.inputs])
+        md_fit = fit.fit_rf(
+            self.df_tree,
+            md=self.md_tree,
+            max_depth=1,  # True tree is a stump
+            seed=101,
+        )
+        df_res = gr.eval_df(md_fit, self.df_tree[self.md_tree.var])
 
-        ## How to test accuracy?
-        ## TODO
+        ## RF can approximately recover a tree
+        self.assertTrue(gr.df_equal(df_res, self.df_tree, close=True, precision=1,))
+
+        ## Fit copies model data
+        self.assertTrue(set(md_fit.var) == set(self.md_tree.var))
+        self.assertTrue(set(md_fit.out) == set(self.md_tree.out))
 
     def test_kmeans(self):
         ## Fit routine creates usable model
