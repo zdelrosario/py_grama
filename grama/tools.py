@@ -369,7 +369,7 @@ def df_make(**kwargs):
 
 
 ## DataFrame equality checker
-def df_equal(df1, df2, close=False):
+def df_equal(df1, df2, close=False, precision=3):
     """Check DataFrame equality
 
     Check that two dataframes have the same columns and values. Allow column
@@ -390,7 +390,11 @@ def df_equal(df1, df2, close=False):
     if close:
         try:
             pd.testing.assert_frame_equal(
-                df1[df2.columns], df2, check_dtype=False, check_exact=False
+                df1[df2.columns],
+                df2,
+                check_dtype=False,
+                check_exact=False,
+                check_less_precise=precision,
             )
             return True
         except:

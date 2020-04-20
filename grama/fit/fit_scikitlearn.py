@@ -92,6 +92,33 @@ class FunctionGPR(gr.Function):
         return func_new
 
 
+class FunctionRFR(gr.Function):
+    def __init__(self, rf, var, out, name, runtime):
+        """
+
+        Args:
+            rf (scikit RandomForestRegressor):
+        """
+        self.rf = rf
+        self.var = var
+        self.out = out
+        self.name = name
+        self.runtime = runtime
+
+    def eval(self, df):
+        ## Check invariant; model inputs must be subset of df columns
+        if not set(self.var).issubset(set(df.columns)):
+            raise ValueError(
+                "Model function `{}` var not a subset of given columns".format(
+                    self.name
+                )
+            )
+
+        ## Predict
+        y = self.rf.predict(df[self.var])
+        return DataFrame(data=y, columns=self.out)
+
+
 ## Fit GP model with sklearn
 # --------------------------------------------------
 @curry
@@ -285,11 +312,7 @@ def fit_rf(
         rf.fit(df[var], df[output])
         name = "RF"
 
-        def fun_regression(df):
-            df_res = DataFrame({output: rf.predict(df[var])})
-            return df_res
-
-        fun = gr.FunctionVectorized(fun_regression, var, [output], name, 0)
+        fun = FunctionRFR(rf, var, [output], name, 0)
         functions.append(fun)
 
     ## Construct model
