@@ -409,3 +409,11 @@ class TestSummaryFcn(unittest.TestCase):
         self.assertTrue(df_t_25.equals(df_c_25))
         self.assertTrue(df_t_50.equals(df_c_50))
         self.assertTrue(df_t_75.equals(df_c_75))
+
+    def test_rsq(self):
+        # Known case; Rsq = 3/4
+        y_meas = pd.Series([-1, 0, +1])
+        y_fit = pd.Series([-0.5, 0, +0.5])
+        rsq_comp = gr.rsq(y_fit, y_meas)
+
+        self.assertTrue(rsq_comp, 3 / 4)

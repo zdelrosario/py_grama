@@ -289,10 +289,12 @@ def rsq(series_pred, series_meas):
 
     """
 
-    return (
-        power(series_pred - series_meas.mean(), 2).sum()
-        / power(series_meas - series_meas.mean(), 2).sum()
-    )
+    y_mean = series_meas.mean()
+
+    SS_res = power(series_meas - series_pred, 2).sum()
+    SS_tot = power(series_meas - y_mean, 2).sum()
+
+    return 1 - SS_res / SS_tot
 
 
 @make_symbolic
