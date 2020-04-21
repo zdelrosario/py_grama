@@ -33,6 +33,8 @@ def tran_feat_composition(
         preset_name (string): Matminer featurization preset
 
     Kwargs:
+        ignore_errors (bool): Do not throw an error while parsing formulae; set to
+            True to return NaN's for invalid formulae.
 
     Notes:
         - A pre-processor and wrapper for matminer.featurizers.composition
