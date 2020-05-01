@@ -285,17 +285,17 @@ class TestDR(unittest.TestCase):
 
 
 # --------------------------------------------------
-class TestMatminer(unittest.TestCase):
-    def test_magpie_featurizer(self):
-        df_magpie_check = pd.DataFrame(
-            {
-                "MagpieData minimum Number": [1.0],
-                "MagpieData maximum Number": [8.0],
-                "MagpieData range Number": [7.0],
-            }
-        )
-        df_test = gr.df_make(FORMULA=["C6H12O6"])
+# class TestMatminer(unittest.TestCase):
+#     def test_magpie_featurizer(self):
+#         df_magpie_check = pd.DataFrame(
+#             {
+#                 "MagpieData minimum Number": [1.0],
+#                 "MagpieData maximum Number": [8.0],
+#                 "MagpieData range Number": [7.0],
+#             }
+#         )
+#         df_test = gr.df_make(FORMULA=["C6H12O6"])
 
-        df_res = df_test >> tran.tf_feat_composition()
+#         df_res = df_test >> tran.tf_feat_composition()
 
-        self.assertTrue(gr.df_equal(df_test, df_res[df_test.columns]))
+#         self.assertTrue(gr.df_equal(df_test, df_res[df_test.columns]))
