@@ -17,7 +17,7 @@ from numpy.random import choice, permutation
 from numpy.random import seed as set_seed
 from pandas import concat, DataFrame, melt
 
-from grama import pipe, copy_meta, Intention, mse
+from grama import pipe, copy_meta, Intention, mse, rsq
 from grama import (
     tf_bind_cols,
     tf_filter,
@@ -40,13 +40,7 @@ X = Intention()
 # --------------------------------------------------
 @curry
 def tran_kfolds(
-    df,
-    k=None,
-    ft=None,
-    summaries=dict(mse=mse),
-    tf=tf_summarize,
-    shuffle=True,
-    seed=None,
+    df, k=None, ft=None, summaries=None, tf=tf_summarize, shuffle=True, seed=None,
 ):
     r"""Perform k-fold CV
 
@@ -94,6 +88,9 @@ def tran_kfolds(
     if k is None:
         print("... tran_kfolds is using default k=5")
         k = 5
+    if summaries is None:
+        print("... tran_kfolds is using default summaries mse and rsq")
+        summaries = dict(mse=mse, rsq=rsq)
 
     ## Shuffle data indices
     n = df.shape[0]
@@ -142,7 +139,7 @@ def tran_kfolds(
             >> tf_mutate(_kfold=i)
         )
 
-        df_res = concat((df_res, df_summary_tmp), axis=0)
+        df_res = concat((df_res, df_summary_tmp), axis=0).reset_index(drop=True)
 
     return df_res
 
