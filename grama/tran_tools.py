@@ -1,6 +1,7 @@
 __all__ = [
     "tran_angles",
     "tf_angles",
+    "tf_count",
     "tran_bootstrap",
     "tf_bootstrap",
     "tran_copula_corr",
@@ -14,12 +15,25 @@ from numpy.random import choice
 from numpy.random import seed as set_seed
 from pandas import concat, DataFrame, melt
 
-from grama import pipe, copy_meta
+from grama import pipe, copy_meta, Intention, tf_group_by, tf_summarize
+from grama import n as n_count
 from toolz import curry
 from numbers import Integral
 from pandas.api.types import is_numeric_dtype
 from scipy.linalg import subspace_angles
 from scipy.stats import norm
+
+X = Intention()
+
+## Count dataframe entries
+# --------------------------------------------------
+@pipe
+@curry
+def tf_count(df, *args, **kwargs):
+    df_res = df >> tf_group_by(*args, **kwargs) >> tf_summarize(n=n_count(X.index))
+
+    return df_res
+
 
 ## Bootstrap utility
 # --------------------------------------------------
