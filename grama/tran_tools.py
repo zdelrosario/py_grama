@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 from collections import ChainMap
-from numpy import arange, ceil, zeros, std, quantile, nan, triu_indices
+from numpy import arange, ceil, zeros, std, quantile, nan, triu_indices, unique
 from numpy.random import choice, permutation
 from numpy.random import seed as set_seed
 from pandas import concat, DataFrame, melt
@@ -40,7 +40,14 @@ X = Intention()
 # --------------------------------------------------
 @curry
 def tran_kfolds(
-    df, k=None, ft=None, summaries=None, tf=tf_summarize, shuffle=True, seed=None,
+    df,
+    k=None,
+    ft=None,
+    var_fold=None,
+    summaries=None,
+    tf=tf_summarize,
+    shuffle=True,
+    seed=None,
 ):
     r"""Perform k-fold CV
 
@@ -54,6 +61,7 @@ def tran_kfolds(
         tf (gr.tf_): Partially-evaluated grama transform function; evaluation of
             fitted model will be passed to tf and provided with keyword arguments
             from summaries
+        var_fold (str or None):
         summaries (dict of functions): Summary functions to pass to tf; will be evaluated
             for each output of ft. Each summary must have signature summary(f_pred, f_meas)
         k (int): Number of folds; k=5 to k=10 recommended [1]
@@ -85,24 +93,38 @@ def tran_kfolds(
     ## Check invariants
     if ft is None:
         raise ValueError("Must provide ft keyword argument")
-    if k is None:
+    if (k is None) and (var_fold is None):
         print("... tran_kfolds is using default k=5")
         k = 5
     if summaries is None:
         print("... tran_kfolds is using default summaries mse and rsq")
         summaries = dict(mse=mse, rsq=rsq)
 
-    ## Shuffle data indices
     n = df.shape[0]
-    if shuffle:
-        if seed:
-            set_seed(seed)
-        I = permutation(n)
+    ## Handle custom folds
+    if not (var_fold is None):
+        ## Check for a valid var_fold
+        if not (var_fold in df.columns):
+            raise ValueError("var_fold must be in df.columns or None")
+        ## Build folds
+        levels = unique(df[var_fold])
+        k = len(levels)
+        print("... tran_kfolds found {} levels via var_folds".format(k))
+        Is = []
+        for l in levels:
+            Is.append(list(arange(n)[df[var_fold] == l]))
+
     else:
-        I = arange(n)
-    di = int(ceil(n / k))
-    ## Build folds
-    Is = [I[i * di : min((i + 1) * di, n)] for i in range(k)]
+        ## Shuffle data indices
+        if shuffle:
+            if seed:
+                set_seed(seed)
+            I = permutation(n)
+        else:
+            I = arange(n)
+        ## Build folds
+        di = int(ceil(n / k))
+        Is = [I[i * di : min((i + 1) * di, n)] for i in range(k)]
 
     ## Iterate over folds
     df_res = DataFrame()
@@ -136,8 +158,13 @@ def tran_kfolds(
             df_pred
             >> tf_bind_cols(df[md_fit.out] >> tf_filter(var_in(X.index, Is[i])))
             >> tf(**summaries_all)
-            >> tf_mutate(_kfold=i)
+            # >> tf_mutate(_kfold=i)
         )
+
+        if var_fold is None:
+            df_summary_tmp = df_summary_tmp >> tf_mutate(_kfold=i)
+        else:
+            df_summary_tmp[var_fold] = levels[i]
 
         df_res = concat((df_res, df_summary_tmp), axis=0).reset_index(drop=True)
 

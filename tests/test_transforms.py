@@ -97,7 +97,9 @@ class TestTools(unittest.TestCase):
         df_corr = gr.tran_copula_corr(data.df_stang, model=md)
 
     def test_kfold(self):
-        df_train = pd.DataFrame(dict(X=list(range(4)), Y=[0, 0, 1, 1]))
+        df_train = pd.DataFrame(
+            dict(X=list(range(4)), Y=[0, 0, 1, 1], _fold=["a", "a", "b", "b"])
+        )
         df_true = pd.DataFrame(
             dict(
                 mse_Y=[
@@ -107,14 +109,42 @@ class TestTools(unittest.TestCase):
                 _kfold=[0, 1],
             )
         )
+        df_true_m = pd.DataFrame(
+            dict(
+                mse_Y=[
+                    np.mean((np.array([0, 0]) - 1) ** 2),
+                    np.mean((np.array([1, 1]) - 0) ** 2),
+                ],
+                _fold=["a", "b"],
+            )
+        )
 
+        ## Unshuffled, auto-generated folds
         df_res = df_train >> gr.tf_kfolds(
-            k=2, ft=fit.ft_rf(out=["Y"]), shuffle=False, summaries=dict(mse=gr.mse)
+            k=2,
+            ft=fit.ft_rf(out=["Y"], var=["X"]),
+            shuffle=False,
+            summaries=dict(mse=gr.mse),
         )
 
         pd.testing.assert_frame_equal(
             df_res,
             df_true,
+            check_exact=False,
+            check_dtype=False,
+            check_column_type=False,
+        )
+
+        ## Manual folds
+        df_manual = df_train >> gr.tf_kfolds(
+            ft=fit.ft_rf(out=["Y"], var=["X"]),
+            var_fold="_fold",
+            summaries=dict(mse=gr.mse),
+        )
+
+        pd.testing.assert_frame_equal(
+            df_manual,
+            df_true_m,
             check_exact=False,
             check_dtype=False,
             check_column_type=False,
