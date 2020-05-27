@@ -62,7 +62,6 @@ def eval_nls(
         var_fix = set()
     else:
         var_fix = set(var_fix)
-    var_prob = []
     for var in model.var_det:
         wid = model.domain.get_width(var)
         if wid == 0:
