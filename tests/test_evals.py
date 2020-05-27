@@ -275,7 +275,7 @@ class TestOpt(unittest.TestCase):
 
     def test_nls(self):
         ## Setup
-        md_test = (
+        md_feat = (
             gr.Model()
             >> gr.cp_function(
                 fun=lambda x: x[0] * x[1] + x[2],
@@ -289,18 +289,25 @@ class TestOpt(unittest.TestCase):
             >> gr.cp_marginals(x1=dict(dist="norm", loc=0, scale=1))
         )
 
+        md_const = (
+            gr.Model()
+            >> gr.cp_function(
+                fun=lambda x: x[0],
+                var=1,
+                out=1
+            )
+            >> gr.cp_bounds(x0=(-1, +1))
+        )
+
         df_response = (
-            md_test
+            md_feat
             >> gr.ev_df(df=gr.df_make(x0=0.1, x1=[-1, -0.5, +0, +0.5, +1], x2=0))
         )
         df_data = df_response[["x1", "y0"]]
 
         ## Model with features
         df_true = gr.df_make(x0=0.1)
-        df_fit = (
-            md_test
-            >> gr.ev_nls(df_data=df_data, append=False)
-        )
+        df_fit = md_feat >> gr.ev_nls(df_data=df_data, append=False)
 
         pd.testing.assert_frame_equal(
             df_fit,
@@ -310,6 +317,17 @@ class TestOpt(unittest.TestCase):
             check_column_type=False,
         )
 
+        ## Model with features
+        df_const = gr.df_make(x0=0)
+        df_fit = md_const >> gr.ev_nls(df_data=gr.df_make(y0=[-1,0,+1]))
+
+        pd.testing.assert_frame_equal(
+            df_fit,
+            df_const,
+            check_exact=False,
+            check_dtype=False,
+            check_column_type=False,
+        )
 
 ## Run tests
 if __name__ == "__main__":
