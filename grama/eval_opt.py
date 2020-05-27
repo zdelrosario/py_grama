@@ -74,6 +74,11 @@ def eval_nls(
 
     ## Determine variables for fitting
     var_fit = set(model.var).difference(var_fix.union(var_feat))
+    if len(var_fit) == 0:
+        raise ValueError(
+            "No var selected for fitting!\n" + \
+            "Try checking model bounds and df_data.columns."
+        )
 
     ## Separate var_fit into det and rand
     var_fit_det = list(set(model.var_det).intersection(var_fit))
