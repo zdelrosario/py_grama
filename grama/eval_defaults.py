@@ -46,11 +46,23 @@ def eval_df(model, df=None, append=True):
         raise ValueError("No input df given")
     if len(model.functions) == 0:
         raise ValueError("Given model has no functions")
+    out_intersect = set(df.columns).intersection(model.out)
+    if len(out_intersect) > 0:
+        print(
+            "... provided columns intersect model output.\n"
+            + "eval_df() is dropping {}".format(out_intersect)
+        )
 
     df_res = model.evaluate_df(df)
 
     if append:
-        df_res = concat([df.reset_index(drop=True), df_res], axis=1)
+        df_res = concat(
+            [
+                df.reset_index(drop=True).drop(model.out, axis=1, errors="ignore"),
+                df_res,
+            ],
+            axis=1,
+        )
 
     return df_res
 

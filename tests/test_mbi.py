@@ -66,6 +66,9 @@ class TestMBI(unittest.TestCase):
             # Missing out
             gr.comp_function(self.md, fun=lambda x: x, var=["foo"], out=None)
         with self.assertRaises(ValueError):
+            # Intersection var / out names
+            self.md >> gr.cp_function(lambda x: x, var=["x"], out=["x"], name="f0")
+        with self.assertRaises(ValueError):
             # Non-unique function names
             self.md >> gr.cp_function(
                 lambda x: x, var=1, out=1, name="f0"
