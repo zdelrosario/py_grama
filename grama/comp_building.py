@@ -57,10 +57,23 @@ def _comp_function_data(model, fun, var, out, name, runtime):
         raise ValueError("`out` must be list or int")
 
     # Check DAG invariants
-    if len(set(out).intersection(set(model.var))) > 0:
-        raise ValueError("`out` must not intersect model.var")
-    if len(set(out).intersection(set(model.out))) > 0:
-        raise ValueError("`out` must not intersect model.out")
+    args_inter = set(out).intersection(set(var))
+    if len(args_inter) > 0:
+        raise ValueError(
+            "`out` must not intersect `var`\n" + "intersection = {}".format(args_inter)
+        )
+    out_var_inter = set(out).intersection(set(model.var))
+    if len(out_var_inter) > 0:
+        raise ValueError(
+            "`out` must not intersect model.var"
+            + "intersection = {}".format(out_var_inter)
+        )
+    out_out_inter = set(out).intersection(set(model.out))
+    if len(out_out_inter) > 0:
+        raise ValueError(
+            "`out` must not intersect model.out"
+            + "intersection = {}".format(out_out_inter)
+        )
 
     return fun, var, out, name, runtime
 
