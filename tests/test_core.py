@@ -140,6 +140,16 @@ class TestModel(unittest.TestCase):
         with self.assertRaises(ValueError):
             gr.eval_nominal(md)
 
+    def test_nominal(self):
+        """Checks the implementation of nominal values"""
+        md = gr.Model() >> gr.cp_bounds(
+            x0=[-1, +1], x1=[0.1, np.Inf], x2=[-np.Inf, -0.1],
+        )
+        df_true = gr.df_make(x0=0.0, x1=+0.1, x2=-0.1)
+        df_res = gr.eval_nominal(md, df_det="nom", skip=True)
+
+        self.assertTrue(gr.df_equal(df_res, df_true))
+
     ## Test sample transforms
     def test_transforms(self):
         ## Setup

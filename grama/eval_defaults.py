@@ -103,7 +103,6 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
 
     ## Convert samples to desired marginals
     df_pr = DataFrame(data=quantiles, columns=model.var_rand)
-    ## Convert samples to desired marginals
     df_rand = model.density.pr2sample(df_pr)
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)

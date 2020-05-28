@@ -18,7 +18,19 @@ __all__ = [
 from abc import ABC, abstractmethod
 import copy
 
-from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, dot, diag
+from numpy import (
+    ones,
+    zeros,
+    triu_indices,
+    eye,
+    array,
+    Inf,
+    NaN,
+    sqrt,
+    dot,
+    diag,
+    isfinite,
+)
 from numpy import min as npmin
 from numpy import max as npmax
 from numpy.random import random, multivariate_normal
@@ -246,7 +258,10 @@ class Domain:
 
         self.bounds = bounds
         self.feasible = feasible
-        self.var = list(bounds.keys())
+        self.update()
+
+    def update(self):
+        self.var = list(self.bounds.keys())
 
     def copy(self):
         new_domain = Domain(
@@ -269,7 +284,17 @@ class Domain:
 
     def get_nominal(self, var):
         if var in self.bounds.keys():
-            return 0.5 * (self.bounds[var][1] + self.bounds[var][0])
+            if isfinite(self.bounds[var][0]):
+                if isfinite(self.bounds[var][1]):
+                    return 0.5 * (self.bounds[var][1] + self.bounds[var][0])
+                else:
+                    return self.bounds[var][0]
+            else:
+                if isfinite(self.bounds[var][1]):
+                    return self.bounds[var][1]
+                else:
+                    return NaN
+
         else:
             return NaN
 
@@ -964,6 +989,7 @@ class Model:
 
         """
         ## Initialize
+        self.domain.update()
         self.var = self.domain.var.copy()
         self.out = []
 

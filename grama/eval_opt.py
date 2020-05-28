@@ -5,7 +5,7 @@ __all__ = [
 
 from grama import pipe, custom_formatwarning, df_make
 from grama import eval_df, eval_nominal, tran_outer
-from numpy import Inf
+from numpy import Inf, isfinite
 from pandas import DataFrame, concat
 from scipy.optimize import minimize
 from toolz import curry
@@ -29,7 +29,8 @@ def eval_nls(
 
     Args:
         model (gr.Model): Model to analyze. All model variables
-            must be bounded or random.
+            selected for fitting must be bounded or random. Deterministic
+            variables may have semi-infinite bounds.
         df_data (DataFrame): Data for estimating parameters. Variables not
             found in df_data optimized in fitting.
         out (list or None): Output contributions to consider in computing MSE.
@@ -49,12 +50,12 @@ def eval_nls(
     ## Check `out` invariants
     if out is None:
         out = model.out
-        print("... eval_opt setting out = {}".format(out))
+        print("... eval_nls setting out = {}".format(out))
     set_diff = set(out).difference(set(df_data.columns))
     if len(set_diff) > 0:
         raise ValueError(
-            "out must be subset of df_data.columns\n" + \
-            "difference = {}".format(set_diff)
+            "out must be subset of df_data.columns\n"
+            + "difference = {}".format(set_diff)
         )
 
     ## Determine variables to be fixed
@@ -66,18 +67,18 @@ def eval_nls(
         wid = model.domain.get_width(var)
         if wid == 0:
             var_fix.add(var)
-    print("... eval_opt setting var_fix = {}".format(list(var_fix)))
+    print("... eval_nls setting var_fix = {}".format(list(var_fix)))
 
     ## Determine variables for evaluation
     var_feat = set(model.var).intersection(set(df_data.columns))
-    print("... eval_opt setting var_feat = {}".format(list(var_feat)))
+    print("... eval_nls setting var_feat = {}".format(list(var_feat)))
 
     ## Determine variables for fitting
     var_fit = set(model.var).difference(var_fix.union(var_feat))
     if len(var_fit) == 0:
         raise ValueError(
-            "No var selected for fitting!\n" + \
-            "Try checking model bounds and df_data.columns."
+            "No var selected for fitting!\n"
+            + "Try checking model bounds and df_data.columns."
         )
 
     ## Separate var_fit into det and rand
@@ -89,21 +90,19 @@ def eval_nls(
     bounds = []
     var_prob = []
     for var in var_fit_det:
-        if model.domain.get_width(var) == Inf:
+        if not isfinite(model.domain.get_nominal(var)):
             var_prob.append(var)
         bounds.append(model.domain.get_bound(var))
     if len(var_prob) > 0:
         raise ValueError(
-            "all variables to be fitted must have finite-width bounds\n" + \
-            "offending var = {}".format(var_prob)
+            "all variables to be fitted must finite nominal value\n"
+            + "offending var = {}".format(var_prob)
         )
 
     for var in var_fit_rand:
-        bounds.append((
-            model.density.marginals[var].q(0),
-            model.density.marginals[var].q(1),
-        ))
-
+        bounds.append(
+            (model.density.marginals[var].q(0), model.density.marginals[var].q(1),)
+        )
 
     ## Determine initial guess points
     df_nom = eval_nominal(model, df_det="nom", skip=True)
@@ -123,17 +122,14 @@ def eval_nls(
             df_var = tran_outer(
                 df_data[var_feat],
                 concat(
-                    (
-                        df_nom[var_fix].iloc[[0]],
-                        df_make(**dict(zip(var_fit, x)))
-                    ),
-                    axis=1
-                )
+                    (df_nom[var_fix].iloc[[0]], df_make(**dict(zip(var_fit, x)))),
+                    axis=1,
+                ),
             )
             df_res = eval_df(model, df=df_var)
 
             ## Compute joint MSE
-            return ((df_res[out].values - df_data[out].values)**2).mean()
+            return ((df_res[out].values - df_data[out].values) ** 2).mean()
 
         ## Run optimization
         res = minimize(
@@ -155,9 +151,9 @@ def eval_nls(
                     **dict(zip(map(lambda s: s + "_0", var_fit), x0)),
                     status=res.status,
                     mse=res.fun,
-                )
+                ),
             ),
-            axis=0
+            axis=0,
         )
 
     ## Post-process
@@ -165,6 +161,7 @@ def eval_nls(
         return df_res
     else:
         return df_res[var_fit]
+
 
 @pipe
 def ev_nls(*args, **kwargs):
