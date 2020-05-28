@@ -21,27 +21,29 @@ class TestModel(unittest.TestCase):
         self.df_wrong = pd.DataFrame(data={"z": [0.0, 1.0]})
 
         # 2D identity model with permuted df inputs
-        domain_2d = gr.Domain(bounds={"x": [-1.0, +1.0], "y": [0.0, 1.0]})
+        domain_2d = gr.Domain(bounds={"x0": [-1.0, +1.0], "x1": [0.0, 1.0]})
         marginals = {}
-        marginals["x"] = gr.MarginalNamed(
+        marginals["x0"] = gr.MarginalNamed(
             d_name="uniform", d_param={"loc": -1, "scale": 2}
         )
-        marginals["y"] = gr.MarginalNamed(
-            sign=-1, d_name="uniform", d_param={"loc": 0, "scale": 1}
+        marginals["x1"] = gr.MarginalNamed(
+            sign=-1, d_name="uniform", d_param={"loc": 0, "scale": 1},
         )
 
         self.model_2d = gr.Model(
             functions=[
-                gr.Function(lambda x: [x[0], x[1]], ["x", "y"], ["x", "y"], "test", 0)
+                gr.Function(
+                    lambda x: [x[0], x[1]], ["x0", "x1"], ["y0", "y1"], "test", 0
+                ),
             ],
             domain=domain_2d,
             density=gr.Density(marginals=marginals),
         )
-        self.df_2d = pd.DataFrame(data={"y": [0.0], "x": [+1.0]})
+        self.df_2d = pd.DataFrame(data={"x1": [0.0], "x0": [+1.0]})
         self.res_2d = self.model_2d.evaluate_df(self.df_2d)
 
-        self.df_median_in = pd.DataFrame({"x": [0.5], "y": [0.5]})
-        self.df_median_out = pd.DataFrame({"x": [0.0], "y": [0.5]})
+        self.df_median_in = pd.DataFrame({"x0": [0.5], "x1": [0.5]})
+        self.df_median_out = pd.DataFrame({"x0": [0.0], "x1": [0.5]})
 
         self.model_3d = gr.Model(
             functions=[
@@ -55,8 +57,8 @@ class TestModel(unittest.TestCase):
         ## Timing check
         self.model_slow = gr.Model(
             functions=[
-                gr.Function(lambda x: x, ["x"], ["y"], "f0", 1),
-                gr.Function(lambda x: x, ["x"], ["y"], "f1", 1),
+                gr.Function(lambda x: x, ["x0"], ["y0"], "f0", 1),
+                gr.Function(lambda x: x, ["x0"], ["y1"], "f1", 1),
             ]
         )
 
@@ -75,7 +77,7 @@ class TestModel(unittest.TestCase):
         self.assertTrue(self.model_2d.runtime_message(self.df_2d) is None)
 
         ## Slow function returns string message
-        msg = self.model_slow.runtime_message(pd.DataFrame({"x": [0]}))
+        msg = self.model_slow.runtime_message(pd.DataFrame({"x0": [0]}))
         self.assertTrue(isinstance(msg, str))
 
     ## Basic functionality with default arguments
@@ -107,6 +109,16 @@ class TestModel(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.model_3d.var_outer(self.df_2d, df_det=self.df_2d)
 
+    def test_drop_out(self):
+        """Checks that output column names are properly dropped"""
+        md = gr.Model() >> gr.cp_function(lambda x: x[0] + 1, var=1, out=1)
+        df_in = gr.df_make(x0=[0, 1, 2], y0=[0, 1, 2])
+        df_true = gr.df_make(x0=[0, 1, 2], y0=[1, 2, 3])
+
+        df_res = md >> gr.ev_df(df=df_in)
+
+        self.assertTrue(gr.df_equal(df_res, df_true, close=True))
+
     ## Test re-ordering issues
 
     def test_2d_output_names(self):
@@ -115,11 +127,6 @@ class TestModel(unittest.TestCase):
         self.assertEqual(
             set(self.model_2d.evaluate_df(self.df_2d).columns), set(self.model_2d.out)
         )
-
-    def test_2d_identity(self):
-        """Checks that re-ordering of inputs handled properly
-        """
-        self.assertTrue(gr.df_equal(self.df_2d, self.res_2d.loc[:, self.df_2d.columns]))
 
     def test_quantile(self):
         """Checks that model.sample_quantile() evaluates correctly.

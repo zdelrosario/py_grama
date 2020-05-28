@@ -1052,10 +1052,14 @@ class Model:
 
         """
         ## Check invariant; model inputs must be subset of df columns
-        if not set(self.var).issubset(set(df.columns)):
-            raise ValueError("Model inputs not a subset of given columns")
+        var_diff = set(self.var).difference(set(df.columns))
+        if len(var_diff) != 0:
+            raise ValueError(
+                "Model inputs not a subset of given columns;\n"
+                + "missing var = {}".format(var_diff)
+            )
 
-        df_tmp = df.copy()
+        df_tmp = df.copy().drop(self.out, axis=1, errors="ignore")
         ## Evaluate each function
         for func in self.functions:
             ## Concatenate to make intermediate results available
