@@ -92,3 +92,7 @@ def pull(df, col=-1):
         col = col._name
 
     return df[col]
+
+@dfpipe
+def dropna(df, how="any", subset=None):
+   return df.dropna(how=how, subset=subset).reset_index(drop=True)
