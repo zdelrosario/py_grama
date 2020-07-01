@@ -2,6 +2,7 @@ __all__ = [
     "sin",
     "cos",
     "log",
+    "log10",
     "exp",
     "sqrt",
     "pow",
@@ -18,6 +19,7 @@ from numpy import argsort, array, median, zeros
 from numpy import sin as npsin
 from numpy import cos as npcos
 from numpy import log as nplog
+from numpy import log10 as nplog10
 from numpy import exp as npexp
 from numpy import sqrt as npsqrt
 from numpy import power as nppower
@@ -41,6 +43,11 @@ def cos(x):
 @make_symbolic
 def log(x):
     return nplog(x)
+
+
+@make_symbolic
+def log10(x):
+    return nplog10(x)
 
 
 @make_symbolic
