@@ -47,4 +47,4 @@ If you have a suggestion for a significant change to the design of `py_grama`, p
 
 Updated 2020-06-05
 
-- Zachary del Rosario (zdelrosario.com)
+- Zachary del Rosario (zdelrosario(at)outlook(doot)com)
