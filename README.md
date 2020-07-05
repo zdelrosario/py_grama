@@ -38,3 +38,6 @@ $ python
 
 # Tutorials
 The [tutorials](https://github.com/zdelrosario/py_grama/tree/master/tutorials) page has educational materials for learning to work with `py_grama`.
+
+# Support and Contributing
+If you are seeking support or want to contribute, please see [Contributing](https://github.com/zdelrosario/py_grama/blob/master/contributing.md).
