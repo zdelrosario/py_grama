@@ -51,6 +51,7 @@ from .dfply import row_slice as tf_row_slice
 from .dfply import mask as tf_filter
 from .dfply import top_n as tf_top_n
 from .dfply import pull as tf_pull
+from .dfply import dropna as tf_dropna
 
 # summarize.py
 from .dfply import summarize as tf_summarize
