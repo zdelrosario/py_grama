@@ -19,7 +19,12 @@ from pandas import concat
 # --------------------------------------------------
 @curry
 def tran_feat_composition(
-    df, var_formula="FORMULA", preset_name="magpie", append=True, **kwargs,
+    df,
+    var_formula="FORMULA",
+    preset_name="magpie",
+    append=True,
+    ignore_errors=True,
+    **kwargs,
 ):
     r"""Featurize a dataset using matminer
 
@@ -55,8 +60,17 @@ def tran_feat_composition(
 
     ## Featurize
     featurizer = ElementProperty.from_preset(preset_name=preset_name)
-    df_res = StrToComposition().featurize_dataframe(df[[var_formula]], var_formula)
-    df_res = featurizer.featurize_dataframe(df_res, col_id="composition", **kwargs)
+    df_res = StrToComposition().featurize_dataframe(
+        df[[var_formula]],
+        var_formula,
+        ignore_errors=ignore_errors,
+    )
+    df_res = featurizer.featurize_dataframe(
+        df_res,
+        col_id="composition",
+        ignore_errors=ignore_errors,
+        **kwargs,
+    )
     df_res.drop(columns=[var_formula, "composition"], inplace=True)
 
     ## Concatenate as necessary
