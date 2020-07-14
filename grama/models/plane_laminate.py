@@ -20,7 +20,7 @@ nu12_M = 0.45
 E1_CV    = 0.02
 E2_CV    = 0.08
 G12_CV   = 0.1
-nu12_SIG = nu12_M * np.sqrt(0.08)
+nu12_SIG = nu12_M * 0.08 # By 8% COV
 
 T_NOM    = 1e-3            # Nominal thickness
 T_PM     = T_NOM * 0.01    # +/- ply thickness
