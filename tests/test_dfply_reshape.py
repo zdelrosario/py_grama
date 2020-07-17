@@ -262,3 +262,21 @@ class TestReshape(unittest.TestCase):
         )
 
         self.assertTrue(true4.equals(test4))
+
+class TestNesting(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_explode(self):
+        df_base = gr.df_make(x=[1, 2], y=[[3, 4], [5, 6]])
+        df_str = gr.df_make(x=[1, 2], y=[["3", "4"], ["5", "6"]])
+        df_true = gr.df_make(
+            x=[1, 1, 2, 2],
+            y=[3, 4, 5, 6]
+        )
+
+        df_res = df_base >> gr.tf_explode(X.y)
+        df_res_s = df_base >> gr.tf_explode(X.y, convert=True)
+
+        self.assertTrue(gr.df_equal(df_true, df_res, close=True))
+        self.assertTrue(gr.df_equal(df_true, df_res_s, close=True))
