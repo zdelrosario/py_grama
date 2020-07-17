@@ -4,7 +4,9 @@ __all__ = [
     "str_extract",
     "str_locate",
     "str_replace",
+    "str_replace_all",
     "str_sub",
+    "str_split",
     "str_which",
 ]
 
@@ -129,29 +131,71 @@ def str_extract(string, pattern):
 
 ## Mutate string
 # --------------------------------------------------
-def _replace_or_none(string, pattern, replacement, ind):
-    if not isnan(ind):
-        return string[:ind] + replacement + string[ind + len(pattern) :]
-    else:
-        return string
-
-
 @make_symbolic
 def str_replace(string, pattern, replacement):
     """Replace the first matched pattern in each string."""
-
-    indices = str_which(string, pattern)
 
     try:
         if isinstance(string, str):
             raise TypeError
         return Series(
             [
-                _replace_or_none(string[ind], pattern, replacement, indices[ind])
-                for ind in range(len(indices))
+                re.sub(pattern, replacement, s, count=1)
+                for s in string
             ]
         )
 
     except TypeError:
 
-        return _replace_or_none(string, pattern, replacement, indices)
+        return re.sub(pattern, replacement, string, count=1)
+
+@make_symbolic
+def str_replace_all(string, pattern, replacement):
+    """Replace all occurences of pattern in each string."""
+
+    try:
+        if isinstance(string, str):
+            raise TypeError
+        return Series(
+            [
+                re.sub(pattern, replacement, s)
+                for s in string
+            ]
+        )
+
+    except TypeError:
+
+        return re.sub(pattern, replacement, string)
+
+
+## Split
+# --------------------------------------------------
+@make_symbolic
+def str_split(string, pattern, maxsplit=0):
+    """Split string into list on pattern
+
+    Args:
+        string (str or iterable[str]): String(s) to split
+        pattern (str): Regex pattern on which to split
+
+    Kwargs:
+        maxsplit (int): Maximum number of splits, or 0 for unlimited
+
+    Returns
+        str or iterable[str]: List (of lists) of strings
+
+    """
+
+    try:
+        if isinstance(string, str):
+            raise TypeError
+        return Series(
+            [
+                re.split(pattern, s, maxsplit=maxsplit)
+                for s in string
+            ]
+        )
+
+    except TypeError:
+
+        return re.split(pattern, string, maxsplit=maxsplit)

@@ -59,8 +59,27 @@ class TestStringHelpers(unittest.TestCase):
         self.assertTrue(gr.str_replace("foofoo", "foo", "barbar") == "barbarfoo")
         self.assertTrue(gr.str_replace("barbar", "foo", "bar") == "barbar")
 
-        R = gr.str_replace(["foo"], "foo", "bar")
+        R = gr.str_replace(["foo", "nope"], "foo", "bar")
         self.assertTrue(R[0] == "bar")
+        self.assertTrue(R[1] == "nope")
+
+    def test_str_replace_all(self):
+        self.assertTrue(gr.str_replace_all("foofoo", "foo", "bar") == "barbar")
+
+        R = gr.str_replace_all(["foofoo", "nope"], "foo", "bar")
+        self.assertTrue(R[0] == "barbar")
+        self.assertTrue(R[1] == "nope")
+
+    def test_str_split(self):
+        self.assertTrue(gr.str_split("x-y", "-") == ["x", "y"])
+
+        S0 = gr.str_split(["x-y", "u-v-w"], "-")
+        self.assertTrue(S0[0] == ["x", "y"])
+        self.assertTrue(S0[1] == ["u", "v", "w"])
+
+        S1 = gr.str_split(["x-y", "u-v-w"], "-", maxsplit=1)
+        self.assertTrue(S1[0] == ["x", "y"])
+        self.assertTrue(S1[1] == ["u", "v-w"])
 
     def test_str_sub(self):
         s_base0 = "foofoo"
