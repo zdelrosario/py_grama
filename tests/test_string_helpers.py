@@ -62,6 +62,9 @@ class TestStringHelpers(unittest.TestCase):
         R = gr.str_replace(["foo"], "foo", "bar")
         self.assertTrue(R[0] == "bar")
 
+    def test_str_replace_all(self):
+        self.assertTrue(gr.str_replace_all("foofoo", "foo", "bar") == "barbar")
+
     def test_str_sub(self):
         s_base0 = "foofoo"
         s_sub0 = "foo"

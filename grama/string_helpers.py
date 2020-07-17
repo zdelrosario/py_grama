@@ -4,6 +4,7 @@ __all__ = [
     "str_extract",
     "str_locate",
     "str_replace",
+    "str_replace_all",
     "str_sub",
     "str_which",
 ]
@@ -129,13 +130,6 @@ def str_extract(string, pattern):
 
 ## Mutate string
 # --------------------------------------------------
-def _replace_or_none(string, pattern, replacement, ind):
-    if not isnan(ind):
-        return string[:ind] + replacement + string[ind + len(pattern) :]
-    else:
-        return string
-
-
 @make_symbolic
 def str_replace(string, pattern, replacement):
     """Replace the first matched pattern in each string."""
@@ -147,11 +141,31 @@ def str_replace(string, pattern, replacement):
             raise TypeError
         return Series(
             [
-                _replace_or_none(string[ind], pattern, replacement, indices[ind])
+                re.sub(pattern, replacement, string[ind], count=1)
                 for ind in range(len(indices))
             ]
         )
 
     except TypeError:
 
-        return _replace_or_none(string, pattern, replacement, indices)
+        return re.sub(pattern, replacement, string, count=1)
+
+@make_symbolic
+def str_replace_all(string, pattern, replacement):
+    """Replace the first matched pattern in each string."""
+
+    indices = str_which(string, pattern)
+
+    try:
+        if isinstance(string, str):
+            raise TypeError
+        return Series(
+            [
+                re.sub(pattern, replacement, string[ind])
+                for ind in range(len(indices))
+            ]
+        )
+
+    except TypeError:
+
+        return re.sub(pattern, replacement, string)
