@@ -6,6 +6,7 @@ __all__ = [
     "str_replace",
     "str_replace_all",
     "str_sub",
+    "str_split",
     "str_which",
 ]
 
@@ -184,3 +185,17 @@ def str_split(string, pattern, maxsplit=0):
         str or iterable[str]: List (of lists) of strings
 
     """
+
+    try:
+        if isinstance(string, str):
+            raise TypeError
+        return Series(
+            [
+                re.split(pattern, s, maxsplit=maxsplit)
+                for s in string
+            ]
+        )
+
+    except TypeError:
+
+        return re.split(pattern, string, maxsplit=maxsplit)
