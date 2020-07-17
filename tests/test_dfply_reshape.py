@@ -115,6 +115,22 @@ class TestReshape(unittest.TestCase):
         self.assertTrue(df_spread.equals(d_spread))
         self.assertTrue(df_conv.equals(d_spread_conv))
 
+        ## Test fill
+        df_base = gr.df_make(
+            x=[1, 2, 3, 4, 5],
+            y=["a", "b", "c", "a", "b"],
+            idx=[0, 0, 0, 1, 1]
+        )
+        df_true = gr.df_make(
+            a=[1, 4],
+            b=[2, 5],
+            c=[3, 0],
+            idx=[0, 1]
+        )
+        df_res = df_base >> gr.tf_spread(X.y, X.x, fill=0)
+
+        self.assertTrue(gr.df_equal(df_true, df_res, close=True))
+
     def test_separate(self):
 
         d = pd.DataFrame({"a": ["1-a-3", "1-b", "1-c-3-4", "9-d-1", "10"]})

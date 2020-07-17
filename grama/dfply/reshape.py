@@ -150,7 +150,7 @@ def convert_type(df, columns):
 
 @pipe
 @symbolic_evaluation(eval_as_label=["*"])
-def spread(df, key, values, convert=False):
+def spread(df, key, values, convert=False, fill=None):
     """
     Transforms a "long" DataFrame into a "wide" format using a key and value
     column.
@@ -204,6 +204,9 @@ def spread(df, key, values, convert=False):
     if convert and (out_df[values].dtype.kind in "OSaU"):
         columns_to_convert = [col for col in spread_data if col not in columns]
         spread_data = convert_type(spread_data, columns_to_convert)
+
+    if not (fill is None):
+        spread_data.fillna(value=fill, inplace=True)
 
     out_df = out_df[id_cols].drop_duplicates()
     out_df = out_df.merge(spread_data, left_index=True, right_index=True).reset_index(
