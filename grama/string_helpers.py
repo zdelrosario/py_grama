@@ -134,15 +134,13 @@ def str_extract(string, pattern):
 def str_replace(string, pattern, replacement):
     """Replace the first matched pattern in each string."""
 
-    indices = str_which(string, pattern)
-
     try:
         if isinstance(string, str):
             raise TypeError
         return Series(
             [
-                re.sub(pattern, replacement, string[ind], count=1)
-                for ind in range(len(indices))
+                re.sub(pattern, replacement, s, count=1)
+                for s in string
             ]
         )
 
@@ -152,20 +150,37 @@ def str_replace(string, pattern, replacement):
 
 @make_symbolic
 def str_replace_all(string, pattern, replacement):
-    """Replace the first matched pattern in each string."""
-
-    indices = str_which(string, pattern)
+    """Replace all occurences of pattern in each string."""
 
     try:
         if isinstance(string, str):
             raise TypeError
         return Series(
             [
-                re.sub(pattern, replacement, string[ind])
-                for ind in range(len(indices))
+                re.sub(pattern, replacement, s)
+                for s in string
             ]
         )
 
     except TypeError:
 
         return re.sub(pattern, replacement, string)
+
+
+## Split
+# --------------------------------------------------
+@make_symbolic
+def str_split(string, pattern, maxsplit=0):
+    """Split string into list on pattern
+
+    Args:
+        string (str or iterable[str]): String(s) to split
+        pattern (str): Regex pattern on which to split
+
+    Kwargs:
+        maxsplit (int): Maximum number of splits, or 0 for unlimited
+
+    Returns
+        str or iterable[str]: List (of lists) of strings
+
+    """
