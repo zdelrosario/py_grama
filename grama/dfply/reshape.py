@@ -356,3 +356,40 @@ def unite(df, colname, *args, **kwargs):
         df.drop(to_unite, axis=1, inplace=True)
 
     return df
+
+# ------------------------------------------------------------------------------
+# Nesting
+# ------------------------------------------------------------------------------
+
+@pipe
+@symbolic_evaluation(eval_as_label=["*"])
+def explode(df, col, convert=False):
+    """Lengthen DataFrame by exploding iterable entries in a column.
+
+    If you have a mixed datatype column in your long-format DataFrame then the
+    default behavior is for the spread columns to be of type `object`, or
+    string. If you want to try to convert dtypes when spreading, you can set
+    the convert keyword argument in spread to True.
+
+    Note: Implemented in terms of the Pandas pd.DataFrame.explode() function.
+
+    Args:
+        col (str, int, or symbolic): Label for the column to explode.
+
+    Kwargs:
+        convert (bool): Boolean indicating whether or not to try and convert
+            the spread columns to more appropriate data types.
+
+    Returns:
+        DataFrame:
+
+    Example:
+
+    """
+
+    df_res = df.explode(col).reset_index(drop=True)
+
+    if convert and (df_res[col].dtype.kind in "OSaU"):
+        return convert_type(df_res, [col])
+    else:
+        return df_res

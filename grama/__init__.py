@@ -30,6 +30,7 @@ from .dfply import separate as tf_separate
 from .dfply import unite as tf_unite
 from .dfply import gather as tf_gather
 from .dfply import spread as tf_spread
+from .dfply import explode as tf_explode
 
 # select.py
 from .dfply import select as tf_select
