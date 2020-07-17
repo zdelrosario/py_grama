@@ -40,7 +40,7 @@ def arrange(df, *args, **kwargs):
 
     sorter = pd.concat(series, axis=1).reset_index(drop=True)
     sorter = sorter.sort_values(sorter.columns.tolist(), **kwargs)
-    return df.iloc[sorter.index, :]
+    return df.iloc[sorter.index, :].reset_index(drop=True)
 
 
 # ------------------------------------------------------------------------------
