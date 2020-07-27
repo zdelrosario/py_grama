@@ -68,7 +68,7 @@ reproducibility of results through the inspection of source code.
 
 ``Grama`` relies heavily on the SciKit package ecosystem for its numerical
 backbone
-[@scipy2020,@numpy2011,@matplotlib2007,@mckinney-proc-scipy-2010,@pedregosa2011scikit].
+[@scipy2020;@numpy2011;@matplotlib2007;@mckinney-proc-scipy-2010;@pedregosa2011scikit].
 The functional design is heavily inspired by the `Tidyverse`
 [@wickham2019tidyverse], while its implementation is built upon `dfply`
 [@kiefer2019dfply]. Additional functionality for materials data via an optional
