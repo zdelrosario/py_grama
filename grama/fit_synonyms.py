@@ -10,12 +10,10 @@ from grama import pipe, custom_formatwarning, df_make, eval_nls
 from grama import Model, cp_function, cp_md_det
 from toolz import curry
 
+
 @curry
 def fit_nls(
-        df_data,
-        md=None,
-        verbose=True,
-        **kwargs,
+    df_data, md=None, verbose=True, **kwargs,
 ):
     r"""Fit a model with Nonlinear Least Squares (NLS)
 
@@ -56,8 +54,13 @@ def fit_nls(
         raise ValueError("Resulting model is constant!")
 
     ## Assemble and return fitted model
+    if md.name is None:
+        name = "(Fitted Model)"
+    else:
+        name = md.name + " (Fitted)"
+
     md_res = (
-        Model(md.name + " (Fitted)")
+        Model(name)
         >> cp_function(
             lambda x: df_best[var_fixed].values,
             var=var_remain,
@@ -68,6 +71,7 @@ def fit_nls(
     )
 
     return md_res
+
 
 @pipe
 def ft_nls(*args, **kwargs):
