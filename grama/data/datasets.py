@@ -1,3 +1,9 @@
+__all__ = [
+    "df_diamonds",
+    "df_stang",
+    "df_trajectory_full",
+]
+
 import os
 from pandas import read_csv
 from pathlib import Path
@@ -10,3 +16,6 @@ df_stang = read_csv(Path(path_grama / "data/stang_long.csv"))
 
 # Stang (tidy form)
 df_diamonds = read_csv(Path(path_grama / "data/diamonds.csv"))
+
+# Trajectory, full
+df_trajectory_full = read_csv(Path(path_grama / "data/trajectory_full.csv"))
