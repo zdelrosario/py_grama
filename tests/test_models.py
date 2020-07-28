@@ -23,6 +23,7 @@ class TestModels(unittest.TestCase):
         md_plate_buckling = models.make_plate_buckle()
         md_poly = models.make_poly()
         md_test = models.make_test()
+        md_trajectory_linear = models.make_trajectory_linear()
 
         ## Models evaluate
         md_cantilever_beam >> gr.ev_nominal(df_det="nom")
@@ -32,3 +33,4 @@ class TestModels(unittest.TestCase):
         md_plate_buckling >> gr.ev_nominal(df_det="nom")
         md_poly >> gr.ev_nominal(df_det="nom")
         md_test >> gr.ev_nominal(df_det="nom")
+        md_trajectory_linear >> gr.ev_nominal(df_det="nom")
