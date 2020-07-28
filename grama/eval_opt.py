@@ -46,6 +46,20 @@ def eval_nls(
     Returns:
         DataFrame: Results of estimation
 
+    Examples:
+        >>> import grama as gr
+        >>> from grama.data import df_trajectory_full
+        >>> from grama.models import make_trajectory_linear
+        >>>
+        >>> md_trajectory = make_trajectory_linear()
+        >>>
+        >>> df_fit = (
+        >>>     md_trajectory
+        >>>     >> gr.ev_nls(df_data=df_trajectory_full)
+        >>> )
+        >>>
+        >>> print(df_fit)
+
     """
     ## Check `out` invariants
     if out is None:
