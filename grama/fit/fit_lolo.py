@@ -141,10 +141,10 @@ def fit_lolo(
     for output in out:
         rf = RandomForestRegressor(**kwargs)
         set_seed(seed)
-        rf.fit(df[var], df[output])
+        rf.fit(df[var].values, df[output].values)
         name = "RF"
 
-        fun = FunctionRFR(rf, var, [output], name, 0)
+        fun = FunctionRFR(rf, var, [output], name, 0, return_std)
         functions.append(fun)
 
     ## Construct model
