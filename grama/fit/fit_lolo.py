@@ -114,6 +114,10 @@ def fit_lolo(
 
     n_obs, n_in = df.shape
 
+    ## Check minimum rows
+    if n_obs < 8:
+        raise ValueError("The lolo random forest requires at least 8 rows")
+
     ## Infer fitting metadata, if available
     if not (md is None):
         domain = md.domain
