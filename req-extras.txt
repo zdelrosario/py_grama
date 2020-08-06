@@ -1,3 +1,4 @@
+lolopy
 matminer
 sklearn
 statsmodels

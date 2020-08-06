@@ -34,15 +34,15 @@ class TestFits(unittest.TestCase):
         )
 
         self.df_tree = self.md_tree >> gr.ev_df(
-            df=pd.DataFrame(dict(x=[0, 1, 2, 7, 8, 9]))
+            df=pd.DataFrame(dict(x=np.linspace(0, 10, num=8)))
         )
 
         ## Cluster model
         self.df_cluster = pd.DataFrame(
             dict(
-                x=[0.1, 0.2, 0.3, 1.1, 1.2, 1.3],
-                y=[0.3, 0.2, 0.1, 1.3, 1.2, 1.1],
-                c=[0, 0, 0, 1, 1, 1],
+                x=[0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4],
+                y=[0.3, 0.2, 0.1, 0.0, 1.3, 1.2, 1.1, 1.0],
+                c=[0, 0, 0, 0, 1, 1, 1, 1],
             )
         )
 
@@ -71,12 +71,46 @@ class TestFits(unittest.TestCase):
         )
         df_res = gr.eval_df(md_fit, self.df_tree[self.md_tree.var])
 
-        ## RF can approximately recover a tree
-        self.assertTrue(gr.df_equal(df_res, self.df_tree, close=True, precision=1,))
+        ## RF can approximately recover a tree; check ends only
+        self.assertTrue(
+            gr.df_equal(
+                df_res[["y", "z"]].iloc[[0, 1, -2, -1]],
+                self.df_tree[["y", "z"]].iloc[[0, 1, -2, -1]],
+                close=True,
+                precision=1,
+            )
+        )
 
         ## Fit copies model data
         self.assertTrue(set(md_fit.var) == set(self.md_tree.var))
         self.assertTrue(set(md_fit.out) == set(self.md_tree.out))
+
+    def test_lolo(self):
+        ## Fit routine creates usable model
+        md_fit = fit.fit_lolo(
+            self.df_tree,
+            md=self.md_tree,
+            max_depth=1,  # True tree is a stump
+            seed=102,
+        )
+        df_res = gr.eval_df(md_fit, self.df_tree[self.md_tree.var])
+
+        ## lolo seems to interpolate middle values; check ends only
+        self.assertTrue(
+            gr.df_equal(
+                df_res[["y", "z"]].iloc[[0, 1, -2, -1]],
+                self.df_tree[["y", "z"]].iloc[[0, 1, -2, -1]],
+                close=True,
+                precision=1,
+            )
+        )
+
+        ## Fit copies model data, plus predictive std
+        self.assertTrue(set(md_fit.var) == set(self.md_tree.var))
+        self.assertTrue(
+            set(md_fit.out)
+            == set(self.md_tree.out + list(map(lambda s: s + "_std", self.md_tree.out)))
+        )
 
     def test_kmeans(self):
         ## Fit routine creates usable model
