@@ -10,6 +10,7 @@ __all__ = [
     "as_str",
     "as_factor",
     "fct_reorder",
+    "fillna",
 ]
 
 from grama import make_symbolic
@@ -21,7 +22,7 @@ from numpy import log as nplog
 from numpy import exp as npexp
 from numpy import sqrt as npsqrt
 from numpy import power as nppower
-from pandas import Categorical
+from pandas import Categorical, Series
 
 # --------------------------------------------------
 # Mutation helpers
@@ -93,3 +94,10 @@ def fct_reorder(f, x, fun=median):
         values[i] = fun(x[mask])
     # Sort according to computed values
     return as_factor(f, categories=levels[argsort(values)], ordered=True)
+
+
+# Pandas helpers
+# -------------------------
+@make_symbolic
+def fillna(*args, **kwargs):
+    return Series.fillna(*args, **kwargs)
