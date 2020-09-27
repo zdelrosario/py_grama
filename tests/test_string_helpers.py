@@ -2,6 +2,7 @@ import unittest
 
 from context import grama as gr
 from numpy import isnan
+from pandas import Series
 
 ##==============================================================================
 ## string helper tests
@@ -15,6 +16,20 @@ class TestStringHelpers(unittest.TestCase):
         self.S_true = ["foo"]
         self.S_false = ["bar"]
         self.S_ind1 = ["afoo"]
+
+    def test_str_c(self):
+        ## Correct errors
+        with self.assertRaises(ValueError):
+            gr.str_c([1,2], [1,2,3])
+
+        ## Correct behavior
+        S0_true = Series(["foo"])
+        S0_comp = gr.str_c("foo")
+        self.assertTrue(S0_true.equals(S0_comp))
+
+        S1_true = Series(["x0", "x1"])
+        S1_comp = gr.str_c("x", [0, 1])
+        self.assertTrue(S1_true.equals(S1_comp))
 
     def test_str_detect(self):
         self.assertTrue(gr.str_detect(self.s_true, "foo"))
