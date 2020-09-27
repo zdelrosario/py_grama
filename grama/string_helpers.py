@@ -35,8 +35,8 @@ def _vec_len(x):
 def _ensure_series(x, l, length):
     if l == 1:
         return Series([x] * length).astype(str)
-    else:
-        return Series(x).astype(str)
+
+    return Series(x).astype(str)
 
 @make_symbolic
 def str_c(*args, sep=""):
@@ -47,26 +47,25 @@ def str_c(*args, sep=""):
     if len(args) < 2:
         return Series(args[0]).astype(str)
 
-    else:
-        ## Check all lengths 1 or equal
-        all_lengths = [_vec_len(a) for a in args]
-        if not len(set(
+    ## Check all lengths 1 or equal
+    all_lengths = [_vec_len(a) for a in args]
+    if not len(set(
                 filter(lambda l: l > 1, all_lengths)
-        )) <= 1:
+    )) <= 1:
             raise ValueError(
                 "All arguments must be same length or scalar"
             )
-        length = max(all_lengths)
+    length = max(all_lengths)
 
-        ## Ensure first arg is string
-        res = _ensure_series(args[0], all_lengths[0], length)
+    ## Ensure first arg is string
+    res = _ensure_series(args[0], all_lengths[0], length)
 
-        ## Iteratively concatenate
-        for i in range(1, len(args)):
+    ## Iteratively concatenate
+    for i in range(1, len(args)):
             tmp = _ensure_series(args[i], all_lengths[i], length)
             res = res.str.cat(tmp, sep=sep)
 
-        return res
+    return res
 
 ## Detect matches
 # --------------------------------------------------
