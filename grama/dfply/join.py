@@ -301,7 +301,8 @@ def bind_rows(df, other, join="outer", ignore_index=False, reset=True):
     """
 
     df = pd.concat(
-        [df, other], join=join, ignore_index=ignore_index, axis=0, sort=False
+        [df.reset_index(drop=True), other.reset_index(drop=True)],
+        join=join, ignore_index=ignore_index, axis=0, sort=False
     )
 
     if reset:
@@ -329,6 +330,7 @@ def bind_cols(df, other, join="outer", ignore_index=False):
     """
 
     df = pd.concat(
-        [df, other], join=join, ignore_index=ignore_index, axis=1, sort=False
+        [df.reset_index(drop=True), other.reset_index(drop=True)],
+        join=join, ignore_index=ignore_index, axis=1, sort=False
     )
     return df
