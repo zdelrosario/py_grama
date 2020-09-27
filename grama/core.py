@@ -13,6 +13,7 @@ __all__ = [
     "MarginalNamed",
     "MarginalGKDE",
     "Model",
+    "NaN",
 ]
 
 from abc import ABC, abstractmethod
