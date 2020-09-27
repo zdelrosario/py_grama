@@ -71,9 +71,21 @@ def tran_tsne(
 
     ## Concatenate as necessary
     if keep:
-        df_res = concat((df_res, df[var_leftover]), axis=1)
+        df_res = concat(
+            (
+                df_res.reset_index(drop=True),
+                df[var_leftover].reset_index(drop=True)
+            ),
+            axis=1
+        )
     if append:
-        df_res = concat((df_res, df[var]), axis=1)
+        df_res = concat(
+            (
+                df_res.reset_index(drop=True),
+                df[var].reset_index(drop=True)
+            ),
+            axis=1
+        )
 
     return df_res
 
