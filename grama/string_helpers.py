@@ -34,7 +34,7 @@ def _vec_len(x):
 
 
 def _ensure_series(x, l, length):
-    if l == 1:
+    if (l == 1) and (not isinstance(x, Series)):
         return Series([x] * length).astype(str)
 
     return Series(x).astype(str).reset_index(drop=True)
