@@ -2,7 +2,7 @@ import unittest
 
 from context import grama as gr
 from numpy import isnan
-from pandas import Series
+from pandas import Series, Index
 
 ##==============================================================================
 ## string helper tests
@@ -20,7 +20,7 @@ class TestStringHelpers(unittest.TestCase):
     def test_str_c(self):
         ## Correct errors
         with self.assertRaises(ValueError):
-            gr.str_c([1,2], [1,2,3])
+            gr.str_c([1, 2], [1, 2, 3])
 
         ## Correct behavior
         S0_true = Series(["foo"])
@@ -30,6 +30,18 @@ class TestStringHelpers(unittest.TestCase):
         S1_true = Series(["x0", "x1"])
         S1_comp = gr.str_c("x", [0, 1])
         self.assertTrue(S1_true.equals(S1_comp))
+
+        S2_true = Series(["x0", "x1"])
+        S2_comp = gr.str_c("x", [0, 1])
+        self.assertTrue(S2_true.equals(S2_comp))
+
+        # Catch series index issues
+        S3_true = Series(["x0", "x1"])
+        S_tmp = Series([0, 1])
+        S_tmp.index = Index(["a", "b"])
+
+        S3_comp = gr.str_c("x", S_tmp)
+        self.assertTrue(S3_true.equals(S3_comp))
 
     def test_str_detect(self):
         self.assertTrue(gr.str_detect(self.s_true, "foo"))
