@@ -43,6 +43,11 @@ class TestStringHelpers(unittest.TestCase):
         S3_comp = gr.str_c("x", S_tmp)
         self.assertTrue(S3_true.equals(S3_comp))
 
+        # Catch length-one issue
+        S4_true = Series(["0x"])
+        S4_comp = gr.str_c(Series([0], name="test"), "x")
+        self.assertTrue(S4_true.equals(S4_comp))
+
     def test_str_detect(self):
         self.assertTrue(gr.str_detect(self.s_true, "foo"))
         self.assertTrue(not gr.str_detect(self.s_false, "foo"))
