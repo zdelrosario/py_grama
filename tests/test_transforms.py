@@ -338,6 +338,12 @@ class TestDR(unittest.TestCase):
             data.df_diamonds >> gr.tf_sample(n=100) >> tran.tf_tsne(var=["x", "y", "z"])
         )
 
+    def test_umap(self):
+        ## UMAP executes successfully
+        df_umap = (
+            data.df_diamonds >> gr.tf_sample(n=100) >> tran.tf_umap(var=["x", "y", "z"])
+        )
+
 
 # --------------------------------------------------
 # class TestMatminer(unittest.TestCase):
