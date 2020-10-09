@@ -33,10 +33,9 @@ def tran_umap(
         n_dim (int): Target dimensionality
 
     Kwargs:
-        n_neighbors (int):
-        min_dist (float):
-        n_components (int):
-        metric ():
+        n_neighbors (int): A smaller value emphasizes local structure, larger value emphasizes global structure. Assumed number of nearest-neighbors in clusters. Coenen and Pearce claim this is the most important hyperparameter for UMAP. default=15
+        min_dist (float): Minimum distance between mapped points. default=0.1
+        metric (str or function): Metric used for distance computations. See url: https://umap-learn.readthedocs.io/en/latest/parameters.html#metric
 
     Notes:
         - A wrapper for umap.UMAP
