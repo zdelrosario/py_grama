@@ -1,4 +1,5 @@
 __all__ = [
+    "abs",
     "sin",
     "cos",
     "log",
@@ -16,6 +17,7 @@ __all__ = [
 from grama import make_symbolic
 
 from numpy import argsort, array, median, zeros
+from numpy import abs as npabs
 from numpy import sin as npsin
 from numpy import cos as npcos
 from numpy import log as nplog
@@ -29,6 +31,11 @@ from pandas import Categorical, Series
 # --------------------------------------------------
 # Numeric
 # -------------------------
+@make_symbolic
+def abs(x):
+    return npabs(x)
+
+
 @make_symbolic
 def sin(x):
     return npsin(x)
