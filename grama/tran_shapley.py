@@ -3,7 +3,7 @@ __all__ = [
     "tf_shapley_cohort",
 ]
 
-from grama import pipe
+from grama import add_pipe, pipe
 from itertools import chain, combinations
 from numpy import all, number, sum, zeros, empty, NaN
 from pandas import concat, DataFrame
@@ -168,15 +168,11 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20, inds=None):
     df_res = DataFrame()
     for j in range(n):
         df_tmp = cohort_shapley(j)
-        df_tmp.columns = [
-            df_tmp.columns[i] + "_" + var[j] for i in range(len(out))
-        ]
+        df_tmp.columns = [df_tmp.columns[i] + "_" + var[j] for i in range(len(out))]
 
         df_res = concat((df_res, df_tmp), axis=1)
 
     return df_res
 
 
-@pipe
-def tf_shapley_cohort(*args, **kwargs):
-    return tran_shapley_cohort(*args, **kwargs)
+tf_shapley_cohort = add_pipe(tran_shapley_cohort)

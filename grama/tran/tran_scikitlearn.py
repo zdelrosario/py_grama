@@ -9,7 +9,7 @@ try:
 except ModuleNotFoundError:
     raise ModuleNotFoundError("module sklearn not found")
 
-from grama import pipe
+from grama import add_pipe
 from toolz import curry
 from pandas import concat, DataFrame
 
@@ -72,24 +72,15 @@ def tran_tsne(
     ## Concatenate as necessary
     if keep:
         df_res = concat(
-            (
-                df_res.reset_index(drop=True),
-                df[var_leftover].reset_index(drop=True)
-            ),
-            axis=1
+            (df_res.reset_index(drop=True), df[var_leftover].reset_index(drop=True)),
+            axis=1,
         )
     if append:
         df_res = concat(
-            (
-                df_res.reset_index(drop=True),
-                df[var].reset_index(drop=True)
-            ),
-            axis=1
+            (df_res.reset_index(drop=True), df[var].reset_index(drop=True)), axis=1
         )
 
     return df_res
 
 
-@pipe
-def tf_tsne(*args, **kwargs):
-    return tran_tsne(*args, **kwargs)
+tf_tsne = add_pipe(tran_tsne)

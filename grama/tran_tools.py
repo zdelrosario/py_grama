@@ -17,7 +17,7 @@ from numpy.random import choice, permutation
 from numpy.random import seed as set_seed
 from pandas import concat, DataFrame, melt
 
-from grama import pipe, copy_meta, Intention, mse, rsq
+from grama import add_pipe, pipe, copy_meta, Intention, mse, rsq
 from grama import (
     tf_bind_cols,
     tf_filter,
@@ -171,10 +171,7 @@ def tran_kfolds(
     return df_res
 
 
-@pipe
-def tf_kfolds(*args, **kwargs):
-    return tran_kfolds(*args, **kwargs)
-
+tf_kfolds = add_pipe(tran_kfolds)
 
 ## Bootstrap utility
 # --------------------------------------------------
@@ -279,9 +276,7 @@ def tran_bootstrap(
     return concat((df_base, df_ci), axis=1)
 
 
-@pipe
-def tf_bootstrap(*args, **kwargs):
-    return tran_bootstrap(*args, **kwargs)
+tf_bootstrap = add_pipe(tran_bootstrap)
 
 
 ## DataFrame outer product
@@ -323,9 +318,7 @@ def tran_outer(df, df_outer):
     return concat(list_df, ignore_index=True)
 
 
-@pipe
-def tf_outer(*args, **kwargs):
-    return tran_outer(*args, **kwargs)
+tf_outer = add_pipe(tran_outer)
 
 
 ## Assess subspace angles
@@ -362,9 +355,7 @@ def tran_angles(df, df2):
     return subspace_angles(A1, A2)
 
 
-@pipe
-def tf_angles(*args, **kwargs):
-    return tran_angles(*args, **kwargs)
+tf_angles = add_pipe(tran_angles)
 
 
 ## Compute Gaussian copula correlations from data
@@ -426,6 +417,4 @@ def tran_copula_corr(df, model=None, density=None):
     return DataFrame(dict(var1=var1_all, var2=var2_all, corr=corr_all))
 
 
-@pipe
-def tf_copula_corr(*args, **kwargs):
-    return tran_copula_corr(*args, **kwargs)
+tf_copula_corr = add_pipe(tran_copula_corr)

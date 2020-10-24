@@ -14,7 +14,7 @@ from pandas import DataFrame
 import warnings
 
 import grama as gr
-from grama import pipe, custom_formatwarning
+from grama import add_pipe, pipe, custom_formatwarning
 from scipy.stats import norm, lognorm
 from toolz import curry
 from numpy.linalg import cholesky, inv
@@ -68,6 +68,4 @@ def eval_lhs(
         return gr.eval_df(model, df=df_samp, append=append)
 
 
-@pipe
-def ev_lhs(*args, **kwargs):
-    return eval_lhs(*args, **kwargs)
+ev_lhs = add_pipe(eval_lhs)

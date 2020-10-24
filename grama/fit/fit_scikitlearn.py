@@ -19,7 +19,7 @@ except ModuleNotFoundError:
 
 import grama as gr
 
-from grama import pipe
+from grama import add_pipe, pipe
 from pandas import DataFrame
 from toolz import curry
 from warnings import filterwarnings
@@ -221,10 +221,7 @@ def fit_gp(
     return gr.Model(functions=functions, domain=domain, density=density)
 
 
-@pipe
-def ft_gp(*args, **kwargs):
-    return fit_gp(*args, **kwargs)
-
+ft_gp = add_pipe(fit_gp)
 
 ## Fit random forest model with sklearn
 # --------------------------------------------------
@@ -319,10 +316,7 @@ def fit_rf(
     return gr.Model(functions=functions, domain=domain, density=density)
 
 
-@pipe
-def ft_rf(*args, **kwargs):
-    return fit_rf(*args, **kwargs)
-
+ft_rf = add_pipe(fit_rf)
 
 ## Fit kmeans clustering model
 # --------------------------------------------------
@@ -397,6 +391,4 @@ def fit_kmeans(df, var=None, colname="cluster_id", seed=None, **kwargs):
     return md
 
 
-@pipe
-def ft_kmeans(*args, **kwargs):
-    return fit_kmeans(*args, **kwargs)
+ft_kmeans = add_pipe(fit_kmeans)

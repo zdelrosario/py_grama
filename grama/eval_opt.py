@@ -3,7 +3,7 @@ __all__ = [
     "ev_nls",
 ]
 
-from grama import pipe, custom_formatwarning, df_make
+from grama import add_pipe, pipe, custom_formatwarning, df_make
 from grama import eval_df, eval_nominal, tran_outer
 from numpy import Inf, isfinite
 from pandas import DataFrame, concat
@@ -177,6 +177,4 @@ def eval_nls(
         return df_res[var_fit]
 
 
-@pipe
-def ev_nls(*args, **kwargs):
-    return eval_nls(*args, **kwargs)
+ev_nls = add_pipe(eval_nls)
