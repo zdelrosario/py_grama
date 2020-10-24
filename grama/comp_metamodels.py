@@ -2,7 +2,7 @@ __all__ = ["comp_metamodel", "cp_metamodel"]
 
 ## Fitting via statsmodels package
 import grama as gr
-from grama import pipe
+from grama import add_pipe, pipe
 from toolz import curry
 
 ## Fit a metamodel
@@ -53,6 +53,4 @@ def comp_metamodel(model, n=1, ev=None, ft=None, seed=None):
     return model
 
 
-@pipe
-def cp_metamodel(*args, **kwargs):
-    return comp_metamodel(*args, **kwargs)
+cp_metamodel = add_pipe(comp_metamodel)

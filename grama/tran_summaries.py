@@ -19,7 +19,7 @@ import re
 import itertools
 import warnings
 
-from grama import pipe, custom_formatwarning
+from grama import add_pipe, pipe, custom_formatwarning
 from toolz import curry
 
 warnings.formatwarning = custom_formatwarning
@@ -154,10 +154,7 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
     return df_res
 
 
-@pipe
-def tf_sobol(*args, **kwargs):
-    return tran_sobol(*args, **kwargs)
-
+tf_sobol = add_pipe(tran_sobol)
 
 ## Linear algebra tools
 ##################################################
@@ -209,10 +206,7 @@ def tran_pca(df, var=None, lamvar="lam", standardize=False):
     return df_tmp[[lamvar] + var]
 
 
-@pipe
-def tf_pca(*args, **kwargs):
-    return tran_pca(*args, **kwargs)
-
+tf_pca = add_pipe(tran_pca)
 
 ## Gradient principal directions (AS)
 @curry
@@ -267,10 +261,7 @@ def tran_asub(df, prefix="D", outvar="out", lamvar="lam"):
     return concat(list_df).reset_index(drop=True)
 
 
-@pipe
-def tf_asub(*args, **kwargs):
-    return tran_asub(*args, **kwargs)
-
+tf_asub = add_pipe(tran_asub)
 
 # --------------------------------------------------
 ## Inner product
@@ -363,10 +354,7 @@ def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
     return df_res
 
 
-@pipe
-def tf_inner(*args, **kwargs):
-    return tran_inner(*args, **kwargs)
-
+tf_inner = add_pipe(tran_inner)
 
 # --------------------------------------------------
 ## Describe
@@ -386,6 +374,4 @@ def tran_describe(df):
     return df.describe()
 
 
-@pipe
-def tf_describe(*args, **kwargs):
-    return tran_describe(*args, **kwargs)
+tf_describe = add_pipe(tran_describe)

@@ -6,7 +6,7 @@ __all__ = [
 ]
 
 import grama as gr
-from grama import pipe, custom_formatwarning
+from grama import add_pipe, pipe, custom_formatwarning
 from numpy import array, argmin, ones, eye, zeros, sqrt, NaN
 from numpy.linalg import norm as length
 from numpy.random import multivariate_normal
@@ -121,9 +121,7 @@ def eval_form_pma(
                 return z.dot(z) - (betas[key]) ** 2
 
             ## Use conservative direction for initial guess
-            signs = array([
-                model.density.marginals[k].sign for k in model.var_rand
-            ])
+            signs = array([model.density.marginals[k].sign for k in model.var_rand])
             if length(signs) > 0:
                 z0 = betas[key] * signs / length(signs)
             else:
@@ -172,9 +170,7 @@ def eval_form_pma(
     return df_return
 
 
-@pipe
-def ev_form_pma(*args, **kwargs):
-    return eval_form_pma(*args, **kwargs)
+ev_form_pma = add_pipe(eval_form_pma)
 
 
 @curry
@@ -272,9 +268,7 @@ def eval_form_ria(
                 return g
 
             ## Use conservative direction for initial guess
-            signs = array([
-                model.density.marginals[k].sign for k in model.var_rand
-            ])
+            signs = array([model.density.marginals[k].sign for k in model.var_rand])
             if length(signs) > 0:
                 z0 = signs / length(signs)
             else:
@@ -323,6 +317,4 @@ def eval_form_ria(
     return df_return
 
 
-@pipe
-def ev_form_ria(*args, **kwargs):
-    return eval_form_ria(*args, **kwargs)
+ev_form_ria = add_pipe(eval_form_ria)

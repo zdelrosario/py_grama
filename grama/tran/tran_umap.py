@@ -9,7 +9,7 @@ try:
 except ModuleNotFoundError:
     raise ModuleNotFoundError("module umap not found")
 
-from grama import pipe
+from grama import add_pipe
 from toolz import curry
 from pandas import concat, DataFrame
 
@@ -70,24 +70,15 @@ def tran_umap(
     ## Concatenate as necessary
     if keep:
         df_res = concat(
-            (
-                df_res.reset_index(drop=True),
-                df[var_leftover].reset_index(drop=True)
-            ),
-            axis=1
+            (df_res.reset_index(drop=True), df[var_leftover].reset_index(drop=True)),
+            axis=1,
         )
     if append:
         df_res = concat(
-            (
-                df_res.reset_index(drop=True),
-                df[var].reset_index(drop=True)
-            ),
-            axis=1
+            (df_res.reset_index(drop=True), df[var].reset_index(drop=True)), axis=1
         )
 
     return df_res
 
 
-@pipe
-def tf_umap(*args, **kwargs):
-    return tran_umap(*args, **kwargs)
+tf_umap = add_pipe(tran_umap)

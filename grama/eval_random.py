@@ -15,7 +15,7 @@ from pandas import DataFrame
 import warnings
 
 import grama as gr
-from grama import pipe, custom_formatwarning
+from grama import add_pipe, pipe, custom_formatwarning
 from scipy.stats import norm, lognorm
 from toolz import curry
 from numpy.linalg import cholesky, inv
@@ -99,10 +99,7 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
         return df_res
 
 
-@pipe
-def ev_monte_carlo(*args, **kwargs):
-    return eval_monte_carlo(*args, **kwargs)
-
+ev_monte_carlo = add_pipe(eval_monte_carlo)
 
 ## Marginal sweeps with random origins
 # --------------------------------------------------
@@ -257,10 +254,7 @@ def eval_sinews(
         return df_res
 
 
-@pipe
-def ev_sinews(*args, **kwargs):
-    return eval_sinews(*args, **kwargs)
-
+ev_sinews = add_pipe(eval_sinews)
 
 ## Hybrid points for Sobol' indices
 # --------------------------------------------------
@@ -385,6 +379,4 @@ def eval_hybrid(
         return df_res
 
 
-@pipe
-def ev_hybrid(*args, **kwargs):
-    return eval_hybrid(*args, **kwargs)
+ev_hybrid = add_pipe(eval_hybrid)

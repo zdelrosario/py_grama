@@ -11,7 +11,7 @@ try:
 except ModuleNotFoundError:
     raise ModuleNotFoundError("module matminer not found")
 
-from grama import pipe
+from grama import add_pipe, pipe
 from toolz import curry
 from pandas import concat
 
@@ -61,15 +61,10 @@ def tran_feat_composition(
     ## Featurize
     featurizer = ElementProperty.from_preset(preset_name=preset_name)
     df_res = StrToComposition().featurize_dataframe(
-        df[[var_formula]],
-        var_formula,
-        ignore_errors=ignore_errors,
+        df[[var_formula]], var_formula, ignore_errors=ignore_errors,
     )
     df_res = featurizer.featurize_dataframe(
-        df_res,
-        col_id="composition",
-        ignore_errors=ignore_errors,
-        **kwargs,
+        df_res, col_id="composition", ignore_errors=ignore_errors, **kwargs,
     )
     df_res.drop(columns=[var_formula, "composition"], inplace=True)
 
@@ -80,6 +75,4 @@ def tran_feat_composition(
     return df_res
 
 
-@pipe
-def tf_feat_composition(*args, **kwargs):
-    return tran_feat_composition(*args, **kwargs)
+tf_feat_composition = add_pipe(tran_feat_composition)

@@ -14,7 +14,7 @@ __all__ = [
 
 import grama as gr
 
-from grama import pipe
+from grama import add_pipe, pipe
 from toolz import curry
 from pandas import melt
 from seaborn import pairplot, FacetGrid, relplot
@@ -56,9 +56,7 @@ def plot_scattermat(df, var=None):
     return pairplot(data=df, vars=var)
 
 
-@pipe
-def pt_scattermat(*args, **kwargs):
-    return plot_scattermat(*args, **kwargs)
+pt_scattermat = add_pipe(plot_scattermat)
 
 
 @curry
@@ -99,10 +97,7 @@ def plot_hists(df, out=None):
     return g
 
 
-@pipe
-def pt_hists(*args, **kwargs):
-    return plot_hists(*args, **kwargs)
-
+pt_hists = add_pipe(plot_hists)
 
 ## Sinew plots
 # --------------------------------------------------
@@ -140,9 +135,7 @@ def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
     return pairplot(data=df, vars=var, hue=sweep_ind)
 
 
-@pipe
-def pt_sinew_inputs(*args, **kwargs):
-    return plot_sinew_inputs(*args, **kwargs)
+pt_sinew_inputs = add_pipe(plot_sinew_inputs)
 
 
 @curry
@@ -206,10 +199,7 @@ def plot_sinew_outputs(
     )
 
 
-@pipe
-def pt_sinew_outputs(*args, **kwargs):
-    return plot_sinew_outputs(*args, **kwargs)
-
+pt_sinew_outputs = add_pipe(plot_sinew_outputs)
 
 ## Autoplot dispatcher
 ## ##################################################
@@ -257,6 +247,4 @@ def plot_auto(df):
     return plot_fcn(df, **plt_kwargs)
 
 
-@pipe
-def pt_auto(*args, **kwargs):
-    return plot_auto(*args, **kwargs)
+pt_auto = add_pipe(plot_auto)

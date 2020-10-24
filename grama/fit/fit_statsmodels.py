@@ -11,7 +11,7 @@ except ModuleNotFoundError:
     raise ModuleNotFoundError("module statsmodels not found")
 
 import grama as gr
-from grama import pipe
+from grama import add_pipe, pipe
 from toolz import curry
 
 ## Fit model via OLS
@@ -66,6 +66,4 @@ def fit_ols(df, formulae=[""], domain=None, density=None):
     )
 
 
-@pipe
-def ft_ols(*args, **kwargs):
-    return fit_ols(*args, **kwargs)
+ft_ols = add_pipe(fit_ols)

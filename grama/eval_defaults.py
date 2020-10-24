@@ -14,13 +14,13 @@ from pandas import DataFrame, concat
 import itertools
 
 import grama as gr
-from grama import pipe
+from grama import add_pipe, pipe
 from toolz import curry
 
 ## Default evaluation function
 # --------------------------------------------------
 @curry
-def eval_df(model, df=None, append=True):
+def eval_df(model, df=None, append=True, verbose=True):
     r"""Evaluate model at given values
 
     Evaluates a given model at a given dataframe.
@@ -47,7 +47,7 @@ def eval_df(model, df=None, append=True):
     if len(model.functions) == 0:
         raise ValueError("Given model has no functions")
     out_intersect = set(df.columns).intersection(model.out)
-    if len(out_intersect) > 0:
+    if (len(out_intersect) > 0) and verbose:
         print(
             "... provided columns intersect model output.\n"
             + "eval_df() is dropping {}".format(out_intersect)
@@ -67,10 +67,7 @@ def eval_df(model, df=None, append=True):
     return df_res
 
 
-@pipe
-def ev_df(*args, **kwargs):
-    return eval_df(*args, **kwargs)
-
+ev_df = add_pipe(eval_df)
 
 ## Nominal evaluation
 # --------------------------------------------------
@@ -113,10 +110,7 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
         return eval_df(model, df=df_samp, append=append)
 
 
-@pipe
-def ev_nominal(*args, **kwargs):
-    return eval_nominal(*args, **kwargs)
-
+ev_nominal = add_pipe(eval_nominal)
 
 ## Gradient finite-difference evaluation
 # --------------------------------------------------
@@ -220,10 +214,7 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
     return concat(results).reset_index(drop=True)
 
 
-@pipe
-def ev_grad_fd(*args, **kwargs):
-    return eval_grad_fd(*args, **kwargs)
-
+ev_grad_fd = add_pipe(eval_grad_fd)
 
 ## Conservative quantile evaluation
 # --------------------------------------------------
@@ -294,6 +285,4 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
         return eval_df(model, df=df_samp, append=append)
 
 
-@pipe
-def ev_conservative(*args, **kwargs):
-    return eval_conservative(*args, **kwargs)
+ev_conservative = add_pipe(eval_conservative)

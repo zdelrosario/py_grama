@@ -12,7 +12,7 @@ except ModuleNotFoundError:
 
 import grama as gr
 
-from grama import pipe
+from grama import add_pipe, pipe
 from numpy import stack
 from numpy.random import seed as set_seed
 from pandas import DataFrame
@@ -155,6 +155,4 @@ def fit_lolo(
     return gr.Model(functions=functions, domain=domain, density=density)
 
 
-@pipe
-def ft_lolo(*args, **kwargs):
-    return fit_lolo(*args, **kwargs)
+ft_lolo = add_pipe(fit_lolo)

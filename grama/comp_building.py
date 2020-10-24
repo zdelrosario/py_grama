@@ -19,7 +19,7 @@ __all__ = [
 
 from collections import ChainMap
 import grama as gr
-from grama import pipe
+from grama import add_pipe, pipe
 from toolz import curry
 from pandas import concat, DataFrame
 
@@ -125,10 +125,7 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
     return model_new
 
 
-@pipe
-def cp_function(*args, **kwargs):
-    return comp_function(*args, **kwargs)
-
+cp_function = add_pipe(comp_function)
 
 # Add vectorized function
 # -------------------------
@@ -178,10 +175,7 @@ def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0)
     return model_new
 
 
-@pipe
-def cp_vec_function(*args, **kwargs):
-    return comp_vec_function(*args, **kwargs)
-
+cp_vec_function = add_pipe(comp_vec_function)
 
 # Add model as deterministic function
 # -------------------------
@@ -212,10 +206,7 @@ def comp_md_det(model, md=None):
     return model_new
 
 
-@pipe
-def cp_md_det(*args, **kwargs):
-    return comp_md_det(*args, **kwargs)
-
+cp_md_det = add_pipe(comp_md_det)
 
 # Add model as sampled function
 # -------------------------
@@ -302,10 +293,7 @@ def comp_md_sample(model, md=None, param=None, rand2out=False):
     return model_new
 
 
-@pipe
-def cp_md_sample(*args, **kwargs):
-    return comp_md_sample(*args, **kwargs)
-
+cp_md_sample = add_pipe(comp_md_sample)
 
 # Add bounds
 # -------------------------
@@ -352,10 +340,7 @@ def comp_bounds(model, **kwargs):
     return new_model
 
 
-@pipe
-def cp_bounds(*args, **kwargs):
-    return comp_bounds(*args, **kwargs)
-
+cp_bounds = add_pipe(comp_bounds)
 
 # Add marginals
 # -------------------------
@@ -422,10 +407,7 @@ def comp_marginals(model, **kwargs):
     return new_model
 
 
-@pipe
-def cp_marginals(*args, **kwargs):
-    return comp_marginals(*args, **kwargs)
-
+cp_marginals = add_pipe(comp_marginals)
 
 # Add copula
 ##################################################
@@ -462,10 +444,7 @@ def comp_copula_independence(model):
     return new_model
 
 
-@pipe
-def cp_copula_independence(*args, **kwargs):
-    return comp_copula_independence(*args, **kwargs)
-
+cp_copula_independence = add_pipe(comp_copula_independence)
 
 # -------------------------
 @curry
@@ -533,6 +512,4 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
         raise ValueError("Must provide df_corr or df_data")
 
 
-@pipe
-def cp_copula_gaussian(*args, **kwargs):
-    return comp_copula_gaussian(*args, **kwargs)
+cp_copula_gaussian = add_pipe(comp_copula_gaussian)

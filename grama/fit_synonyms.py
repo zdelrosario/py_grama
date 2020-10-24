@@ -6,7 +6,7 @@ __all__ = [
 ## Collection of fitting synonyms: functions implemented in terms of other grama
 ## verbs
 
-from grama import pipe, custom_formatwarning, df_make, eval_nls
+from grama import add_pipe, pipe, custom_formatwarning, df_make, eval_nls
 from grama import Model, cp_function, cp_md_det
 from toolz import curry
 
@@ -73,6 +73,4 @@ def fit_nls(
     return md_res
 
 
-@pipe
-def ft_nls(*args, **kwargs):
-    return fit_nls(*args, **kwargs)
+ft_nls = add_pipe(fit_nls)
