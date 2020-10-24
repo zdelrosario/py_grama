@@ -1,4 +1,5 @@
 __all__ = [
+    "add_pipe",
     "copy_meta",
     "custom_formatwarning",
     "df_equal",
@@ -266,11 +267,8 @@ class pipe(object):
     __name__ = "pipe"
 
     def __init__(self, function):
-        # @wraps(function) # Preserve documentation?
-
         self.function = function
-        self.__doc__ = function.__doc__
-
+        # self.__doc__ = function.__doc__
         self.chained_pipes = []
 
     def __rshift__(self, other):
@@ -284,9 +282,6 @@ class pipe(object):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             if isinstance(other, pd.DataFrame):
-                # other_copy._grouped_by = getattr(other, '_grouped_by', None)
-                # other_copy._plot_info = getattr(other, '_plot_info', None)
-                # other_copy._meta = getattr(other, '_meta', None)
                 other_copy = copy_meta(other, other_copy)
 
         result = self.function(other_copy)
@@ -306,6 +301,13 @@ class pipe(object):
     def __call__(self, *args, **kwargs):
         return pipe(lambda x: self.function(x, *args, **kwargs))
 
+## Pipe applicator
+def add_pipe(f):
+    class newpipe(pipe):
+        __doc__ = f.__doc__
+        __name__ = f.__name__
+
+    return newpipe(f)
 
 ## Safe length-checker
 def safelen(x):
