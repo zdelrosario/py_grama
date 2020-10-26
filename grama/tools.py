@@ -17,6 +17,7 @@ import warnings
 
 from functools import wraps
 from numbers import Integral
+from inspect import signature
 
 from scipy.stats import gaussian_kde
 
@@ -301,13 +302,19 @@ class pipe(object):
     def __call__(self, *args, **kwargs):
         return pipe(lambda x: self.function(x, *args, **kwargs))
 
-## Pipe applicator
-def add_pipe(f):
-    class newpipe(pipe):
-        __doc__ = f.__doc__
-        __name__ = f.__name__
 
-    return newpipe(f)
+## Pipe applicator
+def add_pipe(fun):
+    class NewPipe(pipe):
+        __name__ = fun.__name__
+        __doc__ = (
+            "Pipe-enabled version of {}\n".format(fun.__name__)
+            + "Inherited Signature: {}\n".format(signature(fun))
+            + fun.__doc__
+        )
+
+    return NewPipe(fun)
+
 
 ## Safe length-checker
 def safelen(x):
