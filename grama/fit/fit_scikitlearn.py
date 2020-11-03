@@ -125,8 +125,8 @@ class FunctionRFR(gr.Function):
 def fit_gp(
     df,
     md=None,
-    inputs=None,
-    outputs=None,
+    var=None,
+    out=None,
     domain=None,
     density=None,
     kernel=None,
@@ -143,8 +143,8 @@ def fit_gp(
     Args:
         df (DataFrame): Data for function fitting
         md (gr.Model): Model from which to inherit metadata
-        inputs (list(str) or None): List of features or None for all except outputs
-        outputs (list(str)): List of outputs to fit
+        var (list(str) or None): List of features or None for all except outputs
+        out (list(str)): List of outputs to fit
         domain (gr.Domain): Domain for new model
         density (gr.Density): Density for new model
         seed (int or None): Random seed for fitting process
@@ -169,40 +169,40 @@ def fit_gp(
     if not (md is None):
         domain = md.domain
         density = md.density
-        outputs = md.out
+        out = md.out
 
     ## Check invariants
-    if not set(outputs).issubset(set(df.columns)):
-        raise ValueError("outputs must be subset of df.columns")
+    if not set(out).issubset(set(df.columns)):
+        raise ValueError("out must be subset of df.columns")
     ## Default input value
-    if inputs is None:
-        inputs = list(set(df.columns).difference(set(outputs)))
+    if var is None:
+        var = list(set(df.columns).difference(set(out)))
     ## Check more invariants
-    set_inter = set(outputs).intersection(set(inputs))
+    set_inter = set(out).intersection(set(var))
     if len(set_inter) > 0:
         raise ValueError(
-            "outputs and inputs must be disjoint; intersect = {}".format(set_inter)
+            "out and var must be disjoint; intersect = {}".format(set_inter)
         )
-    if not set(inputs).issubset(set(df.columns)):
-        raise ValueError("inputs must be subset of df.columns")
+    if not set(var).issubset(set(df.columns)):
+        raise ValueError("var must be subset of df.columns")
 
     ## Pre-process data
-    ser_min_in = df[inputs].min()
-    ser_max_in = df[inputs].max()
-    ser_min_out = df[outputs].min()
-    ser_max_out = df[outputs].max()
-    df_std = standardize_cols(df, ser_min_in, ser_max_in, inputs)
-    df_std = standardize_cols(df_std, ser_min_out, ser_max_out, outputs)
+    ser_min_in = df[var].min()
+    ser_max_in = df[var].max()
+    ser_min_out = df[out].min()
+    ser_max_out = df[out].max()
+    df_std = standardize_cols(df, ser_min_in, ser_max_in, var)
+    df_std = standardize_cols(df_std, ser_min_out, ser_max_out, out)
 
     ## Assign default kernel, if necessary
     if kernel is None:
         print("fit_gp is assigning default kernel")
-        kernel = Con(1, (1e-3, 1e3)) * RBF([1] * len(inputs), (1e-8, 1e8))
+        kernel = Con(1, (1e-3, 1e3)) * RBF([1] * len(var), (1e-8, 1e8))
 
     ## Construct gaussian process for each output
     functions = []
 
-    for output in outputs:
+    for output in out:
         gpr = GaussianProcessRegressor(
             kernel=kernel,
             random_state=seed,
@@ -211,10 +211,10 @@ def fit_gp(
             n_restarts_optimizer=n_restart,
             alpha=alpha,
         )
-        gpr.fit(df_std[inputs], df_std[output])
+        gpr.fit(df_std[var], df_std[output])
         name = "GP ({})".format(str(gpr.kernel_))
 
-        fun = FunctionGPR(gpr, df.copy(), inputs, [output], name, 0)
+        fun = FunctionGPR(gpr, df.copy(), var, [output], name, 0)
         functions.append(fun)
 
     ## Construct model
