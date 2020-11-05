@@ -1,4 +1,5 @@
 __all__ = [
+    "abs",
     "sin",
     "cos",
     "log",
@@ -11,11 +12,15 @@ __all__ = [
     "as_factor",
     "fct_reorder",
     "fillna",
+    "qnorm",
+    "pnorm",
+    "dnorm",
 ]
 
 from grama import make_symbolic
 
 from numpy import argsort, array, median, zeros
+from numpy import abs as npabs
 from numpy import sin as npsin
 from numpy import cos as npcos
 from numpy import log as nplog
@@ -23,12 +28,18 @@ from numpy import exp as npexp
 from numpy import sqrt as npsqrt
 from numpy import power as nppower
 from pandas import Categorical, Series
+from scipy.stats import norm
 
 # --------------------------------------------------
 # Mutation helpers
 # --------------------------------------------------
 # Numeric
 # -------------------------
+@make_symbolic
+def abs(x):
+    return npabs(x)
+
+
 @make_symbolic
 def sin(x):
     return npsin(x)
@@ -79,6 +90,29 @@ def as_str(x):
 @make_symbolic
 def as_factor(x, categories=None, ordered=True, dtype=None):
     return Categorical(x, categories=categories, ordered=ordered, dtype=dtype)
+
+
+# Distributions
+# -------------------------
+@make_symbolic
+def qnorm(x):
+    r"""Normal quantile function (inverse CDF)
+    """
+    return norm.ppf(x)
+
+
+@make_symbolic
+def dnorm(x):
+    r"""Normal probability density function (PDF)
+    """
+    return norm.pdf(x)
+
+
+@make_symbolic
+def pnorm(x):
+    r"""Normal cumulative distribution function (CDF)
+    """
+    return norm.cdf(x)
 
 
 # Factors
