@@ -150,10 +150,6 @@ def pnorm(x):
 def fct_reorder(f, x, fun=median):
     r"""Reorder a factor on another variable
 
-    Usage:
-        fp = fct_reorder(f, x)
-        fp = fct_reorder(f, x, fun=median)
-
     Args:
         f (iterable OR DataFrame column): factor to reorder
         x (iterable OR DataFrame column): variable on which to reorder; specify aggregation method with fun
