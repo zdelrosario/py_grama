@@ -63,6 +63,10 @@ def make_symbolic(f):
         else:
             return f(*args, **kwargs)
 
+    ## Preserve documentation
+    wrapper.__doc__ = f.__doc__
+    wrapper.__name__ = f.__name__
+
     return wrapper
 
 
