@@ -185,4 +185,20 @@ def fct_reorder(f, x, fun=median):
 # -------------------------
 @make_symbolic
 def fillna(*args, **kwargs):
+    r"""Wrapper for pandas Series.fillna
+
+    (See below for Pandas documentation)
+
+    Examples:
+        >>> import grama as gr
+        >>> X = gr.Intention()
+        >>> df = gr.df_make(x=[1, gr.NaN], y=[2, 3])
+        >>> df_filled = (
+        >>>     df
+        >>>     >> gr.tf_mutate(x=gr.fillna(X.x, 0))
+        >>> )
+    """
     return Series.fillna(*args, **kwargs)
+
+
+fillna.__doc__ = fillna.__doc__ + Series.fillna.__doc__
