@@ -37,36 +37,57 @@ from scipy.stats import norm
 # -------------------------
 @make_symbolic
 def abs(x):
+    r"""Absolute value
+    """
     return npabs(x)
 
 
 @make_symbolic
 def sin(x):
+    r"""Sine
+    """
     return npsin(x)
 
 
 @make_symbolic
 def cos(x):
+    r"""Cosine
+    """
     return npcos(x)
 
 
 @make_symbolic
 def log(x):
+    r"""(Natural) log
+    """
     return nplog(x)
 
 
 @make_symbolic
 def exp(x):
+    r"""Exponential (e-base)
+    """
     return npexp(x)
 
 
 @make_symbolic
 def sqrt(x):
+    r"""Square-root
+    """
     return npsqrt(x)
 
 
 @make_symbolic
 def pow(x, p):
+    r"""Power
+
+    Usage:
+        q = pow(x, p) := x ^ p
+
+    Arguments:
+        x = base
+        p = exponent
+    """
     return nppower(x, p)
 
 
@@ -74,21 +95,29 @@ def pow(x, p):
 # -------------------------
 @make_symbolic
 def as_int(x):
+    r"""Cast to integer
+    """
     return x.astype(int)
 
 
 @make_symbolic
 def as_float(x):
+    r"""Cast to float
+    """
     return x.astype(float)
 
 
 @make_symbolic
 def as_str(x):
+    r"""Cast to string
+    """
     return x.astype(str)
 
 
 @make_symbolic
 def as_factor(x, categories=None, ordered=True, dtype=None):
+    r"""Cast to factor
+    """
     return Categorical(x, categories=categories, ordered=ordered, dtype=dtype)
 
 
@@ -119,6 +148,32 @@ def pnorm(x):
 # -------------------------
 @make_symbolic
 def fct_reorder(f, x, fun=median):
+    r"""Reorder a factor on another variable
+
+    Usage:
+        fp = fct_reorder(f, x)
+        fp = fct_reorder(f, x, fun=median)
+
+    Args:
+        f (iterable OR DataFrame column): factor to reorder
+        x (iterable OR DataFrame column): variable on which to reorder; specify aggregation method with fun
+        fun (function): aggregation function for reordering
+
+    Returns:
+        Categorical: Iterable with levels sorted according to x
+
+    Examples:
+        >>> import grama as gr
+        >>> from grama.data import df_diamonds
+        >>> X = gr.Intention()
+        >>> (
+        >>>     df_diamonds
+        >>>     >> gr.tf_mutate(cut=gr.fct_reorder(X.cut, X.price, fun=gr.colmax))
+        >>>     >> gr.tf_group_by(X.cut)
+        >>>     >> gr.tf_summarize(max=gr.colmax(X.price), mean=gr.mean(X.price))
+        >>> )
+    """
+
     # Get factor levels
     levels = array(list(set(f)))
     # Compute given fun over associated values
