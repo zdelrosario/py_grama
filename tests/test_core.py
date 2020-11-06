@@ -267,7 +267,7 @@ class TestDensity(unittest.TestCase):
                 y=gr.MarginalNamed(d_name="uniform", d_param={"loc": -1, "scale": 2}),
             ),
             copula=gr.CopulaGaussian(
-                pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
+                ["x", "y"], pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
             ),
         )
 
@@ -301,7 +301,7 @@ class TestDensity(unittest.TestCase):
     def test_CopulaGaussian(self):
         df_corr = pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
         Sigma_h = np.linalg.cholesky(np.array([[1.0, 0.5], [0.5, 1.0]]))
-        copula = gr.CopulaGaussian(df_corr=df_corr)
+        copula = gr.CopulaGaussian(["x", "y"], df_corr=df_corr)
         df_res = copula.sample(seed=101)
 
         self.assertTrue(np.isclose(copula.Sigma_h, Sigma_h).all)
@@ -313,7 +313,7 @@ class TestDensity(unittest.TestCase):
         )
 
         with self.assertRaises(ValueError):
-            gr.CopulaGaussian(df_corr=df_corr_invalid)
+            gr.CopulaGaussian(["x", "y"], df_corr=df_corr_invalid)
 
         ## Transforms invariant
         z = np.array([0, 0])

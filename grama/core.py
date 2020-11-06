@@ -607,7 +607,7 @@ class CopulaIndependence(Copula):
 
 
 class CopulaGaussian(Copula):
-    def __init__(self, df_corr):
+    def __init__(self, var_rand, df_corr):
         """Constructor
 
         Args:
@@ -621,19 +621,19 @@ class CopulaGaussian(Copula):
             gr.CopulaGaussian: Gaussian copula
 
         """
-        ## Assemble data
-        df_corr.sort_values(["var1", "var2"], inplace=True)
-        df_summary = (
-            df_corr.set_index(["var1", "var2"])
-            .count(level="var1")
-            .sort_values("corr", ascending=False)
+        ## Sort correlations along given var_rand
+        sorter_index = dict(zip(var_rand, range(len(var_rand))))
+        df_corr["var1_rank"] = df_corr["var1"].map(sorter_index)
+        df_corr["var2_rank"] = df_corr["var2"].map(sorter_index)
+        df_corr.sort_values(
+            ["var1_rank", "var2_rank"], ascending=[True, True], inplace=True
         )
-        var_rand = list(df_summary.index) + [df_corr.var2.iloc[-1]]
-        n_var_rand = df_summary.iloc[0, 0] + 1
+        df_corr.drop(["var1_rank", "var2_rank"], axis=1, inplace=True)
+
+        n_var_rand = len(var_rand)
         Ind_upper = triu_indices(n_var_rand, 1)
+
         ## Check invariants
-        if len(var_rand) != n_var_rand:
-            raise ValueError("Invalid set of correlations provided")
         if len(Ind_upper[0]) != len(df_corr["corr"]):
             raise ValueError("Invalid set of correlations provided")
 
@@ -665,7 +665,7 @@ class CopulaGaussian(Copula):
         Returns:
             gr.CopulaGaussian:
         """
-        cop = CopulaGaussian(df_corr=self.df_corr.copy())
+        cop = CopulaGaussian(self.var_rand, self.df_corr.copy())
 
         return cop
 
