@@ -164,6 +164,9 @@ class TestModel(unittest.TestCase):
             >> gr.cp_copula_gaussian(df_corr=df_corr)
         )
 
+        ## Copula and marginals have same var_rand order
+        self.assertTrue(list(md.density.marginals) == md.density.copula.var_rand)
+
         ## Transforms invariant
         z = np.array([0, 0])
         x = md.z2x(z)
