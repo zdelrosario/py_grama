@@ -131,3 +131,46 @@ class TestFits(unittest.TestCase):
         )
 
         self.assertTrue(gr.df_equal(df_res1, df_res2))
+
+    def test_nls(self):
+        ## Ground-truth model
+        c_true = 2
+        a_true = 1
+
+        md_true = (
+            gr.Model()
+            >> gr.cp_function(
+                fun=lambda x: a_true * np.exp(x[0] * c_true) + x[1],
+                var=["x", "epsilon"],
+                out=["y"],
+            )
+            >> gr.cp_marginals(epsilon={"dist": "norm", "loc": 0, "scale": 0.5})
+            >> gr.cp_copula_independence()
+        )
+        df_data = md_true >> gr.ev_monte_carlo(
+            n=5, seed=101, df_det=gr.df_make(x=[0, 1, 2, 3, 4])
+        )
+
+        ## Model to fit
+        md_param = (
+            gr.Model()
+            >> gr.cp_function(
+                fun=lambda x: x[2] * np.exp(x[0] * x[1]), var=["x", "c", "a"], out=["y"]
+            )
+            >> gr.cp_bounds(c=[0, 4], a=[0.1, 2.0])
+        )
+
+        ## Fit the model
+        md_fit = df_data >> gr.ft_nls(md=md_param, verbose=False, uq_method="linpool",)
+
+        ## True parameters in wide confidence region
+        alpha = 1e-3
+        self.assertTrue(
+            (md_fit.density.marginals["c"].q(alpha / 2) <= c_true)
+            and (c_true <= md_fit.density.marginals["c"].q(1 - alpha / 2))
+        )
+
+        self.assertTrue(
+            (md_fit.density.marginals["a"].q(alpha / 2) <= a_true)
+            and (a_true <= md_fit.density.marginals["a"].q(1 - alpha / 2))
+        )
