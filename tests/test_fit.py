@@ -164,6 +164,7 @@ class TestFits(unittest.TestCase):
         md_fit = df_data >> gr.ft_nls(md=md_param, verbose=False, uq_method="linpool",)
 
         ## True parameters in wide confidence region
+        # -------------------------
         alpha = 1e-3
         self.assertTrue(
             (md_fit.density.marginals["c"].q(alpha / 2) <= c_true)
@@ -174,3 +175,20 @@ class TestFits(unittest.TestCase):
             (md_fit.density.marginals["a"].q(alpha / 2) <= a_true)
             and (a_true <= md_fit.density.marginals["a"].q(1 - alpha / 2))
         )
+
+        ## Model with fixed parameter
+        # -------------------------
+        md_fixed = (
+            gr.Model()
+            >> gr.cp_function(
+                fun=lambda x: x[2] * np.exp(x[0] * x[1]), var=["x", "c", "a"], out=["y"]
+            )
+            >> gr.cp_bounds(c=[0, 4], a=[1, 1])
+        )
+        md_fit_fixed = (
+            df_data
+            >> gr.ft_nls(md=md_fixed, verbose=False, uq_method="linpool")
+        )
+
+        # Test that fixed model can evaluate successfully
+        gr.eval_monte_carlo(md_fit_fixed, n=1, df_det="nom")
