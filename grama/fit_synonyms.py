@@ -94,9 +94,9 @@ def fit_nls(
     ## Run eval_nls to fit model parameter values
     df_fit = eval_nls(md, df_data=df_data, var_fix=var_fix, append=True, **kwargs)
     ## Select best-fit values
-    df_best = df_fit.sort_values(by="mse", axis=0).iloc[[0]]
+    df_best = df_fit.sort_values(by="mse", axis=0).iloc[[0]].reset_index(drop=True)
     if verbose:
-        print(df_best)
+        print(df_fit.sort_values(by="mse", axis=0))
 
     ## Determine variables that were fitted
     var_fitted = list(set(md.var).intersection(set(df_best.columns)))
@@ -161,18 +161,26 @@ def fit_nls(
             }
 
         ## Construct model with Gaussian copula
-        md_res = (
-            Model(name)
-            >> cp_function(
-                lambda x: df_nom[var_fix].values,
-                var=set(var_remain).difference(var_fix),
-                out=var_fix,
-                name="Fix variable levels",
+        if len(var_fix) > 0:
+            md_res = (
+                Model(name)
+                >> cp_function(
+                    lambda x: df_nom[var_fix].values,
+                    var=set(var_remain).difference(var_fix),
+                    out=var_fix,
+                    name="Fix variable levels",
+                )
+                >> cp_md_det(md=md)
+                >> cp_marginals(**marginals)
+                >> cp_copula_gaussian(df_corr=df_corr)
             )
-            >> cp_md_det(md=md)
-            >> cp_marginals(**marginals)
-            >> cp_copula_gaussian(df_corr=df_corr)
-        )
+        else:
+            md_res = (
+                Model(name)
+                >> cp_md_det(md=md)
+                >> cp_marginals(**marginals)
+                >> cp_copula_gaussian(df_corr=df_corr)
+            )
 
     ## Return deterministic model
     elif uq_method is None:
