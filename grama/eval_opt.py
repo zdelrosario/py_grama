@@ -22,6 +22,7 @@ def eval_nls(
     tol=1e-3,
     maxiter=25,
     nrestart=1,
+    method="SLSQP",
 ):
     r"""Estimate with Nonlinear Least Squares (NLS)
 
@@ -150,7 +151,7 @@ def eval_nls(
             objective,
             x0,
             args=(),
-            method="SLSQP",
+            method=method,
             jac=False,
             tol=tol,
             options={"maxiter": maxiter, "disp": False},
