@@ -4,7 +4,9 @@ __all__ = [
 ]
 
 from grama import add_pipe, pipe, custom_formatwarning, df_make
-from grama import eval_df, eval_nominal, tran_outer
+from grama import eval_df, eval_nominal, eval_monte_carlo
+from grama import comp_marginals, comp_copula_independence
+from grama import tran_outer
 from numpy import Inf, isfinite
 from pandas import DataFrame, concat
 from scipy.optimize import minimize
@@ -21,7 +23,7 @@ def eval_nls(
     append=False,
     tol=1e-6,
     maxiter=100,
-    nrestart=1,
+    n_restart=1,
     method="L-BFGS-B",
 ):
     r"""Estimate with Nonlinear Least Squares (NLS)
@@ -41,7 +43,7 @@ def eval_nls(
         append (bool): Append metadata? (Initial guess, MSE, optimizer status)
         tol (float): Optimizer convergence tolerance
         maxiter (int): Optimizer maximum iterations
-        nrestart (int): Number of restarts; beyond nrestart=1 random
+        n_restart (int): Number of restarts; beyond n_restart=1 random
             restarts are used.
 
     Returns:
@@ -123,12 +125,37 @@ def eval_nls(
     df_nom = eval_nominal(model, df_det="nom", skip=True)
 
     df_init = df_nom[var_fit]
-    if nrestart > 1:
-        raise NotImplementedError()
-
+    if n_restart > 1:
+        ## Collect sweep-able deterministic variables
+        var_sweep = list(
+            filter(
+                lambda v: isfinite(model.domain.get_width(v))
+                & (model.domain.get_width(v) > 0),
+                model.var_det,
+            )
+        )
+        ## Generate pseudo-marginals
+        dicts_var = {}
+        for v in var_sweep:
+            dicts_var[v] = {
+                "dist": "uniform",
+                "loc": model.domain.get_bound(v)[0],
+                "scale": model.domain.get_width(v),
+            }
+        ## Overwrite model
+        md_sweep = comp_marginals(model, **dicts_var)
+        md_sweep = comp_copula_independence(md_sweep)
+        ## Generate random start points
+        df_rand = eval_monte_carlo(
+            md_sweep,
+            n=n_restart - 1,
+            df_det="nom",
+            skip=True,
+        )
+        df_init = concat((df_init, df_rand[var_fit]), axis=0).reset_index(drop=True)
     ## Iterate over initial guesses
     df_res = DataFrame()
-    for i in range(df_init.shape[0]):
+    for i in range(n_restart):
         x0 = df_init[var_fit].iloc[i].values
         ## Build evaluator
         def objective(x):
@@ -141,10 +168,10 @@ def eval_nls(
                     axis=1,
                 ),
             )
-            df_res = eval_df(model, df=df_var)
+            df_tmp = eval_df(model, df=df_var)
 
             ## Compute joint MSE
-            return ((df_res[out].values - df_data[out].values) ** 2).mean()
+            return ((df_tmp[out].values - df_data[out].values) ** 2).mean()
 
         ## Run optimization
         res = minimize(
@@ -158,18 +185,22 @@ def eval_nls(
             bounds=bounds,
         )
 
+        ## Package results
+        df_tmp = df_make(
+            **dict(zip(var_fit, res.x)),
+            **dict(zip(map(lambda s: s + "_0", var_fit), x0)),
+        )
+        df_tmp["status"] = [res.status]
+        df_tmp["message"] = [res.message]
+        df_tmp["mse"] = [res.fun]
+
         df_res = concat(
             (
                 df_res,
-                df_make(
-                    **dict(zip(var_fit, res.x)),
-                    **dict(zip(map(lambda s: s + "_0", var_fit), x0)),
-                    status=res.status,
-                    mse=res.fun,
-                ),
+                df_tmp,
             ),
             axis=0,
-        )
+        ).reset_index(drop=True)
 
     ## Post-process
     if append:
