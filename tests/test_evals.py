@@ -320,6 +320,14 @@ class TestOpt(unittest.TestCase):
             check_column_type=False,
         )
 
+        ## Multiple restarts works
+        df_multi = gr.eval_nls(
+            md_feat,
+            df_data=df_data,
+            n_restart=2,
+        )
+        self.assertTrue(df_multi.shape[0] == 2)
+
 
 ## Run tests
 if __name__ == "__main__":
