@@ -8,6 +8,7 @@ from grama import eval_df, eval_nominal, eval_monte_carlo
 from grama import comp_marginals, comp_copula_independence
 from grama import tran_outer
 from numpy import Inf, isfinite
+from numpy.random import seed as setseed
 from pandas import DataFrame, concat
 from scipy.optimize import minimize
 from toolz import curry
@@ -22,9 +23,12 @@ def eval_nls(
     var_fix=None,
     append=False,
     tol=1e-6,
+    ftol=1e-9,
+    gtol=1e-5,
     maxiter=100,
     n_restart=1,
     method="L-BFGS-B",
+    seed=None,
 ):
     r"""Estimate with Nonlinear Least Squares (NLS)
 
@@ -45,6 +49,7 @@ def eval_nls(
         maxiter (int): Optimizer maximum iterations
         n_restart (int): Number of restarts; beyond n_restart=1 random
             restarts are used.
+        seed (int OR None): Random seed for restarts
 
     Returns:
         DataFrame: Results of estimation
@@ -126,6 +131,8 @@ def eval_nls(
 
     df_init = df_nom[var_fit]
     if n_restart > 1:
+        if not (seed is None):
+            setseed(seed)
         ## Collect sweep-able deterministic variables
         var_sweep = list(
             filter(
@@ -181,7 +188,12 @@ def eval_nls(
             method=method,
             jac=False,
             tol=tol,
-            options={"maxiter": maxiter, "disp": False},
+            options={
+                "maxiter": maxiter,
+                "disp": False,
+                "ftol": ftol,
+                "gtol": gtol,
+            },
             bounds=bounds,
         )
 
@@ -190,8 +202,9 @@ def eval_nls(
             **dict(zip(var_fit, res.x)),
             **dict(zip(map(lambda s: s + "_0", var_fit), x0)),
         )
-        df_tmp["status"] = [res.status]
+        df_tmp["success"] = [res.success]
         df_tmp["message"] = [res.message]
+        df_tmp["n_iter"] = [res.nit]
         df_tmp["mse"] = [res.fun]
 
         df_res = concat(
