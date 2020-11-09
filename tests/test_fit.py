@@ -5,6 +5,8 @@ import unittest
 
 from context import grama as gr
 from context import fit
+from context import models
+from context import data
 
 X = gr.Intention()
 
@@ -185,10 +187,17 @@ class TestFits(unittest.TestCase):
             )
             >> gr.cp_bounds(c=[0, 4], a=[1, 1])
         )
-        md_fit_fixed = (
-            df_data
-            >> gr.ft_nls(md=md_fixed, verbose=False, uq_method="linpool")
+        md_fit_fixed = df_data >> gr.ft_nls(
+            md=md_fixed, verbose=False, uq_method="linpool"
         )
 
         # Test that fixed model can evaluate successfully
         gr.eval_monte_carlo(md_fit_fixed, n=1, df_det="nom")
+
+        ## Trajectory model
+        # -------------------------
+        md_base = models.make_trajectory_linear()
+        md_fit = data.df_trajectory_windowed >> gr.ft_nls(
+            md=md_base, method="SLSQP", tol=1e-3
+        )
+        df_tmp = md_fit >> gr.ev_nominal(df_det="nom")
