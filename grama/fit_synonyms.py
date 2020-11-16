@@ -17,18 +17,13 @@ from numpy import zeros, diag, atleast_2d, triu_indices
 from numpy import sum as npsum
 from numpy import power as nppow
 from numpy import sqrt as npsqrt
-from numpy.linalg import pinv
+from numpy.linalg import pinv, cond
+from warnings import warn
 
 
 @curry
 def fit_nls(
-    df_data,
-        md=None,
-        out=None,
-        var_fix=None,
-        verbose=True,
-        uq_method=None,
-        **kwargs,
+    df_data, md=None, out=None, var_fix=None, verbose=True, uq_method=None, **kwargs,
 ):
     r"""Fit a model with Nonlinear Least Squares (NLS)
 
@@ -116,8 +111,7 @@ def fit_nls(
         ## Precompute data
         df_nom = eval_nominal(md, df_det="nom")
         df_base = tran_outer(
-            df_data,
-            concat((df_best[var_fitted], df_nom[var_fix]), axis=1)
+            df_data, concat((df_best[var_fitted], df_nom[var_fix]), axis=1)
         )
         df_pred = eval_df(md, df=df_base)
         df_grad = eval_grad_fd(md, df_base=df_base, var=var_fitted)
@@ -139,6 +133,16 @@ def fit_nls(
 
             ## Add variance matrix to pooled Sigma
             Sigma_pooled = Sigma_pooled + sigma_sq * Hinv / n_fitted
+
+        ## Check model for identifiability
+        kappa_out = cond(Sigma_pooled)
+        if kappa_out > 1e10:
+            warn(
+                "Model is locally unidentifiable as measured by the "
+                + "condition number of the pooled covariance matrix; "
+                + "kappa = {}".format(kappa_out),
+                RuntimeWarning,
+            )
 
         ## Convert to std deviations and correlation
         sigma_comp = npsqrt(diag(Sigma_pooled))
