@@ -165,6 +165,22 @@ class TestFits(unittest.TestCase):
         ## Fit the model
         md_fit = df_data >> gr.ft_nls(md=md_param, verbose=False, uq_method="linpool",)
 
+        ## Unidentifiable model throws warning
+        # -------------------------
+        md_unidet = (
+            gr.Model()
+            >> gr.cp_function(
+                fun=lambda x: x[2] / x[3] * np.exp(x[0] * x[1]),
+                var=["x", "c", "a", "z"],
+                out=["y"],
+            )
+            >> gr.cp_bounds(c=[0, 4], a=[0.1, 2.0], z=[0, 1])
+        )
+        with self.assertWarns(RuntimeWarning):
+            gr.fit_nls(
+                df_data, md=md_unidet, uq_method="linpool",
+            )
+
         ## True parameters in wide confidence region
         # -------------------------
         alpha = 1e-3
