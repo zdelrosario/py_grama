@@ -1,8 +1,8 @@
 from .base import *
 from .vector import *
 
-from statsmodels.stats.proportion import proportion_confint
 from numpy import sqrt, power
+from scipy.stats import norm
 
 # ------------------------------------------------------------------------------
 # Series summary functions
@@ -314,30 +314,28 @@ def ndme(series_pred, series_meas):
 
 
 @make_symbolic
-def binomial_ci(series, alpha=0.05, method="wilson", side="both"):
+def binomial_ci(series, alpha=0.05, side="both"):
     """Returns a binomial confidence interval
 
-    Computes a binomial confidence interval based on boolean data. A symbolic
-    wrapper for statsmodels.stats.proportion.proportion_confint.
+    Computes a binomial confidence interval based on boolean data. Uses Wilson interval
 
     Args:
         series (pandas.Series): Column to summarize; must be boolean or 0/1.
         alpha (float): Confidence level; value in (0, 1)
-        method (string): Method for computation. Options:
-            - "normal": asymptotic normal approximation
-            - "agresti_coull": Agresti-Coull interval
-            - "beta": Clopper-Pearson interval based on Beta distribution
-            - "wilson": Wilson score interval
-            - "jeffreys": Jeffreys Bayesian interval
         side (string): Chosen side of interval
             - "both": Return a series of tuples
             - "lo": Return the lower interval bound
             - "up": Return the upper interval bound
     """
-    count = series.sum()
-    nobs = len(series)
+    n_s = series.sum()
+    n_t = len(series)
+    n_f = n_t - n_s
+    z = -norm.ppf(alpha / 2)
 
-    lo, up = proportion_confint(count, nobs, alpha=alpha, method=method)
+    mid = (n_s + 0.5 * z ** 2) / (n_t + z ** 2)
+    delta = z / (n_t + z ** 2) * sqrt(n_s * n_f / n_t + 0.25 * z ** 2)
+    lo = mid - delta
+    up = mid + delta
 
     if side == "both":
         return (lo, up)
