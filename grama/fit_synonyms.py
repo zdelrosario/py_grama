@@ -42,6 +42,8 @@ def fit_nls(
             variables may have semi-infinite bounds.
         var_fix (list or None): Variables to fix to nominal levels. Note that
             variables with domain width zero will automatically be fixed.
+        n_restart (int): Number of restarts to try; the first try is at
+            the nominal conditions of the model.
         verbose (bool): Print best-fit parameters to console?
         uq_method (str OR None): If string, select method to quantify parameter
             uncertainties. If None, provide best-fit values only. Methods:
