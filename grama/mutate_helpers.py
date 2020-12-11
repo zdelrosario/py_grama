@@ -15,11 +15,14 @@ __all__ = [
     "qnorm",
     "pnorm",
     "dnorm",
+    "pareto_min",
 ]
 
 from grama import make_symbolic
 
-from numpy import argsort, array, median, zeros
+from numpy import argsort, array, median, zeros, ones
+from numpy import any as npany
+from numpy import all as npall
 from numpy import abs as npabs
 from numpy import sin as npsin
 from numpy import cos as npcos
@@ -142,6 +145,36 @@ def pnorm(x):
     r"""Normal cumulative distribution function (CDF)
     """
     return norm.cdf(x)
+
+
+# Pareto frontier calculation
+# -------------------------
+@make_symbolic
+def pareto_min(*args):
+    r"""Determine if observation is a Pareto point
+
+    Find the Pareto-efficient points that minimize the provided features.
+
+    Args:
+        xi (iterable OR gr.Intention()): Feature to minimize
+
+    Returns:
+        boolean: Indicates if observation is Pareto-efficient
+    """
+    # Check invariants
+    lengths = map(len, args)
+    if len(set(lengths)) > 1:
+        raise ValueError("All arguments to pareto_min must be of equal length")
+
+    # Compute pareto points
+    costs = array([*args]).T
+    is_efficient = ones(costs.shape[0], dtype=bool)
+    for i, c in enumerate(costs):
+        is_efficient[i] = npall(npany(costs[:i] > c, axis=1)) and npall(
+            npany(costs[i + 1 :] > c, axis=1)
+        )
+
+    return is_efficient
 
 
 # Factors
