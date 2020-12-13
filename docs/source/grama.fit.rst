@@ -4,6 +4,14 @@ grama.fit package
 Submodules
 ----------
 
+grama.fit.fit\_lolo module
+--------------------------
+
+.. automodule:: grama.fit.fit_lolo
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.fit.fit\_scikitlearn module
 ---------------------------------
 

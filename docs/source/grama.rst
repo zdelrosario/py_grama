@@ -8,8 +8,10 @@ Subpackages
 
    grama.data
    grama.dfply
+   grama.eval
    grama.fit
    grama.models
+   grama.tran
 
 Submodules
 ----------
@@ -46,6 +48,14 @@ grama.eval\_defaults module
    :undoc-members:
    :show-inheritance:
 
+grama.eval\_opt module
+----------------------
+
+.. automodule:: grama.eval_opt
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.eval\_random module
 -------------------------
 
@@ -58,6 +68,14 @@ grama.eval\_tail module
 -----------------------
 
 .. automodule:: grama.eval_tail
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+grama.fit\_synonyms module
+--------------------------
+
+.. automodule:: grama.fit_synonyms
    :members:
    :undoc-members:
    :show-inheritance:

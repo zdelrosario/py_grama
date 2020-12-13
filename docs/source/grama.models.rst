@@ -60,10 +60,10 @@ grama.models.test module
    :undoc-members:
    :show-inheritance:
 
-grama.models.time\_cantilever module
-------------------------------------
+grama.models.trajectory\_linear\_drag module
+--------------------------------------------
 
-.. automodule:: grama.models.time_cantilever
+.. automodule:: grama.models.trajectory_linear_drag
    :members:
    :undoc-members:
    :show-inheritance:
