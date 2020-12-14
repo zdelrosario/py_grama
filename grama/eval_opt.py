@@ -247,6 +247,14 @@ def eval_min(
     ## Check that model has only deterministic variables
     if model.n_var_rand > 0:
         raise ValueError("model must have no random variables")
+    ## Check that objective is in model
+    if not (out_min in model.out):
+        raise ValueError("model must contain out_min")
+    ## Check that constraints is in model
+    if any(map(lambda s: not (s in model.out), out_geq)):
+        raise ValueError("model must contain each out_geq")
+    if any(map(lambda s: not (s in model.out), out_eq)):
+        raise ValueError("model must contain each out_eq")
 
     ## Formulate initial guess
     if df_start is None:
