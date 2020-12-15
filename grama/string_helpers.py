@@ -9,6 +9,9 @@ __all__ = [
     "str_sub",
     "str_split",
     "str_which",
+    "str_to_lower",
+    "str_to_upper",
+    "str_to_snake",
 ]
 
 import re
@@ -230,3 +233,75 @@ def str_split(string, pattern, maxsplit=0):
     except TypeError:
 
         return re.split(pattern, string, maxsplit=maxsplit)
+
+
+## Case helpers
+# --------------------------------------------------
+@make_symbolic
+def str_to_lower(string):
+    """Make string lower-case
+
+    Args:
+        string (str or iterable[str]): String(s) to modify
+
+    Returns
+        str or iterable[str]: List (of lists) of strings
+
+    """
+
+    try:
+        if isinstance(string, str):
+            raise TypeError
+        return Series([s.lower() for s in string])
+
+    except TypeError:
+
+        return string.lower()
+
+
+@make_symbolic
+def str_to_upper(string):
+    """Make string upper-case
+
+    Args:
+        string (str or iterable[str]): String(s) to modify
+
+    Returns
+        str or iterable[str]: List (of lists) of strings
+
+    """
+
+    try:
+        if isinstance(string, str):
+            raise TypeError
+        return Series([s.upper() for s in string])
+
+    except TypeError:
+
+        return string.upper()
+
+
+def _snake_case(s):
+    return re.sub("\s+", "_", s)
+
+
+@make_symbolic
+def str_to_snake(string):
+    """Make string snake case
+
+    Args:
+        string (str or iterable[str]): String(s) to modify
+
+    Returns
+        str or iterable[str]: List (of lists) of strings
+
+    """
+
+    try:
+        if isinstance(string, str):
+            raise TypeError
+        return Series([_snake_case(s) for s in string])
+
+    except TypeError:
+
+        return _snake_case(string)

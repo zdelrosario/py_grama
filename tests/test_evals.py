@@ -319,6 +319,14 @@ class TestOpt(unittest.TestCase):
             check_dtype=False,
             check_column_type=False,
         )
+        
+        ## Multiple restarts works
+        df_multi = gr.eval_nls(
+            md_feat,
+            df_data=df_data,
+            n_restart=2,
+        )
+        self.assertTrue(df_multi.shape[0] == 2)
 
     def test_opt(self):
         md_bowl = (

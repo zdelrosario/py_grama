@@ -491,7 +491,8 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
     if not (df_corr is None):
         new_model = model.copy()
         new_model.density = gr.Density(
-            marginals=model.density.marginals, copula=gr.CopulaGaussian(df_corr)
+            marginals=model.density.marginals,
+            copula=gr.CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
         )
         new_model.update()
 
@@ -502,7 +503,8 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
         df_corr = gr.tran_copula_corr(df_data, model=new_model)
 
         new_model.density = gr.Density(
-            marginals=model.density.marginals, copula=gr.CopulaGaussian(df_corr)
+            marginals=model.density.marginals,
+            copula=gr.CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
         )
         new_model.update()
 
