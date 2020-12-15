@@ -319,7 +319,7 @@ class TestOpt(unittest.TestCase):
             check_dtype=False,
             check_column_type=False,
         )
-
+        
         ## Multiple restarts works
         df_multi = gr.eval_nls(
             md_feat,
@@ -328,6 +328,49 @@ class TestOpt(unittest.TestCase):
         )
         self.assertTrue(df_multi.shape[0] == 2)
 
+    def test_opt(self):
+        md_bowl = (
+            gr.Model("Constrained bowl")
+            >> gr.cp_function(
+                fun=lambda x: x[0]**2 + x[1]**2,
+                var=["x", "y"],
+                out=["f"],
+            )
+            >> gr.cp_function(
+                fun=lambda x: (x[0] + x[1] + 1),
+                var=["x", "y"],
+                out=["g1"],
+            )
+            >> gr.cp_function(
+                fun=lambda x: (-x[0] +x[1] - np.sqrt(2/10)),
+                var=["x", "y"],
+                out=["g2"],
+            )
+            >> gr.cp_bounds(
+                x=(-1, +1),
+                y=(-1, +1),
+            )
+        )
+
+        df_res = (
+            md_bowl
+            >> gr.ev_min(
+                out_min="f",
+                out_geq=["g1", "g2"]
+            )
+        )
+
+        # Check result
+        self.assertTrue(abs(df_res.x[0] + np.sqrt(1/20)) < 1e-6)
+        self.assertTrue(abs(df_res.y[0] - np.sqrt(1/20)) < 1e-6)
+
+        # Check errors for violated invariants
+        with self.assertRaises(ValueError):
+            gr.eval_min(md_bowl, out_min="FALSE")
+        with self.assertRaises(ValueError):
+            gr.eval_min(md_bowl, out_min="f", out_geq=["FALSE"])
+        with self.assertRaises(ValueError):
+            gr.eval_min(md_bowl, out_min="f", out_eq=["FALSE"])
 
 ## Run tests
 if __name__ == "__main__":
