@@ -338,6 +338,12 @@ def eval_min(
                 {"type": "eq", "fun": make_fun(out),}
             )
 
+    ## Parse the bounds for minimize
+    bounds = list(map(
+        lambda k: model.domain.bounds[k],
+        model.var
+    ))
+
     ## Run optimization
     res = minimize(
         make_fun(out_min),
@@ -348,10 +354,14 @@ def eval_min(
         tol=tol,
         options={"maxiter": maxiter, "disp": False},
         constraints=constraints,
-        # bounds=bounds,
+        bounds=bounds,
     )
 
-    df_res = df_make(**dict(zip(model.var, res.x)))
+    df_opt = df_make(**dict(zip(model.var, res.x)))
+    df_res = eval_df(model, df=df_opt)
+    df_res["success"] = [res.success]
+    df_res["message"] = [res.message]
+    df_res["n_iter"] = [res.nit]
 
     return df_res
 
