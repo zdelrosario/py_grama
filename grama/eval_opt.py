@@ -241,11 +241,13 @@ def eval_min(
         out_leq (None OR list of str): Outputs to use as leq constraints; var <= 0
         out_eq (None OR list of str): Outputs to use as equality constraints; var == 0
 
-        method (str): Optimization method;
+        method (str): Optimization method; see the documentation for
+            scipy.optimize.minimize for options.
         tol (float): Optimization objective convergence tolerance
-        nrestart (int): Number of restarts; beyond nrestart=1 random
+        n_restart (int): Number of restarts; beyond n_restart=1 random
             restarts are used.
-        df_start (None or DataFrame):
+        df_start (None or DataFrame): Specific starting values to use; overrides
+            n_restart if non None provided.
 
     Returns:
         DataFrame: Results of optimization
@@ -260,19 +262,23 @@ def eval_min(
         >>>         out=["c"],
         >>>     )
         >>>     >> gr.cp_function(
-        >>>         fun=lambda x: -( (x[0] - 1)**3 - x[1] + 1 ),
+        >>>         fun=lambda x: (x[0] - 1)**3 - x[1] + 1,
         >>>         var=["x", "y"],
         >>>         out=["g1"],
         >>>     )
         >>>     >> gr.cp_function(
-        >>>         fun=lambda x: -( x[0] + x[1] - 2 ),
+        >>>         fun=lambda x: x[0] + x[1] - 2,
         >>>         var=["x", "y"],
         >>>         out=["g2"],
+        >>>     )
+        >>>     >> gr.cp_bounds(
+        >>>         x=(-1.5, +1.5),
+        >>>         y=(-0.5, +2.5),
         >>>     )
         >>> )
         >>> md >> gr.ev_min(
         >>>     out_min="c",
-        >>>     out_geq=["g1", "g2"]
+        >>>     out_leq=["g1", "g2"]
         >>> )
 
     """
