@@ -155,12 +155,7 @@ def eval_nls(
         md_sweep = comp_marginals(model, **dicts_var)
         md_sweep = comp_copula_independence(md_sweep)
         ## Generate random start points
-        df_rand = eval_monte_carlo(
-            md_sweep,
-            n=n_restart - 1,
-            df_det="nom",
-            skip=True,
-        )
+        df_rand = eval_monte_carlo(md_sweep, n=n_restart - 1, df_det="nom", skip=True,)
         df_init = concat((df_init, df_rand[var_fit]), axis=0).reset_index(drop=True)
     ## Iterate over initial guesses
     df_res = DataFrame()
@@ -190,12 +185,7 @@ def eval_nls(
             method=method,
             jac=False,
             tol=tol,
-            options={
-                "maxiter": maxiter,
-                "disp": False,
-                "ftol": ftol,
-                "gtol": gtol,
-            },
+            options={"maxiter": maxiter, "disp": False, "ftol": ftol, "gtol": gtol,},
             bounds=bounds,
         )
 
@@ -209,13 +199,7 @@ def eval_nls(
         df_tmp["n_iter"] = [res.nit]
         df_tmp["mse"] = [res.fun]
 
-        df_res = concat(
-            (
-                df_res,
-                df_tmp,
-            ),
-            axis=0,
-        ).reset_index(drop=True)
+        df_res = concat((df_res, df_tmp,), axis=0,).reset_index(drop=True)
 
     ## Post-process
     if append:
@@ -233,10 +217,11 @@ def eval_min(
     model,
     out_min=None,
     out_geq=None,
+    out_leq=None,
     out_eq=None,
     method="SLSQP",
     tol=1e-6,
-    nrestart=1,
+    n_restart=1,
     maxiter=50,
     df_start=None,
 ):
@@ -252,6 +237,7 @@ def eval_min(
             deterministic.
         out_min (str): Output to use as minimization objective.
         out_geq (None OR list of str): Outputs to use as geq constraints; var >= 0
+        out_leq (None OR list of str): Outputs to use as leq constraints; var <= 0
         out_eq (None OR list of str): Outputs to use as equality constraints; var == 0
 
         method (str): Optimization method;
@@ -302,6 +288,12 @@ def eval_min(
             raise ValueError(
                 "model must contain each out_geq; missing {}".format(out_diff)
             )
+    if not (out_leq is None):
+        out_diff = set(out_leq).difference(set(model.out))
+        if len(out_diff) > 0:
+            raise ValueError(
+                "model must contain each out_leq; missing {}".format(out_diff)
+            )
     if not (out_eq is None):
         out_diff = set(out_eq).difference(set(model.out))
         if len(out_diff) > 0:
@@ -315,11 +307,11 @@ def eval_min(
     x0 = df_start[model.var]
 
     ## Factory for wrapping model's output
-    def make_fun(out):
+    def make_fun(out, sign=+1):
         def fun(x):
             df = DataFrame([x], columns=model.var)
             df_res = eval_df(model, df)
-            return df_res[out]
+            return sign * df_res[out]
 
         return fun
 
@@ -332,6 +324,12 @@ def eval_min(
                 {"type": "ineq", "fun": make_fun(out),}
             )
 
+    if not (out_leq is None):
+        for out in out_leq:
+            constraints.append(
+                {"type": "ineq", "fun": make_fun(out, sign=-1),}
+            )
+
     if not (out_eq is None):
         for out in out_eq:
             constraints.append(
@@ -339,10 +337,7 @@ def eval_min(
             )
 
     ## Parse the bounds for minimize
-    bounds = list(map(
-        lambda k: model.domain.bounds[k],
-        model.var
-    ))
+    bounds = list(map(lambda k: model.domain.bounds[k], model.var))
 
     ## Run optimization
     res = minimize(
