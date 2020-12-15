@@ -155,12 +155,7 @@ def eval_nls(
         md_sweep = comp_marginals(model, **dicts_var)
         md_sweep = comp_copula_independence(md_sweep)
         ## Generate random start points
-        df_rand = eval_monte_carlo(
-            md_sweep,
-            n=n_restart - 1,
-            df_det="nom",
-            skip=True,
-        )
+        df_rand = eval_monte_carlo(md_sweep, n=n_restart - 1, df_det="nom", skip=True,)
         df_init = concat((df_init, df_rand[var_fit]), axis=0).reset_index(drop=True)
     ## Iterate over initial guesses
     df_res = DataFrame()
@@ -190,12 +185,7 @@ def eval_nls(
             method=method,
             jac=False,
             tol=tol,
-            options={
-                "maxiter": maxiter,
-                "disp": False,
-                "ftol": ftol,
-                "gtol": gtol,
-            },
+            options={"maxiter": maxiter, "disp": False, "ftol": ftol, "gtol": gtol,},
             bounds=bounds,
         )
 
@@ -209,13 +199,7 @@ def eval_nls(
         df_tmp["n_iter"] = [res.nit]
         df_tmp["mse"] = [res.fun]
 
-        df_res = concat(
-            (
-                df_res,
-                df_tmp,
-            ),
-            axis=0,
-        ).reset_index(drop=True)
+        df_res = concat((df_res, df_tmp,), axis=0,).reset_index(drop=True)
 
     ## Post-process
     if append:
@@ -233,11 +217,13 @@ def eval_min(
     model,
     out_min=None,
     out_geq=None,
+    out_leq=None,
     out_eq=None,
     method="SLSQP",
     tol=1e-6,
-    nrestart=1,
+    n_restart=1,
     maxiter=50,
+    seed=None,
     df_start=None,
 ):
     r"""Constrained minimization using functions from a model
@@ -252,13 +238,16 @@ def eval_min(
             deterministic.
         out_min (str): Output to use as minimization objective.
         out_geq (None OR list of str): Outputs to use as geq constraints; var >= 0
+        out_leq (None OR list of str): Outputs to use as leq constraints; var <= 0
         out_eq (None OR list of str): Outputs to use as equality constraints; var == 0
 
-        method (str): Optimization method;
+        method (str): Optimization method; see the documentation for
+            scipy.optimize.minimize for options.
         tol (float): Optimization objective convergence tolerance
-        nrestart (int): Number of restarts; beyond nrestart=1 random
+        n_restart (int): Number of restarts; beyond n_restart=1 random
             restarts are used.
-        df_start (None or DataFrame):
+        df_start (None or DataFrame): Specific starting values to use; overrides
+            n_restart if non None provided.
 
     Returns:
         DataFrame: Results of optimization
@@ -273,19 +262,23 @@ def eval_min(
         >>>         out=["c"],
         >>>     )
         >>>     >> gr.cp_function(
-        >>>         fun=lambda x: -( (x[0] - 1)**3 - x[1] + 1 ),
+        >>>         fun=lambda x: (x[0] - 1)**3 - x[1] + 1,
         >>>         var=["x", "y"],
         >>>         out=["g1"],
         >>>     )
         >>>     >> gr.cp_function(
-        >>>         fun=lambda x: -( x[0] + x[1] - 2 ),
+        >>>         fun=lambda x: x[0] + x[1] - 2,
         >>>         var=["x", "y"],
         >>>         out=["g2"],
+        >>>     )
+        >>>     >> gr.cp_bounds(
+        >>>         x=(-1.5, +1.5),
+        >>>         y=(-0.5, +2.5),
         >>>     )
         >>> )
         >>> md >> gr.ev_min(
         >>>     out_min="c",
-        >>>     out_geq=["g1", "g2"]
+        >>>     out_leq=["g1", "g2"]
         >>> )
 
     """
@@ -295,12 +288,18 @@ def eval_min(
     ## Check that objective is in model
     if not (out_min in model.out):
         raise ValueError("model must contain out_min")
-    ## Check that constraints is in model
+    ## Check that constraints are in model
     if not (out_geq is None):
         out_diff = set(out_geq).difference(set(model.out))
         if len(out_diff) > 0:
             raise ValueError(
                 "model must contain each out_geq; missing {}".format(out_diff)
+            )
+    if not (out_leq is None):
+        out_diff = set(out_leq).difference(set(model.out))
+        if len(out_diff) > 0:
+            raise ValueError(
+                "model must contain each out_leq; missing {}".format(out_diff)
             )
     if not (out_eq is None):
         out_diff = set(out_eq).difference(set(model.out))
@@ -310,16 +309,48 @@ def eval_min(
             )
 
     ## Formulate initial guess
+    df_nom = eval_nominal(model, df_det="nom", skip=True)
     if df_start is None:
-        df_start = eval_nominal(model, df_det="nom", skip=True)
-    x0 = df_start[model.var]
+        df_start = df_nom[model.var]
+
+        if n_restart > 1:
+            if not (seed is None):
+                setseed(seed)
+            ## Collect sweep-able deterministic variables
+            var_sweep = list(
+                filter(
+                    lambda v: isfinite(model.domain.get_width(v))
+                    & (model.domain.get_width(v) > 0),
+                    model.var_det,
+                )
+            )
+            ## Generate pseudo-marginals
+            dicts_var = {}
+            for v in var_sweep:
+                dicts_var[v] = {
+                    "dist": "uniform",
+                    "loc": model.domain.get_bound(v)[0],
+                    "scale": model.domain.get_width(v),
+                }
+            ## Overwrite model
+            md_sweep = comp_marginals(model, **dicts_var)
+            md_sweep = comp_copula_independence(md_sweep)
+            ## Generate random start points
+            df_rand = eval_monte_carlo(
+                md_sweep, n=n_restart - 1, df_det="nom", skip=True,
+            )
+            df_start = concat((df_start, df_rand[model.var]), axis=0).reset_index(
+                drop=True
+            )
+    else:
+        n_restart = df_start.shape[0]
 
     ## Factory for wrapping model's output
-    def make_fun(out):
+    def make_fun(out, sign=+1):
         def fun(x):
             df = DataFrame([x], columns=model.var)
             df_res = eval_df(model, df)
-            return df_res[out]
+            return sign * df_res[out]
 
         return fun
 
@@ -332,6 +363,12 @@ def eval_min(
                 {"type": "ineq", "fun": make_fun(out),}
             )
 
+    if not (out_leq is None):
+        for out in out_leq:
+            constraints.append(
+                {"type": "ineq", "fun": make_fun(out, sign=-1),}
+            )
+
     if not (out_eq is None):
         for out in out_eq:
             constraints.append(
@@ -339,29 +376,31 @@ def eval_min(
             )
 
     ## Parse the bounds for minimize
-    bounds = list(map(
-        lambda k: model.domain.bounds[k],
-        model.var
-    ))
+    bounds = list(map(lambda k: model.domain.bounds[k], model.var))
 
     ## Run optimization
-    res = minimize(
-        make_fun(out_min),
-        x0,
-        args=(),
-        method=method,
-        jac=False,
-        tol=tol,
-        options={"maxiter": maxiter, "disp": False},
-        constraints=constraints,
-        bounds=bounds,
-    )
+    df_res = DataFrame()
+    for i in range(n_restart):
+        x0 = df_start[model.var].iloc[i].values
+        res = minimize(
+            make_fun(out_min),
+            x0,
+            args=(),
+            method=method,
+            jac=False,
+            tol=tol,
+            options={"maxiter": maxiter, "disp": False},
+            constraints=constraints,
+            bounds=bounds,
+        )
 
-    df_opt = df_make(**dict(zip(model.var, res.x)))
-    df_res = eval_df(model, df=df_opt)
-    df_res["success"] = [res.success]
-    df_res["message"] = [res.message]
-    df_res["n_iter"] = [res.nit]
+        df_opt = df_make(**dict(zip(model.var, res.x)))
+        df_tmp = eval_df(model, df=df_opt)
+        df_tmp["success"] = [res.success]
+        df_tmp["message"] = [res.message]
+        df_tmp["n_iter"] = [res.nit]
+
+        df_res = concat((df_res, df_tmp), axis=0).reset_index(drop=True)
 
     return df_res
 
