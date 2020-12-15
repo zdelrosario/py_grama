@@ -223,6 +223,7 @@ def eval_min(
     tol=1e-6,
     n_restart=1,
     maxiter=50,
+    seed=None,
     df_start=None,
 ):
     r"""Constrained minimization using functions from a model
@@ -281,7 +282,7 @@ def eval_min(
     ## Check that objective is in model
     if not (out_min in model.out):
         raise ValueError("model must contain out_min")
-    ## Check that constraints is in model
+    ## Check that constraints are in model
     if not (out_geq is None):
         out_diff = set(out_geq).difference(set(model.out))
         if len(out_diff) > 0:
@@ -302,9 +303,41 @@ def eval_min(
             )
 
     ## Formulate initial guess
+    df_nom = eval_nominal(model, df_det="nom", skip=True)
     if df_start is None:
-        df_start = eval_nominal(model, df_det="nom", skip=True)
-    x0 = df_start[model.var]
+        df_start = df_nom[model.var]
+
+        if n_restart > 1:
+            if not (seed is None):
+                setseed(seed)
+            ## Collect sweep-able deterministic variables
+            var_sweep = list(
+                filter(
+                    lambda v: isfinite(model.domain.get_width(v))
+                    & (model.domain.get_width(v) > 0),
+                    model.var_det,
+                )
+            )
+            ## Generate pseudo-marginals
+            dicts_var = {}
+            for v in var_sweep:
+                dicts_var[v] = {
+                    "dist": "uniform",
+                    "loc": model.domain.get_bound(v)[0],
+                    "scale": model.domain.get_width(v),
+                }
+            ## Overwrite model
+            md_sweep = comp_marginals(model, **dicts_var)
+            md_sweep = comp_copula_independence(md_sweep)
+            ## Generate random start points
+            df_rand = eval_monte_carlo(
+                md_sweep, n=n_restart - 1, df_det="nom", skip=True,
+            )
+            df_start = concat((df_start, df_rand[model.var]), axis=0).reset_index(
+                drop=True
+            )
+    else:
+        n_restart = df_start.shape[0]
 
     ## Factory for wrapping model's output
     def make_fun(out, sign=+1):
@@ -340,23 +373,28 @@ def eval_min(
     bounds = list(map(lambda k: model.domain.bounds[k], model.var))
 
     ## Run optimization
-    res = minimize(
-        make_fun(out_min),
-        x0,
-        args=(),
-        method=method,
-        jac=False,
-        tol=tol,
-        options={"maxiter": maxiter, "disp": False},
-        constraints=constraints,
-        bounds=bounds,
-    )
+    df_res = DataFrame()
+    for i in range(n_restart):
+        x0 = df_start[model.var].iloc[i].values
+        res = minimize(
+            make_fun(out_min),
+            x0,
+            args=(),
+            method=method,
+            jac=False,
+            tol=tol,
+            options={"maxiter": maxiter, "disp": False},
+            constraints=constraints,
+            bounds=bounds,
+        )
 
-    df_opt = df_make(**dict(zip(model.var, res.x)))
-    df_res = eval_df(model, df=df_opt)
-    df_res["success"] = [res.success]
-    df_res["message"] = [res.message]
-    df_res["n_iter"] = [res.nit]
+        df_opt = df_make(**dict(zip(model.var, res.x)))
+        df_tmp = eval_df(model, df=df_opt)
+        df_tmp["success"] = [res.success]
+        df_tmp["message"] = [res.message]
+        df_tmp["n_iter"] = [res.nit]
+
+        df_res = concat((df_res, df_tmp), axis=0).reset_index(drop=True)
 
     return df_res
 

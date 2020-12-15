@@ -355,6 +355,12 @@ class TestOpt(unittest.TestCase):
         with self.assertRaises(ValueError):
             gr.eval_min(md_bowl, out_min="f", out_eq=["FALSE"])
 
+        # Test multiple restarts
+        df_multi = gr.eval_min(
+            md_bowl, out_min="f", out_geq=["g1"], out_leq=["g2"], n_restart=2,
+        )
+        self.assertTrue(df_multi.shape[0] == 2)
+
 
 ## Run tests
 if __name__ == "__main__":
