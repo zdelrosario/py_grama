@@ -356,6 +356,14 @@ class TestOpt(unittest.TestCase):
         self.assertTrue(abs(df_res.x[0] + np.sqrt(1/20)) < 1e-6)
         self.assertTrue(abs(df_res.y[0] - np.sqrt(1/20)) < 1e-6)
 
+        # Check errors for violated invariants
+        with self.assertRaises(ValueError):
+            gr.eval_min(md_bowl, out_min="FALSE")
+        with self.assertRaises(ValueError):
+            gr.eval_min(md_bowl, out_min="f", out_geq=["FALSE"])
+        with self.assertRaises(ValueError):
+            gr.eval_min(md_bowl, out_min="f", out_eq=["FALSE"])
+
 ## Run tests
 if __name__ == "__main__":
     unittest.main()

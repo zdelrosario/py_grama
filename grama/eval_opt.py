@@ -251,10 +251,18 @@ def eval_min(
     if not (out_min in model.out):
         raise ValueError("model must contain out_min")
     ## Check that constraints is in model
-    if any(map(lambda s: not (s in model.out), out_geq)):
-        raise ValueError("model must contain each out_geq")
-    if any(map(lambda s: not (s in model.out), out_eq)):
-        raise ValueError("model must contain each out_eq")
+    if not (out_geq is None):
+        out_diff = set(out_geq).difference(set(model.out))
+        if len(out_diff) > 0:
+            raise ValueError(
+                "model must contain each out_geq; missing {}".format(out_diff)
+            )
+    if not (out_eq is None):
+        out_diff = set(out_eq).difference(set(model.out))
+        if len(out_diff) > 0:
+            raise ValueError(
+                "model must contain each out_eq; missing {}".format(out_diff)
+            )
 
     ## Formulate initial guess
     if df_start is None:
