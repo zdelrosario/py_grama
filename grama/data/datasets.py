@@ -1,5 +1,6 @@
 __all__ = [
     "df_diamonds",
+    "df_ruff",
     "df_stang",
     "df_trajectory_full",
     "df_trajectory_windowed",
@@ -17,6 +18,9 @@ df_stang = read_csv(Path(path_grama / "data/stang_long.csv"))
 
 # Stang (tidy form)
 df_diamonds = read_csv(Path(path_grama / "data/diamonds.csv"))
+
+# Ruff (tidy form)
+df_ruff = read_csv(Path(path_grama / "data/ruff.csv"))
 
 # Trajectories
 df_trajectory_full = read_csv(Path(path_grama / "data/trajectory_full.csv"))
