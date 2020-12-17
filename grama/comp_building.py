@@ -134,7 +134,8 @@ def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0)
     r"""Add a vectorized function to a model
 
     Composition. Add a function to an existing model. Function must be
-    vectorized over DataFrames.
+    vectorized over DataFrames, and must add new columns matching its `out`
+    set.
 
     Args:
         model (gr.model): Model to compose
@@ -154,7 +155,7 @@ def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0)
         >>> import grama as gr
         >>> md = gr.Model("test") >> \
         >>>     gr.function(
-        >>>         fun=lambda x: x,
+        >>>         fun=lambda df: df.assign(y=df.x0),
         >>>         var=1,
         >>>         out=["y"],
         >>>         name="identity"
