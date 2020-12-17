@@ -318,7 +318,7 @@ def eval_form_ria(
             df_return = concat((df_return, df_inner), axis=0, sort=False)
 
     if not append:
-        df_return = df_return.groupby(model.var_det).agg({s: max for s in betas.keys()})
+        df_return = df_return.groupby(model.var_det).agg({s: max for s in limits})
 
     return df_return
 

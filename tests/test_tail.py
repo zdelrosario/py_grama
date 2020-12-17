@@ -29,12 +29,27 @@ class TestFORM(unittest.TestCase):
             >> gr.cp_copula_independence()
         )
 
-    def test_ria(self):
-        df_res = self.md >> gr.ev_form_ria(df_det="nom", limits=["g"])
+        ## Cantilever beam for flatten test
+        self.md_beam = models.make_cantilever_beam()
 
+    def test_ria(self):
+        ## Test accuracy
+        df_res = self.md >> gr.ev_form_ria(df_det="nom", limits=["g"])
         self.assertTrue(np.allclose(df_res["g"], [self.beta_true], atol=1e-3))
 
-    def test_pma(self):
-        df_res = self.md >> gr.ev_form_pma(df_det="nom", betas=dict(g=self.beta_true))
+        ## Test flatten
+        df_beam = self.md_beam >> gr.ev_form_ria(
+            df_det="nom", limits=["g_stress", "g_disp"], append=False
+        )
+        self.assertTrue(df_beam.shape[0] == 1)
 
+    def test_pma(self):
+        ## Test accuracy
+        df_res = self.md >> gr.ev_form_pma(df_det="nom", betas=dict(g=self.beta_true))
         self.assertTrue(np.allclose(df_res["g"], [0], atol=1e-3))
+
+        ## Test flatten
+        df_beam = self.md_beam >> gr.ev_form_pma(
+            df_det="nom", betas={"g_stress": 3, "g_disp": 3}, append=False,
+        )
+        self.assertTrue(df_beam.shape[0] == 1)
