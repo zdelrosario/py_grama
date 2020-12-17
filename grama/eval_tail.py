@@ -7,7 +7,7 @@ __all__ = [
 
 import grama as gr
 from grama import add_pipe, pipe, custom_formatwarning
-from numpy import array, argmin, ones, eye, zeros, sqrt, NaN
+from numpy import array, argmin, ones, eye, zeros, sqrt, NaN, max
 from numpy.linalg import norm as length
 from numpy.random import multivariate_normal
 from pandas import DataFrame, concat
@@ -167,6 +167,9 @@ def eval_form_pma(
             df_inner[key] = [fun_star]
             df_return = concat((df_return, df_inner), axis=0, sort=False)
 
+    if not append:
+        df_return = df_return.groupby(model.var_det).agg({s: max for s in betas.keys()})
+
     return df_return
 
 
@@ -313,6 +316,9 @@ def eval_form_ria(
                 )
             df_inner[key] = [fun_star]
             df_return = concat((df_return, df_inner), axis=0, sort=False)
+
+    if not append:
+        df_return = df_return.groupby(model.var_det).agg({s: max for s in betas.keys()})
 
     return df_return
 
