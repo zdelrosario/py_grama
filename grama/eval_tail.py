@@ -171,7 +171,7 @@ def eval_form_pma(
         df_return = (
             df_return.groupby(model.var_det)
             .agg({s: max for s in betas.keys()})
-            .reset_index(drop=True)
+            .reset_index()
         )
 
     return df_return
@@ -323,9 +323,7 @@ def eval_form_ria(
 
     if not append:
         df_return = (
-            df_return.groupby(model.var_det)
-            .agg({s: max for s in limits})
-            .reset_index(drop=True)
+            df_return.groupby(model.var_det).agg({s: max for s in limits}).reset_index()
         )
 
     return df_return
