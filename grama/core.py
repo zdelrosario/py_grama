@@ -148,9 +148,7 @@ class FunctionVectorized(Function):
 
         """
         df_res = self.func(df)
-        df_res.columns = self.out
-
-        return df_res
+        return df_res[self.out]
 
     def copy(self):
         """Make a copy"""
