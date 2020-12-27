@@ -47,7 +47,8 @@ class TestReshape(unittest.TestCase):
         ).reset_index(drop=True)
         assert df.equals(d)
 
-        df = data.df_diamonds.sort_values(["cut", "price"], ascending=False)
+        df = data.df_diamonds.sort_values(["cut", "price"], ascending=False) \
+                             .reset_index(drop=True)
         d = data.df_diamonds >> gr.tf_arrange(gr.desc(X.cut), gr.desc(X.price))
         self.assertTrue(df.equals(d))
 
