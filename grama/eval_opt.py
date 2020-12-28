@@ -222,7 +222,7 @@ def eval_min(
     method="SLSQP",
     tol=1e-6,
     n_restart=1,
-    maxiter=50,
+    n_maxiter=50,
     seed=None,
     df_start=None,
 ):
@@ -389,7 +389,7 @@ def eval_min(
             method=method,
             jac=False,
             tol=tol,
-            options={"maxiter": maxiter, "disp": False},
+            options={"maxiter": n_maxiter, "disp": False},
             constraints=constraints,
             bounds=bounds,
         )
