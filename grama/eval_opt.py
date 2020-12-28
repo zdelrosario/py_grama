@@ -394,7 +394,10 @@ def eval_min(
             bounds=bounds,
         )
 
-        df_opt = df_make(**dict(zip(model.var, res.x)))
+        df_opt = df_make(
+            **dict(zip(model.var, res.x)),
+            **dict(zip(map(lambda s: s + "_0", model.var), x0)),
+        )
         df_tmp = eval_df(model, df=df_opt)
         df_tmp["success"] = [res.success]
         df_tmp["message"] = [res.message]
