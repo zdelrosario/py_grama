@@ -25,7 +25,7 @@ from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime
 from scipy.stats import bradford, burr, burr12, cauchy, chi, chi2, cosine
 from scipy.stats import crystalball, dgamma, dweibull, erlang, expon, exponnorm
 from scipy.stats import exponweib, exponpow, f, fatiguelife, fisk, foldcauchy
-from scipy.stats import foldnorm, frechet_r, frechet_l, genlogistic, gennorm
+from scipy.stats import foldnorm, genlogistic, gennorm
 from scipy.stats import genpareto, genexpon, genextreme, gausshyper, gamma
 from scipy.stats import gengamma, genhalflogistic, gilbrat, gompertz
 from scipy.stats import gumbel_r, gumbel_l, halfcauchy, halflogistic, halfnorm
@@ -67,8 +67,8 @@ valid_dist = {
     "fisk": fisk,
     "foldcauchy": foldcauchy,
     "foldnorm": foldnorm,
-    "frechet_r": frechet_r,
-    "frechet_l": frechet_l,
+    # "frechet_r": frechet_r,
+    # "frechet_l": frechet_l,
     "genlogistic": genlogistic,
     "gennorm": gennorm,
     "genpareto": genpareto,
