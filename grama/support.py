@@ -100,6 +100,26 @@ def _sp_cpp(X0, Y, delta=1e-6, iter_max=500):
     return Xn, d, iter_c
 
 
+def _perturbed_choice(Y, n):
+    r"""Choose a set of perturbed points
+
+    Arguments:
+        Y (np.array): target points, Y.shape == (N, p)
+
+    Returns:
+        np.array: perturbed points, shape == (n, p)
+
+    """
+    i0 = choice(Y.shape[0], size=n)
+    # Add noise to initial proposal to avoid X-Y overlap;
+    # random directions with fixed distance
+    V_rand = multivariate_normal(zeros(Y.shape[1]), eye(Y.shape[1]), size=n)
+    V_rand = V_rand / norm(V_rand, axis=1)[:, newaxis]
+    X0 = Y[i0] + V_rand * Y.std(axis=0)
+
+    return X0
+
+
 ## Public interfaces
 ##################################################
 @curry
@@ -123,6 +143,7 @@ def tran_sp(df, n=None, var=None, iter_max=500, tol=1e-3, seed=None, verbose=Tru
         >>> df_sp = gr.tran_sp(df_diamonds, n=50, var=["price", "carat"])
     """
     ## Setup
+    setseed(seed)
     # Handle input variables
     if var is None:
         # Select numeric columns only
@@ -132,15 +153,9 @@ def tran_sp(df, n=None, var=None, iter_max=500, tol=1e-3, seed=None, verbose=Tru
     # Extract values
     Y = df[var].values
     # Generate initial proposal points
-    i0 = choice(Y.shape[0], size=n)
-    # Add noise to initial proposal to avoid X-Y overlap;
-    # random directions with fixed distance
-    V_rand = multivariate_normal(zeros(Y.shape[1]), eye(Y.shape[1]), size=n)
-    V_rand = V_rand / norm(V_rand, axis=1)[:, newaxis]
-    X0 = Y[i0] + V_rand * Y.std(axis=0)
+    X0 = _perturbed_choice(Y, n)
 
     ## Run sp.ccp algorithm
-    setseed(seed)
     X, d, iter_c = _sp_cpp(X0, Y, delta=tol, iter_max=iter_max)
     if verbose:
         print(
