@@ -102,7 +102,7 @@ def _sp_cpp(X0, Y, delta=1e-6, iter_max=500):
 ## Public interfaces
 ##################################################
 @curry
-def tran_sp(df, n=None, var=None, iter_max=500, tol=1e-6, seed=None, verbose=True):
+def tran_sp(df, n=None, var=None, iter_max=500, tol=1e-3, seed=None, verbose=True):
     r"""Compact a dataset with support points
 
     Arguments:
