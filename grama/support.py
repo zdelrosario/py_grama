@@ -9,12 +9,13 @@ __all__ = [
 ]
 
 from grama import add_pipe
-from numpy import diag, ma, newaxis, number, zeros
+from numpy import diag, eye, ma, newaxis, number, zeros
 from numpy.linalg import norm
 from numpy.random import choice, multivariate_normal
 from numpy.random import seed as setseed
 from pandas import DataFrame
 from toolz import curry
+from warnings import warn
 
 ## Helper functions
 ##################################################
@@ -127,36 +128,36 @@ def tran_sp(df, n=None, var=None, iter_max=500, tol=1e-3, seed=None, verbose=Tru
         # Select numeric columns only
         var = list(df.select_dtypes(include=[number]).columns)
         if verbose:
-            print("tran_sp has selected var={}".format(var))
+            print("tran_sp has selected var = {}".format(var))
     # Extract values
     Y = df[var].values
     # Generate initial proposal points
     i0 = choice(Y.shape[0], size=n)
-    # Add noise to initial proposal to avoid X-Y overlap
-    X0 = Y[i0] + multivariate_normal(zeros(Y.shape[1]), diag(Y.std(axis=0)), size=n)
+    # Add noise to initial proposal to avoid X-Y overlap;
+    # random directions with fixed distance
+    V_rand = multivariate_normal(zeros(Y.shape[1]), eye(Y.shape[1]), size=n)
+    V_rand = V_rand / norm(V_rand, axis=1)[:, newaxis]
+    X0 = Y[i0] + V_rand * Y.std(axis=0)
 
     ## Run sp.ccp algorithm
     setseed(seed)
-    X, d, iter_c = _sp_cpp(X0, Y, delta=1e-6, iter_max=500)
+    X, d, iter_c = _sp_cpp(X0, Y, delta=tol, iter_max=iter_max)
     if verbose:
         print(
-            "tran_sp finished in {0:} iterations with distance criterion {1:}".format(
+            "tran_sp finished in {0:} iterations with distance criterion {1:4.3e}".format(
                 iter_c, d
             )
         )
+        if not (d <= tol):
+            warn(
+                "Convergence tolerance not met; d = {0:4.3e} > tol = {1:4.3e}".format(
+                    d, tol
+                ),
+                RuntimeWarning,
+            )
 
     ## Package results
     return DataFrame(data=X, columns=var,)
 
 
 tf_sp = add_pipe(tran_sp)
-
-## DEBUG test
-if __name__ == "__main__":
-    import numpy as np
-    import pandas as pd
-
-    Y = np.random.multivariate_normal([0, 0], np.array([[1, 0.5], [0.5, 1]]), size=100)
-    df_data = pd.DataFrame(data=Y, columns=["X1", "X2"],)
-
-    df_sp = tran_sp(df_data, n=10)
