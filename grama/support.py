@@ -3,11 +3,21 @@
 # Reference:
 #   Mak and Joseph, "Support Points" (2018) *The Annals of Statistics*
 
-from numpy import ma, newaxis
+__all__ = [
+    "tran_sp",
+    "tf_sp",
+]
+
+from grama import add_pipe
+from numpy import diag, ma, newaxis, number, zeros
 from numpy.linalg import norm
-from numpy.random import choice
+from numpy.random import choice, multivariate_normal
+from numpy.random import seed as setseed
+from pandas import DataFrame
+from toolz import curry
 
-
+## Helper functions
+##################################################
 def _iterate_x(X, Y, ind):
     r"""Iterate a single candidate point
 
@@ -89,13 +99,64 @@ def _sp_cpp(X0, Y, delta=1e-6, iter_max=500):
     return Xn, d, iter_c
 
 
+## Public interfaces
+##################################################
+@curry
+def tran_sp(df, n=None, var=None, iter_max=500, tol=1e-6, seed=None, verbose=True):
+    r"""Compact a dataset with support points
+
+    Arguments:
+        df (DataFrame): dataset to compact
+        n (int): number of samples for compacted dataset
+        var (list of str): list of variables to compact, must all be numeric
+        iter_max (int): maximum number of iterations for support point algorithm
+        tol (float): convergence tolerance
+        verbose (bool):
+
+    Returns:
+        DataFrame: dataset compacted with support points
+
+    Examples:
+        >>> import grama as gr
+        >>> from grama.data import df_diamonds
+        >>> df_sp = gr.tran_sp(df_diamonds, n=50, var=["price", "carat"])
+    """
+    ## Setup
+    # Handle input variables
+    if var is None:
+        # Select numeric columns only
+        var = list(df.select_dtypes(include=[number]).columns)
+        if verbose:
+            print("tran_sp has selected var={}".format(var))
+    # Extract values
+    Y = df[var].values
+    # Generate initial proposal points
+    i0 = choice(Y.shape[0], size=n)
+    # Add noise to initial proposal to avoid X-Y overlap
+    X0 = Y[i0] + multivariate_normal(zeros(Y.shape[1]), diag(Y.std(axis=0)), size=n)
+
+    ## Run sp.ccp algorithm
+    setseed(seed)
+    X, d, iter_c = _sp_cpp(X0, Y, delta=1e-6, iter_max=500)
+    if verbose:
+        print(
+            "tran_sp finished in {0:} iterations with distance criterion {1:}".format(
+                iter_c, d
+            )
+        )
+
+    ## Package results
+    return DataFrame(data=X, columns=var,)
+
+
+tf_sp = add_pipe(tran_sp)
+
 ## DEBUG test
 if __name__ == "__main__":
     import numpy as np
+    import pandas as pd
 
-    X0 = np.random.multivariate_normal([0, 0], np.eye(2), size=10)
     Y = np.random.multivariate_normal([0, 0], np.array([[1, 0.5], [0.5, 1]]), size=100)
+    df_data = pd.DataFrame(data=Y, columns=["X1", "X2"],)
 
-    #
-    np.random.seed(101)
-    X, d, iter_c = _sp_cpp(X0, Y)
+    df_sp = tran_sp(df_data, n=10)
