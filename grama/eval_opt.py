@@ -27,7 +27,7 @@ def eval_nls(
     tol=1e-6,
     ftol=1e-9,
     gtol=1e-5,
-    maxiter=100,
+    n_maxiter=100,
     n_restart=1,
     method="L-BFGS-B",
     seed=None,
@@ -48,7 +48,7 @@ def eval_nls(
             variables with domain width zero will automatically be fixed.
         append (bool): Append metadata? (Initial guess, MSE, optimizer status)
         tol (float): Optimizer convergence tolerance
-        maxiter (int): Optimizer maximum iterations
+        n_maxiter (int): Optimizer maximum iterations
         n_restart (int): Number of restarts; beyond n_restart=1 random
             restarts are used.
         seed (int OR None): Random seed for restarts
@@ -185,7 +185,7 @@ def eval_nls(
             method=method,
             jac=False,
             tol=tol,
-            options={"maxiter": maxiter, "disp": False, "ftol": ftol, "gtol": gtol,},
+            options={"maxiter": n_maxiter, "disp": False, "ftol": ftol, "gtol": gtol,},
             bounds=bounds,
         )
 
@@ -222,7 +222,7 @@ def eval_min(
     method="SLSQP",
     tol=1e-6,
     n_restart=1,
-    maxiter=50,
+    n_maxiter=50,
     seed=None,
     df_start=None,
 ):
@@ -389,12 +389,15 @@ def eval_min(
             method=method,
             jac=False,
             tol=tol,
-            options={"maxiter": maxiter, "disp": False},
+            options={"maxiter": n_maxiter, "disp": False},
             constraints=constraints,
             bounds=bounds,
         )
 
-        df_opt = df_make(**dict(zip(model.var, res.x)))
+        df_opt = df_make(
+            **dict(zip(model.var, res.x)),
+            **dict(zip(map(lambda s: s + "_0", model.var), x0)),
+        )
         df_tmp = eval_df(model, df=df_opt)
         df_tmp["success"] = [res.success]
         df_tmp["message"] = [res.message]

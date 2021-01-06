@@ -38,8 +38,8 @@ def eval_form_pma(
     df_det=None,
     append=True,
     tol=1e-3,
-    maxiter=25,
-    nrestart=1,
+    n_maxiter=25,
+    n_restart=1,
 ):
     r"""Tail quantile via FORM PMA
 
@@ -129,7 +129,7 @@ def eval_form_pma(
 
             ## Minimize
             res_all = []
-            for jnd in range(nrestart):
+            for jnd in range(n_restart):
                 res = minimize(
                     objective,
                     z0,
@@ -137,7 +137,7 @@ def eval_form_pma(
                     method="SLSQP",
                     jac=False,
                     tol=tol,
-                    options={"maxiter": maxiter, "disp": False},
+                    options={"maxiter": n_maxiter, "disp": False},
                     constraints=[{"type": "eq", "fun": con_beta}],
                 )
                 # Append only a successful result
@@ -189,8 +189,8 @@ def eval_form_ria(
     df_det=None,
     append=True,
     tol=1e-3,
-    maxiter=25,
-    nrestart=1,
+    n_maxiter=25,
+    n_restart=1,
 ):
     r"""Tail reliability via FORM RIA
 
@@ -283,7 +283,7 @@ def eval_form_ria(
 
             ## Minimize
             res_all = []
-            for jnd in range(nrestart):
+            for jnd in range(n_restart):
                 res = minimize(
                     fun_jac,
                     z0,
@@ -291,7 +291,7 @@ def eval_form_ria(
                     method="SLSQP",
                     jac=True,
                     tol=tol,
-                    options={"maxiter": maxiter, "disp": False},
+                    options={"maxiter": n_maxiter, "disp": False},
                     constraints=[{"type": "eq", "fun": con_limit}],
                 )
                 # Append only a successful result

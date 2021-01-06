@@ -122,14 +122,14 @@ def _perturbed_choice(Y, n):
 ## Public interfaces
 ##################################################
 @curry
-def tran_sp(df, n=None, var=None, iter_max=500, tol=1e-3, seed=None, verbose=True):
+def tran_sp(df, n=None, var=None, n_maxiter=500, tol=1e-3, seed=None, verbose=True):
     r"""Compact a dataset with support points
 
     Arguments:
         df (DataFrame): dataset to compact
         n (int): number of samples for compacted dataset
         var (list of str): list of variables to compact, must all be numeric
-        iter_max (int): maximum number of iterations for support point algorithm
+        n_maxiter (int): maximum number of iterations for support point algorithm
         tol (float): convergence tolerance
         verbose (bool):
 
@@ -155,7 +155,7 @@ def tran_sp(df, n=None, var=None, iter_max=500, tol=1e-3, seed=None, verbose=Tru
     X0 = _perturbed_choice(Y, n)
 
     ## Run sp.ccp algorithm
-    X, d, iter_c = _sp_cpp(X0, Y, delta=tol, iter_max=iter_max)
+    X, d, iter_c = _sp_cpp(X0, Y, delta=tol, iter_max=n_maxiter)
     if verbose:
         print(
             "tran_sp finished in {0:} iterations with distance criterion {1:4.3e}".format(

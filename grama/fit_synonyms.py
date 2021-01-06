@@ -45,6 +45,7 @@ def fit_nls(
         n_restart (int): Number of restarts to try; the first try is at
             the nominal conditions of the model. Returned model will use
             the least-error parameter set among restarts tested.
+        n_maxiter (int): Optimizer maximum iterations
         verbose (bool): Print best-fit parameters to console?
         uq_method (str OR None): If string, select method to quantify parameter
             uncertainties. If None, provide best-fit values only. Methods:
