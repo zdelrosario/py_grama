@@ -85,7 +85,6 @@ def _sp_cpp(X0, Y, delta=1e-6, iter_max=500):
     # Check convergence criterion
     while (d >= delta) and (iter_c < iter_max):
         # Update the candidate points
-        # TODO: Parallel for
         for i in range(n):
             Xn[i] = _iterate_x(X0, Y, i)
 
@@ -163,7 +162,7 @@ def tran_sp(df, n=None, var=None, iter_max=500, tol=1e-3, seed=None, verbose=Tru
                 iter_c, d
             )
         )
-        if not (d <= tol):
+        if d > tol:
             warn(
                 "Convergence tolerance not met; d = {0:4.3e} > tol = {1:4.3e}".format(
                     d, tol

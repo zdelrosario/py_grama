@@ -1,21 +1,21 @@
-import numpy as np
-import pandas as pd
 import unittest
 import io
 import sys
 
 from context import grama as gr
+from numpy import eye, zeros
+from numpy.random import multivariate_normal
+from pandas import DataFrame
 
 ## Test support points
 ##################################################
 class TestSupportPoints(unittest.TestCase):
     def setUp(self):
         n = 100
-        self.df = pd.DataFrame(
-            data=np.random.multivariate_normal(np.zeros(3), np.eye(3), size=n,),
-            columns=["x", "y", "z"],
+        self.df = DataFrame(
+            data=multivariate_normal(zeros(3), eye(3), size=n), columns=["x", "y", "z"],
         )
-        self.df["c"] = list(map(lambda x: str(x), range(n)))
+        self.df["c"] = list(map(str, range(n)))
 
     def test_tran_sp(self):
         """Test the functionality of tran_sp()
