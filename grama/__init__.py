@@ -93,5 +93,6 @@ from .eval_opt import *
 from .plot_auto import *
 from .tran_shapley import *
 from .tran_summaries import *
+from .support import *
 
 from .fit_synonyms import *
