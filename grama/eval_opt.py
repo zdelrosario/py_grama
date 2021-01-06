@@ -27,7 +27,7 @@ def eval_nls(
     tol=1e-6,
     ftol=1e-9,
     gtol=1e-5,
-    maxiter=100,
+    n_maxiter=100,
     n_restart=1,
     method="L-BFGS-B",
     seed=None,
@@ -48,7 +48,7 @@ def eval_nls(
             variables with domain width zero will automatically be fixed.
         append (bool): Append metadata? (Initial guess, MSE, optimizer status)
         tol (float): Optimizer convergence tolerance
-        maxiter (int): Optimizer maximum iterations
+        n_maxiter (int): Optimizer maximum iterations
         n_restart (int): Number of restarts; beyond n_restart=1 random
             restarts are used.
         seed (int OR None): Random seed for restarts
@@ -185,7 +185,7 @@ def eval_nls(
             method=method,
             jac=False,
             tol=tol,
-            options={"maxiter": maxiter, "disp": False, "ftol": ftol, "gtol": gtol,},
+            options={"maxiter": n_maxiter, "disp": False, "ftol": ftol, "gtol": gtol,},
             bounds=bounds,
         )
 
