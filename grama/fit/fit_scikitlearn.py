@@ -9,8 +9,9 @@ __all__ = [
 
 ## Fitting via sklearn package
 try:
+    from sklearn.base import clone
     from sklearn.gaussian_process import GaussianProcessRegressor
-    from sklearn.gaussian_process.kernels import RBF, ConstantKernel as Con
+    from sklearn.gaussian_process.kernels import Kernel, RBF, ConstantKernel as Con
     from sklearn.cluster import KMeans
     from sklearn.ensemble import RandomForestRegressor
 
@@ -19,8 +20,9 @@ except ModuleNotFoundError:
 
 import grama as gr
 
+from copy import deepcopy
 from grama import add_pipe, pipe
-from pandas import DataFrame
+from pandas import concat, DataFrame, Series
 from toolz import curry
 from warnings import filterwarnings
 
@@ -54,18 +56,22 @@ def restore_cols(df, ser_min, ser_max, var):
 
 
 class FunctionGPR(gr.Function):
-    def __init__(self, gpr, df_train, var, out, name, runtime):
+    def __init__(self, gpr, var, out, name, runtime, var_min, var_max):
         self.gpr = gpr
-        self.df_train = df_train
+        # self.df_train = df_train
         self.var = var
-        self.out = out
+        ## "Natural" outputs; what we're modeling
+        self.out_nat = out
+        ## Predicted outputs; mean and std
+        self.out_mean = list(map(lambda s: s + "_mean", out))
+        self.out_std = list(map(lambda s: s + "_std", out))
+        self.out = self.out_mean + self.out_std
+
         self.name = name
         self.runtime = runtime
 
-        self.ser_min_in = df_train[var].min()
-        self.ser_max_in = df_train[var].max()
-        self.ser_min_out = df_train[out].min()
-        self.ser_max_out = df_train[out].max()
+        self.var_min = var_min
+        self.var_max = var_max
 
     def eval(self, df):
         ## Check invariant; model inputs must be subset of df columns
@@ -75,18 +81,26 @@ class FunctionGPR(gr.Function):
                     self.name
                 )
             )
-        df_std = standardize_cols(df, self.ser_min_in, self.ser_max_in, self.var)
-        y = self.gpr.predict(df_std[self.var])
-        return restore_cols(
-            DataFrame(data=y, columns=self.out),
-            self.ser_min_out,
-            self.ser_max_out,
-            self.out,
+        # df_std = standardize_cols(df, self.ser_min_in, self.ser_max_in, self.var)
+        df_std = standardize_cols(df, self.var_min, self.var_max, self.var)
+        y, y_std = self.gpr.predict(df_std[self.var], return_std=True)
+
+        return concat(
+            (
+                DataFrame(data=y, columns=self.out_mean),
+                DataFrame(data=y_std, columns=self.out_std),
+            ),
+            axis=1,
         )
 
     def copy(self):
         func_new = FunctionGPR(
-            self.gpr, self.df_train.copy(), self.var, self.out, self.name, self.runtime
+            self.gpr,
+            self.df_train.copy(),
+            self.var,
+            self.out_nat,
+            self.name,
+            self.runtime,
         )
 
         return func_new
@@ -129,7 +143,7 @@ def fit_gp(
     out=None,
     domain=None,
     density=None,
-    kernel=None,
+    kernels=None,
     seed=None,
     suppress_warnings=True,
     n_restart=5,
@@ -148,7 +162,7 @@ def fit_gp(
         domain (gr.Domain): Domain for new model
         density (gr.Density): Density for new model
         seed (int or None): Random seed for fitting process
-        kernel (sklearn.gaussian_process.kernels.Kernel or None): Kernel for GP
+        kernels (sklearn.gaussian_process.kernels.Kernel or dict or None): Kernel for GP
         n_restart (int): Restarts for optimization
         alpha (float or iterable): Value added to diagonal of kernel matrix
         suppress_warnings (bool): Suppress warnings when fitting?
@@ -186,35 +200,35 @@ def fit_gp(
     if not set(var).issubset(set(df.columns)):
         raise ValueError("var must be subset of df.columns")
 
-    ## Pre-process data
-    ser_min_in = df[var].min()
-    ser_max_in = df[var].max()
-    ser_min_out = df[out].min()
-    ser_max_out = df[out].max()
-    df_std = standardize_cols(df, ser_min_in, ser_max_in, var)
-    df_std = standardize_cols(df_std, ser_min_out, ser_max_out, out)
+    ## Pre-process kernel selection
+    if kernels is None:
+        # Vectorize
+        kernels = {o: None for o in out}
+    elif isinstance(kernels, Kernel):
+        kernels = {o: kernels for o in out}
 
-    ## Assign default kernel, if necessary
-    if kernel is None:
-        print("fit_gp is assigning default kernel")
-        kernel = Con(1, (1e-3, 1e3)) * RBF([1] * len(var), (1e-8, 1e8))
+    ## Pre-process data
+    var_min = df[var].min()
+    var_max = df[var].max()
+    df_std = standardize_cols(df, var_min, var_max, var)
 
     ## Construct gaussian process for each output
     functions = []
 
     for output in out:
+        # Define and fit model
         gpr = GaussianProcessRegressor(
-            kernel=kernel,
+            kernel=deepcopy(kernels[output]),
             random_state=seed,
-            normalize_y=False,
-            copy_X_train=False,
+            normalize_y=True,
+            copy_X_train=True,
             n_restarts_optimizer=n_restart,
             alpha=alpha,
         )
         gpr.fit(df_std[var], df_std[output])
         name = "GP ({})".format(str(gpr.kernel_))
 
-        fun = FunctionGPR(gpr, df.copy(), var, [output], name, 0)
+        fun = FunctionGPR(gpr, var, [output], name, 0, var_min, var_max)
         functions.append(fun)
 
     ## Construct model
