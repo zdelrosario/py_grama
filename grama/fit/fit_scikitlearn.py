@@ -151,8 +151,12 @@ def fit_gp(
 ):
     r"""Fit a gaussian process
 
-    Fit a gaussian process to given data. Specify inputs and outputs, or inherit
-    from an existing model.
+    Fit a gaussian process to given data. Specify var and out, or inherit from
+    an existing model.
+
+    Note that the new model will have two outputs `y_mean, y_std` for each
+    original output `y`. The quantity `y_mean` is the best-fit value, while
+    `y_std` is a measure of predictive uncertainty.
 
     Args:
         df (DataFrame): Data for function fitting
