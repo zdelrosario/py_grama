@@ -54,14 +54,27 @@ class TestFits(unittest.TestCase):
         df_res = gr.eval_df(md_fit, self.df_smooth[self.md_smooth.var])
 
         ## GP provides std estimates
-        # self.assertTrue("y_std" in df_res.columns)
+        self.assertTrue("y_std" in df_res.columns)
 
         ## GP is an interpolation
-        self.assertTrue(gr.df_equal(df_res, self.df_smooth, close=True))
+        self.assertTrue(
+            gr.df_equal(
+                df_res[["x", "y_mean", "z_mean"]].rename(
+                    {"y_mean": "y", "z_mean": "z"}, axis=1
+                ),
+                self.df_smooth,
+                close=True,
+            )
+        )
 
         ## Fit copies model data
         self.assertTrue(set(md_fit.var) == set(self.md_smooth.var))
-        self.assertTrue(set(md_fit.out) == set(self.md_smooth.out))
+        self.assertTrue(
+            set(md_fit.out)
+            == set(map(lambda s: s + "_mean", self.md_smooth.out)).union(
+                set(map(lambda s: s + "_std", self.md_smooth.out))
+            )
+        )
 
     def test_rf(self):
         ## Fit routine creates usable model
