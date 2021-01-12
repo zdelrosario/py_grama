@@ -1,11 +1,14 @@
 __all__ = [
     "tran_tsne",
     "tf_tsne",
+    "tran_poly",
+    "tf_poly",
 ]
 
 ## Transforms via sklearn package
 try:
     from sklearn.manifold import TSNE
+    from sklearn.preprocessing import PolynomialFeatures
 except ModuleNotFoundError:
     raise ModuleNotFoundError("module sklearn not found")
 
@@ -84,3 +87,58 @@ def tran_tsne(
 
 
 tf_tsne = add_pipe(tran_tsne)
+
+# --------------------------------------------------
+@curry
+def tran_poly(df, degree=None, var=None, keep=True, **kwargs):
+    r"""Compute polynomial features of a dataset
+
+    Compute polynomial features of a dataset.
+
+    Args:
+        df (DataFrame): Hybrid point results from gr.eval_hybrid()
+
+    Kwargs:
+        degree (int): Maximum degree of polynomial features
+        var (list or None): Variables in df on which to perform dimension reduction.
+            Use None to compute with all variables.
+        keep (bool): Keep unused columns (outside `var`) in new DataFrame?
+        interaction_only (bool): If true, only produce interaction features
+        include_bias (bool): If true, include a constant feature term (bias)
+
+    Notes:
+        - A wrapper for sklearn.preprocessing.PolynomialFeatures
+
+    References:
+        Scikit-learn: Machine Learning in Python, Pedregosa et al. JMLR 12, pp. 2825-2830, 2011.
+
+    Examples:
+
+    """
+    ## Check invariants
+    if var is None:
+        var = list(df.columns).copy()
+    else:
+        var = list(var).copy()
+        diff = set(var).difference(set(df.columns))
+        if len(diff) > 0:
+            raise ValueError(
+                "`var` must be subset of `df.columns`\n" "diff = {}".format(diff)
+            )
+    var_leftover = list(set(df.columns).difference(set(var)))
+
+    ## Compute the features
+    fit = PolynomialFeatures(degree)
+    X_feat = fit.fit_transform(df[var].values)
+    var_feat = fit.get_feature_names(var)
+
+    ## Package results
+    df_feat = DataFrame(data=X_feat, columns=var_feat)
+
+    if keep:
+        return concat((df_feat, df[var_leftover].reset_index(drop=True)), axis=1)
+
+    return df_feat
+
+
+tf_poly = add_pipe(tran_poly)
