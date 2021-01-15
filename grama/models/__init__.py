@@ -1,4 +1,5 @@
 from .cantilever_beam import *
+from .circuit_RLC import *
 from .ishigami import *
 from .test import *
 from .trajectory_linear_drag import *
