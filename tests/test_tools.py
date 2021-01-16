@@ -39,6 +39,10 @@ class TestMarginals(unittest.TestCase):
 
         self.assertTrue(np.isclose(q_norm[1], median, atol=0, rtol=0.05))
 
+        ## Raises error when dataframe passed
+        with self.assertRaises(ValueError):
+            gr.marg_named(data.df_stang, "norm")
+
 
 class TestMisc(unittest.TestCase):
     def setUp(self):
