@@ -439,6 +439,11 @@ def marg_named(data, dist, name=True, sign=None):
         >>> md.printpretty()
 
     """
+    ##
+    if isinstance(data, pd.DataFrame):
+        raise ValueError("`data` argument must be a single column; try data.var")
+
+    ## Fit the distribution
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         param = valid_dist[dist].fit(data)
