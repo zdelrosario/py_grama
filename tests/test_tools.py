@@ -42,6 +42,8 @@ class TestMarginals(unittest.TestCase):
         ## Raises error when dataframe passed
         with self.assertRaises(ValueError):
             gr.marg_named(data.df_stang, "norm")
+        with self.assertRaises(ValueError):
+            gr.marg_gkde(data.df_stang)
 
 
 class TestMisc(unittest.TestCase):

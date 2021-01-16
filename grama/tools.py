@@ -439,7 +439,7 @@ def marg_named(data, dist, name=True, sign=None):
         >>> md.printpretty()
 
     """
-    ##
+    ## Catch case where user provides entire DataFrame
     if isinstance(data, pd.DataFrame):
         raise ValueError("`data` argument must be a single column; try data.var")
 
@@ -484,6 +484,10 @@ def marg_gkde(data, sign=None):
         >>> md.printpretty()
 
     """
+    ## Catch case where user provides entire DataFrame
+    if isinstance(data, pd.DataFrame):
+        raise ValueError("`data` argument must be a single column; try data.var")
+
     kde = gaussian_kde(data)
     if sign is not None:
         if not (sign in [-1, 0, +1]):
