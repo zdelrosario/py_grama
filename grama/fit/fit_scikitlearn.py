@@ -1,6 +1,8 @@
 __all__ = [
     "fit_gp",
     "ft_gp",
+    "fit_lm",
+    "ft_lm",
     "fit_rf",
     "ft_rf",
     "fit_kmeans",
@@ -10,6 +12,7 @@ __all__ = [
 ## Fitting via sklearn package
 try:
     from sklearn.base import clone
+    from sklearn.linear_model import LinearRegression
     from sklearn.gaussian_process import GaussianProcessRegressor
     from sklearn.gaussian_process.kernels import Kernel, RBF, ConstantKernel as Con
     from sklearn.cluster import KMeans
@@ -106,14 +109,14 @@ class FunctionGPR(gr.Function):
         return func_new
 
 
-class FunctionRFR(gr.Function):
-    def __init__(self, rf, var, out, name, runtime):
+class FunctionRegressor(gr.Function):
+    def __init__(self, regressor, var, out, name, runtime):
         """
 
         Args:
-            rf (scikit RandomForestRegressor):
+            regressor (scikit Regressor):
         """
-        self.rf = rf
+        self.regressor = regressor
         self.var = var
         self.out = out
         self.name = name
@@ -129,7 +132,7 @@ class FunctionRFR(gr.Function):
             )
 
         ## Predict
-        y = self.rf.predict(df[self.var])
+        y = self.regressor.predict(df[self.var])
         return DataFrame(data=y, columns=self.out)
 
 
@@ -327,7 +330,7 @@ def fit_rf(
         rf.fit(df[var], df[output])
         name = "RF"
 
-        fun = FunctionRFR(rf, var, [output], name, 0)
+        fun = FunctionRegressor(rf, var, [output], name, 0)
         functions.append(fun)
 
     ## Construct model
@@ -335,6 +338,86 @@ def fit_rf(
 
 
 ft_rf = add_pipe(fit_rf)
+
+## Fit linear model with sklearn
+# --------------------------------------------------
+@curry
+def fit_lm(
+    df,
+    md=None,
+    var=None,
+    out=None,
+    domain=None,
+    density=None,
+    seed=None,
+    suppress_warnings=True,
+    **kwargs
+):
+    r"""Fit a linear model
+
+    Fit a linear model to given data. Specify inputs and outputs, or inherit
+    from an existing model.
+
+    Args:
+        df (DataFrame): Data for function fitting
+        md (gr.Model): Model from which to inherit metadata
+        var (list(str) or None): List of features or None for all except outputs
+        out (list(str)): List of outputs to fit
+        domain (gr.Domain): Domain for new model
+        density (gr.Density): Density for new model
+        seed (int or None): Random seed for fitting process
+        suppress_warnings (bool): Suppress warnings when fitting?
+
+    Returns:
+        gr.Model: A grama model with fitted function(s)
+
+    Notes:
+        - Wrapper for sklearn.ensemble.RandomForestRegressor
+
+    """
+    if suppress_warnings:
+        filterwarnings("ignore")
+
+    n_obs, n_in = df.shape
+
+    ## Infer fitting metadata, if available
+    if not (md is None):
+        domain = md.domain
+        density = md.density
+        out = md.out
+
+    ## Check invariants
+    if not set(out).issubset(set(df.columns)):
+        raise ValueError("out must be subset of df.columns")
+    ## Default input value
+    if var is None:
+        var = list(set(df.columns).difference(set(out)))
+    ## Check more invariants
+    set_inter = set(out).intersection(set(var))
+    if len(set_inter) > 0:
+        raise ValueError(
+            "outputs and inputs must be disjoint; intersect = {}".format(set_inter)
+        )
+    if not set(var).issubset(set(df.columns)):
+        raise ValueError("var must be subset of df.columns")
+
+    ## Construct gaussian process for each output
+    functions = []
+
+    for output in out:
+        lm = LinearRegression(**kwargs)
+        lm.fit(df[var], df[output])
+        name = "LM"
+
+        fun = FunctionRegressor(lm, var, [output], name, 0)
+        functions.append(fun)
+
+    ## Construct model
+    return gr.Model(functions=functions, domain=domain, density=density)
+
+
+ft_lm = add_pipe(fit_lm)
+
 
 ## Fit kmeans clustering model
 # --------------------------------------------------
