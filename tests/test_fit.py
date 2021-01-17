@@ -100,6 +100,18 @@ class TestFits(unittest.TestCase):
         self.assertTrue(set(md_fit.var) == set(self.md_tree.var))
         self.assertTrue(set(md_fit.out) == set(self.md_tree.out))
 
+    def test_lm(self):
+        ## Fit routine creates usable model
+        md_fit = fit.fit_lm(self.df_smooth, md=self.md_smooth,)
+        df_res = gr.eval_df(md_fit, self.df_smooth[self.md_smooth.var])
+
+        ## LM can recover a linear model
+        self.assertTrue(gr.df_equal(df_res, self.df_smooth, close=True, precision=1,))
+
+        ## Fit copies model data
+        self.assertTrue(set(md_fit.var) == set(self.md_smooth.var))
+        self.assertTrue(set(md_fit.out) == set(self.md_smooth.out))
+
     def test_lolo(self):
         ## Fit routine creates usable model
         md_fit = fit.fit_lolo(
