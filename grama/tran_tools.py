@@ -43,6 +43,7 @@ def tran_kfolds(
     df,
     k=None,
     ft=None,
+    out=None,
     var_fold=None,
     summaries=None,
     tf=tf_summarize,
@@ -61,9 +62,10 @@ def tran_kfolds(
         tf (gr.tf_): Partially-evaluated grama transform function; evaluation of
             fitted model will be passed to tf and provided with keyword arguments
             from summaries
-        var_fold (str or None):
+        out (list or None): Outputs for which to compute `summaries`; None uses ft.out
+        var_fold (str or None): Column to treat as fold identifier; overrides `k`
         summaries (dict of functions): Summary functions to pass to tf; will be evaluated
-            for each output of ft. Each summary must have signature summary(f_pred, f_meas)
+            for outputs of ft. Each summary must have signature summary(f_pred, f_meas)
         k (int): Number of folds; k=5 to k=10 recommended [1]
         shuffle (bool): Shuffle the data before CV?
 
@@ -132,31 +134,33 @@ def tran_kfolds(
         ## Train by out-of-fold data
         md_fit = df >> tf_filter(~var_in(X.index, Is[i])) >> ft
 
+        if out is None:
+            out = md_fit.out
+
         ## Test by in-fold data
         df_pred = md_fit >> ev_df(
-            df=df >> tf_filter(var_in(X.index, Is[i])) >> tf_drop(md_fit.out),
-            append=False,
+            df=df >> tf_filter(var_in(X.index, Is[i])) >> tf_drop(out), append=False,
         )
 
         # Modify names with suffix
-        out_pred = list(map(lambda s: s + "_pred", md_fit.out))
-        df_pred.rename(mapper=dict(zip(md_fit.out, out_pred)), axis=1, inplace=True)
+        out_pred = list(map(lambda s: s + "_pred", out))
+        df_pred.rename(mapper=dict(zip(out, out_pred)), axis=1, inplace=True)
 
         ## Specialize summaries for output names
         summaries_all = ChainMap(
             *[
                 {
-                    key + "_" + out: fun(X[out + "_pred"], X[out])
+                    key + "_" + o: fun(X[o + "_pred"], X[o])
                     for key, fun in summaries.items()
                 }
-                for out in md_fit.out
+                for o in out
             ]
         )
 
         ## Aggregate
         df_summary_tmp = (
             df_pred
-            >> tf_bind_cols(df[md_fit.out] >> tf_filter(var_in(X.index, Is[i])))
+            >> tf_bind_cols(df[out] >> tf_filter(var_in(X.index, Is[i])))
             >> tf(**summaries_all)
             # >> tf_mutate(_kfold=i)
         )
