@@ -323,7 +323,7 @@ def binomial_ci(series, alpha=0.05, side="both"):
         series (pandas.Series): Column to summarize; must be boolean or 0/1.
         alpha (float): Confidence level; value in (0, 1)
         side (string): Chosen side of interval
-            - "both": Return a series of tuples
+            - "both": Return a 2-tuple of series
             - "lo": Return the lower interval bound
             - "up": Return the upper interval bound
     """
