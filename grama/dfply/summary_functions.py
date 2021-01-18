@@ -364,7 +364,6 @@ def corr(series1, series2, method="pearson"):
     """
     if method == "pearson":
         r, p = pearsonr(series1, series2)
-        return r
     elif method == "spearman":
         r, p = spearmanr(series1, b=series2)
     else:
