@@ -2,7 +2,7 @@ from .base import *
 from .vector import *
 
 from numpy import sqrt, power
-from scipy.stats import norm
+from scipy.stats import norm, pearsonr, spearmanr
 
 # ------------------------------------------------------------------------------
 # Series summary functions
@@ -323,7 +323,7 @@ def binomial_ci(series, alpha=0.05, side="both"):
         series (pandas.Series): Column to summarize; must be boolean or 0/1.
         alpha (float): Confidence level; value in (0, 1)
         side (string): Chosen side of interval
-            - "both": Return a series of tuples
+            - "both": Return a 2-tuple of series
             - "lo": Return the lower interval bound
             - "up": Return the upper interval bound
     """
@@ -345,3 +345,28 @@ def binomial_ci(series, alpha=0.05, side="both"):
         return up
     else:
         raise ValueError("side value {} not recognized".format(side))
+
+@make_symbolic
+def corr(series1, series2, method="pearson"):
+    r"""Computes a correlation coefficient
+
+    Computes a correlation coefficient using either the pearson or spearman
+    formulation.
+
+    Args:
+        series1 (pandas.Series): Column 1 to study
+        series2 (pandas.Series): Column 2 to study
+        method (str): Method to use; either "pearson" or "spearman"
+
+    Returns:
+        pandas.Series: correlation coefficient
+
+    """
+    if method == "pearson":
+        r, p = pearsonr(series1, series2)
+    elif method == "spearman":
+        r, p = spearmanr(series1, b=series2)
+    else:
+        raise ValueError("method {} not supported".format(method))
+
+    return r

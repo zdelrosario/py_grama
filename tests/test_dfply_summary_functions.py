@@ -417,3 +417,11 @@ class TestSummaryFcn(unittest.TestCase):
         rsq_comp = gr.rsq(y_fit, y_meas)
 
         self.assertTrue(rsq_comp, 3 / 4)
+
+    def test_corr(self):
+        df_data = gr.df_make(x=[1., 2., 3., 4.])
+        df_data["y"] = 0.5 * df_data.x
+        df_data["z"] = - 0.5 * df_data.x
+
+        self.assertTrue(abs(gr.corr(df_data.x, df_data.y) - 1.0) < 1e-6)
+        self.assertTrue(abs(gr.corr(df_data.x, df_data.z) + 1.0) < 1e-6)
