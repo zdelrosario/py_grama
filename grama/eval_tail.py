@@ -160,7 +160,12 @@ def eval_form_pma(
             ## Extract results
             if append:
                 df_inner = concat(
-                    (df_inner, DataFrame(data=[x_star], columns=model.var_rand)),
+                    (
+                        df_inner,
+                        model.norm2rand(
+                            DataFrame(data=[x_star], columns=model.var_rand)
+                        ),
+                    ),
                     axis=1,
                     sort=False,
                 )
@@ -314,16 +319,22 @@ def eval_form_ria(
             ## Extract results
             if append:
                 df_inner = concat(
-                    (df_inner, DataFrame(data=[x_star], columns=model.var_rand)),
+                    (
+                        df_inner,
+                        model.norm2rand(
+                            DataFrame(data=[x_star], columns=model.var_rand)
+                        ),
+                    ),
                     axis=1,
                     sort=False,
                 )
-            df_inner[key] = [fun_star]
+            df_inner["beta_" + key] = [fun_star]
             df_return = concat((df_return, df_inner), axis=0, sort=False)
 
     if not append:
         df_return = (
-            df_return.groupby(model.var_det).agg({s: max for s in limits}).reset_index()
+            df_return.groupby(model.var_det) \
+                     .agg({"beta_" + s: max for s in limits}).reset_index()
         )
 
     return df_return
