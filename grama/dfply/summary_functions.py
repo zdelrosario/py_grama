@@ -346,8 +346,9 @@ def binomial_ci(series, alpha=0.05, side="both"):
     else:
         raise ValueError("side value {} not recognized".format(side))
 
+
 @make_symbolic
-def corr(series1, series2, method="pearson"):
+def corr(series1, series2, method="pearson", res="corr"):
     r"""Computes a correlation coefficient
 
     Computes a correlation coefficient using either the pearson or spearman
@@ -357,6 +358,7 @@ def corr(series1, series2, method="pearson"):
         series1 (pandas.Series): Column 1 to study
         series2 (pandas.Series): Column 2 to study
         method (str): Method to use; either "pearson" or "spearman"
+        res (str): Quantities to return; either "corr" or "both"
 
     Returns:
         pandas.Series: correlation coefficient
@@ -369,4 +371,9 @@ def corr(series1, series2, method="pearson"):
     else:
         raise ValueError("method {} not supported".format(method))
 
-    return r
+    if res == "corr":
+        return r
+    elif res == "both":
+        return r, p
+    else:
+        raise ValueError("res {} not supported".format(res))
