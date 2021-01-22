@@ -40,6 +40,7 @@ def eval_form_pma(
     tol=1e-3,
     n_maxiter=25,
     n_restart=1,
+    verbose=False,
 ):
     r"""Tail quantile via FORM PMA
 
@@ -61,7 +62,10 @@ def eval_form_pma(
             parameters with no information assumed to be known exactly.
         df_det (DataFrame): Deterministic levels for evaluation; use "nom"
             for nominal deterministic levels.
+        n_maxiter (int): Maximum iterations for each optimization run
+        n_restart (int): Number of restarts (== number of optimization runs)
         append (bool): Append MPP results for random values?
+        verbose (bool): Print optimization results?
 
     Returns:
         DataFrame: Results of MPP search
@@ -96,7 +100,6 @@ def eval_form_pma(
     )
     df_det = df_det[model.var_det]
 
-    # df_return = DataFrame(columns=model.var_rand + model.var_det + list(betas.keys()))
     df_return = DataFrame()
     for ind in range(df_det.shape[0]):
         ## Loop over objectives
@@ -148,14 +151,23 @@ def eval_form_pma(
                 z0 = z0 / length(z0) * betas[key]
 
             # Choose value among restarts
+            n_iter_total = sum([res_all[i].nit for i in range(len(res_all))])
             if len(res_all) > 0:
                 i_star = argmin([res.fun for res in res_all])
                 x_star = res_all[i_star].x
                 fun_star = res_all[i_star].fun
+                if verbose:
+                    print("out = {}: Optimization successful".format(key))
+                    print("n_iter = {}".format(res_all[i_star].nit))
+                    print("n_iter_total = {}".format(n_iter_total))
             else:
                 ## WARNING
                 x_star = [NaN] * model.n_var_rand
                 fun_star = NaN
+                if verbose:
+                    print("out = {}: Optimization unsuccessful".format(key))
+                    print("n_iter = {}".format(res_all[i_star].nit))
+                    print("n_iter_total = {}".format(n_iter_total))
 
             ## Extract results
             if append:
@@ -196,6 +208,7 @@ def eval_form_ria(
     tol=1e-3,
     n_maxiter=25,
     n_restart=1,
+    verbose=False,
 ):
     r"""Tail reliability via FORM RIA
 
@@ -216,7 +229,10 @@ def eval_form_ria(
             parameters with no information assumed to be known exactly.
         df_det (DataFrame): Deterministic levels for evaluation; use "nom"
             for nominal deterministic levels.
+        n_maxiter (int): Maximum iterations for each optimization run
+        n_restart (int): Number of restarts (== number of optimization runs)
         append (bool): Append MPP results for random values?
+        verbose (bool): Print optimization results?
 
     Returns:
         DataFrame: Results of MPP search
@@ -307,14 +323,23 @@ def eval_form_ria(
                 z0 = z0 / length(z0)
 
             # Choose value among restarts
+            n_iter_total = sum([res_all[i].nit for i in range(len(res_all))])
             if len(res_all) > 0:
                 i_star = argmin([res.fun for res in res_all])
                 x_star = res_all[i_star].x
                 fun_star = sqrt(res_all[i_star].fun)
+                if verbose:
+                    print("out = {}: Optimization successful".format(key))
+                    print("n_iter = {}".format(res_all[i_star].nit))
+                    print("n_iter_total = {}".format(n_iter_total))
             else:
                 ## WARNING
                 x_star = [NaN] * model.n_var_rand
                 fun_star = NaN
+                if verbose:
+                    print("out = {}: Optimization unsuccessful".format(key))
+                    print("n_iter = {}".format(res_all[i_star].nit))
+                    print("n_iter_total = {}".format(n_iter_total))
 
             ## Extract results
             if append:
