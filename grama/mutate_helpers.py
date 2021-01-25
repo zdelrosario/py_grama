@@ -6,6 +6,9 @@ __all__ = [
     "exp",
     "sqrt",
     "pow",
+    "floor",
+    "ceil",
+    "round",
     "as_int",
     "as_float",
     "as_str",
@@ -30,6 +33,9 @@ from numpy import log as nplog
 from numpy import exp as npexp
 from numpy import sqrt as npsqrt
 from numpy import power as nppower
+from numpy import floor as npfloor
+from numpy import ceil as npceil
+from numpy import round as npround
 from pandas import Categorical, Series
 from scipy.stats import norm
 
@@ -38,6 +44,27 @@ from scipy.stats import norm
 # --------------------------------------------------
 # Numeric
 # -------------------------
+@make_symbolic
+def floor(x):
+    r"""Absolute value
+    """
+    return npfloor(x)
+
+
+@make_symbolic
+def ceil(x):
+    r"""Absolute value
+    """
+    return npceil(x)
+
+
+@make_symbolic
+def round(x):
+    r"""Absolute value
+    """
+    return npround(x)
+
+
 @make_symbolic
 def abs(x):
     r"""Absolute value
