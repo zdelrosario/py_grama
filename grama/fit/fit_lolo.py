@@ -35,7 +35,7 @@ class FunctionRFR(gr.Function):
 
         self.return_std = return_std
         if return_std:
-            self.out = out + list(map(lambda s: s + "_std", out))
+            self.out = out + list(map(lambda s: s + "_sd", out))
         else:
             self.out = out
 
