@@ -321,8 +321,23 @@ class TestOpt(unittest.TestCase):
         )
 
         ## Multiple restarts works
-        df_multi = gr.eval_nls(md_feat, df_data=df_data, n_restart=2,)
+        df_multi = gr.eval_nls(md_feat, df_data=df_data, n_restart=2)
         self.assertTrue(df_multi.shape[0] == 2)
+
+        ## Specified initial guess
+        df_spec = gr.eval_nls(
+            md_feat, df_data=df_data, df_init=gr.df_make(x0=0.5), append=False
+        )
+        pd.testing.assert_frame_equal(
+            df_spec,
+            df_true,
+            check_exact=False,
+            check_dtype=False,
+            check_column_type=False,
+        )
+        # Raises if incorrect guess data
+        with self.assertRaises(ValueError):
+            gr.eval_nls(md_feat, df_data=df_data, df_init=gr.df_make(foo=0.5))
 
     def test_opt(self):
         md_bowl = (

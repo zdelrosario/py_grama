@@ -23,6 +23,7 @@ def eval_nls(
     df_data=None,
     out=None,
     var_fix=None,
+    df_init=None,
     append=False,
     tol=1e-6,
     ftol=1e-9,
@@ -31,6 +32,7 @@ def eval_nls(
     n_restart=1,
     method="L-BFGS-B",
     seed=None,
+    verbose=True,
 ):
     r"""Estimate with Nonlinear Least Squares (NLS)
 
@@ -46,12 +48,14 @@ def eval_nls(
             Assumed to be model.out if left as None.
         var_fix (list or None): Variables to fix to nominal levels. Note that
             variables with domain width zero will automatically be fixed.
+        df_init (DataFrame): Initial guesses for parameters; overrides n_restart
         append (bool): Append metadata? (Initial guess, MSE, optimizer status)
         tol (float): Optimizer convergence tolerance
         n_maxiter (int): Optimizer maximum iterations
         n_restart (int): Number of restarts; beyond n_restart=1 random
             restarts are used.
         seed (int OR None): Random seed for restarts
+        verbose (bool): Print messages to console?
 
     Returns:
         DataFrame: Results of estimation
@@ -74,7 +78,8 @@ def eval_nls(
     ## Check `out` invariants
     if out is None:
         out = model.out
-        print("... eval_nls setting out = {}".format(out))
+        if verbose:
+            print("... eval_nls setting out = {}".format(out))
     set_diff = set(out).difference(set(df_data.columns))
     if len(set_diff) > 0:
         raise ValueError(
@@ -91,11 +96,13 @@ def eval_nls(
         wid = model.domain.get_width(var)
         if wid == 0:
             var_fix.add(var)
-    print("... eval_nls setting var_fix = {}".format(list(var_fix)))
+    if verbose:
+        print("... eval_nls setting var_fix = {}".format(list(var_fix)))
 
     ## Determine variables for evaluation
     var_feat = set(model.var).intersection(set(df_data.columns))
-    print("... eval_nls setting var_feat = {}".format(list(var_feat)))
+    if verbose:
+        print("... eval_nls setting var_feat = {}".format(list(var_feat)))
 
     ## Determine variables for fitting
     var_fit = set(model.var).difference(var_fix.union(var_feat))
@@ -131,32 +138,50 @@ def eval_nls(
     ## Determine initial guess points
     df_nom = eval_nominal(model, df_det="nom", skip=True)
 
-    df_init = df_nom[var_fit]
-    if n_restart > 1:
-        if not (seed is None):
-            setseed(seed)
-        ## Collect sweep-able deterministic variables
-        var_sweep = list(
-            filter(
-                lambda v: isfinite(model.domain.get_width(v))
-                & (model.domain.get_width(v) > 0),
-                model.var_det,
+    ## Use specified initial guess(es)
+    if not (df_init is None):
+        # Check invariants
+        set_diff = set(var_fit).difference(set(df_init.columns))
+        if len(set_diff) > 0:
+            raise ValueError(
+                "var_fit must be subset of df_init.columns\n"
+                + "difference = {}".format(set_diff)
             )
-        )
-        ## Generate pseudo-marginals
-        dicts_var = {}
-        for v in var_sweep:
-            dicts_var[v] = {
-                "dist": "uniform",
-                "loc": model.domain.get_bound(v)[0],
-                "scale": model.domain.get_width(v),
-            }
-        ## Overwrite model
-        md_sweep = comp_marginals(model, **dicts_var)
-        md_sweep = comp_copula_independence(md_sweep)
-        ## Generate random start points
-        df_rand = eval_monte_carlo(md_sweep, n=n_restart - 1, df_det="nom", skip=True,)
-        df_init = concat((df_init, df_rand[var_fit]), axis=0).reset_index(drop=True)
+        # Pull n_restart
+        n_restart = df_init.shape[0]
+
+    ## Generate initial guess(es)
+    else:
+
+        df_init = df_nom[var_fit]
+        if n_restart > 1:
+            if not (seed is None):
+                setseed(seed)
+            ## Collect sweep-able deterministic variables
+            var_sweep = list(
+                filter(
+                    lambda v: isfinite(model.domain.get_width(v))
+                    & (model.domain.get_width(v) > 0),
+                    model.var_det,
+                )
+            )
+            ## Generate pseudo-marginals
+            dicts_var = {}
+            for v in var_sweep:
+                dicts_var[v] = {
+                    "dist": "uniform",
+                    "loc": model.domain.get_bound(v)[0],
+                    "scale": model.domain.get_width(v),
+                }
+            ## Overwrite model
+            md_sweep = comp_marginals(model, **dicts_var)
+            md_sweep = comp_copula_independence(md_sweep)
+            ## Generate random start points
+            df_rand = eval_monte_carlo(
+                md_sweep, n=n_restart - 1, df_det="nom", skip=True,
+            )
+            df_init = concat((df_init, df_rand[var_fit]), axis=0).reset_index(drop=True)
+
     ## Iterate over initial guesses
     df_res = DataFrame()
     for i in range(n_restart):
