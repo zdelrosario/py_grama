@@ -450,7 +450,7 @@ def tran_md(df, md=None, append=True):
         >>> md_beam = make_cantilever_beam()
         >>> df_res = (
         >>>     md_beam
-        >>>     >> gr.ev_monte_carlo(n=1e3, df_det="nom", seed=101)
+        >>>     >> gr.ev_monte_carlo(n=1e3, df_det="nom", skip=True, seed=101)
         >>>     >> gr.tf_sp(n=100)
         >>>     >> gr.tf_md(md=md_beam)
         >>> )
