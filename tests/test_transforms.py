@@ -16,6 +16,16 @@ class TestTools(unittest.TestCase):
     def setUp(self):
         pass
 
+    def test_tran_md(self):
+        md = models.make_test()
+
+        ## Check for identical responses
+        df = gr.df_make(x0=1, x1=1, x2=1)
+        df_ev = gr.eval_df(md, df=df)
+        df_tf = gr.tran_md(df, md=md)
+
+        self.assertTrue(gr.df_equal(df_ev, df_tf))
+
     def test_bootstrap(self):
         df_stang = data.df_stang
         df_stang._meta = "foo"
