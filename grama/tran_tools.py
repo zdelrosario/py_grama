@@ -16,6 +16,7 @@ from numpy import arange, ceil, zeros, std, quantile, nan, triu_indices, unique
 from numpy.random import choice, permutation
 from numpy.random import seed as set_seed
 from pandas import concat, DataFrame, melt
+from .string_helpers import str_detect, str_replace
 
 from grama import add_pipe, pipe, copy_meta, Intention, mse, rsq
 from grama import (
@@ -45,6 +46,7 @@ def tran_kfolds(
     ft=None,
     out=None,
     var_fold=None,
+    suffix="_mean",
     summaries=None,
     tf=tf_summarize,
     shuffle=True,
@@ -64,6 +66,7 @@ def tran_kfolds(
             from summaries
         out (list or None): Outputs for which to compute `summaries`; None uses ft.out
         var_fold (str or None): Column to treat as fold identifier; overrides `k`
+        suffix (str): Suffix for predicted value; used to distinguish between predicted and actual
         summaries (dict of functions): Summary functions to pass to tf; will be evaluated
             for outputs of ft. Each summary must have signature summary(f_pred, f_meas)
         k (int): Number of folds; k=5 to k=10 recommended [1]
@@ -134,23 +137,22 @@ def tran_kfolds(
         ## Train by out-of-fold data
         md_fit = df >> tf_filter(~var_in(X.index, Is[i])) >> ft
 
+        ## Determine predicted and actual
         if out is None:
-            out = md_fit.out
+            out = str_replace(md_fit.out, suffix, "")
+        else:
+            out = str_replace(out, suffix, "")
 
         ## Test by in-fold data
         df_pred = md_fit >> ev_df(
-            df=df >> tf_filter(var_in(X.index, Is[i])) >> tf_drop(out), append=False,
+            df=df >> tf_filter(var_in(X.index, Is[i])), append=False
         )
-
-        # Modify names with suffix
-        out_pred = list(map(lambda s: s + "_pred", out))
-        df_pred.rename(mapper=dict(zip(out, out_pred)), axis=1, inplace=True)
 
         ## Specialize summaries for output names
         summaries_all = ChainMap(
             *[
                 {
-                    key + "_" + o: fun(X[o + "_pred"], X[o])
+                    key + "_" + o: fun(X[o + suffix], X[o])
                     for key, fun in summaries.items()
                 }
                 for o in out

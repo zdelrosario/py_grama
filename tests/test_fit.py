@@ -54,7 +54,7 @@ class TestFits(unittest.TestCase):
         df_res = gr.eval_df(md_fit, self.df_smooth[self.md_smooth.var])
 
         ## GP provides std estimates
-        self.assertTrue("y_std" in df_res.columns)
+        self.assertTrue("y_sd" in df_res.columns)
 
         ## GP is an interpolation
         self.assertTrue(
@@ -72,7 +72,7 @@ class TestFits(unittest.TestCase):
         self.assertTrue(
             set(md_fit.out)
             == set(map(lambda s: s + "_mean", self.md_smooth.out)).union(
-                set(map(lambda s: s + "_std", self.md_smooth.out))
+                set(map(lambda s: s + "_sd", self.md_smooth.out))
             )
         )
 
@@ -89,8 +89,9 @@ class TestFits(unittest.TestCase):
         ## RF can approximately recover a tree; check ends only
         self.assertTrue(
             gr.df_equal(
-                df_res[["y", "z"]].iloc[[0, 1, -2, -1]],
-                self.df_tree[["y", "z"]].iloc[[0, 1, -2, -1]],
+                df_res[["y_mean", "z_mean"]].iloc[[0, 1, -2, -1]],
+                self.df_tree[["y", "z"]].iloc[[0, 1, -2, -1]]
+                >> gr.tf_rename(y_mean="y", z_mean="z"),
                 close=True,
                 precision=1,
             )
@@ -98,7 +99,9 @@ class TestFits(unittest.TestCase):
 
         ## Fit copies model data
         self.assertTrue(set(md_fit.var) == set(self.md_tree.var))
-        self.assertTrue(set(md_fit.out) == set(self.md_tree.out))
+        self.assertTrue(
+            set(md_fit.out) == set(map(lambda s: s + "_mean", self.md_tree.out))
+        )
 
     def test_lm(self):
         ## Fit routine creates usable model
@@ -106,11 +109,20 @@ class TestFits(unittest.TestCase):
         df_res = gr.eval_df(md_fit, self.df_smooth[self.md_smooth.var])
 
         ## LM can recover a linear model
-        self.assertTrue(gr.df_equal(df_res, self.df_smooth, close=True, precision=1,))
+        self.assertTrue(
+            gr.df_equal(
+                df_res,
+                self.df_smooth >> gr.tf_rename(y_mean="y", z_mean="z"),
+                close=True,
+                precision=1,
+            )
+        )
 
         ## Fit copies model data
         self.assertTrue(set(md_fit.var) == set(self.md_smooth.var))
-        self.assertTrue(set(md_fit.out) == set(self.md_smooth.out))
+        self.assertTrue(
+            set(md_fit.out) == set(map(lambda s: s + "_mean", self.md_smooth.out))
+        )
 
     def test_lolo(self):
         ## Fit routine creates usable model
@@ -132,11 +144,11 @@ class TestFits(unittest.TestCase):
         #     )
         # )
 
-        ## Fit copies model data, plus predictive std
+        ## Fit copies model data, plus predictive sd
         self.assertTrue(set(md_fit.var) == set(self.md_tree.var))
         self.assertTrue(
             set(md_fit.out)
-            == set(self.md_tree.out + list(map(lambda s: s + "_std", self.md_tree.out)))
+            == set(self.md_tree.out + list(map(lambda s: s + "_sd", self.md_tree.out)))
         )
 
     def test_kmeans(self):

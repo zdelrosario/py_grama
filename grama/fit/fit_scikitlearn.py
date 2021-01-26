@@ -67,8 +67,8 @@ class FunctionGPR(gr.Function):
         self.out_nat = out
         ## Predicted outputs; mean and std
         self.out_mean = list(map(lambda s: s + "_mean", out))
-        self.out_std = list(map(lambda s: s + "_std", out))
-        self.out = self.out_mean + self.out_std
+        self.out_sd = list(map(lambda s: s + "_sd", out))
+        self.out = self.out_mean + self.out_sd
 
         self.name = name
         self.runtime = runtime
@@ -84,14 +84,13 @@ class FunctionGPR(gr.Function):
                     self.name
                 )
             )
-        # df_std = standardize_cols(df, self.ser_min_in, self.ser_max_in, self.var)
-        df_std = standardize_cols(df, self.var_min, self.var_max, self.var)
-        y, y_std = self.gpr.predict(df_std[self.var], return_std=True)
+        df_sd = standardize_cols(df, self.var_min, self.var_max, self.var)
+        y, y_sd = self.gpr.predict(df_sd[self.var], return_std=True)
 
         return concat(
             (
                 DataFrame(data=y, columns=self.out_mean),
-                DataFrame(data=y_std, columns=self.out_std),
+                DataFrame(data=y_sd, columns=self.out_sd),
             ),
             axis=1,
         )
@@ -118,7 +117,7 @@ class FunctionRegressor(gr.Function):
         """
         self.regressor = regressor
         self.var = var
-        self.out = out
+        self.out = list(map(lambda s: s + "_mean", out))
         self.name = name
         self.runtime = runtime
 
@@ -157,9 +156,9 @@ def fit_gp(
     Fit a gaussian process to given data. Specify var and out, or inherit from
     an existing model.
 
-    Note that the new model will have two outputs `y_mean, y_std` for each
+    Note that the new model will have two outputs `y_mean, y_sd` for each
     original output `y`. The quantity `y_mean` is the best-fit value, while
-    `y_std` is a measure of predictive uncertainty.
+    `y_sd` is a measure of predictive uncertainty.
 
     Args:
         df (DataFrame): Data for function fitting
@@ -217,7 +216,7 @@ def fit_gp(
     ## Pre-process data
     var_min = df[var].min()
     var_max = df[var].max()
-    df_std = standardize_cols(df, var_min, var_max, var)
+    df_sd = standardize_cols(df, var_min, var_max, var)
 
     ## Construct gaussian process for each output
     functions = []
@@ -232,7 +231,7 @@ def fit_gp(
             n_restarts_optimizer=n_restart,
             alpha=alpha,
         )
-        gpr.fit(df_std[var], df_std[output])
+        gpr.fit(df_sd[var], df_sd[output])
         name = "GP ({})".format(str(gpr.kernel_))
 
         fun = FunctionGPR(gpr, var, [output], name, 0, var_min, var_max)
