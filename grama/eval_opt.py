@@ -23,6 +23,7 @@ def eval_nls(
     df_data=None,
     out=None,
     var_fix=None,
+    df_init=None,
     append=False,
     tol=1e-6,
     ftol=1e-9,
@@ -46,6 +47,7 @@ def eval_nls(
             Assumed to be model.out if left as None.
         var_fix (list or None): Variables to fix to nominal levels. Note that
             variables with domain width zero will automatically be fixed.
+        df_init (DataFrame): Initial guesses for parameters; overrides n_restart
         append (bool): Append metadata? (Initial guess, MSE, optimizer status)
         tol (float): Optimizer convergence tolerance
         n_maxiter (int): Optimizer maximum iterations
@@ -105,58 +107,75 @@ def eval_nls(
             + "Try checking model bounds and df_data.columns."
         )
 
-    ## Separate var_fit into det and rand
-    var_fit_det = list(set(model.var_det).intersection(var_fit))
-    var_fit_rand = list(set(model.var_rand).intersection(var_fit))
-
-    ## Construct bounds, fix var_fit order
-    var_fit = var_fit_det + var_fit_rand
-    bounds = []
-    var_prob = []
-    for var in var_fit_det:
-        if not isfinite(model.domain.get_nominal(var)):
-            var_prob.append(var)
-        bounds.append(model.domain.get_bound(var))
-    if len(var_prob) > 0:
-        raise ValueError(
-            "all variables to be fitted must finite nominal value\n"
-            + "offending var = {}".format(var_prob)
-        )
-
-    for var in var_fit_rand:
-        bounds.append(
-            (model.density.marginals[var].q(0), model.density.marginals[var].q(1),)
-        )
-
-    ## Determine initial guess points
-    df_nom = eval_nominal(model, df_det="nom", skip=True)
-
-    df_init = df_nom[var_fit]
-    if n_restart > 1:
-        if not (seed is None):
-            setseed(seed)
-        ## Collect sweep-able deterministic variables
-        var_sweep = list(
-            filter(
-                lambda v: isfinite(model.domain.get_width(v))
-                & (model.domain.get_width(v) > 0),
-                model.var_det,
+    ## Use specified initial guess(es)
+    if not (df_init is None):
+        # Check invariants
+        set_diff = set(var_fit).difference(set(df_init.columns))
+        if len(set_diff) > 0:
+            raise ValueError(
+                "var_fit must be subset of df_init.columns\n"
+                + "difference = {}".format(set_diff)
             )
-        )
-        ## Generate pseudo-marginals
-        dicts_var = {}
-        for v in var_sweep:
-            dicts_var[v] = {
-                "dist": "uniform",
-                "loc": model.domain.get_bound(v)[0],
-                "scale": model.domain.get_width(v),
-            }
-        ## Overwrite model
-        md_sweep = comp_marginals(model, **dicts_var)
-        md_sweep = comp_copula_independence(md_sweep)
-        ## Generate random start points
-        df_rand = eval_monte_carlo(md_sweep, n=n_restart - 1, df_det="nom", skip=True,)
-        df_init = concat((df_init, df_rand[var_fit]), axis=0).reset_index(drop=True)
+        # Pull n_restart
+        n_restart = df_init.shape[0]
+
+    ## Generate initial guess(es)
+    else:
+        ## Separate var_fit into det and rand
+        var_fit_det = list(set(model.var_det).intersection(var_fit))
+        var_fit_rand = list(set(model.var_rand).intersection(var_fit))
+
+        ## Construct bounds, fix var_fit order
+        var_fit = var_fit_det + var_fit_rand
+        bounds = []
+        var_prob = []
+        for var in var_fit_det:
+            if not isfinite(model.domain.get_nominal(var)):
+                var_prob.append(var)
+            bounds.append(model.domain.get_bound(var))
+        if len(var_prob) > 0:
+            raise ValueError(
+                "all variables to be fitted must finite nominal value\n"
+                + "offending var = {}".format(var_prob)
+            )
+
+        for var in var_fit_rand:
+            bounds.append(
+                (model.density.marginals[var].q(0), model.density.marginals[var].q(1),)
+            )
+
+        ## Determine initial guess points
+        df_nom = eval_nominal(model, df_det="nom", skip=True)
+
+        df_init = df_nom[var_fit]
+        if n_restart > 1:
+            if not (seed is None):
+                setseed(seed)
+            ## Collect sweep-able deterministic variables
+            var_sweep = list(
+                filter(
+                    lambda v: isfinite(model.domain.get_width(v))
+                    & (model.domain.get_width(v) > 0),
+                    model.var_det,
+                )
+            )
+            ## Generate pseudo-marginals
+            dicts_var = {}
+            for v in var_sweep:
+                dicts_var[v] = {
+                    "dist": "uniform",
+                    "loc": model.domain.get_bound(v)[0],
+                    "scale": model.domain.get_width(v),
+                }
+            ## Overwrite model
+            md_sweep = comp_marginals(model, **dicts_var)
+            md_sweep = comp_copula_independence(md_sweep)
+            ## Generate random start points
+            df_rand = eval_monte_carlo(
+                md_sweep, n=n_restart - 1, df_det="nom", skip=True,
+            )
+            df_init = concat((df_init, df_rand[var_fit]), axis=0).reset_index(drop=True)
+
     ## Iterate over initial guesses
     df_res = DataFrame()
     for i in range(n_restart):
