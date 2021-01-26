@@ -9,6 +9,8 @@ __all__ = [
     "tf_outer",
     "tran_kfolds",
     "tf_kfolds",
+    "tran_md",
+    "tf_md",
 ]
 
 from collections import ChainMap
@@ -425,3 +427,55 @@ def tran_copula_corr(df, model=None, density=None):
 
 
 tf_copula_corr = add_pipe(tran_copula_corr)
+
+## Model as transform
+# --------------------------------------------------
+@curry
+def tran_md(df, md=None, append=True):
+    r"""Model as transform
+
+    Use a model to transform data; useful when pre-processing data to evaluate a
+    model.
+
+    Args:
+        df (DataFrame): Data to merge
+        md (gr.Model): Model to use as transform
+
+    Returns:
+        DataFrame: Output of evaluated model
+
+    Examples:
+        >>> import grama as gr
+        >>> from grama.models import make_cantilever_beam
+        >>> md_beam = make_cantilever_beam()
+        >>> df_res = (
+        >>>     md_beam
+        >>>     >> gr.ev_monte_carlo(n=1e3, df_det="nom", seed=101)
+        >>>     >> gr.tf_sp(n=100)
+        >>>     >> gr.tf_md(md=md_beam)
+        >>> )
+
+    """
+    if md is None:
+        raise ValueError("No input md given")
+    if len(md.functions) == 0:
+        raise ValueError("Given model has no functions")
+    out_intersect = set(df.columns).intersection(md.out)
+    if len(out_intersect) > 0:
+        print(
+            "... provided columns intersect model output.\n"
+            + "tran_md() is dropping {}".format(out_intersect)
+        )
+
+    df_res = md.evaluate_df(df)
+
+    if append:
+        df_res = concat(
+            [df.reset_index(drop=True).drop(md.out, axis=1, errors="ignore"), df_res,],
+            axis=1,
+        )
+
+    return df_res
+
+
+tf_md = add_pipe(tran_md)
