@@ -23,7 +23,14 @@ from warnings import warn
 
 @curry
 def fit_nls(
-    df_data, md=None, out=None, var_fix=None, verbose=True, uq_method=None, **kwargs,
+    df_data,
+    md=None,
+    out=None,
+    var_fix=None,
+    df_init=None,
+    verbose=True,
+    uq_method=None,
+    **kwargs,
 ):
     r"""Fit a model with Nonlinear Least Squares (NLS)
 
@@ -42,6 +49,7 @@ def fit_nls(
             variables may have semi-infinite bounds.
         var_fix (list or None): Variables to fix to nominal levels. Note that
             variables with domain width zero will automatically be fixed.
+        df_init (DataFrame): Initial guesses for parameters; overrides n_restart
         n_restart (int): Number of restarts to try; the first try is at
             the nominal conditions of the model. Returned model will use
             the least-error parameter set among restarts tested.
@@ -91,7 +99,15 @@ def fit_nls(
             var_fix.add(var)
 
     ## Run eval_nls to fit model parameter values
-    df_fit = eval_nls(md, df_data=df_data, var_fix=var_fix, append=True, **kwargs)
+    df_fit = eval_nls(
+        md,
+        df_data=df_data,
+        var_fix=var_fix,
+        df_init=df_init,
+        append=True,
+        verbose=verbose,
+        **kwargs,
+    )
     ## Select best-fit values
     df_best = df_fit.sort_values(by="mse", axis=0).iloc[[0]].reset_index(drop=True)
     if verbose:
