@@ -122,7 +122,16 @@ def _perturbed_choice(Y, n):
 ## Public interfaces
 ##################################################
 @curry
-def tran_sp(df, n=None, var=None, n_maxiter=500, tol=1e-3, seed=None, verbose=True):
+def tran_sp(
+    df,
+    n=None,
+    var=None,
+    n_maxiter=500,
+    tol=1e-3,
+    seed=None,
+    verbose=True,
+    standardize=True,
+):
     r"""Compact a dataset with support points
 
     Arguments:
@@ -131,7 +140,8 @@ def tran_sp(df, n=None, var=None, n_maxiter=500, tol=1e-3, seed=None, verbose=Tr
         var (list of str): list of variables to compact, must all be numeric
         n_maxiter (int): maximum number of iterations for support point algorithm
         tol (float): convergence tolerance
-        verbose (bool):
+        verbose (bool): print messages to the console?
+        standardize (bool): standardize columns before running sp? (Restores after sp)
 
     Returns:
         DataFrame: dataset compacted with support points
@@ -151,6 +161,10 @@ def tran_sp(df, n=None, var=None, n_maxiter=500, tol=1e-3, seed=None, verbose=Tr
             print("tran_sp has selected var = {}".format(var))
     # Extract values
     Y = df[var].values
+    if standardize:
+        Y_mean = Y.mean(axis=0)
+        Y_sd = Y.std(axis=0)
+        Y = (Y - Y_mean) / Y_sd
     # Generate initial proposal points
     X0 = _perturbed_choice(Y, n)
 
@@ -170,8 +184,11 @@ def tran_sp(df, n=None, var=None, n_maxiter=500, tol=1e-3, seed=None, verbose=Tr
                 RuntimeWarning,
             )
 
+    if standardize:
+        X = X * Y_sd + Y_mean
+
     ## Package results
-    return DataFrame(data=X, columns=var,)
+    return DataFrame(data=X, columns=var)
 
 
 tf_sp = add_pipe(tran_sp)
