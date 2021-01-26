@@ -55,7 +55,7 @@ def tran_kfolds(
     r"""Perform k-fold CV
 
     Perform k-fold cross-validation (CV) using a given fitting procedure (ft).
-    Optionally provide
+    Optionally provide a fold identifier column, or (randomly) assign folds.
 
     Args:
         df (DataFrame): Data to pass to given fitting procedure
@@ -68,19 +68,20 @@ def tran_kfolds(
         var_fold (str or None): Column to treat as fold identifier; overrides `k`
         suffix (str): Suffix for predicted value; used to distinguish between predicted and actual
         summaries (dict of functions): Summary functions to pass to tf; will be evaluated
-            for outputs of ft. Each summary must have signature summary(f_pred, f_meas)
+            for outputs of ft. Each summary must have signature summary(f_pred, f_meas).
+            Grama includes builtin options: gr.mse, gr.rmse, gr.rel_mse, gr.rsq, gr.ndme
         k (int): Number of folds; k=5 to k=10 recommended [1]
-        shuffle (bool): Shuffle the data before CV?
+        shuffle (bool): Shuffle the data before CV? True recommended [1]
 
     Notes:
-        - Many grama functions support /partial evaluation/; this allows one to specify things like hyperparameters in fitting functions without providing data and executing the fit. You can take advantage of this functionality to easly do hyperparameter studies.
+        - Many grama functions support *partial evaluation*; this allows one to specify things like hyperparameters in fitting functions without providing data and executing the fit. You can take advantage of this functionality to easly do hyperparameter studies.
 
     Returns:
-        DataFram: Aggregated results within each of k-folds using given model and
+        DataFrame: Aggregated results within each of k-folds using given model and
             summary transform
 
     References:
-        James, Witten, Hastie, and Tibshirani, "An introduction to statistical learning" (2017), Chapter 5. Resampling Methods
+        [1] James, Witten, Hastie, and Tibshirani, "An introduction to statistical learning" (2017), Chapter 5. Resampling Methods
 
     Examples:
 
