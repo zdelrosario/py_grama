@@ -32,6 +32,7 @@ def eval_nls(
     n_restart=1,
     method="L-BFGS-B",
     seed=None,
+    verbose=True,
 ):
     r"""Estimate with Nonlinear Least Squares (NLS)
 
@@ -76,7 +77,8 @@ def eval_nls(
     ## Check `out` invariants
     if out is None:
         out = model.out
-        print("... eval_nls setting out = {}".format(out))
+        if verbose:
+            print("... eval_nls setting out = {}".format(out))
     set_diff = set(out).difference(set(df_data.columns))
     if len(set_diff) > 0:
         raise ValueError(
@@ -93,11 +95,13 @@ def eval_nls(
         wid = model.domain.get_width(var)
         if wid == 0:
             var_fix.add(var)
-    print("... eval_nls setting var_fix = {}".format(list(var_fix)))
+    if verbose:
+        print("... eval_nls setting var_fix = {}".format(list(var_fix)))
 
     ## Determine variables for evaluation
     var_feat = set(model.var).intersection(set(df_data.columns))
-    print("... eval_nls setting var_feat = {}".format(list(var_feat)))
+    if verbose:
+        print("... eval_nls setting var_feat = {}".format(list(var_feat)))
 
     ## Determine variables for fitting
     var_fit = set(model.var).difference(var_fix.union(var_feat))
