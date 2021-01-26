@@ -55,6 +55,7 @@ def eval_nls(
         n_restart (int): Number of restarts; beyond n_restart=1 random
             restarts are used.
         seed (int OR None): Random seed for restarts
+        verbose (bool): Print messages to console?
 
     Returns:
         DataFrame: Results of estimation
