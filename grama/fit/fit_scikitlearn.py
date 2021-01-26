@@ -117,7 +117,7 @@ class FunctionRegressor(gr.Function):
         """
         self.regressor = regressor
         self.var = var
-        self.out = out
+        self.out = list(map(lambda s: s + "_mean", out))
         self.name = name
         self.runtime = runtime
 
