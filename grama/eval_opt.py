@@ -107,6 +107,32 @@ def eval_nls(
             + "Try checking model bounds and df_data.columns."
         )
 
+    ## Separate var_fit into det and rand
+    var_fit_det = list(set(model.var_det).intersection(var_fit))
+    var_fit_rand = list(set(model.var_rand).intersection(var_fit))
+
+    ## Construct bounds, fix var_fit order
+    var_fit = var_fit_det + var_fit_rand
+    bounds = []
+    var_prob = []
+    for var in var_fit_det:
+        if not isfinite(model.domain.get_nominal(var)):
+            var_prob.append(var)
+        bounds.append(model.domain.get_bound(var))
+    if len(var_prob) > 0:
+        raise ValueError(
+            "all variables to be fitted must finite nominal value\n"
+            + "offending var = {}".format(var_prob)
+        )
+
+    for var in var_fit_rand:
+        bounds.append(
+            (model.density.marginals[var].q(0), model.density.marginals[var].q(1),)
+        )
+
+    ## Determine initial guess points
+    df_nom = eval_nominal(model, df_det="nom", skip=True)
+
     ## Use specified initial guess(es)
     if not (df_init is None):
         # Check invariants
@@ -121,31 +147,6 @@ def eval_nls(
 
     ## Generate initial guess(es)
     else:
-        ## Separate var_fit into det and rand
-        var_fit_det = list(set(model.var_det).intersection(var_fit))
-        var_fit_rand = list(set(model.var_rand).intersection(var_fit))
-
-        ## Construct bounds, fix var_fit order
-        var_fit = var_fit_det + var_fit_rand
-        bounds = []
-        var_prob = []
-        for var in var_fit_det:
-            if not isfinite(model.domain.get_nominal(var)):
-                var_prob.append(var)
-            bounds.append(model.domain.get_bound(var))
-        if len(var_prob) > 0:
-            raise ValueError(
-                "all variables to be fitted must finite nominal value\n"
-                + "offending var = {}".format(var_prob)
-            )
-
-        for var in var_fit_rand:
-            bounds.append(
-                (model.density.marginals[var].q(0), model.density.marginals[var].q(1),)
-            )
-
-        ## Determine initial guess points
-        df_nom = eval_nominal(model, df_det="nom", skip=True)
 
         df_init = df_nom[var_fit]
         if n_restart > 1:
