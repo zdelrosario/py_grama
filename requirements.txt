@@ -5,3 +5,4 @@ seaborn>=0.9
 scipy
 toolz
 networkx
+pathos>=0.2.7
