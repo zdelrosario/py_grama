@@ -204,7 +204,7 @@ def eval_nls(
             ## Compute joint MSE
             return ((df_tmp[out].values - df_data[out].values) ** 2).mean()
         
-        # Run optimization
+        ## Run optimization
         res = minimize(
             objective,
             x0,
@@ -215,8 +215,7 @@ def eval_nls(
             options={"maxiter": n_maxiter, "disp": False, "ftol": ftol, "gtol": gtol,},
             bounds=bounds,
         )
-    #     x0 = x0
-    #     res = minimize(rosen, x0, method='Nelder-Mead', tol=1e-6)
+
         df_tmp = df_make(
             **dict(zip(var_fit, res.x)),
             **dict(zip(map(lambda s: s + "_0", var_fit), x0)),
