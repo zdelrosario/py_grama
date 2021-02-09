@@ -14,6 +14,7 @@ from numpy.random import seed as setseed
 from pandas import DataFrame, concat
 from scipy.optimize import minimize
 from toolz import curry
+from pathos.multiprocessing import ProcessingPool as Pool
 
 ## Nonlinear least squares
 # --------------------------------------------------
@@ -30,6 +31,7 @@ def eval_nls(
     gtol=1e-5,
     n_maxiter=100,
     n_restart=1,
+    n_process=1,
     method="L-BFGS-B",
     seed=None,
     verbose=True,
@@ -184,7 +186,7 @@ def eval_nls(
 
     ## Iterate over initial guesses
     df_res = DataFrame()
-    for i in range(n_restart):
+    def fun_mp(i):
         x0 = df_init[var_fit].iloc[i].values
         ## Build evaluator
         def objective(x):
@@ -201,8 +203,8 @@ def eval_nls(
 
             ## Compute joint MSE
             return ((df_tmp[out].values - df_data[out].values) ** 2).mean()
-
-        ## Run optimization
+        
+        # Run optimization
         res = minimize(
             objective,
             x0,
@@ -213,8 +215,8 @@ def eval_nls(
             options={"maxiter": n_maxiter, "disp": False, "ftol": ftol, "gtol": gtol,},
             bounds=bounds,
         )
-
-        ## Package results
+    #     x0 = x0
+    #     res = minimize(rosen, x0, method='Nelder-Mead', tol=1e-6)
         df_tmp = df_make(
             **dict(zip(var_fit, res.x)),
             **dict(zip(map(lambda s: s + "_0", var_fit), x0)),
@@ -223,8 +225,15 @@ def eval_nls(
         df_tmp["message"] = [res.message]
         df_tmp["n_iter"] = [res.nit]
         df_tmp["mse"] = [res.fun]
+        return df_tmp
 
-        df_res = concat((df_res, df_tmp,), axis=0,).reset_index(drop=True)
+    num_process = n_process
+    if num_process > n_restart:
+        num_process = n_restart
+
+    pool = Pool(processes = num_process)
+    mp_out = pool.map(fun_mp, range(n_restart))
+    df_res = concat(mp_out, axis=0,).reset_index(drop=True)
 
     ## Post-process
     if append:
