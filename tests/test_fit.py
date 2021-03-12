@@ -148,7 +148,10 @@ class TestFits(unittest.TestCase):
         self.assertTrue(set(md_fit.var) == set(self.md_tree.var))
         self.assertTrue(
             set(md_fit.out)
-            == set(self.md_tree.out + list(map(lambda s: s + "_sd", self.md_tree.out)))
+            == set(
+                list(map(lambda s: s + "_mean", self.md_tree.out)) +
+                list(map(lambda s: s + "_sd", self.md_tree.out))
+            )
         )
 
     def test_kmeans(self):
