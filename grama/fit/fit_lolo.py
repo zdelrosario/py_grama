@@ -35,9 +35,9 @@ class FunctionRFR(gr.Function):
 
         self.return_std = return_std
         if return_std:
-            self.out = out + list(map(lambda s: s + "_sd", out))
+            self.out = list(map(lambda s: s + "_mean", out)) + list(map(lambda s: s + "_sd", out))
         else:
-            self.out = out
+            self.out = list(map(lambda s: s + "_mean", out))
 
     def eval(self, df):
         ## Check invariant; model inputs must be subset of df columns
