@@ -37,8 +37,6 @@ from pandas.api.types import is_numeric_dtype
 from scipy.linalg import subspace_angles
 from scipy.stats import norm
 
-X = Intention()
-
 ## k-Fold CV utility
 # --------------------------------------------------
 @curry
