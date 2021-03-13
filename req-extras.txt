@@ -1,4 +1,5 @@
 lolopy
+pymatgen==2021.*.*
 matminer
 sklearn
 statsmodels
