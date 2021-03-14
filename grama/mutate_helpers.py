@@ -19,11 +19,12 @@ __all__ = [
     "pnorm",
     "dnorm",
     "pareto_min",
+    "stratum_min",
 ]
 
 from grama import make_symbolic
 
-from numpy import argsort, array, median, zeros, ones
+from numpy import argsort, array, median, zeros, ones, NaN, arange
 from numpy import any as npany
 from numpy import all as npall
 from numpy import abs as npabs
@@ -183,10 +184,10 @@ def pareto_min(*args):
     Find the Pareto-efficient points that minimize the provided features.
 
     Args:
-        xi (iterable OR gr.Intention()): Feature to minimize
+        xi (iterable OR gr.Intention()): Feature to minimize; use -X to maximize
 
     Returns:
-        boolean: Indicates if observation is Pareto-efficient
+        np.array of boolean: Indicates if observation is Pareto-efficient
     """
     # Check invariants
     lengths = map(len, args)
@@ -202,6 +203,51 @@ def pareto_min(*args):
         )
 
     return is_efficient
+
+# Shell number calculation
+# -------------------------
+@make_symbolic
+def stratum_min(*args, max_depth=10):
+    r"""Compute Pareto stratum number
+
+    Compute the Pareto stratum number for a given dataset.
+
+    Args:
+        xi (iterable OR gr.Intention()): Feature to minimize; use -X to maximize
+        max_depth (int): Maximum depth for recursive computation; stratum numbers exceeding
+            this value will not be computed and will be flagged as NaN.
+
+    Returns:
+        np.array of floats: Pareto stratum number
+
+    References:
+        del Rosario, Rupp, Kim, Antono, and Ling "Assessing the frontier: Active learning, model accuracy, and multi-objective candidate discovery and optimization" (2020) J. Chem. Phys.
+    """
+    # Check invariants
+    lengths = map(len, args)
+    if len(set(lengths)) > 1:
+        raise ValueError("All arguments to stratum_min must be of equal length")
+
+    # Set default as NaN
+    costs = array([*args]).T
+    n = costs.shape[0]
+    stratum = ones(n)
+    stratum[:] = NaN
+
+    # Successive computation of stratum numbers
+    active = ones(n, dtype=bool)
+    idx_all = arange(n, dtype=int)
+
+    i = 1
+    while any(active) and (i <= max_depth):
+        idx = idx_all[active]
+        pareto = pareto_min(costs[idx].T)
+        stratum[idx[pareto]] = i
+        active[idx[pareto]] = False
+
+        i += 1
+
+    return stratum
 
 
 # Factors

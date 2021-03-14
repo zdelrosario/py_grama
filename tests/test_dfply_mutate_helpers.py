@@ -48,3 +48,23 @@ class TestFactors(unittest.TestCase):
         # Check for ValueError
         with self.assertRaises(ValueError):
             gr.pareto_min([1], [1, 2, 3])
+
+    def test_stratum_min(self):
+        df_test = gr.df_make(
+            x=[1, 2, 0, 1, 2, 0, 1, 2],
+            y=[0, 0, 1, 1, 1, 2, 2, 2],
+            p=[1, 2, 1, 2, 3, 2, 3, 4],
+        )
+
+        # Test for accuracy
+        self.assertTrue(
+            (
+                df_test
+                >> gr.tf_mutate(p_comp=gr.stratum_min(X.x, X.y))
+                >> gr.tf_mutate(flag=X.p == X.p_comp)
+            ).flag.all()
+        )
+
+        # Check for ValueError
+        with self.assertRaises(ValueError):
+            gr.stratum_min([1], [1, 2, 3])
