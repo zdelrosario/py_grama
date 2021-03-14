@@ -44,3 +44,26 @@ The [tutorials](https://github.com/zdelrosario/py_grama/tree/master/tutorials) p
 
 # Support and Contributing
 If you are seeking support or want to contribute, please see [Contributing](https://github.com/zdelrosario/py_grama/blob/master/contributing.md).
+
+# Cite As
+
+If you find Grama useful in your work, we'd appreciate that you cite it as:
+
+> del Rosario, Z., (2020). Grama: A Grammar of Model Analysis. Journal of Open Source Software, 5(51), 2462, https://doi.org/10.21105/joss.02462
+
+Bibtex code:
+
+```
+@article{del Rosario2020,
+  doi = {10.21105/joss.02462},
+  url = {https://doi.org/10.21105/joss.02462},
+  year = {2020},
+  publisher = {The Open Journal},
+  volume = {5},
+  number = {51},
+  pages = {2462},
+  author = {Zachary del Rosario},
+  title = {Grama: A Grammar of Model Analysis},
+  journal = {Journal of Open Source Software}
+}
+```
