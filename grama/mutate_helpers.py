@@ -218,7 +218,7 @@ def stratum_min(*args, max_depth=10):
             this value will not be computed and will be flagged as NaN.
 
     Returns:
-        np.array of int: Pareto stratum number
+        np.array of floats: Pareto stratum number
 
     References:
         del Rosario, Rupp, Kim, Antono, and Ling "Assessing the frontier: Active learning, model accuracy, and multi-objective candidate discovery and optimization" (2020) J. Chem. Phys.
@@ -231,7 +231,7 @@ def stratum_min(*args, max_depth=10):
     # Set default as NaN
     costs = array([*args]).T
     n = costs.shape[0]
-    stratum = ones(n, dtype=int)
+    stratum = ones(n)
     stratum[:] = NaN
 
     # Successive computation of stratum numbers
