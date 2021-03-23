@@ -203,7 +203,7 @@ def eval_nls(
 
             ## Compute joint MSE
             return ((df_tmp[out].values - df_data[out].values) ** 2).mean()
-        
+
         ## Run optimization
         res = minimize(
             objective,
@@ -270,9 +270,9 @@ def eval_min(
         model (gr.Model): Model to analyze. All model variables must be
             deterministic.
         out_min (str): Output to use as minimization objective.
-        out_geq (None OR list of str): Outputs to use as geq constraints; var >= 0
-        out_leq (None OR list of str): Outputs to use as leq constraints; var <= 0
-        out_eq (None OR list of str): Outputs to use as equality constraints; var == 0
+        out_geq (None OR list of str): Outputs to use as geq constraints; out >= 0
+        out_leq (None OR list of str): Outputs to use as leq constraints; out <= 0
+        out_eq (None OR list of str): Outputs to use as equality constraints; out == 0
 
         method (str): Optimization method; see the documentation for
             scipy.optimize.minimize for options.
