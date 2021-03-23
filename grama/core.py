@@ -1287,28 +1287,51 @@ class Model:
 
     ## Model information
     # -------------------------
+    def string_rep(self):
+        l = [
+            "model: {}".format(self.name),
+            "",
+            "  inputs:",
+            "    var_det:",
+            "".join([
+                "      {}\n".format(self.domain.bound_summary(var_det))
+                for var_det in self.var_det
+            ]),
+            "    var_rand:",
+        ]
+
+        try:
+            l = l + [
+                "".join([
+                    "      {}\n".format(self.density.summary_marginal(var_rand))
+                    for var_rand in self.density.marginals.keys()
+                ]),
+            ]
+        except AttributeError:
+            l = l + ["\n"]
+
+        l = l + [
+            "    copula:",
+            "      {}\n".format(self.density.summary_copula()),
+            "  functions:",
+            "".join([
+                "      {}\n".format(function.summary())
+                for function in self.functions
+            ])
+        ]
+
+        return "\n".join(l)
+
+    def __str__(self):
+        return self.string_rep()
+
+    def __repr__(self):
+        return self.string_rep()
+
     def printpretty(self):
         """Formatted print of model attributes
         """
-        print("model: {}".format(self.name))
-        print("")
-        print("  inputs:")
-        print("    var_det:")
-        for var_det in self.var_det:
-            print("      {}".format(self.domain.bound_summary(var_det)))
-
-        print("    var_rand:")
-        try:
-            for key, marginal in self.density.marginals.items():
-                print("      {}".format(self.density.summary_marginal(key)))
-        except AttributeError:
-            pass
-        print("    copula:")
-        print("        {}".format(self.density.summary_copula()))
-
-        print("  functions:")
-        for function in self.functions:
-            print("    {}".format(function.summary()))
+        print(self.string_rep())
 
     def make_dag(self, expand=set()):
         """Generate a DAG for the model
