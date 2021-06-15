@@ -1,3 +1,12 @@
+__all__ = [
+    "tran_mutate",
+    "tf_mutate",
+    "tran_mutate_if",
+    "tf_mutate_if",
+    "tran_transmute",
+    "tf_transmute",
+]
+
 from .base import *
 from .. import add_pipe
 

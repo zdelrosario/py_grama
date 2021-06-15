@@ -1,5 +1,27 @@
+__all__ = [
+    "tran_inner_join",
+    "tf_inner_join",
+    "tran_full_join",
+    "tf_full_join",
+    "tran_outer_join",
+    "tf_outer_join",
+    "tran_left_join",
+    "tf_left_join",
+    "tran_right_join",
+    "tf_right_join",
+    "tran_semi_join",
+    "tf_semi_join",
+    "tran_anti_join",
+    "tf_anti_join",
+    "tran_bind_rows",
+    "tf_bind_rows",
+    "tran_bind_cols",
+    "tf_bind_cols",
+]
+
 from .base import *
 from .. import add_pipe
+import pandas as pd
 
 # ------------------------------------------------------------------------------
 # SQL-style joins

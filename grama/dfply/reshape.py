@@ -1,6 +1,26 @@
+__all__ = [
+    "tran_arrange",
+    "tf_arrange",
+    "tran_rename",
+    "tf_rename",
+    "tran_separate",
+    "tf_separate",
+    "tran_unite",
+    "tf_unite",
+    "tran_gather",
+    "tf_gather",
+    "tran_spread",
+    "tf_spread",
+    "tran_explode",
+    "tf_explode",
+    "convert_type"
+]
+
 from .base import *
 from .. import add_pipe
 import re
+import numpy as np
+import pandas as pd
 
 
 # ------------------------------------------------------------------------------

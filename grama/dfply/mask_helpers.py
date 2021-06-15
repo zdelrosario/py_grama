@@ -1,3 +1,9 @@
+__all__ = [
+    "var_in",
+    "is_nan",
+    "not_nan",
+]
+
 from .base import *
 import pandas as pd
 from numpy import isnan, logical_not

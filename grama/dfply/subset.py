@@ -1,6 +1,28 @@
+__all__ = [
+    "tran_head",
+    "tf_head",
+    "tran_tail",
+    "tf_tail",
+    "tran_sample",
+    "tf_sample",
+    "tran_distinct",
+    "tf_distinct",
+    "tran_row_slice",
+    "tf_row_slice",
+    "tran_filter",
+    "tf_filter",
+    "tran_top_n",
+    "tf_top_n",
+    "tran_pull",
+    "tf_pull",
+    "tran_dropna",
+    "tf_dropna",
+]
+
 from .base import *
 import warnings
 import numpy as np
+import pandas as pd
 from .. import add_pipe
 
 

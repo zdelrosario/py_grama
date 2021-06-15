@@ -1,5 +1,29 @@
+__all__ = [
+    "mean",
+    "first",
+    "last",
+    "nth",
+    "n",
+    "n_distinct",
+    "IQR",
+    "quant",
+    "colmin",
+    "colmax",
+    "colsum",
+    "median",
+    "var",
+    "sd",
+    "binomial_ci",
+    "mse",
+    "rmse",
+    "ndme",
+    "rsq",
+    "corr",
+]
+
 from .base import *
 from .vector import *
+import numpy as np
 
 from numpy import sqrt, power
 from scipy.stats import norm, pearsonr, spearmanr
