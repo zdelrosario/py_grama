@@ -3,7 +3,7 @@ import numpy as np
 import warnings
 from functools import partial, wraps
 
-from .. import pipe  # Use grama pipe to preserve metadata
+from .. import pipe, add_pipe  # Use grama pipe to preserve metadata
 
 
 def _recursive_apply(f, l):
@@ -356,6 +356,7 @@ def symbolic_evaluation(
 
 
 class group_delegation(object):
+
     __name__ = "group_delegation"
 
     def __init__(self, function):
@@ -397,8 +398,10 @@ class group_delegation(object):
 
 
 def dfpipe(f):
-    return pipe(group_delegation(symbolic_evaluation(f)))
+    return add_pipe(group_delegation(symbolic_evaluation(f)))
 
 
 def dfdelegate(f):
-    return group_delegation(symbolic_evaluation(f))
+    class addName(group_delegation):
+        __name__ = f.__name__
+    return addName(group_delegation(symbolic_evaluation(f)))

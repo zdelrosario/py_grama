@@ -1,4 +1,5 @@
 from .base import *
+from .. import add_pipe
 import re
 
 
@@ -7,8 +8,8 @@ import re
 # ------------------------------------------------------------------------------
 
 
-@dfpipe
-def arrange(df, *args, **kwargs):
+@dfdelegate
+def tran_arrange(df, *args, **kwargs):
     """Calls `pandas.DataFrame.sort_values` to sort a DataFrame according to
     criteria.
 
@@ -42,15 +43,17 @@ def arrange(df, *args, **kwargs):
     sorter = sorter.sort_values(sorter.columns.tolist(), **kwargs)
     return df.iloc[sorter.index, :].reset_index(drop=True)
 
+tf_arrange = add_pipe(tran_arrange)
+
 
 # ------------------------------------------------------------------------------
 # Renaming
 # ------------------------------------------------------------------------------
 
 
-@pipe
+@dfdelegate
 @symbolic_evaluation(eval_as_label=True)
-def rename(df, **kwargs):
+def tran_rename(df, **kwargs):
     """Renames columns, where keyword argument values are the current names
     of columns and keys are the new names.
 
@@ -64,15 +67,17 @@ def rename(df, **kwargs):
 
     return df.rename(columns={v: k for k, v in kwargs.items()})
 
+tf_rename = add_pipe(tran_rename)
+
 
 # ------------------------------------------------------------------------------
 # Elongate
 # ------------------------------------------------------------------------------
 
 
-@pipe
+@dfdelegate
 @symbolic_evaluation(eval_as_label=["*"])
-def gather(df, key, values, *args, **kwargs):
+def tran_gather(df, key, values, *args, **kwargs):
     """
     Melts the specified columns in your DataFrame into two key:value columns.
 
@@ -111,6 +116,8 @@ def gather(df, key, values, *args, **kwargs):
     id_vars = [col for col in columns if col not in args]
     return pd.melt(df, id_vars, list(args), key, values)
 
+tf_gather = add_pipe(tran_gather)
+
 
 # ------------------------------------------------------------------------------
 # Widen
@@ -148,9 +155,9 @@ def convert_type(df, columns):
     return out_df
 
 
-@pipe
+@dfdelegate
 @symbolic_evaluation(eval_as_label=["*"])
-def spread(df, key, values, convert=False, fill=None):
+def tran_spread(df, key, values, convert=False, fill=None):
     """
     Transforms a "long" DataFrame into a "wide" format using a key and value
     column.
@@ -213,9 +220,11 @@ def spread(df, key, values, convert=False, fill=None):
         drop=True
     )
 
-    out_df = (out_df >> arrange(id_cols)).reset_index(drop=True)
+    out_df = (out_df >> tf_arrange(id_cols)).reset_index(drop=True)
 
     return out_df
+
+tf_spread = add_pipe(tran_spread)
 
 
 # ------------------------------------------------------------------------------
@@ -223,9 +232,9 @@ def spread(df, key, values, convert=False, fill=None):
 # ------------------------------------------------------------------------------
 
 
-@pipe
+@dfdelegate
 @symbolic_evaluation(eval_as_label=["*"])
-def separate(
+def tran_separate(
     df,
     column,
     into,
@@ -300,15 +309,17 @@ def separate(
 
     return df
 
+tf_separate = add_pipe(tran_separate)
+
 
 # ------------------------------------------------------------------------------
 # Unite columns
 # ------------------------------------------------------------------------------
 
 
-@pipe
+@dfdelegate
 @symbolic_evaluation(eval_as_label=["*"])
-def unite(df, colname, *args, **kwargs):
+def tran_unite(df, colname, *args, **kwargs):
     """
     Does the inverse of `separate`, joining columns together by a specified
     separator.
@@ -360,13 +371,17 @@ def unite(df, colname, *args, **kwargs):
 
     return df
 
+tf_unite = add_pipe(tran_unite)
+
+
 # ------------------------------------------------------------------------------
 # Nesting
 # ------------------------------------------------------------------------------
 
-@pipe
+
+@dfdelegate
 @symbolic_evaluation(eval_as_label=["*"])
-def explode(df, col, convert=False):
+def tran_explode(df, col, convert=False):
     """Lengthen DataFrame by exploding iterable entries in a column.
 
     If you have a mixed datatype column in your long-format DataFrame then the
@@ -396,3 +411,5 @@ def explode(df, col, convert=False):
         return convert_type(df_res, [col])
     else:
         return df_res
+
+tf_explode = add_pipe(tran_explode)

@@ -4,7 +4,6 @@ from .join import *
 from .mask_helpers import *
 from .reshape import *
 from .select import *
-from .select import *
 from .set_ops import *
 from .subset import *
 from .summarize import *

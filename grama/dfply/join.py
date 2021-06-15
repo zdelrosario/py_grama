@@ -1,5 +1,5 @@
 from .base import *
-
+from .. import add_pipe
 
 # ------------------------------------------------------------------------------
 # SQL-style joins
@@ -24,8 +24,8 @@ def get_join_parameters(join_kwargs):
     return left_on, right_on, suffixes
 
 
-@pipe
-def inner_join(df, other, **kwargs):
+@dfdelegate
+def tran_inner_join(df, other, **kwargs):
     """
     Joins on values present in both DataFrames.
 
@@ -54,9 +54,11 @@ def inner_join(df, other, **kwargs):
     )
     return joined
 
+tf_inner_join = add_pipe(tran_inner_join)
 
-@pipe
-def full_join(df, other, **kwargs):
+
+@dfdelegate
+def tran_full_join(df, other, **kwargs):
     """
     Joins on values present in either DataFrame. (Alternate to `outer_join`)
 
@@ -87,9 +89,11 @@ def full_join(df, other, **kwargs):
     )
     return joined
 
+tf_full_join = add_pipe(tran_full_join)
 
-@pipe
-def outer_join(df, other, **kwargs):
+
+@dfdelegate
+def tran_outer_join(df, other, **kwargs):
     """
     Joins on values present in either DataFrame. (Alternate to `full_join`)
 
@@ -120,9 +124,11 @@ def outer_join(df, other, **kwargs):
     )
     return joined
 
+tf_outer_join = add_pipe(tran_outer_join)
 
-@pipe
-def left_join(df, other, **kwargs):
+
+@dfdelegate
+def tran_left_join(df, other, **kwargs):
     """
     Joins on values present in in the left DataFrame.
 
@@ -152,9 +158,11 @@ def left_join(df, other, **kwargs):
     )
     return joined
 
+tf_left_join = add_pipe(tran_left_join)
 
-@pipe
-def right_join(df, other, **kwargs):
+
+@dfdelegate
+def tran_right_join(df, other, **kwargs):
     """
     Joins on values present in in the right DataFrame.
 
@@ -184,9 +192,11 @@ def right_join(df, other, **kwargs):
     )
     return joined
 
+tf_right_join = add_pipe(tran_right_join)
 
-@pipe
-def semi_join(df, other, **kwargs):
+
+@dfdelegate
+def tran_semi_join(df, other, **kwargs):
     """
     Returns all of the rows in the left DataFrame that have a match
     in the right DataFrame.
@@ -229,9 +239,11 @@ def semi_join(df, other, **kwargs):
     ).query('_merge=="both"')[df.columns.values.tolist()]
     return joined
 
+tf_semi_join = add_pipe(tran_semi_join)
 
-@pipe
-def anti_join(df, other, **kwargs):
+
+@dfdelegate
+def tran_anti_join(df, other, **kwargs):
     """
     Returns all of the rows in the left DataFrame that do not have a
     match in the right DataFrame.
@@ -273,14 +285,16 @@ def anti_join(df, other, **kwargs):
     ).query('_merge=="left_only"')[df.columns.values.tolist()]
     return joined
 
+tf_anti_join = add_pipe(tran_anti_join)
+
 
 # ------------------------------------------------------------------------------
 # Binding
 # ------------------------------------------------------------------------------
 
 
-@pipe
-def bind_rows(df, other, join="outer", ignore_index=False, reset=True):
+@dfdelegate
+def tran_bind_rows(df, other, join="outer", ignore_index=False, reset=True):
     """
     Binds DataFrames "vertically", stacking them together. This is equivalent
     to `pd.concat` with `axis=0`.
@@ -310,9 +324,11 @@ def bind_rows(df, other, join="outer", ignore_index=False, reset=True):
     else:
         return df
 
+tf_bind_rows = add_pipe(tran_bind_rows)
 
-@pipe
-def bind_cols(df, other, join="outer", ignore_index=False):
+
+@dfdelegate
+def tran_bind_cols(df, other, join="outer", ignore_index=False):
     """
     Binds DataFrames "horizontally". This is equivalent to `pd.concat` with
     `axis=1`.
@@ -334,3 +350,5 @@ def bind_cols(df, other, join="outer", ignore_index=False):
         join=join, ignore_index=ignore_index, axis=1, sort=False
     )
     return df
+
+tf_bind_cols = add_pipe(tran_bind_cols)

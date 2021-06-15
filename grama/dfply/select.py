@@ -1,7 +1,6 @@
 import re
-
 from .base import *
-
+from .. import add_pipe
 
 # ------------------------------------------------------------------------------
 # Select and drop operators
@@ -51,10 +50,10 @@ def resolve_selection(df, *args, drop=False):
     return ordering, column_indices
 
 
-@pipe
+
 @group_delegation
 @symbolic_evaluation(eval_as_selector=True)
-def select(df, *args):
+def tran_select(df, *args):
     ordering, column_indices = resolve_selection(df, *args)
     if (column_indices == 0).all():
         return df[[]]
@@ -68,11 +67,12 @@ def select(df, *args):
     else:
         return df
 
+tf_select = add_pipe(tran_select)
 
-@pipe
+
 @group_delegation
 @symbolic_evaluation(eval_as_selector=True)
-def drop(df, *args):
+def tran_drop(df, *args):
     _, column_indices = resolve_selection(df, *args, drop=True)
     if (column_indices == 0).all():
         return df[[]]
@@ -81,9 +81,11 @@ def drop(df, *args):
     )[0]
     return df.iloc[:, selection]
 
+tf_drop = add_pipe(tran_drop)
 
-@pipe
-def select_if(df, fun):
+
+@dfdelegate
+def tran_select_if(df, fun):
     """Selects columns where fun(ction) is true
     Args:
         fun: a function that will be applied to columns
@@ -98,9 +100,11 @@ def select_if(df, fun):
     cols = list(filter(_filter_f, df.columns))
     return df[cols]
 
+tf_select_if = add_pipe(tran_select_if)
 
-@pipe
-def drop_if(df, fun):
+
+@dfdelegate
+def tran_drop_if(df, fun):
     """Drops columns where fun(ction) is true
     Args:
         fun: a function that will be applied to columns
@@ -115,6 +119,7 @@ def drop_if(df, fun):
     cols = list(filter(_filter_f, df.columns))
     return df.drop(cols, axis=1)
 
+tf_drop_if = add_pipe(tran_drop_if)
 
 @selection_filter
 def starts_with(columns, prefix):

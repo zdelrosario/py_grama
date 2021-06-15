@@ -1,4 +1,5 @@
 from .base import *
+from .. import add_pipe
 import warnings
 import pandas as pd
 
@@ -31,9 +32,8 @@ def validate_set_ops(df, other):
 # `union`
 # ------------------------------------------------------------------------------
 
-
-@pipe
-def union(df, other, index=False, keep="first"):
+@dfdelegate
+def tran_union(df, other, index=False, keep="first"):
     """
     Returns rows that appear in either DataFrame.
 
@@ -64,14 +64,16 @@ def union(df, other, index=False, keep="first"):
     else:
         return stacked.drop_duplicates(keep=keep)
 
+tf_union = add_pipe(tran_union)
+
 
 # ------------------------------------------------------------------------------
 # `intersect`
 # ------------------------------------------------------------------------------
 
 
-@pipe
-def intersect(df, other, index=False, keep="first"):
+@dfdelegate
+def tran_intersect(df, other, index=False, keep="first"):
     """
     Returns rows that appear in both DataFrames.
 
@@ -114,14 +116,16 @@ def intersect(df, other, index=False, keep="first"):
         return_df = return_df.drop_duplicates(keep=keep)
         return return_df
 
+tf_intersect = add_pipe(tran_intersect)
+
 
 # ------------------------------------------------------------------------------
 # `set_diff`
 # ------------------------------------------------------------------------------
 
 
-@pipe
-def set_diff(df, other, index=False, keep="first"):
+@dfdelegate
+def tran_set_diff(df, other, index=False, keep="first"):
     """
     Returns rows that appear in the first DataFrame but not the second.
 
@@ -167,3 +171,5 @@ def set_diff(df, other, index=False, keep="first"):
         return_df = return_df[return_df._merge == "left_only"]
         return_df = return_df.drop_duplicates(keep=keep)[df.columns]
         return return_df
+
+tf_set_diff = add_pipe(tran_set_diff)

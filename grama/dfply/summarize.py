@@ -1,13 +1,15 @@
 from .base import *
+from .. import add_pipe
 
-
-@dfpipe
-def summarize(df, **kwargs):
+@dfdelegate
+def tran_summarize(df, **kwargs):
     return pd.DataFrame({k: [v] for k, v in kwargs.items()})
 
+tf_summarize = add_pipe(tran_summarize)
 
-@dfpipe
-def summarize_each(df, functions, *args):
+
+@dfdelegate
+def tran_summarize_each(df, functions, *args):
     columns, values = [], []
     for arg in args:
         if isinstance(arg, pd.Series):
@@ -26,3 +28,5 @@ def summarize_each(df, functions, *args):
             values.append(f(col))
 
     return pd.DataFrame([values], columns=columns)
+
+tf_summarize_each = add_pipe(tran_summarize_each)

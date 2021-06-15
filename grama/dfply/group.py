@@ -1,14 +1,16 @@
 from .base import *
+from .. import add_pipe
 
-
-@pipe
 @symbolic_evaluation(eval_as_label=True)
-def group_by(df, *args):
+def tran_group_by(df, *args):
     df._grouped_by = list(args)
     return df
 
+tf_group_by = add_pipe(tran_group_by)
 
-@pipe
-def ungroup(df):
+
+def tran_ungroup(df):
     df._grouped_by = None
     return df
+
+tf_ungroup = add_pipe(tran_ungroup)

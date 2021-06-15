@@ -308,9 +308,10 @@ def add_pipe(fun):
     class NewPipe(pipe):
         __name__ = fun.__name__
         __doc__ = (
-            "Pipe-enabled version of {}\n".format(fun.__name__)
-            + "Inherited Signature: {}\n".format(signature(fun))
-            + fun.__doc__
+            fun.__doc__
+            #"Pipe-enabled version of {}\n".format(fun)
+            #+ "Inherited Signature: {}\n".format(signature(fun))
+            #+ fun.__doc__
         )
 
     return NewPipe(fun)
