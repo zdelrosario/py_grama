@@ -1,4 +1,4 @@
-__all__ = ["make_plate_buckle"]s
+__all__ = ["make_plate_buckle"]
 
 import grama as gr
 from grama.data import df_stang
