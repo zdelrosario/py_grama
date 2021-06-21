@@ -6,19 +6,18 @@ try:
 except ModuleNotFoundError:
     raise ModuleNotFoundError("module pyDOE not found")
 
+import warnings
+import grama as gr
+from .. import add_pipe, pipe, custom_formatwarning
+from scipy.stats import norm, lognorm
+from numbers import Integral
 from numpy import tile, linspace, zeros, isfinite
+from numpy.linalg import cholesky, inv
 from numpy.random import random
 from numpy.random import seed as set_seed
 from pandas import DataFrame
-
-import warnings
-
-import grama as gr
-from grama import add_pipe, pipe, custom_formatwarning
-from scipy.stats import norm, lognorm
 from toolz import curry
-from numpy.linalg import cholesky, inv
-from numbers import Integral
+
 
 ## Latin Hypercube Sampling (LHS)
 # --------------------------------------------------

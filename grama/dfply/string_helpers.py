@@ -7,10 +7,10 @@ __all__ = [
 ]
 
 import re
-
-from grama import dfcurry, pipe, valid_dist, param_dist
-from pandas import Series
+from .. import dfcurry, pipe, valid_dist, param_dist
 from numpy import NaN, isnan
+from pandas import Series
+
 
 # ------------------------------------------------------------------------------
 # String helpers

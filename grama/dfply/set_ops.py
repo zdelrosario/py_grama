@@ -7,10 +7,10 @@ __all__ = [
     "tf_set_diff",
 ]
 
+import warnings
 from .base import *
 from .. import add_pipe
-import warnings
-import pandas as pd
+from pandas import merge
 
 
 def validate_set_ops(df, other):
@@ -104,7 +104,7 @@ def tran_intersect(df, other, index=False, keep="first"):
         other_reset_index = other.reset_index()
         index_cols = [col for col in df_reset_index.columns if col not in df.columns]
         df_index_names = df.index.names
-        return_df = pd.merge(
+        return_df = merge(
             df_reset_index,
             other_reset_index,
             how="inner",
@@ -115,7 +115,7 @@ def tran_intersect(df, other, index=False, keep="first"):
         return_df = return_df.drop_duplicates(keep=keep)
         return return_df
     else:
-        return_df = pd.merge(
+        return_df = merge(
             df,
             other,
             how="inner",
@@ -156,7 +156,7 @@ def tran_set_diff(df, other, index=False, keep="first"):
         other_reset_index = other.reset_index()
         index_cols = [col for col in df_reset_index.columns if col not in df.columns]
         df_index_names = df.index.names
-        return_df = pd.merge(
+        return_df = merge(
             df_reset_index,
             other_reset_index,
             how="left",
@@ -169,7 +169,7 @@ def tran_set_diff(df, other, index=False, keep="first"):
         return_df = return_df.drop_duplicates(keep=keep)[df.columns]
         return return_df
     else:
-        return_df = pd.merge(
+        return_df = merge(
             df,
             other,
             how="left",

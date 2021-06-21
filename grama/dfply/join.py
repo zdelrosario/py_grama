@@ -21,7 +21,8 @@ __all__ = [
 
 from .base import *
 from .. import add_pipe
-import pandas as pd
+from pandas import concat
+
 
 # ------------------------------------------------------------------------------
 # SQL-style joins
@@ -29,7 +30,7 @@ import pandas as pd
 
 
 def get_join_parameters(join_kwargs):
-    """
+    """+
     Convenience function to determine the columns to join the right and
     left DataFrames on, as well as any suffixes for the columns.
     """
@@ -336,7 +337,7 @@ def tran_bind_rows(df, other, join="outer", ignore_index=False, reset=True):
 
     """
 
-    df = pd.concat(
+    df = concat(
         [df.reset_index(drop=True), other.reset_index(drop=True)],
         join=join, ignore_index=ignore_index, axis=0, sort=False
     )
@@ -367,7 +368,7 @@ def tran_bind_cols(df, other, join="outer", ignore_index=False):
             part of the concatenation (defaults to `False`).
     """
 
-    df = pd.concat(
+    df = concat(
         [df.reset_index(drop=True), other.reset_index(drop=True)],
         join=join, ignore_index=ignore_index, axis=1, sort=False
     )

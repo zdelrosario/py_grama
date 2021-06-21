@@ -1,8 +1,8 @@
 __all__ = ["make_prlc", "make_prlc_rand"]
 
-import numpy as np
 import grama as gr
-import pandas as pd
+from numpy import sqrt
+
 
 ## Component tolerances
 C_percent_lo = -0.20
@@ -16,7 +16,7 @@ def make_prlc():
     md_RLC_det = (
         gr.Model("RLC Circuit")
         >> gr.cp_vec_function(
-            fun=lambda df: gr.df_make(np.sqrt(1 / df.L / df.C)),
+            fun=lambda df: gr.df_make(sqrt(1 / df.L / df.C)),
             var=["L", "C"],
             out=["omega0"],
         )
@@ -49,7 +49,7 @@ def make_prlc_rand():
         )
         >> gr.cp_vec_function(
             fun=lambda df: gr.df_make(
-                omega0=np.sqrt(1 / df.Lr / df.Cr)
+                omega0=sqrt(1 / df.Lr / df.Cr)
             ),
             var=["Lr", "Cr"],
             out=["omega0"],

@@ -23,7 +23,6 @@ __all__ = [
 ]
 
 from grama import make_symbolic
-
 from numpy import argsort, array, median, zeros, ones, NaN, arange
 from numpy import any as npany
 from numpy import all as npall
@@ -39,6 +38,7 @@ from numpy import ceil as npceil
 from numpy import round as npround
 from pandas import Categorical, Series
 from scipy.stats import norm
+
 
 # --------------------------------------------------
 # Mutation helpers

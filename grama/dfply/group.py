@@ -8,6 +8,7 @@ __all__ = [
 from .base import *
 from .. import add_pipe
 
+
 @symbolic_evaluation(eval_as_label=True)
 def tran_group_by(df, *args):
     df._grouped_by = list(args)

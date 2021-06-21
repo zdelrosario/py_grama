@@ -10,6 +10,7 @@ __all__ = [
 from .base import *
 from .. import add_pipe
 
+
 @dfdelegate
 def tran_mutate(df, **kwargs):
     """

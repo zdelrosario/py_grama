@@ -1,9 +1,6 @@
 __all__ = ["fit_ols", "ft_ols"]
 
 ## Fitting via statsmodels package
-from numpy import zeros
-from pandas import DataFrame
-
 try:
     import statsmodels.formula.api as smf
 
@@ -11,8 +8,11 @@ except ModuleNotFoundError:
     raise ModuleNotFoundError("module statsmodels not found")
 
 import grama as gr
-from grama import add_pipe, pipe
+from .. import add_pipe, pipe
+from numpy import zeros
+from pandas import DataFrame
 from toolz import curry
+
 
 ## Fit model via OLS
 # --------------------------------------------------

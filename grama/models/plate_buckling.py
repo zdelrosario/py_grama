@@ -1,8 +1,9 @@
-__all__ = ["make_plate_buckle"]
+__all__ = ["make_plate_buckle"]s
 
-import numpy as np
 import grama as gr
 from grama.data import df_stang
+from numpy import pi
+
 
 LOAD = 0.00128  # Applied load (kips)
 
@@ -13,7 +14,7 @@ HEIGHT = 12.0  # Plate height    (in)
 
 def function_buckle_state(x):
     t, h, w, E, mu, L = x
-    return np.pi * E / 12 / (1 - mu ** 2) * (t / h) ** 2 - L / t / w
+    return pi * E / 12 / (1 - mu ** 2) * (t / h) ** 2 - L / t / w
 
 
 def make_plate_buckle():

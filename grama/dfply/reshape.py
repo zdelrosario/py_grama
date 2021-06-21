@@ -16,11 +16,11 @@ __all__ = [
     "convert_type"
 ]
 
+import re
 from .base import *
 from .. import add_pipe
-import re
-import numpy as np
-import pandas as pd
+from numpy import arange, nan
+from pandas import Series, concat, melt, to_numeric, to_datetime
 
 
 # ------------------------------------------------------------------------------
@@ -55,11 +55,11 @@ def tran_arrange(df, *args, **kwargs):
         if isinstance(arg, str)
         else df.iloc[:, arg]
         if isinstance(arg, int)
-        else pd.Series(arg)
+        else Series(arg)
         for arg in flat_args
     ]
 
-    sorter = pd.concat(series, axis=1).reset_index(drop=True)
+    sorter = concat(series, axis=1).reset_index(drop=True)
     sorter = sorter.sort_values(sorter.columns.tolist(), **kwargs)
     return df.iloc[sorter.index, :].reset_index(drop=True)
 
@@ -130,11 +130,11 @@ def tran_gather(df, key, values, *args, **kwargs):
         args = [a for a in flatten(args)]
 
     if kwargs.get("add_id", False):
-        df = df.assign(_ID=np.arange(df.shape[0]))
+        df = df.assign(_ID=arange(df.shape[0]))
 
     columns = df.columns.tolist()
     id_vars = [col for col in columns if col not in args]
-    return pd.melt(df, id_vars, list(args), key, values)
+    return melt(df, id_vars, list(args), key, values)
 
 tf_gather = add_pipe(tran_gather)
 
@@ -152,7 +152,7 @@ def convert_type(df, columns):
     # taken in part from the dplython package
     out_df = df.copy()
     for col in columns:
-        column_values = pd.Series(out_df[col].unique())
+        column_values = Series(out_df[col].unique())
         column_values = column_values[~column_values.isnull()]
         # empty
         if len(column_values) == 0:
@@ -162,12 +162,12 @@ def convert_type(df, columns):
             out_df[col] = out_df[col].map({"True": True, "False": False})
             continue
         # numeric
-        if pd.to_numeric(column_values, errors="coerce").isnull().sum() == 0:
-            out_df[col] = pd.to_numeric(out_df[col], errors="ignore")
+        if to_numeric(column_values, errors="coerce").isnull().sum() == 0:
+            out_df[col] = to_numeric(out_df[col], errors="ignore")
             continue
         # datetime
-        if pd.to_datetime(column_values, errors="coerce").isnull().sum() == 0:
-            out_df[col] = pd.to_datetime(
+        if to_datetime(column_values, errors="coerce").isnull().sum() == 0:
+            out_df[col] = to_datetime(
                 out_df[col], errors="ignore", infer_datetime_format=True
             )
             continue
@@ -301,7 +301,7 @@ def tran_separate(
 
         splits = df[column].map(
             lambda x: [
-                str(x)[slice(inds[i], inds[i + 1])] if i < len(inds) - 1 else np.nan
+                str(x)[slice(inds[i], inds[i + 1])] if i < len(inds) - 1 else nan
                 for i in range(len(into))
             ]
         )
@@ -310,8 +310,8 @@ def tran_separate(
         maxsplit = len(into) - 1 if extra == "merge" else 0
         splits = df[column].map(lambda x: re.split(sep, x, maxsplit))
 
-    right_filler = lambda x: x + [np.nan for i in range(len(into) - len(x))]
-    left_filler = lambda x: [np.nan for i in range(len(into) - len(x))] + x
+    right_filler = lambda x: x + [nan for i in range(len(into) - len(x))]
+    left_filler = lambda x: [nan for i in range(len(into) - len(x))] + x
 
     if fill == "right":
         splits = [right_filler(x) for x in splits]
@@ -319,7 +319,7 @@ def tran_separate(
         splits = [left_filler(x) for x in splits]
 
     for i, split_col in enumerate(into):
-        df[split_col] = [x[i] if not x[i] == "" else np.nan for x in splits]
+        df[split_col] = [x[i] if not x[i] == "" else nan for x in splits]
 
     if convert:
         df = convert_type(df, into)
@@ -377,7 +377,7 @@ def tran_unite(df, colname, *args, **kwargs):
 
     if na_action == "maintain":
         df[colname] = df[to_unite].apply(
-            lambda x: np.nan if any(x.isnull()) else sep.join(x.map(str)), axis=1
+            lambda x: nan if any(x.isnull()) else sep.join(x.map(str)), axis=1
         )
     elif na_action == "ignore":
         df[colname] = df[to_unite].apply(

@@ -11,18 +11,17 @@ __all__ = [
     "tf_sobol",
 ]
 
-from numpy import round, dot
-from numpy.linalg import svd
-from pandas import concat, DataFrame
-
 import re
 import itertools
 import warnings
-
 from grama import add_pipe, pipe, custom_formatwarning
+from numpy import round, dot
+from numpy.linalg import svd
+from pandas import concat, DataFrame
 from toolz import curry
 
 warnings.formatwarning = custom_formatwarning
+
 
 ## Compute Sobol' indices
 # --------------------------------------------------
