@@ -5,8 +5,9 @@ __all__ = [
 ]
 
 from .base import *
-import pandas as pd
 from numpy import isnan, logical_not
+from pandas import Series
+
 
 # ------------------------------------------------------------------------------
 # Mask helpers
@@ -23,7 +24,7 @@ def var_in(series, collection):
         series: column to compute inclusion bools
         collection: set for inclusion calcs
     """
-    bools = pd.Series([s in collection for s in series])
+    bools = Series([s in collection for s in series])
 
     return bools
 

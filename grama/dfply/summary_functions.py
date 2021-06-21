@@ -23,10 +23,9 @@ __all__ = [
 
 from .base import *
 from .vector import *
-import numpy as np
-
-from numpy import sqrt, power
+from numpy import sqrt, power, nan
 from scipy.stats import norm, pearsonr, spearmanr
+
 
 # ------------------------------------------------------------------------------
 # Series summary functions
@@ -106,7 +105,7 @@ def nth(series, n, order_by=None):
     try:
         return series.iloc[n]
     except:
-        return np.nan
+        return nan
 
 
 @make_symbolic

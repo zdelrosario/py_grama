@@ -7,12 +7,11 @@ __all__ = [
     "flatten"
 ]
 
-import pandas as pd
-import numpy as np
 import warnings
-from functools import partial, wraps
-
 from .. import pipe, add_pipe  # Use grama pipe to preserve metadata
+from functools import partial, wraps
+from numpy import zeros, array
+from pandas import Series, Index, DataFrame
 
 
 def _recursive_apply(f, l):
@@ -236,9 +235,9 @@ class IntentionEvaluator(object):
         arg = self._evaluate(df, arg)
 
         cols = list(df.columns)
-        if isinstance(arg, pd.Series):
+        if isinstance(arg, Series):
             arg = arg.name
-        if isinstance(arg, pd.Index):
+        if isinstance(arg, Index):
             arg = list(arg)
         if isinstance(arg, int):
             arg = cols[arg]
@@ -251,11 +250,11 @@ class IntentionEvaluator(object):
             arg = arg.evaluate(df)
 
         cols = list(df.columns)
-        if isinstance(arg, pd.Series):
+        if isinstance(arg, Series):
             arg = [cols.index(arg.name)]
-        if isinstance(arg, pd.Index):
+        if isinstance(arg, Index):
             arg = [cols.index(i) for i in list(arg)]
-        if isinstance(arg, pd.DataFrame):
+        if isinstance(arg, DataFrame):
             arg = [cols.index(i) for i in arg.columns]
         if isinstance(arg, int):
             arg = [arg]
@@ -264,8 +263,8 @@ class IntentionEvaluator(object):
         if isinstance(arg, (list, tuple)):
             arg = [cols.index(i) if isinstance(i, str) else i for i in arg]
 
-        selection_vector = np.zeros(df.shape[1])
-        col_idx = np.array(arg)
+        selection_vector = zeros(df.shape[1])
+        col_idx = array(arg)
 
         if negate and len(col_idx) > 0:
             selection_vector[col_idx] = -1

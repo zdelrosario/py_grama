@@ -1,7 +1,7 @@
 __all__ = ["make_linear_normal"]
 
-import numpy as np
 import grama as gr
+
 
 def limit_state(x):
     x1, x2 = x

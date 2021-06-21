@@ -15,10 +15,10 @@ __all__ = [
 ]
 
 import re
-
 from grama import make_symbolic, pipe, valid_dist, param_dist, dfdelegate
-from pandas import Series
 from numpy import NaN, isnan
+from pandas import Series
+
 
 # ------------------------------------------------------------------------------
 # String helpers

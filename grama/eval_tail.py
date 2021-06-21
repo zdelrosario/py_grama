@@ -14,6 +14,7 @@ from pandas import DataFrame, concat
 from scipy.optimize import minimize
 from toolz import curry
 
+
 ## Utility Functions
 # --------------------------------------------------
 def make_T(model, df_corr):

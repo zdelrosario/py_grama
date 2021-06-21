@@ -7,11 +7,12 @@ __all__ = [
 
 from .base import *
 from .. import add_pipe
-import pandas as pd
+from pandas import DataFrame, Series
+
 
 @dfdelegate
 def tran_summarize(df, **kwargs):
-    return pd.DataFrame({k: [v] for k, v in kwargs.items()})
+    return DataFrame({k: [v] for k, v in kwargs.items()})
 
 tf_summarize = add_pipe(tran_summarize)
 
@@ -20,7 +21,7 @@ tf_summarize = add_pipe(tran_summarize)
 def tran_summarize_each(df, functions, *args):
     columns, values = [], []
     for arg in args:
-        if isinstance(arg, pd.Series):
+        if isinstance(arg, Series):
             varname = arg.name
             col = arg
         elif isinstance(arg, str):
@@ -35,6 +36,6 @@ def tran_summarize_each(df, functions, *args):
             columns.append("_".join([varname, fname]))
             values.append(f(col))
 
-    return pd.DataFrame([values], columns=columns)
+    return DataFrame([values], columns=columns)
 
 tf_summarize_each = add_pipe(tran_summarize_each)

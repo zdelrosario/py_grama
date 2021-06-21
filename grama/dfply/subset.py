@@ -19,11 +19,11 @@ __all__ = [
     "tf_dropna",
 ]
 
-from .base import *
 import warnings
-import numpy as np
-import pandas as pd
+from .base import *
 from .. import add_pipe
+from numpy import array, ones
+from pandas import Series
 
 
 # ------------------------------------------------------------------------------
@@ -70,10 +70,10 @@ tf_distinct = add_pipe(tran_distinct)
 @dfdelegate
 def tran_row_slice(df, indices):
     if isinstance(indices, (tuple, list)):
-        indices = np.array(indices)
+        indices = array(indices)
     if isinstance(indices, int):
-        indices = np.array([indices])
-    if isinstance(indices, pd.Series):
+        indices = array([indices])
+    if isinstance(indices, Series):
         indices = indices.values
 
     if indices.dtype == bool:
@@ -91,7 +91,7 @@ tf_row_slice = add_pipe(tran_row_slice)
 
 @dfdelegate
 def mask(df, *args):
-    mask = pd.Series(np.ones(df.shape[0], dtype=bool))
+    mask = Series(ones(df.shape[0], dtype=bool))
     for arg in args:
         if arg.dtype != bool:
             raise Exception("Arguments must be boolean.")
@@ -107,7 +107,7 @@ tf_filter = add_pipe(tran_filter)
 def tran_top_n(df, n=None, ascending=True, col=None):
     if not n:
         raise ValueError("n must be specified")
-    if not isinstance(col, pd.Series):
+    if not isinstance(col, Series):
         col = df.columns[-1]
     else:
         col = col._name
@@ -121,7 +121,7 @@ tf_top_n = add_pipe(tran_top_n)
 
 @dfdelegate
 def tran_pull(df, col=-1):
-    if not isinstance(col, pd.Series):
+    if not isinstance(col, Series):
         col = df.columns[-1]
     else:
         col = col._name

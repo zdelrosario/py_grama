@@ -1,8 +1,7 @@
 __all__ = ["make_poly"]
 
-import numpy as np
-
 import grama as gr
+
 
 def make_poly():
     md = gr.Model("Polynomials") >> \

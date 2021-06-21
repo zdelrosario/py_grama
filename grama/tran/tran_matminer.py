@@ -12,8 +12,9 @@ except ModuleNotFoundError:
     raise ModuleNotFoundError("module matminer not found")
 
 from grama import add_pipe, pipe
-from toolz import curry
 from pandas import concat
+from toolz import curry
+
 
 ## Compute matminer featurization
 # --------------------------------------------------

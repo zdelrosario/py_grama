@@ -6,8 +6,11 @@ __all__ = ["make_composite_plate_tension"]
 # C.T. Sun "Mechanics of Aircraft Structures" (1998)
 
 import grama as gr
-import numpy as np
 import itertools
+from numpy import pi, sqrt, cos, sin, array, dot, zeros, sum, \
+    reshape, abs, Inf, tile
+from numpy.linalg import solve, inv
+
 
 ## Composite properties
 ##################################################
@@ -24,7 +27,7 @@ nu12_SIG = nu12_M * 0.08 # By 8% COV
 
 T_NOM    = 1e-3            # Nominal thickness
 T_PM     = T_NOM * 0.01    # +/- ply thickness
-THETA_PM = 3 * np.pi / 180 # +/- angle tolerance
+THETA_PM = 3 * pi / 180 # +/- angle tolerance
 
 SIG_11_T_M = 1.4e9 # Tensile strength
 SIG_11_C_M = 0.5e9 # Compressive strength
@@ -41,7 +44,7 @@ SIG_22_T_CV = 0.06
 SIG_22_C_CV = 0.06
 
 Nx_M = 1.2e6                    # Nominal load conditions [N/m]
-Nx_SIG = Nx_M * np.sqrt(0.01)
+Nx_SIG = Nx_M * sqrt(0.01)
 
 ## Laminate Composite Analysis
 ##################################################
@@ -55,10 +58,10 @@ def make_Ts(theta):
     Returns
         Ts    = stress transformation matrix
     """
-    C = np.cos(theta)
-    S = np.sin(theta)
+    C = cos(theta)
+    S = sin(theta)
 
-    return np.array([
+    return array([
         [  C**2,  S**2,   2 * S * C],
         [  S**2,  C**2,  -2 * S * C],
         [-S * C, S * C, C**2 - S**2]
@@ -74,10 +77,10 @@ def make_Te(theta):
     Returns
         Te    = strain transformation matrix
     """
-    C = np.cos(theta)
-    S = np.sin(theta)
+    C = cos(theta)
+    S = sin(theta)
 
-    return np.array([
+    return array([
         [      C**2,      S**2,       S * C],
         [      S**2,      C**2,      -S * C],
         [-2 * S * C, 2 * S * C, C**2 - S**2]
@@ -104,7 +107,7 @@ def make_Q(param):
     Q22 = E2 / (1 - nu12 * nu21)
     Q66 = G12
 
-    return np.array([
+    return array([
         [ Q11, Q12,   0],
         [ Q21, Q22,   0],
         [   0,   0, Q66]
@@ -126,7 +129,7 @@ def make_Qb(param, theta):
     Te     = make_Te(+theta)
     Q      = make_Q(param)
 
-    return np.dot(Ts_inv, np.dot(Q, Te))
+    return dot(Ts_inv, dot(Q, Te))
 
 # Construct extensional stiffness matrix
 def make_A(Param, Theta, T):
@@ -149,12 +152,12 @@ def make_A(Param, Theta, T):
     @pre len(Param) == len(T)
     """
     n_k = len(Param)
-    Qb_all = np.zeros((3, 3, n_k))
+    Qb_all = zeros((3, 3, n_k))
 
     for ind in range(n_k):
         Qb_all[:, :, ind] = make_Qb(Param[ind], Theta[ind]) * T[ind]
 
-    return np.sum(Qb_all, axis = 2)
+    return sum(Qb_all, axis = 2)
 
 # Compute stresses under uniaxial tension
 def uniaxial_stresses(Param, Theta, T):
@@ -181,16 +184,16 @@ def uniaxial_stresses(Param, Theta, T):
     """
     ## Solve for state of strain with uniaxial loading
     Ab = make_A(Param, Theta, T)
-    strains = np.linalg.solve(Ab, np.array([1, 0, 0]))
+    strains = solve(Ab, array([1, 0, 0]))
 
     ## Solve for each lamina state of strain in local coordinates
     n_k      = len(Param)
-    Stresses = np.zeros((n_k, 3))
+    Stresses = zeros((n_k, 3))
     for ind in range(n_k):
         ## Solve in global coordinates
-        stress_global = np.dot(make_Qb(Param[ind], Theta[ind]), strains)
+        stress_global = dot(make_Qb(Param[ind], Theta[ind]), strains)
         ## Convert to lamina coordinates
-        Stresses[ind] = np.dot(make_Ts(Theta[ind]), stress_global)
+        Stresses[ind] = dot(make_Ts(Theta[ind]), stress_global)
 
     return Stresses
 
@@ -219,7 +222,7 @@ def uniaxial_stress_limit(X):
     """
     ## Pre-process inputs
     k = int((len(X) - 1) / 11)
-    Y = np.reshape(np.array(X[:-1]), (k, 11))
+    Y = reshape(array(X[:-1]), (k, 11))
 
     ## Unpack inputs
     Nx        = X[-1]
@@ -232,10 +235,10 @@ def uniaxial_stress_limit(X):
     Stresses = Nx * uniaxial_stresses(Param, Theta, T)
 
     ## Construct limit state
-    g_limit = np.zeros((k, 5))
+    g_limit = zeros((k, 5))
     g_limit[:, (0,1)] = +1 - Stresses[:, (0,1)] / Sigma_max[:, (0,1)]
     g_limit[:, (2,3)] = +1 + Stresses[:, (0,1)] / Sigma_max[:, (2,3)]
-    g_limit[:, 4]     = +1 - np.abs(Stresses[:, 2]) / Sigma_max[:, 4]
+    g_limit[:, 4]     = +1 - abs(Stresses[:, 2]) / Sigma_max[:, 4]
 
     return g_limit.flatten()
 
@@ -279,18 +282,18 @@ def make_domain(Theta_nom, T_nom= T_NOM):
     """
     k = len(Theta_nom)
     bounds_list = list(itertools.chain.from_iterable([
-       [("E1_{}".format(i), [0, +np.Inf]),
-        ("E2_{}".format(i), [0, +np.Inf]),
-        ("nu12_{}".format(i), [-np.Inf, +np.Inf]),
-        ("G12_{}".format(i), [0, +np.Inf]),
-        ("theta_{}".format(i), [-np.pi/2, +np.pi/2]),
-        ("t_{}".format(i), [-np.Inf, +np.Inf]),
-        ("sigma_11_t_{}".format(i), [0, +np.Inf]),
-        ("sigma_22_t_{}".format(i), [0, +np.Inf]),
-        ("sigma_11_c_{}".format(i), [0, +np.Inf]),
-        ("sigma_22_c_{}".format(i), [0, +np.Inf]),
-        ("sigma_12_s_{}".format(i), [0, +np.Inf])] for i in range(k)
-    ])) + [("Nx", [-np.Inf, +np.Inf])]
+       [("E1_{}".format(i), [0, +Inf]),
+        ("E2_{}".format(i), [0, +Inf]),
+        ("nu12_{}".format(i), [-Inf, +Inf]),
+        ("G12_{}".format(i), [0, +Inf]),
+        ("theta_{}".format(i), [-pi/2, +pi/2]),
+        ("t_{}".format(i), [-Inf, +Inf]),
+        ("sigma_11_t_{}".format(i), [0, +Inf]),
+        ("sigma_22_t_{}".format(i), [0, +Inf]),
+        ("sigma_11_c_{}".format(i), [0, +Inf]),
+        ("sigma_22_c_{}".format(i), [0, +Inf]),
+        ("sigma_12_s_{}".format(i), [0, +Inf])] for i in range(k)
+    ])) + [("Nx", [-Inf, +Inf])]
     bounds = dict(bounds_list)
 
     return gr.Domain(bounds=bounds)
@@ -394,7 +397,7 @@ def make_density(Theta_nom, T_nom=T_NOM):
 class make_composite_plate_tension(gr.Model):
     def __init__(self, Theta_nom, T_nom=T_NOM):
         k = len(Theta_nom)
-        deg_int = [int(theta / np.pi * 180) for theta in Theta_nom]
+        deg_int = [int(theta / pi * 180) for theta in Theta_nom]
         def mapSign(x):
             if x < 0:
                 return "m" + str(abs(x))
@@ -436,10 +439,10 @@ if __name__ == "__main__":
     nu12 = 0.3
 
     param = [E1, E2, nu12, G12]
-    theta = 45. * np.pi / 180
+    theta = 45. * pi / 180
 
     Qb = make_Qb(param, theta)
-    Sb = np.linalg.inv(Qb)
+    Sb = inv(Qb)
 
     ## Example 8.4
     E1   = 180e9    # Pa
@@ -448,9 +451,9 @@ if __name__ == "__main__":
     nu12 = 0.3      # [-]
     t    = 0.127e-3 # m
 
-    Theta = np.array([+45, -45, 0, 90, 90, 0, -45, +45]) * np.pi / 180
-    Param = np.tile([E1, E2, nu12, G12], reps = (len(Theta), 1))
-    T     = np.array([t] * len(Theta))
+    Theta = array([+45, -45, 0, 90, 90, 0, -45, +45]) * pi / 180
+    Param = tile([E1, E2, nu12, G12], reps = (len(Theta), 1))
+    T     = array([t] * len(Theta))
 
     A = make_A(Param, Theta, T)
 
@@ -458,7 +461,7 @@ if __name__ == "__main__":
     print(A / t)
 
     # Uniaxial (unit) tension
-    strain_uniaxial = np.linalg.solve(A, np.array([1, 0, 0]))
+    strain_uniaxial = linalg.solve(A, array([1, 0, 0]))
     stress_uniaxial = uniaxial_stresses(Param, Theta, T)
 
     ## Test model

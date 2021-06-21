@@ -5,6 +5,7 @@ import grama as gr
 from grama import add_pipe, pipe
 from toolz import curry
 
+
 ## Fit a metamodel
 # --------------------------------------------------
 @curry

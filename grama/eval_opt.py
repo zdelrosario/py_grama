@@ -5,16 +5,16 @@ __all__ = [
     "ev_min",
 ]
 
-from grama import add_pipe, pipe, custom_formatwarning, df_make
-from grama import eval_df, eval_nominal, eval_monte_carlo
-from grama import comp_marginals, comp_copula_independence
-from grama import tran_outer
+from grama import add_pipe, pipe, custom_formatwarning, df_make, \
+    eval_df, eval_nominal, eval_monte_carlo, comp_marginals, \
+    comp_copula_independence, tran_outer
 from numpy import Inf, isfinite
 from numpy.random import seed as setseed
 from pandas import DataFrame, concat
+from pathos.multiprocessing import ProcessingPool as Pool
 from scipy.optimize import minimize
 from toolz import curry
-from pathos.multiprocessing import ProcessingPool as Pool
+
 
 ## Nonlinear least squares
 # --------------------------------------------------

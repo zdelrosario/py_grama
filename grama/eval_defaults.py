@@ -9,13 +9,13 @@ __all__ = [
     "ev_conservative",
 ]
 
-from numpy import ones, eye, tile, atleast_2d
-from pandas import DataFrame, concat
 import itertools
-
 import grama as gr
 from grama import add_pipe, pipe
+from numpy import ones, eye, tile, atleast_2d
+from pandas import DataFrame, concat
 from toolz import curry
+
 
 ## Default evaluation function
 # --------------------------------------------------
