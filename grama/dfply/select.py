@@ -22,7 +22,8 @@ __all__ = [
 import re
 from .base import *
 from .. import add_pipe
-from numpy import zeros, where, ones, max
+from numpy import zeros, where, ones
+from numpy import max as npmax
 from pandas import Index, Series
 
 
@@ -82,7 +83,7 @@ def tran_select(df, *args):
     if (column_indices == 0).all():
         return df[[]]
     selection = where(
-        (column_indices == max(column_indices)) & (column_indices >= 0)
+        (column_indices == npmax(column_indices)) & (column_indices >= 0)
     )[0]
     df = df.iloc[:, selection]
     if all([col in ordering for col in df.columns]):
@@ -101,7 +102,7 @@ def tran_drop(df, *args):
     if (column_indices == 0).all():
         return df[[]]
     selection = where(
-        (column_indices == max(column_indices)) & (column_indices >= 0)
+        (column_indices == npmax(column_indices)) & (column_indices >= 0)
     )[0]
     return df.iloc[:, selection]
 

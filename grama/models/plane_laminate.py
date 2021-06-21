@@ -7,8 +7,9 @@ __all__ = ["make_composite_plate_tension"]
 
 import grama as gr
 import itertools
-from numpy import pi, sqrt, cos, sin, array, dot, zeros, sum, \
-    reshape, abs, Inf, tile
+from numpy import pi, sqrt, cos, sin, array, dot, zeros, reshape, Inf, tile
+from numpy import abs as npabs
+from numpy import sum as npsum
 from numpy.linalg import solve, inv
 
 
@@ -157,7 +158,7 @@ def make_A(Param, Theta, T):
     for ind in range(n_k):
         Qb_all[:, :, ind] = make_Qb(Param[ind], Theta[ind]) * T[ind]
 
-    return sum(Qb_all, axis = 2)
+    return npsum(Qb_all, axis = 2)
 
 # Compute stresses under uniaxial tension
 def uniaxial_stresses(Param, Theta, T):
@@ -238,7 +239,7 @@ def uniaxial_stress_limit(X):
     g_limit = zeros((k, 5))
     g_limit[:, (0,1)] = +1 - Stresses[:, (0,1)] / Sigma_max[:, (0,1)]
     g_limit[:, (2,3)] = +1 + Stresses[:, (0,1)] / Sigma_max[:, (2,3)]
-    g_limit[:, 4]     = +1 - abs(Stresses[:, 2]) / Sigma_max[:, 4]
+    g_limit[:, 4]     = +1 - npabs(Stresses[:, 2]) / Sigma_max[:, 4]
 
     return g_limit.flatten()
 
@@ -400,7 +401,7 @@ class make_composite_plate_tension(gr.Model):
         deg_int = [int(theta / pi * 180) for theta in Theta_nom]
         def mapSign(x):
             if x < 0:
-                return "m" + str(abs(x))
+                return "m" + str(npabs(x))
             elif x > 0:
                 return "p" + str(x)
             else:
