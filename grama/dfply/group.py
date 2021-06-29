@@ -5,7 +5,7 @@ __all__ = [
     "tf_ungroup",
 ]
 
-from .base import *
+from .base import symbolic_evaluation
 from .. import add_pipe
 
 

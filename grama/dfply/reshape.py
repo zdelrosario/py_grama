@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 import re
-from .base import *
+from .base import dfdelegate, symbolic_evaluation, flatten
 from .. import add_pipe
 from numpy import arange, nan
 from pandas import Series, concat, melt, to_numeric, to_datetime

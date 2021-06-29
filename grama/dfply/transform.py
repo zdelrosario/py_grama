@@ -7,7 +7,7 @@ __all__ = [
     "tf_transmute",
 ]
 
-from .base import *
+from .base import dfdelegate, make_symbolic, flatten
 from .. import add_pipe
 
 

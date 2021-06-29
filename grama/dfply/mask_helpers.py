@@ -4,7 +4,7 @@ __all__ = [
     "not_nan",
 ]
 
-from .base import *
+from .base import make_symbolic
 from numpy import isnan, logical_not
 from pandas import Series
 

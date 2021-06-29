@@ -20,7 +20,8 @@ __all__ = [
 ]
 
 import re
-from .base import *
+from .base import Intention, dfdelegate, symbolic_evaluation, \
+    group_delegation, flatten
 from .. import add_pipe
 from numpy import zeros, where, ones
 from numpy import max as npmax

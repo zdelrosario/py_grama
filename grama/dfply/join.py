@@ -19,7 +19,7 @@ __all__ = [
     "tf_bind_cols",
 ]
 
-from .base import *
+from .base import dfdelegate
 from .. import add_pipe
 from pandas import concat
 

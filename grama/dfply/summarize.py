@@ -5,7 +5,7 @@ __all__ = [
     "tf_summarize_each",
 ]
 
-from .base import *
+from .base import dfdelegate
 from .. import add_pipe
 from pandas import DataFrame, Series
 

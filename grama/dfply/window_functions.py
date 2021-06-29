@@ -15,7 +15,7 @@ __all__ = [
     "row_number",
 ]
 
-from .base import *
+from .base import make_symbolic
 
 
 # ------------------------------------------------------------------------------

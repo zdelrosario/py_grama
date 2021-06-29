@@ -21,8 +21,8 @@ __all__ = [
     "corr",
 ]
 
-from .base import *
-from .vector import *
+from .base import make_symbolic
+from .vector import order_series_by
 from numpy import sqrt, power, nan
 from scipy.stats import norm, pearsonr, spearmanr
 

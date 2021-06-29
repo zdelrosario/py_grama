@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 import warnings
-from .base import *
+from .base import dfdelegate, symbolic_evaluation, group_delegation
 from .. import add_pipe
 from numpy import array, ones
 from pandas import Series

@@ -8,7 +8,7 @@ __all__ = [
 ]
 
 import warnings
-from .base import *
+from .base import dfdelegate
 from .. import add_pipe
 from pandas import merge
 
