@@ -13,8 +13,9 @@ except ModuleNotFoundError:
     raise ModuleNotFoundError("module sklearn not found")
 
 from grama import add_pipe
-from toolz import curry
 from pandas import concat, DataFrame
+from toolz import curry
+
 
 ## Compute t-SNE
 # --------------------------------------------------

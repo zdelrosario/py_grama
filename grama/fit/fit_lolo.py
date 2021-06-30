@@ -11,13 +11,13 @@ except ModuleNotFoundError:
     raise ModuleNotFoundError("module lolopy not found")
 
 import grama as gr
-
 from grama import add_pipe, pipe
 from numpy import stack
 from numpy.random import seed as set_seed
 from pandas import DataFrame
 from toolz import curry
 from warnings import filterwarnings
+
 
 ## Helper functions and classes
 # --------------------------------------------------

@@ -1,6 +1,31 @@
-import re
+__all__ = [
+    "tran_select",
+    "tf_select",
+    "tran_select_if",
+    "tf_select_if",
+    "tran_drop",
+    "tf_drop",
+    "tran_drop_if",
+    "tf_drop_if",
+    "starts_with",
+    "ends_with",
+    "contains",
+    "matches",
+    "everything",
+    "num_range",
+    "one_of",
+    "columns_between",
+    "columns_from",
+    "columns_to",
+]
 
-from .base import *
+import re
+from .base import Intention, dfdelegate, symbolic_evaluation, \
+    group_delegation, flatten
+from .. import add_pipe
+from numpy import zeros, where, ones
+from numpy import max as npmax
+from pandas import Index, Series
 
 
 # ------------------------------------------------------------------------------
@@ -11,9 +36,9 @@ from .base import *
 def selection_context(arg, context):
     if isinstance(arg, Intention):
         arg = arg.evaluate(context)
-        if isinstance(arg, pd.Index):
+        if isinstance(arg, Index):
             arg = list(arg)
-        if isinstance(arg, pd.Series):
+        if isinstance(arg, Series):
             arg = arg.name
     return arg
 
@@ -35,31 +60,31 @@ def resolve_selection(df, *args, drop=False):
     if len(args) > 0:
         args = [a for a in flatten(args)]
         ordering = []
-        column_indices = np.zeros(df.shape[1])
+        column_indices = zeros(df.shape[1])
         for selector in args:
-            visible = np.where(selector != 0)[0]
+            visible = where(selector != 0)[0]
             if not drop:
                 column_indices[visible] = selector[visible]
             else:
                 column_indices[visible] = selector[visible] * -1
-            for selection in np.where(selector == 1)[0]:
+            for selection in where(selector == 1)[0]:
                 if not df.columns[selection] in ordering:
                     ordering.append(df.columns[selection])
     else:
         ordering = list(df.columns)
-        column_indices = np.ones(df.shape[1])
+        column_indices = ones(df.shape[1])
     return ordering, column_indices
 
 
-@pipe
+
 @group_delegation
 @symbolic_evaluation(eval_as_selector=True)
-def select(df, *args):
+def tran_select(df, *args):
     ordering, column_indices = resolve_selection(df, *args)
     if (column_indices == 0).all():
         return df[[]]
-    selection = np.where(
-        (column_indices == np.max(column_indices)) & (column_indices >= 0)
+    selection = where(
+        (column_indices == npmax(column_indices)) & (column_indices >= 0)
     )[0]
     df = df.iloc[:, selection]
     if all([col in ordering for col in df.columns]):
@@ -68,22 +93,25 @@ def select(df, *args):
     else:
         return df
 
+tf_select = add_pipe(tran_select)
 
-@pipe
+
 @group_delegation
 @symbolic_evaluation(eval_as_selector=True)
-def drop(df, *args):
+def tran_drop(df, *args):
     _, column_indices = resolve_selection(df, *args, drop=True)
     if (column_indices == 0).all():
         return df[[]]
-    selection = np.where(
-        (column_indices == np.max(column_indices)) & (column_indices >= 0)
+    selection = where(
+        (column_indices == npmax(column_indices)) & (column_indices >= 0)
     )[0]
     return df.iloc[:, selection]
 
+tf_drop = add_pipe(tran_drop)
 
-@pipe
-def select_if(df, fun):
+
+@dfdelegate
+def tran_select_if(df, fun):
     """Selects columns where fun(ction) is true
     Args:
         fun: a function that will be applied to columns
@@ -98,9 +126,11 @@ def select_if(df, fun):
     cols = list(filter(_filter_f, df.columns))
     return df[cols]
 
+tf_select_if = add_pipe(tran_select_if)
 
-@pipe
-def drop_if(df, fun):
+
+@dfdelegate
+def tran_drop_if(df, fun):
     """Drops columns where fun(ction) is true
     Args:
         fun: a function that will be applied to columns
@@ -115,6 +145,7 @@ def drop_if(df, fun):
     cols = list(filter(_filter_f, df.columns))
     return df.drop(cols, axis=1)
 
+tf_drop_if = add_pipe(tran_drop_if)
 
 @selection_filter
 def starts_with(columns, prefix):

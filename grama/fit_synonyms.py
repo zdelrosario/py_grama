@@ -6,18 +6,17 @@ __all__ = [
 ## Collection of fitting synonyms: functions implemented in terms of other grama
 ## verbs
 
-from grama import add_pipe, pipe, custom_formatwarning, Model
-from grama import df_make, tran_outer
-from grama import eval_nominal, eval_nls, eval_df, eval_grad_fd
-from grama import cp_function, cp_md_det, cp_marginals
-from grama import cp_copula_gaussian, cp_bounds
+from grama import add_pipe, pipe, custom_formatwarning, Model, \
+    df_make, tran_outer, eval_nominal, eval_nls, eval_df, \
+    eval_grad_fd, cp_function, cp_md_det, cp_marginals, \
+    cp_copula_gaussian, cp_bounds
 from toolz import curry
-from pandas import concat, DataFrame
 from numpy import zeros, diag, atleast_2d, triu_indices
 from numpy import sum as npsum
 from numpy import power as nppow
 from numpy import sqrt as npsqrt
 from numpy.linalg import pinv, cond
+from pandas import concat, DataFrame
 from warnings import warn
 
 

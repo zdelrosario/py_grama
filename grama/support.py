@@ -17,6 +17,7 @@ from pandas import DataFrame
 from toolz import curry
 from warnings import warn
 
+
 ## Helper functions
 ##################################################
 def _iterate_x(X, Y, ind):

@@ -1,8 +1,31 @@
-from .base import *
-from .vector import *
+__all__ = [
+    "mean",
+    "first",
+    "last",
+    "nth",
+    "n",
+    "n_distinct",
+    "IQR",
+    "quant",
+    "colmin",
+    "colmax",
+    "colsum",
+    "median",
+    "var",
+    "sd",
+    "binomial_ci",
+    "mse",
+    "rmse",
+    "ndme",
+    "rsq",
+    "corr",
+]
 
-from numpy import sqrt, power
+from .base import make_symbolic
+from .vector import order_series_by
+from numpy import sqrt, power, nan
 from scipy.stats import norm, pearsonr, spearmanr
+
 
 # ------------------------------------------------------------------------------
 # Series summary functions
@@ -82,7 +105,7 @@ def nth(series, n, order_by=None):
     try:
         return series.iloc[n]
     except:
-        return np.nan
+        return nan
 
 
 @make_symbolic

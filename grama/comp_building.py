@@ -17,11 +17,12 @@ __all__ = [
     "cp_marginals",
 ]
 
-from collections import ChainMap
 import grama as gr
+from collections import ChainMap
 from grama import add_pipe, pipe
-from toolz import curry
 from pandas import concat, DataFrame
+from toolz import curry
+
 
 ## Model Building Interface (MBI) tools
 ##################################################

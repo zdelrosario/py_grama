@@ -1,10 +1,10 @@
 __all__ = ["make_cantilever_beam"]
 
-import numpy as np
 import grama as gr
 from collections import OrderedDict as od
-from numpy import sqrt, array, Inf
+from numpy import sqrt, array, Inf, float64
 from scipy.stats import norm
+
 
 LENGTH = 100
 D_MAX  = 2.2535
@@ -29,7 +29,7 @@ def function_stress(x):
 
 def function_displacement(x):
     w, t, H, V, E, Y = x
-    return D_MAX - np.float64(4) * LENGTH**3 / E / w / t * sqrt(
+    return D_MAX - float64(4) * LENGTH**3 / E / w / t * sqrt(
         V**2 / t**4 + H**2 / w**4
     )
 

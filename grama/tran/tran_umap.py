@@ -10,8 +10,9 @@ except ModuleNotFoundError:
     raise ModuleNotFoundError("module umap not found")
 
 from grama import add_pipe
-from toolz import curry
 from pandas import concat, DataFrame
+from toolz import curry
+
 
 ## Compute UMAP
 # --------------------------------------------------

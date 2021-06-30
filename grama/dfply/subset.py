@@ -1,6 +1,29 @@
-from .base import *
+__all__ = [
+    "tran_head",
+    "tf_head",
+    "tran_tail",
+    "tf_tail",
+    "tran_sample",
+    "tf_sample",
+    "tran_distinct",
+    "tf_distinct",
+    "tran_row_slice",
+    "tf_row_slice",
+    "tran_filter",
+    "tf_filter",
+    "tran_top_n",
+    "tf_top_n",
+    "tran_pull",
+    "tf_pull",
+    "tran_dropna",
+    "tf_dropna",
+]
+
 import warnings
-import numpy as np
+from .base import dfdelegate, symbolic_evaluation, group_delegation
+from .. import add_pipe
+from numpy import array, ones
+from pandas import Series
 
 
 # ------------------------------------------------------------------------------
@@ -8,14 +31,18 @@ import numpy as np
 # ------------------------------------------------------------------------------
 
 
-@dfpipe
-def head(df, n=5):
+@dfdelegate
+def tran_head(df, n=5):
     return df.head(n)
 
+tf_head = add_pipe(tran_head)
 
-@dfpipe
-def tail(df, n=5):
+
+@dfdelegate
+def tran_tail(df, n=5):
     return df.tail(n)
+
+tf_tail = add_pipe(tran_tail)
 
 
 # ------------------------------------------------------------------------------
@@ -23,27 +50,30 @@ def tail(df, n=5):
 # ------------------------------------------------------------------------------
 
 
-@dfpipe
-def sample(df, *args, **kwargs):
+@dfdelegate
+def tran_sample(df, *args, **kwargs):
     return df.sample(*args, **kwargs).reset_index(drop=True)
 
+tf_sample = add_pipe(tran_sample)
 
-@pipe
+
 @group_delegation
 @symbolic_evaluation(eval_as_label=["*"])
-def distinct(df, *args, **kwargs):
+def tran_distinct(df, *args, **kwargs):
     if not args:
         return df.drop_duplicates(**kwargs).reset_index(drop=True)
     return df.drop_duplicates(list(args), **kwargs).reset_index(drop=True)
 
+tf_distinct = add_pipe(tran_distinct)
 
-@dfpipe
-def row_slice(df, indices):
+
+@dfdelegate
+def tran_row_slice(df, indices):
     if isinstance(indices, (tuple, list)):
-        indices = np.array(indices)
+        indices = array(indices)
     if isinstance(indices, int):
-        indices = np.array([indices])
-    if isinstance(indices, pd.Series):
+        indices = array([indices])
+    if isinstance(indices, Series):
         indices = indices.values
 
     if indices.dtype == bool:
@@ -51,30 +81,33 @@ def row_slice(df, indices):
     else:
         return df.iloc[indices, :].reset_index(drop=True)
 
+tf_row_slice = add_pipe(tran_row_slice)
+
 
 # ------------------------------------------------------------------------------
 # Filtering/masking
 # ------------------------------------------------------------------------------
 
 
-@dfpipe
+@dfdelegate
 def mask(df, *args):
-    mask = pd.Series(np.ones(df.shape[0], dtype=bool))
+    mask = Series(ones(df.shape[0], dtype=bool))
     for arg in args:
         if arg.dtype != bool:
             raise Exception("Arguments must be boolean.")
         mask = mask & arg.reset_index(drop=True)
     return df[mask.values].reset_index(drop=True)
 
+tran_filter = mask  # alias for mask()
 
-filter_by = mask  # alias for mask()
+tf_filter = add_pipe(tran_filter)
 
 
-@dfpipe
-def top_n(df, n=None, ascending=True, col=None):
+@dfdelegate
+def tran_top_n(df, n=None, ascending=True, col=None):
     if not n:
         raise ValueError("n must be specified")
-    if not isinstance(col, pd.Series):
+    if not isinstance(col, Series):
         col = df.columns[-1]
     else:
         col = col._name
@@ -83,16 +116,23 @@ def top_n(df, n=None, ascending=True, col=None):
     index = index[index["ranks"] >= index["ranks"].nlargest(n).min()]
     return df.reindex(index.index)
 
+tf_top_n = add_pipe(tran_top_n)
 
-@dfpipe
-def pull(df, col=-1):
-    if not isinstance(col, pd.Series):
+
+@dfdelegate
+def tran_pull(df, col=-1):
+    if not isinstance(col, Series):
         col = df.columns[-1]
     else:
         col = col._name
 
     return df[col]
 
-@dfpipe
-def dropna(df, how="any", subset=None):
+tf_pull = add_pipe(tran_pull)
+
+
+@dfdelegate
+def tran_dropna(df, how="any", subset=None):
    return df.dropna(how=how, subset=subset).reset_index(drop=True)
+
+tf_dropna = add_pipe(tran_dropna)
