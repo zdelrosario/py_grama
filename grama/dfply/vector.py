@@ -1,5 +1,16 @@
-from .base import *
+__all__ = [
+    "order_series_by",
+    "desc",
+    "coalesce",
+    "case_when",
+    "if_else",
+    "na_if",
+]
+
 import collections
+from .base import make_symbolic
+from numpy import argmin, arange, unique, repeat, nan, array
+from pandas import concat, DataFrame, Series, isnull
 
 
 # ------------------------------------------------------------------------------
@@ -26,14 +37,14 @@ def order_series_by(series, order_series):
     """
 
     if isinstance(order_series, (list, tuple)):
-        sorter = pd.concat(order_series, axis=1)
+        sorter = concat(order_series, axis=1)
         sorter_columns = ["_sorter" + str(i) for i in range(len(order_series))]
         sorter.columns = sorter_columns
         sorter["series"] = series.values
         sorted_series = sorter.sort_values(sorter_columns)["series"]
         return sorted_series
     else:
-        sorted_series = pd.DataFrame(
+        sorted_series = DataFrame(
             {"series": series.values, "order": order_series.values}
         ).sort_values("order", ascending=True)["series"]
         return sorted_series
@@ -104,11 +115,11 @@ def coalesce(*series):
         4  np.nan
     """
 
-    series = [pd.Series(s) for s in series]
-    coalescer = pd.concat(series, axis=1)
-    min_nonna = np.argmin(pd.isnull(coalescer).values, axis=1)
+    series = [Series(s) for s in series]
+    coalescer = concat(series, axis=1)
+    min_nonna = argmin(isnull(coalescer).values, axis=1)
     min_nonna = [coalescer.columns[i] for i in min_nonna]
-    return coalescer.lookup(np.arange(coalescer.shape[0]), min_nonna)
+    return coalescer.lookup(arange(coalescer.shape[0]), min_nonna)
 
 
 # ------------------------------------------------------------------------------
@@ -173,19 +184,19 @@ def case_when(*conditions):
             lengths.append(len(logical))
         if isinstance(outcome, collections.Iterable) and not isinstance(outcome, str):
             lengths.append(len(outcome))
-    unique_lengths = np.unique(lengths)
+    unique_lengths = unique(lengths)
     assert len(unique_lengths) == 1
     output_len = unique_lengths[0]
 
     output = []
     for logical, outcome in conditions:
         if isinstance(logical, bool):
-            logical = np.repeat(logical, output_len)
-        if isinstance(logical, pd.Series):
+            logical = repeat(logical, output_len)
+        if isinstance(logical, Series):
             logical = logical.values
         if not isinstance(outcome, collections.Iterable) or isinstance(outcome, str):
-            outcome = pd.Series(np.repeat(outcome, output_len))
-        outcome[~logical] = np.nan
+            outcome = Series(repeat(outcome, output_len))
+        outcome[~logical] = nan
         output.append(outcome)
 
     return coalesce(*output)
@@ -219,17 +230,17 @@ def if_else(condition, when_true, otherwise):
     """
 
     if not isinstance(when_true, collections.Iterable) or isinstance(when_true, str):
-        when_true = np.repeat(when_true, len(condition))
+        when_true = repeat(when_true, len(condition))
     if not isinstance(otherwise, collections.Iterable) or isinstance(otherwise, str):
-        otherwise = np.repeat(otherwise, len(condition))
+        otherwise = repeat(otherwise, len(condition))
     assert (len(condition) == len(when_true)) and (len(condition) == len(otherwise))
 
-    if isinstance(when_true, pd.Series):
+    if isinstance(when_true, Series):
         when_true = when_true.values
-    if isinstance(otherwise, pd.Series):
+    if isinstance(otherwise, Series):
         otherwise = otherwise.values
 
-    output = np.array(
+    output = array(
         [when_true[i] if c else otherwise[i] for i, c in enumerate(condition)]
     )
     return output
@@ -250,6 +261,6 @@ def na_if(series, *values):
         *values: Value(s) to convert to `np.nan` in the series.
     """
 
-    series = pd.Series(series)
-    series[series.isin(values)] = np.nan
+    series = Series(series)
+    series[series.isin(values)] = nan
     return series

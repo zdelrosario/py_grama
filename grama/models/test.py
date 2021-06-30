@@ -1,11 +1,11 @@
 __all__ = ["make_test", "df_test_input"]
 
-import numpy as np
-import pandas as pd
 import grama as gr
+from pandas import DataFrame
+
 
 ## Define a test dataset
-df_test_input = pd.DataFrame(data={"x0": [0], "x1": [0], "x2": [0]})
+df_test_input = DataFrame(data={"x0": [0], "x1": [0], "x2": [0]})
 
 ## Define a test model
 def fun(x):

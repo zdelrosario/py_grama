@@ -11,33 +11,28 @@ __all__ = [
     "valid_dist",
 ]
 
-import grama as gr
-import pandas as pd
 import warnings
-
+import grama as gr
 from functools import wraps
-from numbers import Integral
 from inspect import signature
+from numbers import Integral
+from pandas import DataFrame
+from pandas.testing import assert_frame_equal
+from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
+    bradford, burr, burr12, cauchy, chi, chi2, cosine, crystalball, dgamma, \
+    dweibull, erlang, expon, exponnorm, exponweib, exponpow, f, fatiguelife, \
+    fisk, foldcauchy, foldnorm, gaussian_kde, genlogistic, gennorm, genpareto, \
+    genexpon, genextreme, gausshyper, gamma, gengamma, genhalflogistic, \
+    gilbrat, gompertz, gumbel_r, gumbel_l, halfcauchy, halflogistic, \
+    halfnorm, halfgennorm, hypsecant, invgamma, invgauss, invweibull, \
+    johnsonsb, johnsonsu, kappa4, kappa3, ksone, kstwobign, laplace, levy, \
+    levy_l, levy_stable, logistic, loggamma, loglaplace, lognorm, lomax, \
+    maxwell, mielke, moyal, nakagami, ncx2, ncf, nct, norm, norminvgauss, \
+    pareto, pearson3, powerlaw, powerlognorm, powernorm, rdist, rayleigh, \
+    rice, recipinvgauss, skewnorm, t, trapz, triang, truncexpon, truncnorm, \
+    tukeylambda, uniform, vonmises, vonmises_line, wald, weibull_min, \
+    weibull_max, wrapcauchy
 
-from scipy.stats import gaussian_kde
-
-from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime
-from scipy.stats import bradford, burr, burr12, cauchy, chi, chi2, cosine
-from scipy.stats import crystalball, dgamma, dweibull, erlang, expon, exponnorm
-from scipy.stats import exponweib, exponpow, f, fatiguelife, fisk, foldcauchy
-from scipy.stats import foldnorm, genlogistic, gennorm
-from scipy.stats import genpareto, genexpon, genextreme, gausshyper, gamma
-from scipy.stats import gengamma, genhalflogistic, gilbrat, gompertz
-from scipy.stats import gumbel_r, gumbel_l, halfcauchy, halflogistic, halfnorm
-from scipy.stats import halfgennorm, hypsecant, invgamma, invgauss, invweibull
-from scipy.stats import johnsonsb, johnsonsu, kappa4, kappa3, ksone, kstwobign
-from scipy.stats import laplace, levy, levy_l, levy_stable, logistic, loggamma
-from scipy.stats import loglaplace, lognorm, lomax, maxwell, mielke, moyal, nakagami
-from scipy.stats import ncx2, ncf, nct, norm, norminvgauss, pareto, pearson3
-from scipy.stats import powerlaw, powerlognorm, powernorm, rdist, rayleigh
-from scipy.stats import rice, recipinvgauss, skewnorm, t, trapz, triang, truncexpon
-from scipy.stats import truncnorm, tukeylambda, uniform, vonmises, vonmises_line
-from scipy.stats import wald, weibull_min, weibull_max, wrapcauchy
 
 ## Scipy metadata
 valid_dist = {
@@ -282,7 +277,7 @@ class pipe(object):
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            if isinstance(other, pd.DataFrame):
+            if isinstance(other, DataFrame):
                 other_copy = copy_meta(other, other_copy)
 
         result = self.function(other_copy)
@@ -308,9 +303,10 @@ def add_pipe(fun):
     class NewPipe(pipe):
         __name__ = fun.__name__
         __doc__ = (
-            "Pipe-enabled version of {}\n".format(fun.__name__)
-            + "Inherited Signature: {}\n".format(signature(fun))
-            + fun.__doc__
+            fun.__doc__
+            #"Pipe-enabled version of {}\n".format(fun)
+            #+ "Inherited Signature: {}\n".format(signature(fun))
+            #+ fun.__doc__
         )
 
     return NewPipe(fun)
@@ -364,7 +360,7 @@ def df_make(**kwargs):
         raise ValueError("Column lengths must be identical or one.")
 
     ## Construct dataframe
-    df_res = pd.DataFrame()
+    df_res = DataFrame()
     for key in kwargs.keys():
         try:
             if len(kwargs[key]) > 1:
@@ -398,7 +394,7 @@ def df_equal(df1, df2, close=False, precision=3):
 
     if close:
         try:
-            pd.testing.assert_frame_equal(
+            assert_frame_equal(
                 df1[df2.columns],
                 df2,
                 check_dtype=False,
@@ -440,7 +436,7 @@ def marg_named(data, dist, name=True, sign=None):
 
     """
     ## Catch case where user provides entire DataFrame
-    if isinstance(data, pd.DataFrame):
+    if isinstance(data, DataFrame):
         raise ValueError("`data` argument must be a single column; try data.var")
 
     ## Fit the distribution
@@ -485,7 +481,7 @@ def marg_gkde(data, sign=None):
 
     """
     ## Catch case where user provides entire DataFrame
-    if isinstance(data, pd.DataFrame):
+    if isinstance(data, DataFrame):
         raise ValueError("`data` argument must be a single column; try data.var")
 
     kde = gaussian_kde(data)

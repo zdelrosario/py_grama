@@ -1,8 +1,18 @@
-from .base import *
+__all__ = [
+    "tran_mutate",
+    "tf_mutate",
+    "tran_mutate_if",
+    "tf_mutate_if",
+    "tran_transmute",
+    "tf_transmute",
+]
+
+from .base import dfdelegate, make_symbolic, flatten
+from .. import add_pipe
 
 
-@dfpipe
-def mutate(df, **kwargs):
+@dfdelegate
+def tran_mutate(df, **kwargs):
     """
     Creates new variables (columns) in the DataFrame specified by keyword
     argument pairs, where the key is the column name and the value is the
@@ -26,9 +36,11 @@ def mutate(df, **kwargs):
 
     return df.assign(**kwargs)
 
+tf_mutate = add_pipe(tran_mutate)
 
-@dfpipe
-def mutate_if(df, predicate, fun):
+
+@dfdelegate
+def tran_mutate_if(df, predicate, fun):
     """
     Modifies columns in place if the specified predicate is true.
     Args:
@@ -59,9 +71,11 @@ def mutate_if(df, predicate, fun):
     # df2[cols] = df2[cols].apply(fun)
     # return df2
 
+tf_mutate_if = add_pipe(tran_mutate_if)
 
-@dfpipe
-def transmute(df, *keep_columns, **kwargs):
+
+@dfdelegate
+def tran_transmute(df, *keep_columns, **kwargs):
     """
     Creates columns and then returns those new columns and optionally specified
     original columns from the DataFrame.
@@ -99,3 +113,5 @@ def transmute(df, *keep_columns, **kwargs):
     df = df.assign(**kwargs)
     columns = [k for k in kwargs.keys()] + list(keep_cols)
     return df[columns]
+
+tf_transmute = add_pipe(tran_transmute)

@@ -22,12 +22,12 @@ except ModuleNotFoundError:
     raise ModuleNotFoundError("module sklearn not found")
 
 import grama as gr
-
 from copy import deepcopy
 from grama import add_pipe, pipe
 from pandas import concat, DataFrame, Series
 from toolz import curry
 from warnings import filterwarnings
+
 
 ## Helper functions and classes
 # --------------------------------------------------

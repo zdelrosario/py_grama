@@ -1,9 +1,17 @@
-import pandas as pd
-import numpy as np
-import warnings
-from functools import partial, wraps
+__all__ = [
+    "Intention",
+    "dfdelegate",
+    "make_symbolic",
+    "symbolic_evaluation",
+    "group_delegation",
+    "flatten"
+]
 
-from .. import pipe  # Use grama pipe to preserve metadata
+import warnings
+from .. import pipe, add_pipe  # Use grama pipe to preserve metadata
+from functools import partial, wraps
+from numpy import zeros, array
+from pandas import Series, Index, DataFrame
 
 
 def _recursive_apply(f, l):
@@ -12,8 +20,7 @@ def _recursive_apply(f, l):
         if isinstance(l, tuple):
             out = tuple(out)
         return out
-    else:
-        return f(l)
+    return f(l)
 
 
 def contextualize(arg, context):
@@ -60,8 +67,7 @@ def make_symbolic(f):
         if delay:
             delayed = _delayed_function(f, args, kwargs)
             return Intention(delayed)
-        else:
-            return f(*args, **kwargs)
+        return f(*args, **kwargs)
 
     ## Preserve documentation
     wrapper.__doc__ = f.__doc__
@@ -227,9 +233,9 @@ class IntentionEvaluator(object):
         arg = self._evaluate(df, arg)
 
         cols = list(df.columns)
-        if isinstance(arg, pd.Series):
+        if isinstance(arg, Series):
             arg = arg.name
-        if isinstance(arg, pd.Index):
+        if isinstance(arg, Index):
             arg = list(arg)
         if isinstance(arg, int):
             arg = cols[arg]
@@ -242,11 +248,11 @@ class IntentionEvaluator(object):
             arg = arg.evaluate(df)
 
         cols = list(df.columns)
-        if isinstance(arg, pd.Series):
+        if isinstance(arg, Series):
             arg = [cols.index(arg.name)]
-        if isinstance(arg, pd.Index):
+        if isinstance(arg, Index):
             arg = [cols.index(i) for i in list(arg)]
-        if isinstance(arg, pd.DataFrame):
+        if isinstance(arg, DataFrame):
             arg = [cols.index(i) for i in arg.columns]
         if isinstance(arg, int):
             arg = [arg]
@@ -255,8 +261,8 @@ class IntentionEvaluator(object):
         if isinstance(arg, (list, tuple)):
             arg = [cols.index(i) if isinstance(i, str) else i for i in arg]
 
-        selection_vector = np.zeros(df.shape[1])
-        col_idx = np.array(arg)
+        selection_vector = zeros(df.shape[1])
+        col_idx = array(arg)
 
         if negate and len(col_idx) > 0:
             selection_vector[col_idx] = -1
@@ -267,8 +273,7 @@ class IntentionEvaluator(object):
     def _evaluator_loop(self, df, arg, eval_func):
         if isinstance(arg, (list, tuple)):
             return [self._evaluator_loop(df, a_, eval_func) for a_ in arg]
-        else:
-            return eval_func(df, arg)
+        return eval_func(df, arg)
 
     def _symbolic_eval(self, df, arg):
         return self._evaluator_loop(df, arg, self._evaluate)
@@ -314,16 +319,16 @@ class IntentionEvaluator(object):
         }
 
     def _find_eval_args(self, request, args):
-        if (request == True) or ("*" in request):
+        if (request is True) or ("*" in request):
             return [i for i in range(len(args))]
-        elif request in [None, False]:
+        if request in [None, False]:
             return []
         return request
 
     def _find_eval_kwargs(self, request, kwargs):
-        if (request == True) or ("**" in request):
+        if (request is True) or ("**" in request):
             return [k for k in kwargs.keys()]
-        elif request in [None, False]:
+        if request in [None, False]:
             return []
         return request
 
@@ -341,21 +346,21 @@ def symbolic_evaluation(
 ):
     if function:
         return IntentionEvaluator(function)
-    else:
 
-        @wraps(function)
-        def wrapper(function):
-            return IntentionEvaluator(
-                function,
-                eval_symbols=eval_symbols,
-                eval_as_label=eval_as_label,
-                eval_as_selector=eval_as_selector,
-            )
+    @wraps(function)
+    def wrapper(function):
+        return IntentionEvaluator(
+            function,
+            eval_symbols=eval_symbols,
+            eval_as_label=eval_as_label,
+            eval_as_selector=eval_as_selector,
+        )
 
-        return wrapper
+    return wrapper
 
 
 class group_delegation(object):
+
     __name__ = "group_delegation"
 
     def __init__(self, function):
@@ -386,19 +391,21 @@ class group_delegation(object):
         grouped_by = getattr(args[0], "_grouped_by", None)
         if (grouped_by is None) or not all([g in args[0].columns for g in grouped_by]):
             return self.function(*args, **kwargs)
-        else:
-            applied = self._apply(args[0], *args[1:], **kwargs)
 
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                applied._grouped_by = grouped_by
+        applied = self._apply(args[0], *args[1:], **kwargs)
 
-            return applied
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            applied._grouped_by = grouped_by
+
+        return applied
 
 
 def dfpipe(f):
-    return pipe(group_delegation(symbolic_evaluation(f)))
+    return add_pipe(group_delegation(symbolic_evaluation(f)))
 
 
 def dfdelegate(f):
-    return group_delegation(symbolic_evaluation(f))
+    class addName(group_delegation):
+        __name__ = f.__name__
+    return addName(group_delegation(symbolic_evaluation(f)))

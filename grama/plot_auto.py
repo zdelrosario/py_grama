@@ -13,12 +13,12 @@ __all__ = [
 ]
 
 import grama as gr
-
 from grama import add_pipe, pipe
-from toolz import curry
+from matplotlib.pyplot import hist
 from pandas import melt
 from seaborn import pairplot, FacetGrid, relplot
-from matplotlib.pyplot import hist
+from toolz import curry
+
 
 ## Function-specific plot functions
 ##################################################

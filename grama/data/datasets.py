@@ -10,6 +10,7 @@ import os
 from pandas import read_csv
 from pathlib import Path
 
+
 path_this = Path(__file__)
 path_grama = path_this.parents[1]
 

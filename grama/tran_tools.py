@@ -13,13 +13,6 @@ __all__ = [
     "tf_md",
 ]
 
-from collections import ChainMap
-from numpy import arange, ceil, zeros, std, quantile, nan, triu_indices, unique
-from numpy.random import choice, permutation
-from numpy.random import seed as set_seed
-from pandas import concat, DataFrame, melt
-from .string_helpers import str_detect, str_replace
-
 from grama import add_pipe, pipe, copy_meta, Intention, mse, rsq
 from grama import (
     tf_bind_cols,
@@ -30,14 +23,20 @@ from grama import (
     var_in,
     ev_df,
 )
-
-from toolz import curry
+from collections import ChainMap
 from numbers import Integral
+from numpy import arange, ceil, zeros, std, quantile, nan, triu_indices, unique
+from numpy.random import choice, permutation
+from numpy.random import seed as set_seed
+from pandas import concat, DataFrame, melt
 from pandas.api.types import is_numeric_dtype
 from scipy.linalg import subspace_angles
 from scipy.stats import norm
+from .string_helpers import str_detect, str_replace
+from toolz import curry
 
 X = Intention()
+
 
 ## k-Fold CV utility
 # --------------------------------------------------

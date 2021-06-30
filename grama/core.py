@@ -16,39 +16,26 @@ __all__ = [
     "NaN",
 ]
 
-from abc import ABC, abstractmethod
 import copy
-
-from numpy import (
-    ones,
-    zeros,
-    triu_indices,
-    eye,
-    array,
-    Inf,
-    NaN,
-    sqrt,
-    dot,
-    diag,
-    isfinite,
-)
+import networkx as nx
+import warnings
+import grama as gr
+from grama import pipe, valid_dist, param_dist
+from abc import ABC, abstractmethod
+from itertools import chain
+from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, \
+    dot, diag, isfinite
 from numpy import min as npmin
 from numpy import max as npmax
+from numpy.linalg import cholesky
 from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
+from pandas import DataFrame, concat
 from scipy.linalg import det, LinAlgError, solve
 from scipy.optimize import root_scalar
 from scipy.stats import norm, gaussian_kde
-from pandas import DataFrame, concat
-
-import grama as gr
-from grama import pipe, valid_dist, param_dist
-
-from itertools import chain
-from numpy.linalg import cholesky
 from toolz import curry
-import warnings
-import networkx as nx
+
 
 ## Package settings
 RUNTIME_LOWER = 1  # Cutoff threshold for runtime messages
