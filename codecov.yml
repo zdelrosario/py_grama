@@ -5,6 +5,6 @@ fixes:
   - "/home/runner/work/py_grama/py_grama/::" #Path fixing
 
 ignore:
-  - "**/tests/**"
+  - "*/**/tests/**/*"
   - "test_*.py"
   - "test_autoplot.py"
