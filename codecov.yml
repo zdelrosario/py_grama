@@ -6,3 +6,5 @@ fixes:
 
 ignore:
   - "**/tests/**"
+  - "test_*.py"
+  - "test_autoplot.py"
