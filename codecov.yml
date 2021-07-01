@@ -6,3 +6,4 @@ fixes:
 
 ignore:
   - "test_*.py"
+  - "context.py" 
