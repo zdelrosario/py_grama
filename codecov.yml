@@ -1,3 +1,6 @@
+codecov:
+  disable_default_path_fixes: yes
+
 fixes:
   - "/home/runner/work/py_grama/py_grama/::" #Path fixing
 
