@@ -429,7 +429,6 @@ def tran_explode(df, col, convert=False):
 
     if convert and (df_res[col].dtype.kind in "OSaU"):
         return convert_type(df_res, [col])
-    else:
-        return df_res
+    return df_res
 
 tf_explode = add_pipe(tran_explode)

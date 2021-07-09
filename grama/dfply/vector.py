@@ -43,11 +43,11 @@ def order_series_by(series, order_series):
         sorter["series"] = series.values
         sorted_series = sorter.sort_values(sorter_columns)["series"]
         return sorted_series
-    else:
-        sorted_series = DataFrame(
-            {"series": series.values, "order": order_series.values}
-        ).sort_values("order", ascending=True)["series"]
-        return sorted_series
+
+    sorted_series = DataFrame(
+        {"series": series.values, "order": order_series.values}
+    ).sort_values("order", ascending=True)["series"]
+    return sorted_series
 
 
 @make_symbolic

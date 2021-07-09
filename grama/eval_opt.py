@@ -237,8 +237,7 @@ def eval_nls(
     ## Post-process
     if append:
         return df_res
-    else:
-        return df_res[var_fit]
+    return df_res[var_fit]
 
 
 ev_nls = add_pipe(eval_nls)

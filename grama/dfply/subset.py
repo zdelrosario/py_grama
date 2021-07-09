@@ -78,8 +78,7 @@ def tran_row_slice(df, indices):
 
     if indices.dtype == bool:
         return df.loc[indices, :].reset_index(drop=True)
-    else:
-        return df.iloc[indices, :].reset_index(drop=True)
+    return df.iloc[indices, :].reset_index(drop=True)
 
 tf_row_slice = add_pipe(tran_row_slice)
 

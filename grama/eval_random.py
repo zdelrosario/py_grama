@@ -88,15 +88,14 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
             }
 
         return df_samp
-    else:
-        df_res = gr.eval_df(model, df=df_samp, append=append)
 
-        ## Attach metadata
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            df_res._plot_info = {"type": "monte_carlo_outputs", "out": model.out}
+    df_res = gr.eval_df(model, df=df_samp, append=append)
+    ## Attach metadata
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df_res._plot_info = {"type": "monte_carlo_outputs", "out": model.out}
 
-        return df_res
+    return df_res
 
 
 ev_monte_carlo = add_pipe(eval_monte_carlo)
@@ -239,19 +238,19 @@ def eval_sinews(
 
         ## Pass-through
         return df_samp
-    else:
-        ## Apply
-        df_res = gr.eval_df(model, df=df_samp, append=append)
-        ## For autoplot
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            df_res._plot_info = {
-                "type": "sinew_outputs",
-                "var": model.var_rand,
-                "out": model.out,
-            }
 
-        return df_res
+    ## Apply
+    df_res = gr.eval_df(model, df=df_samp, append=append)
+    ## For autoplot
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df_res._plot_info = {
+            "type": "sinew_outputs",
+            "var": model.var_rand,
+            "out": model.out,
+        }
+
+    return df_res
 
 
 ev_sinews = add_pipe(eval_sinews)
@@ -364,19 +363,19 @@ def eval_hybrid(
             )
 
         return df_samp
-    else:
-        df_res = gr.eval_df(model, df=df_samp, append=append)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            df_res._meta = dict(
-                type="eval_hybrid",
-                varname=varname,
-                plan=plan,
-                var_rand=model.var_rand,
-                out=model.out,
-            )
+        
+    df_res = gr.eval_df(model, df=df_samp, append=append)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df_res._meta = dict(
+            type="eval_hybrid",
+            varname=varname,
+            plan=plan,
+            var_rand=model.var_rand,
+            out=model.out,
+        )
 
-        return df_res
+    return df_res
 
 
 ev_hybrid = add_pipe(eval_hybrid)
