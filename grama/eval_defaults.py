@@ -106,8 +106,7 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
 
     if skip:
         return df_samp
-    else:
-        return eval_df(model, df=df_samp, append=append)
+    return eval_df(model, df=df_samp, append=append)
 
 
 ev_nominal = add_pipe(eval_nominal)
@@ -281,8 +280,7 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
 
     if skip:
         return df_samp
-    else:
-        return eval_df(model, df=df_samp, append=append)
+    return eval_df(model, df=df_samp, append=append)
 
 
 ev_conservative = add_pipe(eval_conservative)

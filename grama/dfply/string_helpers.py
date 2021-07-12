@@ -96,8 +96,7 @@ def str_count(string, pattern):
 def replace_or_none(string, pattern, replacement, ind):
     if not isnan(ind):
         return string[:ind] + replacement + string[ind + len(pattern) :]
-    else:
-        return string
+    return string
 
 
 @make_symbolic

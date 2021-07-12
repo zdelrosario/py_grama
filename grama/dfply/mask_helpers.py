@@ -45,8 +45,7 @@ def is_nan(series, inv=False):
 
     if inv:
         return logical_not(bools)
-    else:
-        return bools
+    return bools
 
 
 @make_symbolic
@@ -65,5 +64,4 @@ def not_nan(series, inv=False):
 
     if inv:
         return bools
-    else:
-        return logical_not(bools)
+    return logical_not(bools)
