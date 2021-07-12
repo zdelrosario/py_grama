@@ -114,16 +114,16 @@ def tran_intersect(df, other, index=False, keep="first"):
         return_df.index.names = df_index_names
         return_df = return_df.drop_duplicates(keep=keep)
         return return_df
-    else:
-        return_df = merge(
-            df,
-            other,
-            how="inner",
-            left_on=df.columns.values.tolist(),
-            right_on=df.columns.values.tolist(),
-        )
-        return_df = return_df.drop_duplicates(keep=keep)
-        return return_df
+
+    return_df = merge(
+        df,
+        other,
+        how="inner",
+        left_on=df.columns.values.tolist(),
+        right_on=df.columns.values.tolist(),
+    )
+    return_df = return_df.drop_duplicates(keep=keep)
+    return return_df
 
 tf_intersect = add_pipe(tran_intersect)
 
@@ -168,17 +168,17 @@ def tran_set_diff(df, other, index=False, keep="first"):
         return_df.index.names = df_index_names
         return_df = return_df.drop_duplicates(keep=keep)[df.columns]
         return return_df
-    else:
-        return_df = merge(
-            df,
-            other,
-            how="left",
-            left_on=df.columns.values.tolist(),
-            right_on=df.columns.values.tolist(),
-            indicator=True,
-        )
-        return_df = return_df[return_df._merge == "left_only"]
-        return_df = return_df.drop_duplicates(keep=keep)[df.columns]
-        return return_df
+
+    return_df = merge(
+        df,
+        other,
+        how="left",
+        left_on=df.columns.values.tolist(),
+        right_on=df.columns.values.tolist(),
+        indicator=True,
+    )
+    return_df = return_df[return_df._merge == "left_only"]
+    return_df = return_df.drop_duplicates(keep=keep)[df.columns]
+    return return_df
 
 tf_set_diff = add_pipe(tran_set_diff)

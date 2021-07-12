@@ -362,9 +362,9 @@ def binomial_ci(series, alpha=0.05, side="both"):
 
     if side == "both":
         return (lo, up)
-    elif side == "lo":
+    if side == "lo":
         return lo
-    elif side == "up":
+    if side == "up":
         return up
     else:
         raise ValueError("side value {} not recognized".format(side))
@@ -396,7 +396,7 @@ def corr(series1, series2, method="pearson", res="corr"):
 
     if res == "corr":
         return r
-    elif res == "both":
+    if res == "both":
         return r, p
     else:
         raise ValueError("res {} not supported".format(res))
