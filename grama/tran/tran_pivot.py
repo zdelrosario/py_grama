@@ -41,7 +41,7 @@ def tran_pivot_longer (
                         there are two special values you can take advantage of:
                             -NA will discard that component of the name.
                             -.value indicates that component of the name
-                            defines the name of the column containing the
+                            defines the name of the column containidvszvdzx ng the
                             cell values, overriding values_to.
 
         values_to (str): A string specifying the name of the column to create
@@ -52,7 +52,10 @@ def tran_pivot_longer (
                          column names.
     """
 
-    if cols
+    if cols is None
+        raise TypeError("pivot_longer() is missing 1 required argument: 'cols'")
+
+    cols_listlike = list(cols)
 
     return 0
 
