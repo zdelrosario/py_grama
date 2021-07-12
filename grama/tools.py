@@ -9,14 +9,16 @@ __all__ = [
     "param_dist",
     "pipe",
     "valid_dist",
+    "tran_outer",
+    "tf_outer",
 ]
 
 import warnings
-import grama as gr
+# import grama as gr
 from functools import wraps
 from inspect import signature
 from numbers import Integral
-from pandas import DataFrame
+from pandas import DataFrame, concat
 from pandas.testing import assert_frame_equal
 from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
     bradford, burr, burr12, cauchy, chi, chi2, cosine, crystalball, dgamma, \
@@ -32,6 +34,7 @@ from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
     rice, recipinvgauss, skewnorm, t, trapz, triang, truncexpon, truncnorm, \
     tukeylambda, uniform, vonmises, vonmises_line, wald, weibull_min, \
     weibull_max, wrapcauchy
+from toolz import curry
 
 
 ## Scipy metadata
@@ -237,6 +240,7 @@ param_dist = {
     "weibull_max": ["c", "loc", "scale"],
     "wrapcauchy": ["c", "loc", "scale"],
 }
+
 
 ## Core helper functions
 ##################################################
@@ -498,3 +502,45 @@ def marg_gkde(data, sign=None):
 def custom_formatwarning(msg, *args, **kwargs):
     # ignore everything except the message
     return "Warning: " + str(msg) + "\n"
+
+
+## DataFrame outer product
+# --------------------------------------------------
+@curry
+def tran_outer(df, df_outer):
+    r"""Outer merge
+
+    Perform an outer-merge on two dataframes.
+
+    Args:
+        df (DataFrame): Data to merge
+        df_outer (DataFrame): Data to merge; outer
+
+    Returns:
+        DataFrame: Merged data
+
+    Examples:
+        >>> import grama as gr
+        >>> import pandas as pd
+        >>> df = pd.DataFrame(dict(x=[1,2]))
+        >>> df_outer = pd.DataFrame(dict(y=[3,4]))
+        >>> df_res = gr.tran_outer(df, df_outer)
+        >>> df_res
+        >>>    x  y
+        >>> 0  1  3
+        >>> 1  2  3
+        >>> 2  1  4
+        >>> 3  2  4
+
+    """
+    n_rows = df.shape[0]
+    list_df = []
+
+    for ind in range(df_outer.shape[0]):
+        df_rep = concat([df_outer.iloc[[ind]]] * n_rows, ignore_index=True)
+        list_df.append(concat((df, df_rep), axis=1))
+
+    return concat(list_df, ignore_index=True)
+
+
+tf_outer = add_pipe(tran_outer)

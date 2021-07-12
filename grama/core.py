@@ -19,8 +19,9 @@ __all__ = [
 import copy
 import networkx as nx
 import warnings
-import grama as gr
-from grama import pipe, valid_dist, param_dist
+# import grama as gr
+from grama import pipe, valid_dist, param_dist # want to import tran_outer
+from .tools import tran_outer
 from abc import ABC, abstractmethod
 from itertools import chain
 from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, \
@@ -1115,7 +1116,7 @@ class Model:
             return df_det
 
         ## Outer product if both det and rand exist
-        return gr.tran_outer(df_rand, df_det)
+        return tran_outer(df_rand, df_det)
 
     ## Sample transforms
     # --------------------------------------------------
