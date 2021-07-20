@@ -500,7 +500,7 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
 
         return new_model
 
-    elif not (df_data is None):
+    if not (df_data is None):
         new_model = model.copy()
         df_corr = gr.tran_copula_corr(df_data, model=new_model)
 

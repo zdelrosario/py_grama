@@ -1,0 +1,9 @@
+codecov:
+  disable_default_path_fixes: yes # Disable Codecov's default path fix in order to overwrite below
+
+fixes:
+  - "/home/runner/work/py_grama/py_grama/::" # Path fixing to include the grama folder
+
+ignore:
+  - "test_*.py"  # Ignore all test files
+  - "context.py" # Ignore the context.py in the tests folder

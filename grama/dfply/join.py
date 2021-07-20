@@ -344,8 +344,7 @@ def tran_bind_rows(df, other, join="outer", ignore_index=False, reset=True):
 
     if reset:
         return df.reset_index(drop=True)
-    else:
-        return df
+    return df
 
 tf_bind_rows = add_pipe(tran_bind_rows)
 
