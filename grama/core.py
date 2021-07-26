@@ -260,38 +260,30 @@ class Domain:
     def get_bound(self, var):
         if var in self.bounds.keys():
             return (self.bounds[var][0], self.bounds[var][1])
-        else:
-            return (-Inf, +Inf)
+        return (-Inf, +Inf)
 
     def get_width(self, var):
         if var in self.bounds.keys():
             return self.bounds[var][1] - self.bounds[var][0]
-        else:
-            return +Inf
+        return +Inf
 
     def get_nominal(self, var):
         if var in self.bounds.keys():
             if isfinite(self.bounds[var][0]):
                 if isfinite(self.bounds[var][1]):
                     return 0.5 * (self.bounds[var][1] + self.bounds[var][0])
-                else:
-                    return self.bounds[var][0]
-            else:
-                if isfinite(self.bounds[var][1]):
-                    return self.bounds[var][1]
-                else:
-                    return NaN
-
-        else:
+                return self.bounds[var][0]
+            if isfinite(self.bounds[var][1]):
+                return self.bounds[var][1]
             return NaN
+        return NaN
 
     def bound_summary(self, var):
         if var in self.bounds.keys():
             return "{0:}: [{1:}, {2:}]".format(
                 var, self.bounds[var][0], self.bounds[var][1],
             )
-        else:
-            return "{0:}: (unbounded)".format(var)
+        return "{0:}: (unbounded)".format(var)
 
 
 # Marginal parent class
@@ -430,16 +422,15 @@ class MarginalGKDE(Marginal):
         def qscalar(val):
             if val <= p_bnd[0]:
                 return self.bracket[0]
-            elif val >= p_bnd[1]:
+            if val >= p_bnd[1]:
                 return self.bracket[1]
-            else:
-                sol = root_scalar(
-                    lambda x: val - self.p(x),
-                    bracket=self.bracket,
-                    method="bisect",
-                    xtol=self.atol,
-                )
-                return sol.root
+            sol = root_scalar(
+                lambda x: val - self.p(x),
+                bracket=self.bracket,
+                method="bisect",
+                xtol=self.atol,
+            )
+            return sol.root
 
         ## Iterate over all given values
         try:
@@ -902,8 +893,7 @@ class Density:
     def summary_copula(self):
         if not (self.copula is None):
             return self.copula.summary()
-        else:
-            return None
+        return None
 
 
 # Model parent class
@@ -1037,8 +1027,7 @@ class Model:
 
         if runtime < RUNTIME_LOWER:
             return None
-        else:
-            return "Estimated runtime: {0:3.4f} sec".format(runtime)
+        return "Estimated runtime: {0:3.4f} sec".format(runtime)
 
     def det_nom(self):
         """Return nominal conditions for deterministic variables
