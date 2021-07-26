@@ -20,6 +20,7 @@ from .eval_random import *
 from .eval_tail import *
 from .eval_opt import *
 from .plot_auto import *
+from .tran_pivot import *
 from .tran_shapley import *
 from .tran_summaries import *
 from .support import *
