@@ -2,6 +2,7 @@ __all__ = [
     "df_diamonds",
     "df_ruff",
     "df_stang",
+    "df_stang_wide",
     "df_trajectory_full",
     "df_trajectory_windowed",
 ]
@@ -13,6 +14,9 @@ from pathlib import Path
 
 path_this = Path(__file__)
 path_grama = path_this.parents[1]
+
+# Stang (wdie form)
+df_stang_wide = read_csv(Path(path_grama / "data/stang.csv"))
 
 # Stang (tidy form)
 df_stang = read_csv(Path(path_grama / "data/stang_long.csv"))
