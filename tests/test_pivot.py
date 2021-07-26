@@ -1,8 +1,8 @@
-import numpy as np
 import unittest
 
 from context import grama as gr
 from context import data
+from numpy import NaN
 from pandas import DataFrame, RangeIndex
 from pandas.testing import assert_frame_equal
 
@@ -230,6 +230,7 @@ class TestPivotWider(unittest.TestCase):
 
         assert_frame_equal(wide, expected)
 
+
     def test_pivot_wider_representation_index_multiple_cols(self):
         long = DataFrame(
             {
@@ -257,6 +258,7 @@ class TestPivotWider(unittest.TestCase):
 
         assert_frame_equal(wide, expected)
 
+
     def test_pivot_wider_NaN_entries(self):
         """ Test if pivot_wider returns a table with NaN values for unspecified
             entries that have no represenational index
@@ -274,8 +276,8 @@ class TestPivotWider(unittest.TestCase):
             values_from="value"
         )
         expected = gr.df_make(
-            A=[1,2,3,np.NaN,np.NaN,np.NaN],
-            B=[np.NaN,np.NaN,np.NaN,4,5,6]
+            A=[1,2,3,NaN,NaN,NaN],
+            B=[NaN,NaN,NaN,4,5,6]
         )
 
         assert_frame_equal(wide, expected)

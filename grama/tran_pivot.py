@@ -5,7 +5,7 @@ __all__ = [
     "tf_pivot_wider",
 ]
 
-import numpy as np
+
 from grama import add_pipe
 from pandas import DataFrame, IndexSlice, MultiIndex, RangeIndex, Series, \
     isnull, pivot, pivot_table
