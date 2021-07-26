@@ -125,20 +125,20 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20, inds=None):
         """
         if len(varset) == 0:
             return list(range(s))
-        else:
-            # Find all pairs similar along given variables
-            flags_cohort = all(
-                df_sim.drop(columns=["_i0", "_i1"])[[var[i] for i in varset]], axis=1
-            ).values
 
-            # Filter to pairs including target t
-            df_tmp = df_sim[flags_cohort]
-            df_cohort = df_tmp[(df_tmp["_i0"] == t) | (df_tmp["_i1"] == t)]
+        # Find all pairs similar along given variables
+        flags_cohort = all(
+            df_sim.drop(columns=["_i0", "_i1"])[[var[i] for i in varset]], axis=1
+        ).values
 
-            # Consolidate index set
-            return list(
-                set(df_cohort["_i0"]).union(set(df_cohort["_i1"])).union(set((t,)))
-            )
+        # Filter to pairs including target t
+        df_tmp = df_sim[flags_cohort]
+        df_cohort = df_tmp[(df_tmp["_i0"] == t) | (df_tmp["_i1"] == t)]
+
+        # Consolidate index set
+        return list(
+            set(df_cohort["_i0"]).union(set(df_cohort["_i1"])).union(set((t,)))
+        )
 
     def cohort_mean(t, varset):
         c = cohort_indices(t, varset)

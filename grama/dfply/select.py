@@ -90,8 +90,7 @@ def tran_select(df, *args):
     if all([col in ordering for col in df.columns]):
         ordering = [c for c in ordering if c in df.columns]
         return df[ordering]
-    else:
-        return df
+    return df
 
 tf_select = add_pipe(tran_select)
 

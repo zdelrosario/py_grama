@@ -9,8 +9,7 @@ from copy import deepcopy
 def sub_or_switch(filename, stem):
     if filename.find("master") > -1:
         return filename.replace("master", stem)
-    else:
-        return stem + ".ipynb"
+    return stem + ".ipynb"
 
 ## Handle CLI
 if len(sys.argv) == 1:

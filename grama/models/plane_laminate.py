@@ -402,10 +402,9 @@ class make_composite_plate_tension(gr.Model):
         def mapSign(x):
             if x < 0:
                 return "m" + str(npabs(x))
-            elif x > 0:
+            if x > 0:
                 return "p" + str(x)
-            else:
-                return str(x)
+            return str(x)
         deg_str = map(mapSign, deg_int)
         name =  "Composite Plate in Tension " + "-".join(deg_str)
 

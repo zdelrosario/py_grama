@@ -63,8 +63,7 @@ def eval_lhs(
 
     if skip:
         return df_samp
-    else:
-        return gr.eval_df(model, df=df_samp, append=append)
+    return gr.eval_df(model, df=df_samp, append=append)
 
 
 ev_lhs = add_pipe(eval_lhs)
