@@ -23,7 +23,7 @@ def tran_pivot_longer (
     #names_ptypes = list(),
     #names_transform = list(),
     #names_repair,
-    values_to = None,
+    values_to = None
     #values_drop_na = False,
     #values_ptypes = list(),
     #values_transform = list(),
@@ -124,7 +124,8 @@ def tran_pivot_longer (
 
     ### if there was columns needing to be re-inserted do so
     if data_index is not None:
-        for i in range(len(data_index)):
+        for i, v in enumerate(data_index):
+            print(i)
             long.insert(
                 loc=i+1,
                 column=data_index[i],
@@ -134,7 +135,7 @@ def tran_pivot_longer (
     ### repair NaN values from transformation
     for index in data_index:
         length = len(df[index])
-        for i in range(len(long[index])):
+        for i, v in enumerate(long[index]):
             if isnull(long[index][i]):
                 long[index][i] = long[index][i%length]
 
@@ -212,7 +213,7 @@ def tran_pivot_wider (
         wider.columns.name = None
         # preserve rows by re-inserting them
         if data_index_clean is not None:
-            for i in range(len(data_index_clean)):
+            for i, v in enumerate(data_index_clean):
                 wider.insert(
                     loc=i,
                     column=data_index_clean[i],
@@ -239,7 +240,7 @@ def tran_pivot_wider (
         wider.insert(0,indexes_from,wider.index)
     # if str, insert as so, else loop through list type of indexes_from
     else:
-        for i in range(len(indexes_from)):
+        for i, v in enumerate(indexes_from):
             wider.insert(
                 loc=i,
                 column=indexes_from[i],
