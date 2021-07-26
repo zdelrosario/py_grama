@@ -72,19 +72,19 @@ def tran_pivot_longer (
         data_index = [x for x in data_columns if x not in columns]
 
         # check if data_index is empty and if it has a RangeIndex
-        if not data_index and is_int64_dtype(df.index.dtype):
-            # if so do not add extra index column and pivot
-            longer = df.reset_index().melt(
-                id_vars=None,
-                var_name=names_to,
-                value_vars=columns,
-                value_name=values_to
-            )
-            return(longer)
+        if not data_index:
+            if is_int64_dtype(df.index.dtype):
+                # if so do not add extra index column and pivot
+                longer = df.reset_index().melt(
+                    id_vars=None,
+                    var_name=names_to,
+                    value_vars=columns,
+                    value_name=values_to
+                )
+                return(longer)
 
-        # check if data_index is empty and if it does not have a RangeIndex
-        if not data_index and not is_int64_dtype(df.index.dtype):
-            # if so remake index column fro ID column and pivot
+            # if it does not have a RangeIndex create new column from ID column
+            # and add RangeIndex
             longer = df.reset_index().melt(
                 id_vars="index",
                 var_name=names_to,
