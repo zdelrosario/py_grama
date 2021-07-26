@@ -5,9 +5,11 @@ __all__ = [
     "tf_pivot_wider",
 ]
 
+import numpy as np
 from grama import add_pipe
 from pandas import DataFrame, IndexSlice, MultiIndex, RangeIndex, Series, \
-    pivot, pivot_table
+    isnull, pivot, pivot_table
+from pandas.api.types import is_int64_dtype
 
 
 def tran_pivot_longer (
@@ -34,8 +36,8 @@ def tran_pivot_longer (
     Args:
         df (DataFrame): DataFrame passed through
         columns (str): Label of column(s) to pivot into longer format
-        indexes_to(str): str to specify the name(s) of the index column,
-                         if name is already present index_to = None
+        index_to(str): str name to create a new representation index of
+                        observations
         names_to (str): name to use for the 'variable' column, if None frame.columns.name
                         is used or ‘variable’
         values_to (str): name to use for the 'value' column
@@ -62,30 +64,81 @@ def tran_pivot_longer (
 
     """
 
+    ### Check if index_to is provided
     if index_to is None:
-        df_columns = df.columns
-        df_used = columns
-        df_index = [x for x in df_columns if x not in df_used]
-        if not df_index:
-            return df.reset_index().melt(
+
+        # check to see if all columns are used already
+        data_columns = df.columns.values
+        data_index = [x for x in data_columns if x not in columns]
+
+        # check if data_index is empty and if it has a RangeIndex
+        if not data_index and is_int64_dtype(df.index.dtype):
+            # if so do not add extra index column and pivot
+            longer = df.reset_index().melt(
+                id_vars=None,
+                var_name=names_to,
+                value_vars=columns,
+                value_name=values_to
+            )
+            return(longer)
+
+        # check if data_index is empty and if it does not have a RangeIndex
+        if not data_index and not is_int64_dtype(df.index.dtype):
+            # if so remake index column fro ID column and pivot
+            longer = df.reset_index().melt(
                 id_vars="index",
                 var_name=names_to,
                 value_vars=columns,
                 value_name=values_to
-                )
-        return df.reset_index().melt(
-            id_vars=df_index,
+            )
+            return(longer)
+
+        # look for unused columns to pivot around
+        data_used = columns
+        data_index = [x for x in data_columns if x not in data_used]
+
+        # pivot with leftover name that would be the index column
+        if data_index:
+            longer = df.reset_index().melt(
+                id_vars=data_index,
+                var_name=names_to,
+                value_vars=columns,
+                value_name=values_to
+            )
+            return(longer)
+
+    ### Collect indexes to be preserved post-pivot
+    data_columns = df.columns
+    data_used = columns
+    data_index = [x for x in data_columns if x not in data_used]
+
+    ### Add index column to dataset
+    long = df.reset_index().melt(
+            id_vars="index",
             var_name=names_to,
             value_vars=columns,
             value_name=values_to
+        )
+    ### rename index column to desired: index_to
+    long.rename(columns={'index': index_to},inplace=True)
+
+    ### if there was columns needing to be re-inserted do so
+    if data_index is not None:
+        for i in range(len(data_index)):
+            long.insert(
+                loc=i+1,
+                column=data_index[i],
+                value=df[data_index[i]]
             )
 
-    return df.reset_index().melt(
-        id_vars=index_to,
-        var_name=names_to,
-        value_vars=columns,
-        value_name=values_to
-        )
+    ### repair NaN values from transformation
+    for index in data_index:
+        length = len(df[index])
+        for i in range(len(long[index])):
+            if isnull(long[index][i]):
+                long[index][i] = long[index][i%length]
+
+    return long
 
 tf_pivot_longer = add_pipe(tran_pivot_longer)
 
@@ -139,66 +192,52 @@ def tran_pivot_wider (
 
     if indexes_from is None:
         ### Clean columns list to find unused columns and preserve them
-        df_columns = df.columns
-        df_values_used = values_from
-        df_columns_used = names_from
-        df_1st_clean = [x for x in df_columns if x not in df_columns_used]
-        df_index_clean = [x for x in df_1st_clean if x not in df_values_used]
+        data_columns = df.columns
+        data_values_used = values_from
+        data_columns_used = names_from
+        data_1st_clean = [x for x in data_columns if x not in data_columns_used]
+        data_index_clean = [x for x in data_1st_clean if x not in data_values_used]
+        if not data_index_clean:
+            data_index_clean = None
 
-        ### try pivot, if no repeats exist in df_index_clean values continue,
+        ### try pivot, if no repeats exist in data_index_clean values continue,
         ### else use pivot_table to handle repreated values
-        try:
-            wider = pivot(
-                df,
-                index=df_index_clean,
-                columns=names_from,
-                values=values_from
-            )
-        except ValueError:
-            wider = pivot_table(
-                df,
-                index=df_index_clean,
-                columns=names_from,
-                values=values_from
-            )
-
+        wider = pivot(
+            df,
+            index=data_index_clean,
+            columns=names_from,
+            values=values_from
+        )
         ### Post cleaning of leftover column and index names
         wider.columns.name = None
         # preserve rows by re-inserting them
-        for i in range(len(df_index_clean)):
-            wider.insert(
-                loc=i,
-                column=df_index_clean[i],
-                value=wider.index.get_level_values(df_index_clean[i])
-                )
+        if data_index_clean is not None:
+            for i in range(len(data_index_clean)):
+                wider.insert(
+                    loc=i,
+                    column=data_index_clean[i],
+                    value=wider.index.get_level_values(data_index_clean[i])
+                    )
         # remake index to be numbered column with no name
         wider.index = RangeIndex(start=0,stop=len(wider),step=1)
         wider.index.name = None
 
         return wider
+
     ### If indexes_from exists do the same repeat check as above but with the
     ### provided indexes
-    try:
-        wider = pivot(
-            df,
-            index=indexes_from,
-            columns=names_from,
-            values=values_from
-        )
-    except ValueError:
-        wider = pivot_table(
-            df,
-            index=indexes_from,
-            columns=names_from,
-            values=values_from
-        )
-
+    wider = pivot(
+        df,
+        index=indexes_from,
+        columns=names_from,
+        values=values_from
+    )
     ### Post cleaning of leftover column and index names
     wider.columns.name = None
     ## preserve rows by re-inserting them
     if isinstance(indexes_from, str):
         wider.insert(0,indexes_from,wider.index)
-    # if str insert as so, else loop through list type of indexes_from
+    # if str, insert as so, else loop through list type of indexes_from
     else:
         for i in range(len(indexes_from)):
             wider.insert(
