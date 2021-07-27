@@ -4,8 +4,6 @@ __all__ = [
     "custom_formatwarning",
     "df_equal",
     "df_make",
-    # "marg_gkde",
-    # "marg_named",
     "param_dist",
     "pipe",
     "valid_dist",
@@ -14,8 +12,6 @@ __all__ = [
 ]
 
 import warnings
-# import grama as gr
-# from .marginals import marg_gkde, marg_named
 from functools import wraps
 from inspect import signature
 from numbers import Integral
@@ -411,94 +407,6 @@ def df_equal(df1, df2, close=False, precision=3):
             return False
     else:
         return df1[df2.columns].equals(df2)
-
-
-# ## TODO: Move to new file marginals.py
-# ## Fit a named scipy.stats distribution
-# def marg_named(data, dist, name=True, sign=None):
-#     r"""Fit scipy.stats continuous distirbution
-#
-#     Fits a named scipy.stats continuous distribution. Intended to be used to
-#     define a marginal distribution from data.
-#
-#     Args:
-#         data (iterable): Data for fit
-#         dist (str): Distribution to fit
-#         name (bool): Include distribution name?
-#         sign (bool): Include sign? (Optional)
-#
-#     Returns:
-#         dict: Distribution parameters organized by keyword
-#
-#     Examples:
-#
-#         >>> import grama as gr
-#         >>> from grama.data import df_stang
-#         >>>     gr.cp_marginals(
-#         >>>         E=gr.marg_named(df_stang.E, "norm"),
-#         >>>         mu=gr.marg_named(df_stang.mu, "beta")
-#         >>>     )
-#         >>> md.printpretty()
-#
-#     """
-#     ## Catch case where user provides entire DataFrame
-#     if isinstance(data, DataFrame):
-#         raise ValueError("`data` argument must be a single column; try data.var")
-#
-#     ## Fit the distribution
-#     with warnings.catch_warnings():
-#         warnings.simplefilter("ignore")
-#         param = valid_dist[dist].fit(data)
-#
-#     param = dict(zip(param_dist[dist], param))
-#
-#     if sign is not None:
-#         if not (sign in [-1, 0, +1]):
-#             raise ValueError("Invalid `sign`")
-#     else:
-#         sign = 0
-#
-#     return gr.MarginalNamed(sign=sign, d_name=dist, d_param=param)
-
-
-# ## TODO: Move to new file marginals.py
-# ## Fit a gaussian kernel density estimate (KDE) to data
-# def marg_gkde(data, sign=None):
-#     r"""Fit a gaussian KDE to data
-#
-#     Fits a gaussian kernel density estimate (KDE) to data.
-#
-#     Args:
-#         data (iterable): Data for fit
-#         sign (bool): Include sign? (Optional)
-#
-#     Returns:
-#         gr.MarginalGKDE: Marginal distribution
-#
-#     Examples:
-#
-#         >>> import grama as gr
-#         >>> from grama.data import df_stang
-#         >>> md = gr.Model("Marginal Example") >> \
-#         >>>     gr.cp_marginals(
-#         >>>         E=gr.marg_gkde(df_stang.E),
-#         >>>         mu=gr.marg_gkde(df_stang.mu)
-#         >>>     )
-#         >>> md.printpretty()
-#
-#     """
-#     ## Catch case where user provides entire DataFrame
-#     if isinstance(data, DataFrame):
-#         raise ValueError("`data` argument must be a single column; try data.var")
-#
-#     kde = gaussian_kde(data)
-#     if sign is not None:
-#         if not (sign in [-1, 0, +1]):
-#             raise ValueError("Invalid `sign`")
-#     else:
-#         sign = 0
-#
-#     return gr.MarginalGKDE(kde, sign=sign)
 
 
 ## Monkey-patched warning fcn

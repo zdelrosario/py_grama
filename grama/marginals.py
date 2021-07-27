@@ -1,12 +1,13 @@
 __all__ = [
+    "marg_gkde",
+    "marg_named",
     "Marginal",
     "MarginalNamed",
     "MarginalGKDE",
-    "marg_gkde",
-    "marg_named",
+    "param_dist",
+    "valid_dist",
 ]
 
-## TODO: check imports and slim down extras, if needed?
 import copy
 import warnings
 from abc import ABC, abstractmethod
@@ -31,7 +32,6 @@ from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
     weibull_max, wrapcauchy
 
 
-## TODO: Slim this down, if needed?
 ## Scipy metadata
 valid_dist = {
     "alpha": alpha,
@@ -236,7 +236,7 @@ param_dist = {
     "wrapcauchy": ["c", "loc", "scale"],
 }
 
-## Marginal classes (from core.py)
+## Marginal classes
 ##################################################
 # Marginal parent class
 class Marginal(ABC):
@@ -404,7 +404,7 @@ class MarginalGKDE(Marginal):
             self.bracket[0], self.bracket[1], self.atol
         )
 
-## Marginal functions (from tools.py)
+## Marginal functions
 ##################################################
 ## Fit a named scipy.stats distribution
 def marg_named(data, dist, name=True, sign=None):
