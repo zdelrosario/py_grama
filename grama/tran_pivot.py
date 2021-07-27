@@ -18,12 +18,12 @@ def tran_pivot_longer (
     index_to = None,
     names_to = None,
     #names_prefix = None,
-    #names_sep = None,
+    names_sep = None,
     #names_pattern = None,
     #names_ptypes = list(),
     #names_transform = list(),
     #names_repair,
-    values_to = None
+    values_to = None,
     #values_drop_na = False,
     #values_ptypes = list(),
     #values_transform = list(),
@@ -40,6 +40,9 @@ def tran_pivot_longer (
                         observations
         names_to (str): name to use for the 'variable' column, if None frame.columns.name
                         is used or ‘variable’
+        names_sep (str): delimter to seperate the values of the argument(s) from
+                        the 'columns' parameter into 2 new columns with those
+                        values split by that delimeter
         values_to (str): name to use for the 'value' column
 
     Returns:
@@ -64,14 +67,86 @@ def tran_pivot_longer (
 
     """
 
+    ### Check if tran_select was used
+    if isinstance(columns, DataFrame):
+        columns = columns.columns.values
+
+    ### Only if names_sep is used
+    if names_sep is not None:
+
+        if index_to is None:
+            ### look for unused columns to pivot around
+            data_used = columns
+            data_columns = df.columns.values
+            data_index = [x for x in data_columns if x not in data_used]
+
+            ### initial pivoted DataFrame
+            longer = df.reset_index().melt(
+                id_vars=data_index,
+                var_name="split",
+                value_vars=columns,
+                value_name=values_to
+            )
+
+            ### clean up DataFrame(split, drop extra column, re-order columns)
+            longer[[names_to[0],names_to[1]]] = longer.split.str.split(
+                names_sep,
+                expand=True
+            )
+            longer.drop("split", axis=1, inplace=True)
+            longer = longer[[c for c in longer if c not in values_to] + [values_to]]
+
+            return(longer)
+
+        ### Collect indexes to be preserved post-pivot
+        data_used = columns
+        data_columns = df.columns.values
+        data_index = [x for x in data_columns if x not in data_used]
+
+        ### Add index column to dataset
+        longer = df.reset_index().melt(
+                id_vars="index",
+                var_name="split",
+                value_vars=columns,
+                value_name=values_to
+            )
+        ### rename index column to desired: index_to
+        longer.rename(columns={'index': index_to},inplace=True)
+
+        ### if there was columns needing to be re-inserted do so
+        if data_index is not None:
+            for i, v in enumerate(data_index):
+                longer.insert(
+                    loc=i+1,
+                    column=data_index[i],
+                    value=df[data_index[i]]
+                )
+
+        ### repair NaN values from transformation
+        for index in data_index:
+            length = len(df[index])
+            for i, v in enumerate(longer[index]):
+                if isnull(longer[index][i]):
+                    longer[index][i] = longer[index][i%length]
+
+        ### clean up DataFrame(split, drop extra column, re-order columns)
+        longer[[names_to[0],names_to[1]]] = longer.split.str.split(
+            names_sep,
+            expand=True
+        )
+        longer.drop("split", axis=1, inplace=True)
+        longer = longer[[c for c in longer if c not in values_to] + [values_to]]
+
+        return(longer)
+
     ### Check if index_to is provided
     if index_to is None:
 
-        # check to see if all columns are used already
+        ### check to see if all columns are used already
         data_columns = df.columns.values
         data_index = [x for x in data_columns if x not in columns]
 
-        # check if data_index is empty and if it has a RangeIndex
+        ### check if data_index is empty and if it has a RangeIndex
         if not data_index:
             if is_int64_dtype(df.index.dtype):
                 # if so do not add extra index column and pivot
@@ -93,11 +168,11 @@ def tran_pivot_longer (
             )
             return(longer)
 
-        # look for unused columns to pivot around
+        ### look for unused columns to pivot around
         data_used = columns
         data_index = [x for x in data_columns if x not in data_used]
 
-        # pivot with leftover name that would be the index column
+        ### pivot with leftover name that would be the index column
         if data_index:
             longer = df.reset_index().melt(
                 id_vars=data_index,
@@ -108,8 +183,8 @@ def tran_pivot_longer (
             return(longer)
 
     ### Collect indexes to be preserved post-pivot
-    data_columns = df.columns
     data_used = columns
+    data_columns = df.columns.values
     data_index = [x for x in data_columns if x not in data_used]
 
     ### Add index column to dataset
@@ -125,7 +200,6 @@ def tran_pivot_longer (
     ### if there was columns needing to be re-inserted do so
     if data_index is not None:
         for i, v in enumerate(data_index):
-            print(i)
             long.insert(
                 loc=i+1,
                 column=data_index[i],

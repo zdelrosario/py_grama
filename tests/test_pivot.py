@@ -136,8 +136,77 @@ class TestPivotLonger(unittest.TestCase):
             stang,
             index_to = "idx",
             columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
-            names_to="var",values_to="val"
+            names_to="var",
+            values_to="val"
         )
+        long_index = long["idx"]
+        single_index = list(range(0, max(long_index)))
+
+        if len(long_index) == len(set(long_index)):
+            if single_index == long_index:
+                result = True
+        else:
+            result = True
+
+        self.assertTrue(result)
+
+    def test_pivot_longer_select(self):
+        """ Test if pivot_longer is compatible with gr.tran_select or any input
+            of a DataFrame instead as 'columns' argument
+        """
+        stang = data.df_stang_wide
+        long = gr.tran_pivot_longer(
+            stang,
+            columns=(gr.tran_select(stang,gr.matches("\\d+"))),
+            names_to="var",
+            values_to="val"
+        )
+        expected = gr.tran_pivot_longer(
+            stang,
+            columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
+            names_to="var",
+            values_to="val"
+        )
+
+        assert_frame_equal(long, expected)
+
+
+    def test_pivot_longer_names_sep(self):
+        """ Test if pivot_longer properly works with names_sep argument
+        """
+        stang = data.df_stang_wide
+        long = gr.tran_pivot_longer(
+            stang,
+            names_sep="_",
+            columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
+            names_to=("property", "angle"),
+            values_to="val"
+        )
+        names_to = ["property","angle"]
+        names_to_check = [x for x in long.columns.values if x in names_to]
+
+        if names_to == names_to_check:
+            result = True
+        else:
+            result = False
+
+        self.assertTrue(result)
+
+
+    def test_pivot_longer_names_sep_and_index_to(self):
+        """ Test if pivot_longer works with names_sep and index_to arguments
+            together
+        """
+        stang = data.df_stang_wide
+        long = gr.tran_pivot_longer(
+            stang,
+            index_to="idx",
+            names_sep="_",
+            columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
+            names_to=("property", "angle"),
+            values_to="val"
+        )
+
         long_index = long["idx"]
         single_index = list(range(0, max(long_index)))
 
@@ -187,7 +256,8 @@ class TestPivotWider(unittest.TestCase):
             long = gr.tran_pivot_longer(
                 stang,
                 columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
-                names_to="var",values_to="val"
+                names_to="var",
+                values_to="val"
             )
             wide = gr.tran_pivot_wider(
                 long,
@@ -205,7 +275,8 @@ class TestPivotWider(unittest.TestCase):
             stang,
             index_to = "idx",
             columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
-            names_to="var",values_to="val"
+            names_to="var",
+            values_to="val"
         )
         wide = gr.tran_pivot_wider(
             long,
