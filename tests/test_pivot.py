@@ -1,3 +1,4 @@
+import re
 import unittest
 
 from context import grama as gr
@@ -179,6 +180,29 @@ class TestPivotLonger(unittest.TestCase):
         long = gr.tran_pivot_longer(
             stang,
             names_sep="_",
+            columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
+            names_to=("property", "angle"),
+            values_to="val"
+        )
+        names_to = ["property","angle"]
+        names_to_check = [x for x in long.columns.values if x in names_to]
+
+        if names_to == names_to_check:
+            result = True
+        else:
+            result = False
+
+        self.assertTrue(result)
+
+
+    def test_pivot_longer_names_sep_regex(self):
+        """ Test if pivot_longer properly works with names_sep argument being 
+            regex expression
+        """
+        stang = data.df_stang_wide
+        long = gr.tran_pivot_longer(
+            stang,
+            names_sep=r'\_',
             columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
             names_to=("property", "angle"),
             values_to="val"
