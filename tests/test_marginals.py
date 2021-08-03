@@ -8,7 +8,7 @@ from context import models, data
 
 ## Marginals function tests
 ##################################################
-class TestMarginals(unittest.TestCase):
+class TestMarginalTools(unittest.TestCase):
     def setUp(self):
         self.mg_gkde = gr.marg_gkde(data.df_stang.E)
         self.mg_norm = gr.marg_named(data.df_stang.E, "norm")
