@@ -145,12 +145,12 @@ class TestPivotLonger(unittest.TestCase):
         mod = max(long_index)
         single_index = list(range(0, mod))
 
+        result = False
         if single_index == long_index[0:mod]:
             result = True
-        else:
-            result = False
 
         self.assertTrue(result)
+
 
     def test_pivot_longer_select(self):
         """ Test if pivot_longer is compatible with gr.tran_select or any input
@@ -173,6 +173,27 @@ class TestPivotLonger(unittest.TestCase):
         assert_frame_equal(long, expected)
 
 
+    # def test_pivot_longer_matches(self):
+    #     """ Test if pivot_longer is compatible with gr.matches as columns input
+    #     """
+    #     ### Not working yet, needs to be implmented
+    #     stang = data.df_stang_wide
+    #     long = gr.tran_pivot_longer(
+    #         stang,
+    #         columns=gr.matches("\\d+"),
+    #         names_to="var",
+    #         values_to="val"
+    #     )
+    #     expected = gr.tran_pivot_longer(
+    #         stang,
+    #         columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
+    #         names_to="var",
+    #         values_to="val"
+    #     )
+    #
+    #     #assert_frame_equal(long, expected)
+
+
     def test_pivot_longer_names_sep(self):
         """ Test if pivot_longer properly works with names_sep argument
         """
@@ -187,16 +208,15 @@ class TestPivotLonger(unittest.TestCase):
         names_to = ["property","angle"]
         names_to_check = [x for x in long.columns.values if x in names_to]
 
+        result = False
         if names_to == names_to_check:
             result = True
-        else:
-            result = False
 
         self.assertTrue(result)
 
 
     def test_pivot_longer_names_sep_regex(self):
-        """ Test if pivot_longer properly works with names_sep argument being 
+        """ Test if pivot_longer properly works with names_sep argument being
             regex expression
         """
         stang = data.df_stang_wide
@@ -210,10 +230,9 @@ class TestPivotLonger(unittest.TestCase):
         names_to = ["property","angle"]
         names_to_check = [x for x in long.columns.values if x in names_to]
 
+        result = False
         if names_to == names_to_check:
             result = True
-        else:
-            result = False
 
         self.assertTrue(result)
 
@@ -233,10 +252,9 @@ class TestPivotLonger(unittest.TestCase):
         names_to = ["letter","num","saying"]
         names_to_check = [x for x in long.columns.values if x in names_to]
 
+        result = False
         if names_to == names_to_check:
             result = True
-        else:
-            result = False
 
         self.assertTrue(result)
 
@@ -256,10 +274,9 @@ class TestPivotLonger(unittest.TestCase):
         names_to = ["letter","num","saying"]
         names_to_check = [x for x in long.columns.values if x in names_to]
 
+        result = False
         if names_to == names_to_check:
             result = True
-        else:
-            result = False
 
         self.assertTrue(result)
 
@@ -285,11 +302,10 @@ class TestPivotLonger(unittest.TestCase):
         check = ["property","angle"]
         col_check = [x for x in long.columns.values if x in check]
 
+        result = False
         if single_index == long_index[0:mod]:
             if check == col_check:
                 result = True
-        else:
-            result = False
 
         self.assertTrue(result)
 
@@ -323,10 +339,33 @@ class TestPivotLonger(unittest.TestCase):
         check = ["E_00","mu_00","E_45","mu_45","E_90","mu_90"]
         col_check = [x for x in long.columns.values if x in check]
 
+        result = False
         if set(col_check) == set(check):
             result = True
-        else:
-            result = False
+
+        self.assertTrue(result)
+
+
+    def test_pivot_longer_dot_value_and_index_to(self):
+        """ Test pivot_longer when it receives the .value input and an input
+            for 'index_to'
+        """
+        stang = data.df_stang_wide
+        long = gr.tran_pivot_longer(
+            stang,
+            index_to="idx",
+            columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
+            names_to=".value",
+            values_to="val"
+        )
+
+        check = ["E_00","mu_00","E_45","mu_45","E_90","mu_90"]
+        col_check = [x for x in long.columns.values if x in check]
+
+        result = False
+        if set(col_check) == set(check):
+            if long.columns.values[0] == "idx":
+                result = True
 
         self.assertTrue(result)
 
@@ -347,12 +386,48 @@ class TestPivotLonger(unittest.TestCase):
         E_count = columns.count("E")
         mu_count = columns.count("mu")
 
+        result = False
         if E_count > 0 and mu_count > 0:
             result = True
-        else:
-            result = False
 
         self.assertTrue(result)
+
+
+    def test_pivot_longer_dot_value_in_the_middle(self):
+        """ Test pivot_longer when it receives the .value input in between at
+            least 2 other inputs in 'names_to'
+        """
+        stang = data.df_stang_wide
+        # rename columns for this test
+        for i in stang.columns.values:
+            stang.rename(columns={i: ('NA_'+i)},inplace=True)
+        stang.rename(columns={'NA_thick': 'thick'},inplace=True)
+        stang.rename(columns={'NA_alloy': 'alloy'},inplace=True)
+
+        long = gr.tran_pivot_longer(
+            stang,
+            names_sep="_",
+            columns=["NA_E_00","NA_mu_00","NA_E_45","NA_mu_45","NA_E_90","NA_mu_90"],
+            names_to=("null", ".value", "angle"),
+            values_to="val"
+        )
+
+        columns = list(long.columns.values)
+        null_count = columns.count("null")
+        E_count = columns.count("E")
+        mu_count = columns.count("mu")
+
+        result = False
+        if E_count > 0 and mu_count > 0 and null_count > 0:
+            result = True
+
+        self.assertTrue(result)
+
+        # undo column renaming for future tests
+        null = 'NA_'
+        for i in stang.columns.values:
+            if null in i:
+                stang.rename(columns={i: i.lstrip(null)},inplace=True)
 
 
 class TestPivotWider(unittest.TestCase):

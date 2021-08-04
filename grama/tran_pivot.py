@@ -6,7 +6,7 @@ __all__ = [
 ]
 
 
-from grama import add_pipe
+from grama import add_pipe, tran_select
 from numpy import NaN
 from pandas import DataFrame, IndexSlice, MultiIndex, RangeIndex, Series, \
     concat, isnull, pivot, pivot_table
@@ -47,6 +47,7 @@ def tran_pivot_longer (
         names_sep (str): delimter to seperate the values of the argument(s) from
                         the 'columns' parameter into 2 new columns with those
                         values split by that delimeter
+                          • Regex expression is a valid input for names_sep
         values_to (str): name to use for the 'value' column
 
     Returns:
@@ -75,6 +76,9 @@ def tran_pivot_longer (
     ### Check if tran_select was used
     if isinstance(columns, DataFrame):
         columns = columns.columns.values
+    ### Check if gr.tran_select helper was used:
+    # NEEDS to be implmented, currently gr.tran_select needs to provided with
+    # gr.matches or other helper function for this to work
 
     ### Check if names_to is a list or str
     names_str = False
@@ -159,7 +163,7 @@ def tran_pivot_longer (
             value_longer.drop("index", axis=1, inplace=True)
         else:
             ### rename index column to desired: index_to
-            longer.rename(columns={'index': index_to},inplace=True)
+            value_longer.rename(columns={'index': index_to},inplace=True)
 
         return value_longer
 
@@ -422,9 +426,9 @@ def split_cleanup(
         longer.rename(columns={i: names_to[i]},inplace=True)
     # if any values are None make them NaN
     for i,v in enumerate(names_to):
-        for int, val in enumerate(longer[names_to[i]]):
-            if val is None:
-                longer[names_to[i]][int] = NaN
+        for j, w in enumerate(longer[names_to[i]]):
+            if w is None:
+                longer[names_to[i]][j] = NaN
     # reorder values column to the end
     longer = longer[[c for c in longer if c not in values_to] + [values_to]]
 
