@@ -12,6 +12,14 @@ grama.models.cantilever\_beam module
    :undoc-members:
    :show-inheritance:
 
+grama.models.circuit\_RLC module
+--------------------------------
+
+.. automodule:: grama.models.circuit_RLC
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.models.ishigami module
 ----------------------------
 
@@ -56,6 +64,14 @@ grama.models.test module
 ------------------------
 
 .. automodule:: grama.models.test
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+grama.models.time\_cantilever module
+------------------------------------
+
+.. automodule:: grama.models.time_cantilever
    :members:
    :undoc-members:
    :show-inheritance:
