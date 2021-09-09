@@ -4,7 +4,7 @@ setup(
     name="py_grama",
     author="Zachary del Rosario",
     author_email="zdelrosario@outlook.com",
-    version="0.1.9",
+    version="0.2.1",
     packages=[
         "grama",
         "grama.data",

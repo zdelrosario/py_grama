@@ -13,6 +13,7 @@ __all__ = [
     "as_float",
     "as_str",
     "as_factor",
+    "as_numeric",
     "fct_reorder",
     "fillna",
     "qnorm",
@@ -36,7 +37,7 @@ from numpy import power as nppower
 from numpy import floor as npfloor
 from numpy import ceil as npceil
 from numpy import round as npround
-from pandas import Categorical, Series
+from pandas import Categorical, Series, to_numeric
 from scipy.stats import norm
 
 
@@ -150,6 +151,13 @@ def as_factor(x, categories=None, ordered=True, dtype=None):
     r"""Cast to factor
     """
     return Categorical(x, categories=categories, ordered=ordered, dtype=dtype)
+
+
+@make_symbolic
+def as_numeric(x):
+    r"""Cast to factor
+    """
+    return to_numeric(x, errors="coerce")
 
 
 # Distributions

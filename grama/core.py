@@ -9,9 +9,6 @@ __all__ = [
     "Function",
     "FunctionModel",
     "FunctionVectorized",
-    "Marginal",
-    "MarginalNamed",
-    "MarginalGKDE",
     "Model",
     "NaN",
 ]
@@ -19,8 +16,8 @@ __all__ = [
 import copy
 import networkx as nx
 import warnings
-import grama as gr
 from grama import pipe, valid_dist, param_dist
+from .tools import tran_outer
 from abc import ABC, abstractmethod
 from itertools import chain
 from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, \
@@ -283,173 +280,6 @@ class Domain:
                 var, self.bounds[var][0], self.bounds[var][1],
             )
         return "{0:}: (unbounded)".format(var)
-
-
-# Marginal parent class
-class Marginal(ABC):
-    """Parent class for marginal distributions
-    """
-
-    def __init__(self, sign=0):
-        self.sign = sign
-
-    @abstractmethod
-    def copy(self):
-        pass
-
-    ## Fitting function
-    @abstractmethod
-    def fit(self, data):
-        pass
-
-    ## Likelihood function
-    @abstractmethod
-    def l(self, x):
-        pass
-
-    ## Cumulative density function
-    @abstractmethod
-    def p(self, x):
-        pass
-
-    ## Quantile function
-    @abstractmethod
-    def q(self, p):
-        pass
-
-    ## Summary
-    @abstractmethod
-    def summary(self):
-        pass
-
-
-## Named marginal class
-class MarginalNamed(Marginal):
-    """Marginal using a named distribution from gr.valid_dist"""
-
-    def __init__(self, d_name=None, d_param=None, **kw):
-        super().__init__(**kw)
-
-        self.d_name = d_name
-        self.d_param = d_param
-
-    def copy(self):
-        new_marginal = MarginalNamed(
-            sign=self.sign, d_name=self.d_name, d_param=copy.deepcopy(self.d_param)
-        )
-
-        return new_marginal
-
-    ## Fitting function
-    def fit(self, data):
-        param = valid_dist[self.d_name].fit(data)
-        self.d_param = dict(zip(param_dist[dist], param))
-
-    ## Likelihood function
-    def l(self, x):
-        return valid_dist[self.d_name].pdf(x, **self.d_param)
-
-    ## Cumulative density function
-    def p(self, x):
-        return valid_dist[self.d_name].cdf(x, **self.d_param)
-
-    ## Quantile function
-    def q(self, p):
-        return valid_dist[self.d_name].ppf(p, **self.d_param)
-
-    ## Summary
-    def summary(self):
-        return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, self.d_param)
-
-
-## Gaussian KDE marginal class
-class MarginalGKDE(Marginal):
-    """Marginal using scipy.stats.gaussian_kde"""
-
-    def __init__(self, kde, atol=1e-6, **kw):
-        super().__init__(**kw)
-
-        self.kde = kde
-        self.atol = atol
-        self._set_bracket()
-
-    def copy(self):
-        new_marginal = MarginalGKDE(kde=copy.deepcopy(self.kde), atol=self.atol,)
-
-        return new_marginal
-
-    def _set_bracket(self):
-        ## Calibrate the quantile brackets based on desired accuracy
-        bracket = [npmin(self.kde.dataset), npmax(self.kde.dataset)]
-
-        sol_lo = root_scalar(
-            lambda x: self.atol - self.p(x),
-            x0=bracket[0],
-            x1=bracket[1],
-            method="secant",
-        )
-        sol_hi = root_scalar(
-            lambda x: 1 - self.atol - self.p(x),
-            x0=bracket[0],
-            x1=bracket[1],
-            method="secant",
-        )
-
-        self.bracket = [sol_lo.root, sol_hi.root]
-
-    ## Fitting function
-    def fit(self, data):
-        self.kde = gaussian_kde(data)
-        self._set_bracket()
-
-    ## Likelihood function
-    def l(self, x):
-        return self.kde.pdf(x)
-
-    ## Cumulative density function
-    def p(self, x):
-        try:
-            return array([self.kde.integrate_box_1d(-Inf, v) for v in x])
-        except TypeError:
-            return self.kde.integrate_box_1d(-Inf, x)
-
-    ## Quantile function
-    def q(self, p):
-        p_bnd = self.p(self.bracket)
-
-        ## Create scalar solver
-        def qscalar(val):
-            if val <= p_bnd[0]:
-                return self.bracket[0]
-            if val >= p_bnd[1]:
-                return self.bracket[1]
-            sol = root_scalar(
-                lambda x: val - self.p(x),
-                bracket=self.bracket,
-                method="bisect",
-                xtol=self.atol,
-            )
-            return sol.root
-
-        ## Iterate over all given values
-        try:
-            res = zeros(len(p))
-            for i in range(len(p)):
-                res[i] = qscalar(p[i])
-        except TypeError:
-            res = qscalar(p)
-
-        return res
-
-    ## Summary
-    def summary(self):
-        p_bnd = self.p(self.bracket)
-
-        return "({0:+}) gaussian KDE, n={1:2.1f}/{2:}, f={3:2.1e}, ".format(
-            self.sign, self.kde.neff, self.kde.dataset.shape[1], self.kde.factor
-        ) + "b=[{0:2.1e}, {1:2.1e}], a={2:1.0e}".format(
-            self.bracket[0], self.bracket[1], self.atol
-        )
 
 
 ## Copula base class
@@ -1104,7 +934,7 @@ class Model:
             return df_det
 
         ## Outer product if both det and rand exist
-        return gr.tran_outer(df_rand, df_det)
+        return tran_outer(df_rand, df_det)
 
     ## Sample transforms
     # --------------------------------------------------

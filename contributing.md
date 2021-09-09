@@ -2,12 +2,6 @@
 
 Thanks for your interest in contributing! Please follow the guidelines below, and contact one of the Maintainers (listed below) if you have any questions.
 
-## Seeking support
-
-If you have a question, please try reading the [documentation](https://py-grama.readthedocs.io/en/latest/) first. The documentation contains an [overview](https://py-grama.readthedocs.io/en/latest/source/overview.html) that discusses the motivation behind `py_grama` and a great deal of detail on the [language design](https://py-grama.readthedocs.io/en/latest/source/language.html).
-
-If the documentation does not answer your question, please contact one of the Maintainers (listed below).
-
 ## Reporting an issue
 
 If you find a issue with the software, please file a [new issue](https://github.com/zdelrosario/py_grama/issues). Please include a [reproducible example](https://stackoverflow.com/help/minimal-reproducible-example) in your issue. Note that if you have a question, please don't file an issue---the issue tracker is meant to document issues in the design and implementation of `py_grama`, not to answer questions.

@@ -228,23 +228,6 @@ class TestEvalDf(unittest.TestCase):
         self.assertRaises(ValueError, gr.eval_df, self.model)
 
 
-class TestMarginal(unittest.TestCase):
-    def setUp(self):
-        self.marginal_named = gr.MarginalNamed(
-            d_name="norm", d_param={"loc": 0, "scale": 1}
-        )
-
-    def test_fcn(self):
-
-        ## Invoke summary
-        self.marginal_named.summary()
-
-        ## Correct values for normal distribution
-        self.assertTrue(self.marginal_named.l(0.5) == norm.pdf(0.5))
-        self.assertTrue(self.marginal_named.p(0.5) == norm.cdf(0.5))
-        self.assertTrue(self.marginal_named.q(0.5) == norm.ppf(0.5))
-
-
 # --------------------------------------------------
 class TestDomain(unittest.TestCase):
     def setUp(self):
