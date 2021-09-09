@@ -3,7 +3,7 @@ import unittest
 
 from context import grama as gr
 from context import data
-from numpy import NaN
+from numpy import NaN, random
 from pandas import DataFrame, RangeIndex
 from pandas.testing import assert_frame_equal
 
@@ -205,6 +205,7 @@ class TestPivotLonger(unittest.TestCase):
             names_to=("property", "angle"),
             values_to="val"
         )
+
         names_to = ["property","angle"]
         names_to_check = [x for x in long.columns.values if x in names_to]
 
@@ -335,8 +336,35 @@ class TestPivotLonger(unittest.TestCase):
             names_to=".value",
             values_to="val"
         )
-
         check = ["E_00","mu_00","E_45","mu_45","E_90","mu_90"]
+        col_check = [x for x in long.columns.values if x in check]
+
+        result = False
+        if set(col_check) == set(check):
+            result = True
+
+        self.assertTrue(result)
+
+    def test_pivot_longer_dot_value_and_names_sep(self):
+        """ Test pivot_longer when it receives the .value and names_sep
+        """
+        DF = gr.Intention()
+        wide = gr.df_make(x=range(0, 6))
+        wide = gr.tran_mutate(
+            wide,
+            y_Trend=DF.x**2,
+            y_Variability=random.normal(size=6),
+            y_Mixed=DF.x**2 + random.normal(size=6),
+        )
+
+        long = gr.tran_pivot_longer(
+            wide,
+            columns=["y_Trend", "y_Variability", "y_Mixed"],
+            names_to=(".value", "type"),
+            names_sep="_"
+        )
+
+        check = ["x", "type", "y"]
         col_check = [x for x in long.columns.values if x in check]
 
         result = False

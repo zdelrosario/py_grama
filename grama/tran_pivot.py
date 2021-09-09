@@ -90,13 +90,17 @@ def tran_pivot_longer (
 
     ### Check for .value input
     dot_value = False
-    if names_str == False:
+    if names_str is False:
         for i, v in enumerate(names_to):
             if names_to[i] == ".value":
                 dot_value = True
     else:
         if names_to == ".value":
             dot_value = True
+
+    ### Check values_to argument
+    if values_to is None:
+        values_to = "values"
 
     #######################################
 
