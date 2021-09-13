@@ -80,6 +80,14 @@ grama.fit\_synonyms module
    :undoc-members:
    :show-inheritance:
 
+grama.marginals module
+----------------------
+
+.. automodule:: grama.marginals
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.mutate\_helpers module
 ----------------------------
 
@@ -104,10 +112,26 @@ grama.string\_helpers module
    :undoc-members:
    :show-inheritance:
 
+grama.support module
+--------------------
+
+.. automodule:: grama.support
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.tools module
 ------------------
 
 .. automodule:: grama.tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+grama.tran\_pivot module
+------------------------
+
+.. automodule:: grama.tran_pivot
    :members:
    :undoc-members:
    :show-inheritance:
