@@ -35,6 +35,22 @@ class TestSummaryFcn(unittest.TestCase):
         df_truth["m"] = pd.Series([3.950, 4.045, 4.195, 4.045, 4.195])
         self.assertTrue(t.sort_index().equals(df_truth))
 
+    def test_skew(self):
+        df_truth = pd.DataFrame({"m": [0.09984760044443139]})
+        df_res = (
+            data.df_shewhart
+            >> gr.tf_summarize(m=gr.skew(X.tensile_strength))
+        )
+        self.assertTrue(df_truth.equals(df_res))
+
+    def test_kurt(self):
+        df_truth = pd.DataFrame({"m": [2.605643942300021]})
+        df_res = (
+            data.df_shewhart
+            >> gr.tf_summarize(m=gr.kurt(X.tensile_strength))
+        )
+        self.assertTrue(df_truth.equals(df_res))
+
     def test_first(self):
         df = data.df_diamonds >> gr.tf_select(X.cut, X.x) >> gr.tf_head(5)
         # straight summarize
