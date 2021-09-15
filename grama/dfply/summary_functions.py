@@ -13,6 +13,8 @@ __all__ = [
     "median",
     "var",
     "sd",
+    "skew",
+    "kurt",
     "binomial_ci",
     "mse",
     "rmse",
@@ -24,7 +26,8 @@ __all__ = [
 from .base import make_symbolic
 from .vector import order_series_by
 from numpy import sqrt, power, nan
-from scipy.stats import norm, pearsonr, spearmanr
+from scipy.stats import norm, pearsonr, spearmanr, kurtosis
+from scipy.stats import skew as spskew
 
 
 # ------------------------------------------------------------------------------
@@ -47,6 +50,48 @@ def mean(series):
     #     return np.nan
     return series.mean()
 
+
+@make_symbolic
+def skew(series, bias=True, nan_policy="propagate"):
+    """Returns the skewness of a series.
+
+    Args:
+        series (pandas.Series): column to summarize.
+        bias (bool): Correct for bias?
+        nan_policy (str): How to handle NaN values:
+            - "propagate": return NaN
+            - "raise": throws an error
+            - "omit": remove NaN before calculating skew
+
+    """
+
+    return spskew(series, bias=bias, nan_policy="propagate")
+
+
+@make_symbolic
+def kurt(series, bias=True, nan_policy="propagate", excess=False):
+    """Returns the kurtosis of a series.
+
+    A distribution with kurtosis greater than three is called *leptokurtic*;
+    such a distribution has "fatter" tails and will tend to exhibit more
+    outliers. A distribution with kurtosis less than three is called
+    *platykurtic*; such a distribution has less-fat tails and will tend to
+    exhibit fewer outliers.
+
+    Args:
+        series (pandas.Series): column to summarize.
+        bias (bool): Correct for bias?
+        excess (bool): Return excess kurtosis (excess = kurtosis - 3).
+            Note that a normal distribution has kurtosis == 3, which
+            informs the excess kurtosis definition.
+        nan_policy (str): How to handle NaN values:
+            - "propagate": return NaN
+            - "raise": throws an error
+            - "omit": remove NaN before calculating skew
+
+    """
+
+    return kurtosis(series, fisher=excess, bias=bias, nan_policy="propagate")
 
 @make_symbolic
 def first(series, order_by=None):
