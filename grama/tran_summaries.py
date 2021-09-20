@@ -23,6 +23,39 @@ from toolz import curry
 warnings.formatwarning = custom_formatwarning
 
 
+## Estimate Skewness and Kurtosis with bootstrap
+# --------------------------------------------------
+@curry
+def tran_skew_kurt(df, var=None, n_bootstrap=1000):
+    r"""Estimate skewness and kurtosis for distribution selection
+
+    Args:
+        df (DataFrame): Input data
+        var (iterable of str): Columns to analyze
+        n_bootstrap (int): Bootstrap replicates
+
+    Returns:
+        DataFrame: Point-estimates and bootstrap replicates of skewness and kurtosis
+
+    References:
+        Cullen and Frey *Probabilistic techniques in exposure assessment: A handbook
+for dealing with variability and uncertainty in models and inputs* (1999) Springer Science & Business Media
+
+    """
+    ## Check invariants
+    if var is None:
+        var = list(df.columns).copy()
+    else:
+        var = list(var).copy()
+        diff = set(var).difference(set(df.columns))
+        if len(diff) > 0:
+            raise ValueError(
+                "`var` must be subset of `df.columns`\n" "diff = {}".format(diff)
+            )
+
+    ## Compute point estimates
+
+
 ## Compute Sobol' indices
 # --------------------------------------------------
 @curry
