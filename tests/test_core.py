@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
+import scipy
+from scipy.stats import norm, uniform
 import unittest
 import networkx as nx
 
@@ -257,6 +258,23 @@ class TestDensity(unittest.TestCase):
             ),
         )
 
+        self.density_ind = gr.Density(
+            marginals=dict(
+                x=gr.MarginalNamed(d_name="uniform", d_param={"loc": -1, "scale": 2}),
+                y=gr.MarginalNamed(d_name="norm", d_param={"loc": 0, "scale": 1}),
+            ),
+            copula=gr.CopulaIndependence(["x", "y"]),
+        )
+        self.density_gauss = gr.Density(
+            marginals=dict(
+                x=gr.MarginalNamed(d_name="uniform", d_param={"loc": -1, "scale": 2}),
+                y=gr.MarginalNamed(d_name="norm", d_param={"loc": 0, "scale": 1}),
+            ),
+            copula=gr.CopulaGaussian(
+                ["x", "y"], pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
+            ),
+        )
+
     def test_copula_warning(self):
         md = gr.Model()
 
@@ -331,6 +349,46 @@ class TestDensity(unittest.TestCase):
 
         self.assertTrue(set(df_sample.columns) == set(["x", "y"]))
 
+    def test_density(self):
+        x = np.array([-0.9, -0.5, 0, +0.5, +0.9])
+        y = np.array([-0.9, -0.5, 0, +0.5, +0.9])
+        df = pd.DataFrame(dict(x=x, y=y))
+
+        ## Independence copula
+        # Exact
+        l_true = (
+            1
+            * scipy.stats.uniform(loc=-1, scale=2).pdf(x)
+            * scipy.stats.norm(loc=0, scale=1).pdf(y)
+        )
+        # Computed
+        l_comp = self.density_ind.l(df)
+
+        self.assertTrue(all(l_true == l_comp))
+
+        ## Gaussian copula
+        R = np.array([[1.0, 0.5], [0.5, 1.0]])
+        R_inv = np.linalg.inv(R)
+        det = np.linalg.det(R)
+        I = np.eye(2)
+        df_u = self.density_gauss.sample2pr(df)
+
+        print("df_u = {}".format(df_u))
+        l_gauss_cop = np.zeros(len(x))
+        for i in range(len(x)):
+            l_gauss_cop[i] = np.exp(
+                -0.5 * np.dot(norm.ppf(df_u.values[i]), np.dot(R_inv - I, norm.ppf(df_u.values[i])))
+            ) / np.sqrt(det)
+        # Exact
+        l_true = (
+            l_gauss_cop
+            * scipy.stats.uniform(loc=-1, scale=2).pdf(x)
+            * scipy.stats.norm(loc=0, scale=1).pdf(y)
+        )
+        # Computed
+        l_comp = self.density_gauss.l(df)
+
+        self.assertTrue(all(l_true == l_comp))
 
 # --------------------------------------------------
 class TestFunction(unittest.TestCase):

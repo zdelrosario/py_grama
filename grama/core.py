@@ -21,10 +21,10 @@ from .tools import tran_outer
 from abc import ABC, abstractmethod
 from itertools import chain
 from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, \
-    dot, diag, isfinite
+    dot, diag, isfinite, prod, exp
 from numpy import min as npmin
 from numpy import max as npmax
-from numpy.linalg import cholesky
+from numpy.linalg import cholesky, det, inv
 from numpy.random import random, multivariate_normal
 from numpy.random import seed as set_seed
 from pandas import DataFrame, concat
@@ -289,35 +289,45 @@ class Copula(ABC):
 
     @abstractmethod
     def __init__(self):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def copy(self):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def sample(self, n=1):
-        pass
+        r"""Draw a sample of a given size
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def l(self, u):
-        pass
+        r"""Copula density
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def u2z(self, u):
-        pass
+        r"""Transform from [0, 1]^d to sample space
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def z2u(self, z):
-        pass
+        r"""Transform from sample space to [0, 1]^d
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def dudz(self, z):
-        pass
+        r"""Jacobian of copula transform
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def summary(self):
-        pass
+        raise NotImplementedError
 
 
 class CopulaIndependence(Copula):
@@ -367,7 +377,7 @@ class CopulaIndependence(Copula):
             u (array-like):
 
         Returns:
-            array:
+            array: Copula density values
 
         """
         return ones(u.shape[0])
@@ -449,11 +459,14 @@ class CopulaGaussian(Copula):
         Sigma = Sigma + (Sigma - eye(n_var_rand)).T
         try:
             Sigma_h = cholesky(Sigma)
+            Sigma_i = inv(Sigma)
         except LinAlgError:
             warnings.warn(
-                "Correlation structure is not positive-definite", RuntimeWarning
+                "Correlation structure is not positive-definite; copula transforms not available",
+                RuntimeWarning
             )
             Sigma_h = None
+            Sigma_i = None
 
         ## Build density quantities
 
@@ -461,6 +474,8 @@ class CopulaGaussian(Copula):
         self.var_rand = var_rand
         self.Sigma = Sigma
         self.Sigma_h = Sigma_h
+        self.Sigma_i = Sigma_i
+        self.det = det(Sigma)
 
     def copy(self):
         """Copy
@@ -501,16 +516,27 @@ class CopulaGaussian(Copula):
 
         return DataFrame(data=quantiles, columns=self.var_rand)
 
-    def l(self, x):
-        """Density function
+    def l(self, u):
+        """Copula density function
 
         Args:
-            x (array-like):
+            u (array-like):
 
         Returns:
             array:
 
         """
+        n_obs = u.shape[0]
+        n_dim = u.shape[1]
+        l_values = zeros(n_obs)
+
+        for i in range(n_obs):
+            v = norm.ppf(u[i, :])
+            l_values[i] = exp(
+                -0.5*dot(v, dot( self.Sigma_i - eye(n_dim), v))
+            ) / sqrt(self.det)
+
+        return l_values
 
     def u2z(self, u):
         """Transform to standard-normal space
@@ -601,6 +627,30 @@ class Density:
         new_density = Density(marginals=new_marginals, copula=new_copula)
 
         return new_density
+
+    def l(self, df):
+        r"""Evaluate PDF
+
+        Evaluate the PDF of the density.
+
+        Args:
+            df (DataFrame): Values
+
+        """
+        # Get variable names
+        var = [key for key, _ in self.marginals.items()]
+        df_u = self.sample2pr(df)[var]
+        # Evaluate copula density
+        l_copula = self.copula.l(df_u.values)
+        # Evaluate marginal densities
+        L_marginals = zeros((df.shape[0], len(var)))
+        for i in range(len(var)):
+            v = var[i]
+            L_marginals[:, i] = self.marginals[var[i]].l(df[var[i]])
+        l_marginals = prod(L_marginals, axis=1)
+
+        return l_copula * l_marginals
+
 
     def pr2sample(self, df_prval):
         """Convert CDF probabilities to samples
