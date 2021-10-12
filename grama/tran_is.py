@@ -66,6 +66,59 @@ def tran_reweight(
 
     Examples:
 
+        >>> import grama as gr
+        >>> from grama.models import make_cantilever_beam
+        >>> DF = gr.Intention()
+        >>>
+        >>> md_base = make_cantilever_beam()
+        >>> md_new = (
+        >>>     md_base
+        >>>     >> gr.cp_marginals(
+        >>>         H=dict(dist="norm", loc=500.0, scale=50.0),
+        >>>     )
+        >>> )
+        >>>
+        >>> ## Assess safety via simple Monte Carlo
+        >>> df_base = gr.eval_monte_carlo(md_base, df_det="nom", n=1e3)
+        >>> print(
+        >>>     df_base
+        >>>     >> gr.tf_summarize(
+        >>>         pof_stress=gr.mean(DF.g_stress <= 0),
+        >>>         pof_disp=gr.mean(DF.g_disp <= 0),
+        >>>     )
+        >>> )
+        >>>
+        >>> ## Re-use samples to test another scenario
+        >>> print(
+        >>>     df_base
+        >>>     >> gr.tf_reweight(md_base=md_base, md_new=md_new)
+        >>>     >> gr.tf_summarize(
+        >>>         pof_stress=gr.mean((DF.g_stress <= 0) * DF.weight),
+        >>>         pof_disp=gr.mean((DF.g_disp <= 0) * DF.weight),
+        >>>         n_eff=gr.neff_is(DF.weight),
+        >>>     )
+        >>> )
+        >>>
+        >>> ## It is unsafe to study new scenarios with wider uncertainty than the base
+        >>> ## scenario
+        >>> md_poor = (
+        >>>     md_base
+        >>>     >> gr.cp_marginals(
+        >>>         H=dict(dist="norm", loc=500.0, scale=400.0),
+        >>>     )
+        >>> )
+        >>> ## Note the tiny effective size in this case
+        >>> print(
+        >>>     md_base
+        >>>     >> gr.ev_monte_carlo(n=1e3, df_det="nom")
+        >>>     >> gr.tf_reweight(md_base=md_base, md_new=md_poor)
+        >>>     >> gr.tf_summarize(
+        >>>         pof_stress=gr.mean((DF.g_stress <= 0) * DF.weight),
+        >>>         pof_disp=gr.mean((DF.g_disp <= 0) * DF.weight),
+        >>>         n_eff=gr.neff_is(DF.weight),
+        >>>     )
+        >>> )
+
     """
     ## Check invariants
     # Check that random inputs to md_base available in df_base
