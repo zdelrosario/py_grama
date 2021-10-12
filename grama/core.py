@@ -644,9 +644,8 @@ class Density:
         l_copula = self.copula.l(df_u.values)
         # Evaluate marginal densities
         L_marginals = zeros((df.shape[0], len(var)))
-        for i in range(len(var)):
-            v = var[i]
-            L_marginals[:, i] = self.marginals[var[i]].l(df[var[i]])
+        for i, v in enumerate(var):
+            L_marginals[:, i] = self.marginals[v].l(df[v])
         l_marginals = prod(L_marginals, axis=1)
 
         return l_copula * l_marginals
