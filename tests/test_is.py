@@ -28,10 +28,6 @@ class TestReweight(unittest.TestCase):
         """Test the functionality of tran_reweight()
 
         """
-
-        ## Invariants
-        # TODO
-
         ## Correctness
         # Choose scale based on Owen (2013) Exercise 9.7
         md_new = (
@@ -39,9 +35,13 @@ class TestReweight(unittest.TestCase):
             >> gr.cp_marginals(x=dict(dist="norm", loc=0, scale=sqrt(4/5)))
         )
 
-        df = (
+        df_base = (
             self.md
             >> gr.ev_monte_carlo(n=1e3, df_det="nom", seed=101)
+        )
+
+        df = (
+            df_base
             >> gr.tf_reweight(md_base=self.md, md_new=md_new)
             >> gr.tf_summarize(
                 mu=gr.mean(DF.y * DF.weight),
@@ -62,3 +62,23 @@ class TestReweight(unittest.TestCase):
         # print("se_orig = {0:4.3f}".format(se_orig))
         # print("se      = {0:4.3f}".format(se))
         self.assertTrue(se < se_orig)
+
+        ## Invariants
+        # Missing input in data
+        with self.assertRaises(ValueError):
+            gr.tran_reweight(df_base[["y"]], md_base=self.md, md_new=self.md)
+        # Input mismatch
+        with self.assertRaises(ValueError):
+            gr.tran_reweight(
+                df_base,
+                md_base=self.md,
+                md_new=gr.Model()
+            )
+        # Weights collision
+        with self.assertRaises(ValueError):
+            gr.tran_reweight(
+                df_base
+                >> gr.tf_mutate(weight=0),
+                md_base=self.md,
+                md_new=self.md
+            )
