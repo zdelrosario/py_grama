@@ -373,7 +373,6 @@ class TestDensity(unittest.TestCase):
         I = np.eye(2)
         df_u = self.density_gauss.sample2pr(df)
 
-        print("df_u = {}".format(df_u))
         l_gauss_cop = np.zeros(len(x))
         for i in range(len(x)):
             l_gauss_cop[i] = np.exp(
@@ -388,7 +387,7 @@ class TestDensity(unittest.TestCase):
         # Computed
         l_comp = self.density_gauss.l(df)
 
-        self.assertTrue(all(l_true == l_comp))
+        self.assertTrue(np.allclose(l_true, l_comp, rtol=1e-3, atol=1e-3))
 
 # --------------------------------------------------
 class TestFunction(unittest.TestCase):
