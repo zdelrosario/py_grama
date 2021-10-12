@@ -21,6 +21,7 @@ __all__ = [
     "ndme",
     "rsq",
     "corr",
+    "neff_is",
 ]
 
 from .base import make_symbolic
@@ -445,3 +446,26 @@ def corr(series1, series2, method="pearson", res="corr"):
         return r, p
     else:
         raise ValueError("res {} not supported".format(res))
+
+# ------------------------------------------------------------------------------
+# Effective Sample Size helpers
+# ------------------------------------------------------------------------------
+
+@make_symbolic
+def neff_is(series):
+    """Importance sampling n_eff
+
+    Computes the effective sample size according to Equation 9.13 of Owen
+    (2013).
+
+    Args:
+        series (pandas.Series): column to summarize.
+
+    References:
+        A.B. Owen, "Monte Carlo theory, methods and examples" (2013)
+
+    """
+
+    w = series.mean()
+    w2 = (series**2).mean()
+    return len(series) * w**2 / w2

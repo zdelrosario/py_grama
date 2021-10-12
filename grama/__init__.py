@@ -25,5 +25,6 @@ from .tran_pivot import *
 from .tran_shapley import *
 from .tran_summaries import *
 from .support import *
+from .tran_is import *
 
 from .fit_synonyms import *
