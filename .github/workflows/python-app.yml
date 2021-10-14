@@ -32,6 +32,6 @@ jobs:
       run: |
         cd tests; coverage run -m unittest discover
     - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v2
       with:
         fail_ci_if_error: false
