@@ -17,9 +17,11 @@ __all__ = [
     "cp_marginals",
 ]
 
-import grama as gr
+from grama import add_pipe, CopulaGaussian, CopulaIndependence, Density, \
+    Function, FunctionModel, FunctionVectorized, Marginal, MarginalNamed, \
+    pipe, tran_copula_corr
+from .eval_random import eval_monte_carlo
 from collections import ChainMap
-from grama import add_pipe, pipe
 from pandas import concat, DataFrame
 from toolz import curry
 
@@ -120,7 +122,7 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
     )
 
     ## Add new function
-    model_new.functions.append(gr.Function(fun, var, out, name, runtime))
+    model_new.functions.append(Function(fun, var, out, name, runtime))
 
     model_new.update()
     return model_new
@@ -171,7 +173,7 @@ def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0)
     )
 
     ## Add new vectorized function
-    model_new.functions.append(gr.FunctionVectorized(fun, var, out, name, runtime))
+    model_new.functions.append(FunctionVectorized(fun, var, out, name, runtime))
 
     model_new.update()
     return model_new
@@ -202,7 +204,7 @@ def comp_md_det(model, md=None):
         raise ValueError("Must provide `md` argument")
 
     model_new = model.copy()
-    model_new.functions.append(gr.FunctionModel(md))
+    model_new.functions.append(FunctionModel(md))
 
     model_new.update()
     return model_new
@@ -279,7 +281,7 @@ def comp_md_sample(model, md=None, param=None, rand2out=False):
                 md.density.marginals[pair[0]].d_param[pair[1]] = df.iloc[i][var]
 
             ## Evaluate
-            df_tmp = gr.eval_monte_carlo(
+            df_tmp = eval_monte_carlo(
                 md, n=1, df_det=df.iloc[[i]][list(md.var_det)].reset_index(drop=True)
             )
 
@@ -289,7 +291,7 @@ def comp_md_sample(model, md=None, param=None, rand2out=False):
         return df_res[out].reset_index(drop=True)
 
     ## Construct FunctionModel and assign
-    model_new.functions.append(gr.FunctionModel(md_new, ev=_ev, var=var, out=out))
+    model_new.functions.append(FunctionModel(md_new, ev=_ev, var=var, out=out))
 
     model_new.update()
     return model_new
@@ -397,12 +399,12 @@ def comp_marginals(model, **kwargs):
             except KeyError:
                 sign = 0
 
-            new_model.density.marginals[key] = gr.MarginalNamed(
+            new_model.density.marginals[key] = MarginalNamed(
                 sign=sign, d_name=dist, d_param=value_copy
             )
 
         ## Handle Marginal input
-        if isinstance(value_copy, gr.Marginal):
+        if isinstance(value_copy, Marginal):
             new_model.density.marginals[key] = value_copy
 
     new_model.update()
@@ -437,9 +439,9 @@ def comp_copula_independence(model):
 
     """
     new_model = model.copy()
-    new_model.density = gr.Density(
+    new_model.density = Density(
         marginals=model.density.marginals,
-        copula=gr.CopulaIndependence(new_model.var_rand),
+        copula=CopulaIndependence(new_model.var_rand),
     )
     new_model.update()
 
@@ -492,9 +494,9 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
     """
     if not (df_corr is None):
         new_model = model.copy()
-        new_model.density = gr.Density(
+        new_model.density = Density(
             marginals=model.density.marginals,
-            copula=gr.CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
+            copula=CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
         )
         new_model.update()
 
@@ -502,11 +504,11 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
 
     if not (df_data is None):
         new_model = model.copy()
-        df_corr = gr.tran_copula_corr(df_data, model=new_model)
+        df_corr = tran_copula_corr(df_data, model=new_model)
 
-        new_model.density = gr.Density(
+        new_model.density = Density(
             marginals=model.density.marginals,
-            copula=gr.CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
+            copula=CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
         )
         new_model.update()
 
