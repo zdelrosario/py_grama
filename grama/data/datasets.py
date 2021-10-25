@@ -5,6 +5,7 @@ __all__ = [
     "df_stang_wide",
     "df_trajectory_full",
     "df_trajectory_windowed",
+    "df_shewhart",
 ]
 
 import os
@@ -30,3 +31,6 @@ df_ruff = read_csv(Path(path_grama / "data/ruff.csv"))
 # Trajectories
 df_trajectory_full = read_csv(Path(path_grama / "data/trajectory_full.csv"))
 df_trajectory_windowed = read_csv(Path(path_grama / "data/trajectory_windowed.csv"))
+
+# Shewhart
+df_shewhart = read_csv(Path(path_grama / "data/shewhart1931-table3.csv"))
