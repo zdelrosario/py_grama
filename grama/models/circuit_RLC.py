@@ -1,6 +1,7 @@
 __all__ = ["make_prlc", "make_prlc_rand"]
 
-import grama as gr
+from grama import cp_bounds, cp_copula_independence, cp_function, \
+    cp_marginals, cp_vec_function, df_make, Model
 from numpy import sqrt
 
 

@@ -7,8 +7,7 @@ except ModuleNotFoundError:
     raise ModuleNotFoundError("module pyDOE not found")
 
 import warnings
-import grama as gr
-from .. import add_pipe, pipe, custom_formatwarning
+from grama import add_pipe, eval_df, custom_formatwarning, pipe
 from scipy.stats import norm, lognorm
 from numbers import Integral
 from numpy import tile, linspace, zeros, isfinite
@@ -63,7 +62,7 @@ def eval_lhs(
 
     if skip:
         return df_samp
-    return gr.eval_df(model, df=df_samp, append=append)
+    return eval_df(model, df=df_samp, append=append)
 
 
 ev_lhs = add_pipe(eval_lhs)

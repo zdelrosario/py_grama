@@ -9,7 +9,7 @@ __all__ = [
 
 import warnings
 import grama as gr
-from grama import add_pipe, pipe, custom_formatwarning
+from grama import add_pipe, CopulaIndependence, custom_formatwarning, eval_df, pipe
 from numbers import Integral
 from numpy import tile, linspace, zeros, isfinite
 from numpy.linalg import cholesky, inv
@@ -89,7 +89,7 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
 
         return df_samp
 
-    df_res = gr.eval_df(model, df=df_samp, append=append)
+    df_res = eval_df(model, df=df_samp, append=append)
     ## Attach metadata
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -240,7 +240,7 @@ def eval_sinews(
         return df_samp
 
     ## Apply
-    df_res = gr.eval_df(model, df=df_samp, append=append)
+    df_res = eval_df(model, df=df_samp, append=append)
     ## For autoplot
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -304,7 +304,7 @@ def eval_hybrid(
 
     """
     ## Check invariants
-    if not isinstance(model.density.copula, gr.CopulaIndependence):
+    if not isinstance(model.density.copula, CopulaIndependence):
         raise ValueError(
             "model must have CopulaIndependence structure;\n"
             + "Sobol' indices only defined for independent variables"
@@ -363,8 +363,8 @@ def eval_hybrid(
             )
 
         return df_samp
-        
-    df_res = gr.eval_df(model, df=df_samp, append=append)
+
+    df_res = eval_df(model, df=df_samp, append=append)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         df_res._meta = dict(
