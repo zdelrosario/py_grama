@@ -10,3 +10,4 @@ import grama.data as data
 import grama.fit as fit
 import grama.tran as tran
 import grama.eval as ev
+import grama.psdr as psdr
