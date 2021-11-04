@@ -28,3 +28,7 @@ from .support import *
 from .tran_is import *
 
 from .fit_synonyms import *
+
+## Load extras
+# --------------------------------------------------
+from .psdr import *
