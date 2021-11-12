@@ -12,7 +12,7 @@ __all__ = [
 import copy
 import warnings
 from abc import ABC, abstractmethod
-from numpy import zeros, array, Inf, concatenate
+from numpy import zeros, array, Inf, concatenate, sqrt
 from numpy import min as npmin
 from numpy import max as npmax
 from pandas import DataFrame
@@ -420,22 +420,40 @@ def marg_mom(
 ):
     r"""Fit scipy.stats continuous distribution via moments
 
+    Fit a continuous distribution using the method of moments. Select a
+    distribution shape and provide numerical values for a convenient set of
+    common moments.
+
+    This routine uses a vector-output root finding routine to match the moments.
+    You may set an optional initial guess for the distribution parameters using
+    the dict_x0 argument.
+
     Args:
         dist (str): Name of distribution to fit
 
     Kwargs:
         mean (float): Mean of distribution
         sd (float): Standard deviation of distribution
-        var (float): Variance of distribution
+        var (float): Variance of distribution; only one of `sd` and `var` can be provided.
         skew (float): Skewness of distribution
         kurt (float): Kurtosis of distribution
-        kurt_excess (float): Excess kurtosis of distribution; kurt_excess = kurt - 3
+        kurt_excess (float): Excess kurtosis of distribution; kurt_excess = kurt - 3.
+            Only one of `kurt` and `kurt_excess` can be provided.
 
         sign (-1, 0, +1): Sign
         dict_x0 (dict): Dictionary of initial parameter guesses
 
     Returns:
         gr.MarginalNamed: Distribution
+
+    Examples:
+        >>> import grama as gr
+        >>> ## Fit a normal distribution
+        >>> mg_norm = gr.marg_mom("norm", mean=0, sd=1)
+        >>> ## Fit a lognormal distribution
+        >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, skew=1)
+        >>> ## Fit a lognormal, controlling kurtosis instead
+        >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, kurt=1)
 
     """
     ## Number of distribution parameters
@@ -448,8 +466,10 @@ def marg_mom(
     ## Check invariants
     if mean is None:
         raise ValueError("Must provide `mean` argument.")
-    if sd is None:
-        raise ValueError("Must provide `sd` argument.")
+    if (sd is None) and (var is None):
+        raise ValueError(
+            "Either `sd` or `var` must be provided."
+        )
     if (not sd is None) and (not var is None):
         raise ValueError(
             "Only one of `sd` and `var` may be provided."
@@ -463,8 +483,8 @@ def marg_mom(
     # Transform to "standard" moments
     if (not sd is None):
         var = sd**2
-    if (not kurt_excess is None):
-        kurt = kurt_excess + 3
+    if (not kurt is None):
+        kurt_excess = kurt - 3
 
     # Build up target moments
     s = "mv"
@@ -475,7 +495,7 @@ def marg_mom(
         m_target = concatenate((m_target, array([skew])))
     if (not kurt is None):
         s = s + "k"
-        m_target = concatenate((m_target, array([kurt])))
+        m_target = concatenate((m_target, array([kurt_excess])))
     n_provided = len(s)
 
     if n_provided < n_param:
@@ -501,9 +521,9 @@ def marg_mom(
         # Manually coded initial guesses
         dict_x0 = dict(
             loc=mean,
-            scale=sd,
-            a=mean - 3 * sd,
-            b=mean + 3 * sd,
+            scale=sqrt(var),
+            a=1,
+            b=1,
             s=1,
             df=10,
             #K=None,
@@ -519,6 +539,14 @@ def marg_mom(
         _obj,
         x0
     )
+
+    ## Check for failed optimization
+    if res.success is False:
+        raise RuntimeError(
+            "Moment matching failed; initial guess may be poor, or requested "
+            "moments may be infeasible. Try setting `dict_x0`. " +
+            "Printing optimization results for debugging:\n\n{}".format(res)
+        )
 
     ## Repackage and return
     param = dict(zip(param_dist[dist], res.x))
