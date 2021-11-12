@@ -454,6 +454,12 @@ def marg_mom(
         >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, skew=1)
         >>> ## Fit a lognormal, controlling kurtosis instead
         >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, kurt=1)
+        >>>
+        >>> ## Not all moment combinations are feasible; this will fail
+        >>> gr.marg_mom("beta", mean=1, sd=1, skew=0, kurt=4)
+        >>> ## Skewness and kurtosis are related for the beta distribution;
+        >>> ## a different combination is feasible
+        >>> gr.marg_mom("beta", mean=1, sd=1, skew=0, kurt=2)
 
     """
     ## Number of distribution parameters
