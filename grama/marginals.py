@@ -1,6 +1,7 @@
 __all__ = [
     "marg_gkde",
     "marg_named",
+    "marg_mom",
     "Marginal",
     "MarginalNamed",
     "MarginalGKDE",
@@ -11,11 +12,11 @@ __all__ = [
 import copy
 import warnings
 from abc import ABC, abstractmethod
-from numpy import zeros, array, Inf
+from numpy import zeros, array, Inf, concatenate, sqrt
 from numpy import min as npmin
 from numpy import max as npmax
 from pandas import DataFrame
-from scipy.optimize import root_scalar
+from scipy.optimize import root_scalar, root
 from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
     bradford, burr, burr12, cauchy, chi, chi2, cosine, crystalball, dgamma, \
     dweibull, erlang, expon, exponnorm, exponweib, exponpow, f, fatiguelife, \
@@ -406,6 +407,157 @@ class MarginalGKDE(Marginal):
 
 ## Marginal functions
 ##################################################
+def marg_mom(
+        dist,
+        mean=None,
+        sd=None,
+        var=None,
+        skew=None,
+        kurt=None,
+        kurt_excess=None,
+        sign=0,
+        dict_x0=None,
+):
+    r"""Fit scipy.stats continuous distribution via moments
+
+    Fit a continuous distribution using the method of moments. Select a
+    distribution shape and provide numerical values for a convenient set of
+    common moments.
+
+    This routine uses a vector-output root finding routine to match the moments.
+    You may set an optional initial guess for the distribution parameters using
+    the dict_x0 argument.
+
+    Args:
+        dist (str): Name of distribution to fit
+
+    Kwargs:
+        mean (float): Mean of distribution
+        sd (float): Standard deviation of distribution
+        var (float): Variance of distribution; only one of `sd` and `var` can be provided.
+        skew (float): Skewness of distribution
+        kurt (float): Kurtosis of distribution
+        kurt_excess (float): Excess kurtosis of distribution; kurt_excess = kurt - 3.
+            Only one of `kurt` and `kurt_excess` can be provided.
+
+        sign (-1, 0, +1): Sign
+        dict_x0 (dict): Dictionary of initial parameter guesses
+
+    Returns:
+        gr.MarginalNamed: Distribution
+
+    Examples:
+        >>> import grama as gr
+        >>> ## Fit a normal distribution
+        >>> mg_norm = gr.marg_mom("norm", mean=0, sd=1)
+        >>> ## Fit a lognormal distribution
+        >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, skew=1)
+        >>> ## Fit a lognormal, controlling kurtosis instead
+        >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, kurt=1)
+        >>>
+        >>> ## Not all moment combinations are feasible; this will fail
+        >>> gr.marg_mom("beta", mean=1, sd=1, skew=0, kurt=4)
+        >>> ## Skewness and kurtosis are related for the beta distribution;
+        >>> ## a different combination is feasible
+        >>> gr.marg_mom("beta", mean=1, sd=1, skew=0, kurt=2)
+
+    """
+    ## Number of distribution parameters
+    n_param = len(param_dist[dist])
+    if n_param > 4:
+        raise NotImplementedError(
+            "marg_nom does not yet handle distributions with more than 4 parameters"
+        )
+
+    ## Check invariants
+    if mean is None:
+        raise ValueError("Must provide `mean` argument.")
+    if (sd is None) and (var is None):
+        raise ValueError(
+            "Either `sd` or `var` must be provided."
+        )
+    if (not sd is None) and (not var is None):
+        raise ValueError(
+            "Only one of `sd` and `var` may be provided."
+        )
+    if (not kurt is None) and (not kurt_excess is None):
+        raise ValueError(
+            "Only one of `kurt` and `kurt_excess` may be provided."
+        )
+
+    ## Process arguments
+    # Transform to "standard" moments
+    if (not sd is None):
+        var = sd**2
+    if (not kurt is None):
+        kurt_excess = kurt - 3
+
+    # Build up target moments
+    s = "mv"
+    m_target = array([mean, var])
+
+    if (not skew is None):
+        s = s + "s"
+        m_target = concatenate((m_target, array([skew])))
+    if (not kurt is None):
+        s = s + "k"
+        m_target = concatenate((m_target, array([kurt_excess])))
+    n_provided = len(s)
+
+    if n_provided < n_param:
+        raise ValueError(
+            "Insufficient moments provided; you must provide {} more moment(s).".format(
+                n_param - n_provided
+            )
+        )
+    if n_provided > n_param:
+        raise ValueError(
+            "Overdetermined; you must provide {} fewer moment(s).".format(
+                n_provided - n_param
+            )
+        )
+
+    ## Generate helper function for optimization
+    def _obj(v):
+        kw = dict(zip(param_dist[dist], v))
+        return array(valid_dist[dist](**kw).stats(s)) - m_target
+
+    ## Generate initial guess
+    if dict_x0 is None:
+        # Manually coded initial guesses
+        dict_x0 = dict(
+            loc=mean,
+            scale=sqrt(var),
+            a=1,
+            b=1,
+            s=1,
+            df=10,
+            #K=None,
+            #chi=None,
+        )
+    # Repackage for optimizer
+    x0 = array([
+        dict_x0[key] for key in param_dist[dist]
+    ])
+
+    ## Run multidimensional root finding
+    res = root(
+        _obj,
+        x0
+    )
+
+    ## Check for failed optimization
+    if res.success is False:
+        raise RuntimeError(
+            "Moment matching failed; initial guess may be poor, or requested "
+            "moments may be infeasible. Try setting `dict_x0`. " +
+            "Printing optimization results for debugging:\n\n{}".format(res)
+        )
+
+    ## Repackage and return
+    param = dict(zip(param_dist[dist], res.x))
+    return MarginalNamed(sign=sign, d_name=dist, d_param=param)
+
 ## Fit a named scipy.stats distribution
 def marg_named(data, dist, name=True, sign=None):
     r"""Fit scipy.stats continuous distirbution
@@ -420,7 +572,7 @@ def marg_named(data, dist, name=True, sign=None):
         sign (bool): Include sign? (Optional)
 
     Returns:
-        dict: Distribution parameters organized by keyword
+        gr.MarginalNamed: Distribution
 
     Examples:
 
