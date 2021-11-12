@@ -1,6 +1,7 @@
 __all__ = [
     "marg_gkde",
     "marg_named",
+    "marg_mom",
     "Marginal",
     "MarginalNamed",
     "MarginalGKDE",
@@ -11,11 +12,11 @@ __all__ = [
 import copy
 import warnings
 from abc import ABC, abstractmethod
-from numpy import zeros, array, Inf
+from numpy import zeros, array, Inf, concatenate
 from numpy import min as npmin
 from numpy import max as npmax
 from pandas import DataFrame
-from scipy.optimize import root_scalar
+from scipy.optimize import root_scalar, root
 from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
     bradford, burr, burr12, cauchy, chi, chi2, cosine, crystalball, dgamma, \
     dweibull, erlang, expon, exponnorm, exponweib, exponpow, f, fatiguelife, \
@@ -406,6 +407,123 @@ class MarginalGKDE(Marginal):
 
 ## Marginal functions
 ##################################################
+def marg_mom(
+        dist,
+        mean=None,
+        sd=None,
+        var=None,
+        skew=None,
+        kurt=None,
+        kurt_excess=None,
+        sign=0,
+        dict_x0=None,
+):
+    r"""Fit scipy.stats continuous distribution via moments
+
+    Args:
+        dist (str): Name of distribution to fit
+
+    Kwargs:
+        mean (float): Mean of distribution
+        sd (float): Standard deviation of distribution
+        var (float): Variance of distribution
+        skew (float): Skewness of distribution
+        kurt (float): Kurtosis of distribution
+        kurt_excess (float): Excess kurtosis of distribution; kurt_excess = kurt - 3
+
+        sign (-1, 0, +1): Sign
+        dict_x0 (dict): Dictionary of initial parameter guesses
+
+    Returns:
+        gr.MarginalNamed: Distribution
+
+    """
+    ## Number of distribution parameters
+    n_param = len(param_dist[dist])
+    if n_param > 4:
+        raise NotImplementedError(
+            "marg_nom does not yet handle distributions with more than 4 parameters"
+        )
+
+    ## Check invariants
+    if mean is None:
+        raise ValueError("Must provide `mean` argument.")
+    if sd is None:
+        raise ValueError("Must provide `sd` argument.")
+    if (not sd is None) and (not var is None):
+        raise ValueError(
+            "Only one of `sd` and `var` may be provided."
+        )
+    if (not kurt is None) and (not kurt_excess is None):
+        raise ValueError(
+            "Only one of `kurt` and `kurt_excess` may be provided."
+        )
+
+    ## Process arguments
+    # Transform to "standard" moments
+    if (not sd is None):
+        var = sd**2
+    if (not kurt_excess is None):
+        kurt = kurt_excess + 3
+
+    # Build up target moments
+    s = "mv"
+    m_target = array([mean, var])
+
+    if (not skew is None):
+        s = s + "s"
+        m_target = concatenate((m_target, array([skew])))
+    if (not kurt is None):
+        s = s + "k"
+        m_target = concatenate((m_target, array([kurt])))
+    n_provided = len(s)
+
+    if n_provided < n_param:
+        raise ValueError(
+            "Insufficient moments provided; you must provide {} more moment(s).".format(
+                n_param - n_provided
+            )
+        )
+    if n_provided > n_param:
+        raise ValueError(
+            "Overdetermined; you must provide {} fewer moment(s).".format(
+                n_provided - n_param
+            )
+        )
+
+    ## Generate helper function for optimization
+    def _obj(v):
+        kw = dict(zip(param_dist[dist], v))
+        return array(valid_dist[dist](**kw).stats(s)) - m_target
+
+    ## Generate initial guess
+    if dict_x0 is None:
+        # Manually coded initial guesses
+        dict_x0 = dict(
+            loc=mean,
+            scale=sd,
+            a=mean - 3 * sd,
+            b=mean + 3 * sd,
+            s=1,
+            df=10,
+            #K=None,
+            #chi=None,
+        )
+    # Repackage for optimizer
+    x0 = array([
+        dict_x0[key] for key in param_dist[dist]
+    ])
+
+    ## Run multidimensional root finding
+    res = root(
+        _obj,
+        x0
+    )
+
+    ## Repackage and return
+    param = dict(zip(param_dist[dist], res.x))
+    return MarginalNamed(sign=sign, d_name=dist, d_param=param)
+
 ## Fit a named scipy.stats distribution
 def marg_named(data, dist, name=True, sign=None):
     r"""Fit scipy.stats continuous distirbution
@@ -420,7 +538,7 @@ def marg_named(data, dist, name=True, sign=None):
         sign (bool): Include sign? (Optional)
 
     Returns:
-        dict: Distribution parameters organized by keyword
+        gr.MarginalNamed: Distribution
 
     Examples:
 
