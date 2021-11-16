@@ -12,8 +12,7 @@ __all__ = [
     "plot_list",
 ]
 
-import grama as gr
-from grama import add_pipe, pipe
+from grama import add_pipe, pipe, tf_gather
 from matplotlib.pyplot import hist
 from pandas import melt
 from seaborn import pairplot, FacetGrid, relplot
@@ -88,7 +87,7 @@ def plot_hists(df, out=None):
         raise ValueError("Must provide input columns list as keyword out")
 
     ## Gather data
-    df_gathered = df >> gr.tf_gather("key", "out", out)
+    df_gathered = df >> tf_gather("key", "out", out)
 
     ## Faceted histograms
     g = FacetGrid(df_gathered, col="key", sharex=False, sharey=False)
