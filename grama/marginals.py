@@ -411,6 +411,7 @@ def marg_mom(
         dist,
         mean=None,
         sd=None,
+        cov=None,
         var=None,
         skew=None,
         kurt=None,
@@ -434,6 +435,7 @@ def marg_mom(
     Kwargs:
         mean (float): Mean of distribution
         sd (float): Standard deviation of distribution
+        cov (float): Coefficient of Variation of distribution (sd / mean)
         var (float): Variance of distribution; only one of `sd` and `var` can be provided.
         skew (float): Skewness of distribution
         kurt (float): Kurtosis of distribution
@@ -472,13 +474,13 @@ def marg_mom(
     ## Check invariants
     if mean is None:
         raise ValueError("Must provide `mean` argument.")
-    if (sd is None) and (var is None):
+    if (sd is None) and (var is None) and (cov is None):
         raise ValueError(
             "Either `sd` or `var` must be provided."
         )
-    if (not sd is None) and (not var is None):
+    if sum([(not sd is None), (not var is None), (not cov is None)]) > 1:
         raise ValueError(
-            "Only one of `sd` and `var` may be provided."
+            "Only one of `sd`, `cov`, and `var` may be provided."
         )
     if (not kurt is None) and (not kurt_excess is None):
         raise ValueError(
@@ -489,6 +491,8 @@ def marg_mom(
     # Transform to "standard" moments
     if (not sd is None):
         var = sd**2
+    if (not cov is None):
+        var = (mean * cov)**2
     if (not kurt is None):
         kurt_excess = kurt - 3
 
