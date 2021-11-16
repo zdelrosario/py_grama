@@ -476,7 +476,7 @@ def marg_mom(
         raise ValueError("Must provide `mean` argument.")
     if (sd is None) and (var is None) and (cov is None):
         raise ValueError(
-            "Either `sd` or `var` must be provided."
+            "One of `sd`, `cov`, or `var` must be provided."
         )
     if sum([(not sd is None), (not var is None), (not cov is None)]) > 1:
         raise ValueError(
