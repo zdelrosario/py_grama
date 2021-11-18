@@ -10,8 +10,7 @@ try:
 except ModuleNotFoundError:
     raise ModuleNotFoundError("module lolopy not found")
 
-import grama as gr
-from grama import add_pipe, pipe
+from grama import add_pipe, Function, Model, pipe
 from numpy import stack
 from numpy.random import seed as set_seed
 from pandas import DataFrame
@@ -21,7 +20,7 @@ from warnings import filterwarnings
 
 ## Helper functions and classes
 # --------------------------------------------------
-class FunctionRFR(gr.Function):
+class FunctionRFR(Function):
     def __init__(self, rf, var, out, name, runtime, return_std):
         """
 
@@ -152,7 +151,7 @@ def fit_lolo(
         functions.append(fun)
 
     ## Construct model
-    return gr.Model(functions=functions, domain=domain, density=density)
+    return Model(functions=functions, domain=domain, density=density)
 
 
 ft_lolo = add_pipe(fit_lolo)

@@ -53,6 +53,20 @@ class TestMarginalTools(unittest.TestCase):
             np.array([1, 1, 0, 2 - 3])
         )))
 
+        ## Test COV specification
+        mg_cov = gr.marg_mom(
+            "beta",
+            mean=1,
+            cov=2,
+            skew=0,
+            kurt=2,
+        )
+
+        self.assertTrue(all(np.isclose(
+            beta(**mg_cov.d_param).stats("mvsk"),
+            np.array([1, 4, 0, 2 - 3])
+        )))
+
         ## Test invariants
         # Must provide mean
         with self.assertRaises(ValueError):
@@ -69,9 +83,15 @@ class TestMarginalTools(unittest.TestCase):
         # For beta; skew == 0 and kurt == 4 is infeasible
         with self.assertRaises(RuntimeError):
             gr.marg_mom("beta", mean=1, sd=1, skew=0, kurt=4)
-        # Cannot provide both sd and var
+        # Cannot provide more than one of `sd`, `cov`, or `var`
         with self.assertRaises(ValueError):
             gr.marg_mom("norm", mean=1, sd=1, var=1)
+        with self.assertRaises(ValueError):
+            gr.marg_mom("norm", mean=1, sd=1, cov=1)
+        with self.assertRaises(ValueError):
+            gr.marg_mom("norm", mean=1, cov=1, var=1)
+        with self.assertRaises(ValueError):
+            gr.marg_mom("norm", mean=1, sd=1, var=1, cov=1)
         # Cannot provide both kurt and kurt_excess
         with self.assertRaises(ValueError):
             gr.marg_mom("lognorm", mean=1, sd=1, kurt=1, kurt_excess=-2)

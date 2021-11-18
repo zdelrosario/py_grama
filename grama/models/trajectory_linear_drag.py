@@ -1,6 +1,6 @@
 __all__ = ["make_trajectory_linear"]
 
-import grama as gr
+from grama import cp_bounds, cp_function, Model
 from numpy import exp, Inf
 
 
@@ -28,10 +28,10 @@ var_list = ["u0", "v0", "tau", "t"]
 def make_trajectory_linear():
     ## Assemble model
     md_trajectory = (
-        gr.Model("Trajectory Model")
-        >> gr.cp_function(fun=fun_x, var=var_list, out=["x"], name="x_trajectory",)
-        >> gr.cp_function(fun=fun_y, var=var_list, out=["y"], name="y_trajectory",)
-        >> gr.cp_bounds(
+        Model("Trajectory Model")
+        >> cp_function(fun=fun_x, var=var_list, out=["x"], name="x_trajectory",)
+        >> cp_function(fun=fun_y, var=var_list, out=["y"], name="y_trajectory",)
+        >> cp_bounds(
             u0=[0.1, Inf], v0=[0.1, Inf], tau=[0.05, Inf], t=[0, 600]
         )
     )
