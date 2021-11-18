@@ -6,6 +6,7 @@ __all__ = [
     "min_rank",
     "cumsum",
     "cummean",
+    "cumsd",
     "cummax",
     "cummin",
     "cumprod",
@@ -139,6 +140,20 @@ def cummean(series):
 
     means = series.expanding().mean()
     return means
+
+
+@make_symbolic
+def cumsd(series):
+    """
+    Calculates cumulative standard deviation of values. Equivalent to
+    `series.expanding().sd()`.
+
+    Args:
+        series: column to compute cumulative sd for.
+    """
+
+    sds = series.expanding(2).std()
+    return sds
 
 
 @make_symbolic
