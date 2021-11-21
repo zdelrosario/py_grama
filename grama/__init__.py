@@ -10,6 +10,10 @@ from .dfply import *
 from .string_helpers import *
 from .mutate_helpers import *
 
+## Load plotnine
+# --------------------------------------------------
+from plotnine import *
+
 ## Load grama tools
 # --------------------------------------------------
 from .eval_defaults import *
@@ -20,7 +24,6 @@ from .comp_metamodels import *
 from .eval_random import *
 from .eval_tail import *
 from .eval_opt import *
-from .plot_auto import *
 from .tran_pivot import *
 from .tran_shapley import *
 from .tran_summaries import *
@@ -28,3 +31,4 @@ from .support import *
 from .tran_is import *
 
 from .fit_synonyms import *
+from .plot_auto import *
