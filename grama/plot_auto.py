@@ -12,12 +12,28 @@ __all__ = [
     "plot_list",
 ]
 
-from grama import add_pipe, pipe, tf_gather
-from matplotlib.pyplot import hist
+from grama import add_pipe, pipe, tf_pivot_longer, tf_outer, tf_select, tf_rename, tf_filter
+from grama import Intention
 from pandas import melt
-from seaborn import pairplot, FacetGrid, relplot
+
+from plotnine import aes, annotate, ggplot, facet_grid, facet_wrap, labs, element_text, guides
+from plotnine import theme, theme_void, theme_minimal
+from plotnine import scale_x_continuous, scale_y_continuous
+from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_blank
+from matplotlib import gridspec
+
 from toolz import curry
 
+## Helper functions
+##################################################
+def _sci_format(v):
+    r"""Scientific format
+    """
+    return (
+        ["{0:1.1e}".format(v[0])] +
+        [""] * (len(v) - 2) +
+        ["{0:1.1e}".format(v[-1])]
+    )
 
 ## Function-specific plot functions
 ##################################################
@@ -51,8 +67,87 @@ def plot_scattermat(df, var=None):
     if var is None:
         raise ValueError("Must provide input columns list as keyword var")
 
+    ## Define helpers
+    labels_blank = lambda v: [""] * len(v)
+    breaks_min = lambda lims: (lims[0], 0.5 * (lims[0] + lims[1]), lims[1])
+
+    ## Make blank figure
+    fig = (
+        df
+        >> ggplot()
+        + geom_blank()
+        + theme_void()
+    ).draw(show=False)
+
+    gs = gridspec.GridSpec(len(var), len(var))
+    for i, v1 in enumerate(var):
+        for j, v2 in enumerate(var):
+            ax = fig.add_subplot(gs[i, j])
+            ## Switch labels
+            if j == 0:
+                labels_y = _sci_format
+            else:
+                labels_y = labels_blank
+            if i == len(var) - 1:
+                labels_x = _sci_format
+            else:
+                labels_x = labels_blank
+
+            ## Density
+            if i == j:
+                xmid = 0.5 * (
+                    df[v1].min() + df[v1].max()
+                )
+
+                p = (
+                    df
+                    >> ggplot(aes(v1))
+                    + geom_density()
+                    + scale_x_continuous(
+                        breaks=breaks_min,
+                        labels=labels_x,
+                    )
+                    + scale_y_continuous(
+                        breaks=breaks_min,
+                        labels=labels_y,
+                    )
+                    + annotate(
+                        "label",
+                        x=xmid,
+                        y=0,
+                        label=v1,
+                        va="bottom",
+                    )
+                    + theme_minimal()
+                    + labs(title=v1)
+                )
+
+            ## Scatterplot
+            else:
+                p = (
+                    df
+                    >> ggplot(aes(v2, v1))
+                    + geom_point()
+                    + scale_x_continuous(
+                        breaks=breaks_min,
+                        labels=labels_x,
+                    )
+                    + scale_y_continuous(
+                        breaks=breaks_min,
+                        labels=labels_y,
+                    )
+                    + theme_minimal()
+                    + theme(
+                        axis_title=element_text(va="top", size=12),
+                    )
+                )
+
+            _ = p._draw_using_figure(fig, [ax])
+
+
     ## Plot
-    return pairplot(data=df, vars=var)
+    # NB Returning the figure causes a "double plot" in Jupyter....
+    fig.show()
 
 
 pt_scattermat = add_pipe(plot_scattermat)
@@ -86,14 +181,22 @@ def plot_hists(df, out=None):
     if out is None:
         raise ValueError("Must provide input columns list as keyword out")
 
-    ## Gather data
-    df_gathered = df >> tf_gather("key", "out", out)
-
-    ## Faceted histograms
-    g = FacetGrid(df_gathered, col="key", sharex=False, sharey=False)
-    g.map(hist, "out").set_axis_labels("Output", "Count")
-
-    return g
+    return (
+        df
+        >> tf_pivot_longer(
+            columns=out,
+            names_to="var",
+            values_to="value",
+        )
+        >> ggplot(aes("value"))
+        + geom_histogram(bins=30)
+        + facet_wrap("var", scales="free")
+        + theme_minimal()
+        + labs(
+            x="Output Value",
+            y="Count",
+        )
+    )
 
 
 pt_hists = add_pipe(plot_hists)
@@ -130,8 +233,74 @@ def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
     if var is None:
         raise ValueError("Must provide input columns list as keyword var")
 
+    ## Define helpers
+    labels_blank = lambda v: [""] * len(v)
+    breaks_min = lambda lims: (lims[0], 0.5 * (lims[0] + lims[1]), lims[1])
+
+    ## Make blank figure
+    fig = (
+        df
+        >> ggplot()
+        + geom_blank()
+        + theme_void()
+    ).draw(show=False)
+
+    gs = gridspec.GridSpec(len(var), len(var))
+    for i, v1 in enumerate(var):
+        for j, v2 in enumerate(var):
+            ax = fig.add_subplot(gs[i, j])
+            ## Switch labels
+            if j == 0:
+                labels_y = _sci_format
+            else:
+                labels_y = labels_blank
+            if i == len(var) - 1:
+                labels_x = _sci_format
+            else:
+                labels_x = labels_blank
+
+            ## Label
+            if i == j:
+                p = (
+                    df
+                    >> ggplot()
+                    + annotate(
+                        "label",
+                        x=0,
+                        y=0,
+                        label=v1,
+                    )
+                    + theme_void()
+                    + guides(color=None)
+                )
+
+            ## Scatterplot
+            else:
+                p = (
+                    df
+                    >> ggplot(aes(v2, v1, color="factor("+sweep_ind+")"))
+                    + geom_point(size=0.1)
+                    + scale_x_continuous(
+                        breaks=breaks_min,
+                        labels=labels_x,
+                    )
+                    + scale_y_continuous(
+                        breaks=breaks_min,
+                        labels=labels_y,
+                    )
+                    + guides(color=None)
+                    + theme_minimal()
+                    + theme(
+                        axis_title=element_text(va="top", size=12),
+                    )
+                )
+
+            _ = p._draw_using_figure(fig, [ax])
+
+
     ## Plot
-    return pairplot(data=df, vars=var, hue=sweep_ind)
+    # NB Returning the figure causes a "double plot" in Jupyter....
+    fig.show()
 
 
 pt_sinew_inputs = add_pipe(plot_sinew_inputs)
@@ -185,16 +354,32 @@ def plot_sinew_outputs(
     # Filter off-sweep values
     df_plot = df_plot[df_plot[sweep_var] == df_plot["_var"]]
 
-    # Plot
-    return relplot(
-        data=df_plot,
-        x="_x",
-        y="_y",
-        hue=sweep_ind,
-        col="_var",
-        row="_out",
-        kind="line",
-        facet_kws=dict(sharex=False, sharey=False),
+    breaks_min = lambda lims: (lims[0], 0.5 * (lims[0] + lims[1]), lims[1])
+    return (
+        df_plot
+        >> ggplot(aes(
+            "_x",
+            "_y",
+            color="factor(" + sweep_ind + ")",
+            group="factor(" + sweep_ind + ")",
+        ))
+        + geom_line()
+        + facet_grid("_out~_var", scales="free")
+
+        + scale_x_continuous(
+            breaks=breaks_min,
+            labels=_sci_format,
+        )
+        + scale_y_continuous(
+            breaks=breaks_min,
+            labels=_sci_format,
+        )
+        + guides(color=None)
+        + theme_minimal()
+        + labs(
+            x="Input Value",
+            y="Output Value",
+        )
     )
 
 
