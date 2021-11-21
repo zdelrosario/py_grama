@@ -46,6 +46,8 @@ def plot_scattermat(df, var=None):
     Create a scatterplot matrix. Often used to visualize a design (set of inputs
     points) before evaluating the functions.
 
+    Usually called as a dispatch from plot_auto().
+
     Args:
         var (list of strings): Variables to plot
 
@@ -58,10 +60,18 @@ def plot_scattermat(df, var=None):
         >>> import matplotlib.pyplot as plt
         >>> from grama.models import make_cantilever_beam
         >>> md = make_cantilever_beam()
-        >>> md >> \
-        >>>     gr.ev_monte_carlo(n=100, df_det="nom", skip=True) >> \
-        >>>     gr.pt_scattermat(var=md.var)
-        >>> plt.show()
+        >>> ## Dispatch from autoplotter
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_monte_carlo(n=100, df_det="nom", skip=True)
+        >>>     >> gr.pt_auto()
+        >>> )
+        >>> ## Re-create plot without metadata
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_monte_carlo(n=100, df_det="nom")
+        >>>     >> gr.pt_scattermat(var=md.var)
+        >>> )
 
     """
     if var is None:
@@ -160,6 +170,8 @@ def plot_hists(df, out=None):
     Create a set of histograms. Often used to visualize the results of random
     sampling for multiple outputs.
 
+    Usually called as a dispatch from plot_auto().
+
     Args:
         out (list of strings): Variables to plot
 
@@ -172,10 +184,18 @@ def plot_hists(df, out=None):
         >>> import matplotlib.pyplot as plt
         >>> from grama.models import make_cantilever_beam
         >>> md = make_cantilever_beam()
-        >>> md >> \
-        >>>     gr.ev_monte_carlo(n=100, df_det="nom") >> \
-        >>>     gr.pt_hists(out=md.out)
-        >>> plt.show()
+        >>> ## Dispatch from autoplotter
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_monte_carlo(n=100, df_det="nom")
+        >>>     >> gr.pt_auto()
+        >>> )
+        >>> ## Re-create without metadata
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_monte_carlo(n=100, df_det="nom")
+        >>>     >> gr.pt_hists(out=md.out)
+        >>> )
 
     """
     if out is None:
@@ -210,6 +230,8 @@ def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
     Create a scatterplot matrix with hues. Often used to visualize a sinew
     design before evaluating the model functions.
 
+    Usually called as a dispatch from plot_auto().
+
     Args:
         df (Pandas DataFrame): Input design data
         var (list of strings): Variables to plot
@@ -224,10 +246,18 @@ def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
         >>> import matplotlib.pyplot as plt
         >>> from grama.models import make_cantilever_beam
         >>> md = make_cantilever_beam()
-        >>> md >> \
-        >>>     gr.ev_sinews(df_det="swp", skip=True) >> \
-        >>>     gr.pt_sinew_inputs(var=md.var)
-        >>> plt.show()
+        >>> ## Dispatch from autoplotter
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sinews(df_det="swp", skip=True)
+        >>>     >> gr.pt_auto()
+        >>> )
+        >>> ## Re-create without metadata
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sinews(df_det="swp")
+        >>>     >> gr.pt_sinew_inputs(var=md.var)
+        >>> )
 
     """
     if var is None:
@@ -315,6 +345,8 @@ def plot_sinew_outputs(
     Create a relational lineplot with hues. Often used to visualize the outputs
     of a sinew design.
 
+    Usually called as a dispatch from plot_auto().
+
     Args:
         df (Pandas DataFrame): Input design data with output results
         var (list of strings): Variables to plot
@@ -331,10 +363,18 @@ def plot_sinew_outputs(
         >>> import matplotlib.pyplot as plt
         >>> from grama.models import make_cantilever_beam
         >>> md = make_cantilever_beam()
-        >>> md >> \
-        >>>     gr.ev_sinews(df_det="swp") >> \
-        >>>     gr.pt_sinew_inputs(var=md.var, out=md.out)
-        >>> plt.show()
+        >>> ## Dispatch from autoplotter
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sinews(df_det="swp")
+        >>>     >> gr.pt_auto()
+        >>> )
+        >>> ## Re-create without metadata
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sinews(df_det="swp")
+        >>>     >> gr.pt_sinew_inputs(var=md.var, out=md.out)
+        >>> )
 
     """
     if var is None:
