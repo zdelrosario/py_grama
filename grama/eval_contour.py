@@ -156,26 +156,72 @@ def eval_contour(
     r"""Generate contours from a model
 
     Generates contours from a model. Evaluates the model on a dense grid, then
-    runs marching squares to generate contours.
+    runs marching squares to generate contours. Supports targeting multiple
+    outputs and handling auxiliary inputs not included in the contour map.
 
     Args:
         model (gr.Model): Model to evaluate.
         var (list of str): Model inputs to target; must provide exactly
             two inputs, and both must have finite domain width.
         out (list of str): Model output(s) for contour generation.
-        df (DataFrame): Levels for model variables not included in var.
+        df (DataFrame): Levels for model variables not included in var (auxiliary inputs).
         levels (dict): Specific output levels for contour generation;
             overrides n_levels.
         n_side (int): Side resolution for grid; n_side**2 total evaluations.
         n_levels (int): Number of contour levels.
 
     Returns:
-        DataFrame: Results of model evaluation
+        DataFrame: Points along contours, organized by output and auxiliary variable levels.
 
     Examples:
 
         >>> import grama as gr
-        >>> from grama.models import make_test
+        >>> ## Multiple outputs
+        >>> (
+        >>>     gr.Model()
+        >>>     >> gr.cp_vec_function(
+        >>>         fun=lambda df: gr.df_make(
+        >>>             f=df.x**2 + df.y**2,
+        >>>             g=df.x + df.y,
+        >>>         ),
+        >>>         var=["x", "y"],
+        >>>         out=["f", "g"],
+        >>>     )
+        >>>     >> gr.cp_bounds(
+        >>>         x=(-1, +1),
+        >>>         y=(-1, +1),
+        >>>     )
+        >>>     >> gr.ev_contour(
+        >>>         var=["x", "y"],
+        >>>         out=["f", "g"],
+        >>>     )
+        >>>
+        >>>     >> gr.ggplot(gr.aes("x", "y"))
+        >>>     + gr.geom_segment(gr.aes(xend="x_end", yend="y_end", group="level", color="out"))
+        >>> )
+        >>> ## Auxiliary inputs
+        >>> (
+        >>>     gr.Model()
+        >>>     >> gr.cp_vec_function(
+        >>>         fun=lambda df: gr.df_make(
+        >>>             f=df.c * df.x + (1 - df.c) * df.y,
+        >>>         ),
+        >>>         var=["x", "y"],
+        >>>         out=["f", "g"],
+        >>>     )
+        >>>     >> gr.cp_bounds(
+        >>>         x=(-1, +1),
+        >>>         y=(-1, +1),
+        >>>     )
+        >>>     >> gr.ev_contour(
+        >>>         var=["x", "y"],
+        >>>         out=["f"],
+        >>>         df=gr.df_make(c=[0, 1])
+        >>>     )
+        >>>
+        >>>     >> gr.ggplot(gr.aes("x", "y"))
+        >>>     + gr.geom_segment(gr.aes(xend="x_end", yend="y_end", group="level", color="c"))
+        >>> )
 
     """
     ## Check invariants
