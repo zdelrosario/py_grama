@@ -280,6 +280,10 @@ def eval_contour(
 
                 df_res = concat((df_res, df_tmp), axis=0)
 
+    ## Remove dummy column, if present
+    if "_foo" in df_res.columns:
+        df_res.drop("_foo", axis=1, inplace=True)
+
     ## Return the results
     return df_res
 
