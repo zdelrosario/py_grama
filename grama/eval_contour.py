@@ -148,8 +148,9 @@ def eval_contour(
         model,
         var=None,
         out=None,
+        df=None,
         levels=None,
-        n_side=256,
+        n_side=128,
         n_levels=5,
 ):
     r"""Generate contours from a model
@@ -161,7 +162,8 @@ def eval_contour(
         model (gr.Model): Model to evaluate.
         var (list of str): Model inputs to target; must provide exactly
             two inputs, and both must have finite domain width.
-        out (list of str): Model output(s) for contour generation
+        out (list of str): Model output(s) for contour generation.
+        df (DataFrame): Levels for model variables not included in var.
         levels (dict): Specific output levels for contour generation;
             overrides n_levels.
         n_side (int): Side resolution for grid; n_side**2 total evaluations.
@@ -174,30 +176,35 @@ def eval_contour(
 
         >>> import grama as gr
         >>> from grama.models import make_test
-        >>> md = make_test()
-        >>> (
-        >>>     md
-        >>>     ## Generate the contours
-        >>>     >> gr.ev_contour(
-        >>>         var=["x0", "x1"],
-        >>>         out=["y0"],
-        >>>     )
-        >>>     ## Visualize
-        >>>     >> gr.ggplot(gr.aes("x0", "x1", group="f_level"))
-        >>>     + gr.geom_segment(gr.aes(xend="x0_end", yend="x1_end"))
-        >>> )
 
     """
     ## Check invariants
     # Argument given
     if var is None:
         raise ValueError("No `var` given")
+    # Correct number of inputs
+    if len(var) != 2:
+        raise ValueError("Must provide exactly 2 inputs in `var`.")
     # Inputs available
-    var_diff = set(model.var).difference(set(var))
+    var_diff = set(var).difference(set(model.var))
     if len(var_diff) > 0:
         raise ValueError(
-            "`var` must be a subset of model.var; diff {}".format(var_diff)
+            "`var` must be a subset of model.var; missing: {}".format(var_diff)
         )
+    # All inputs supported
+    var_diff = set(model.var).difference(set(var))
+    if len(var_diff) > 0:
+        if df is None:
+            raise ValueError(
+                "Must provide values for remaining model variables using df; " +
+                "missing values: {}".format(var_diff)
+            )
+        var_diff2 = var_diff.difference(set(df.columns))
+        if len(var_diff2) > 0:
+            raise ValueError(
+                "All model variables need values in provided df; " +
+                "missing values: {}".format(var_diff2)
+            )
     # Finite bound width
     if not all([
             isfinite(model.domain.get_width(v)) and
@@ -206,12 +213,14 @@ def eval_contour(
     ]):
         raise ValueError("All model bounds for `var` must be finite and nonzero")
 
+    # Argument given
     if out is None:
         raise ValueError("No `out` given")
-    out_diff = set(model.out).difference(set(out))
+    # Outputs available
+    out_diff = set(out).difference(set(model.out))
     if len(out_diff) > 0:
         raise ValueError(
-            "`out` must be a subset of model.out; diff {}".format(var_diff)
+            "`out` must be a subset of model.out; missing: {}".format(out_diff)
         )
 
     ## Generate data
@@ -219,42 +228,59 @@ def eval_contour(
     yv = linspace(*model.domain.get_bound(var[1]), n_side)
     df_x = DataFrame({var[0]: xv})
     df_y = DataFrame({var[1]: yv})
-
     df_input = (
         df_x
         >> tf_outer(df_outer=df_y)
     )
-    df = eval_df(model, df=df_input)
 
-    ## Set output threshold levels
-    if levels is None:
-        levels = dict(zip(
-            out,
-            [
-                linspace(df[o].min(), df[o].max(), n_levels + 2)[1:-1]
-                for o in out
-            ]
-        ))
+    # Create singleton level if necessary
+    if df is None:
+        df = DataFrame({"_foo":[0]})
 
-    ## Run marching squares
+    ## Loop over provided auxiliary levels
     df_res = DataFrame()
-    # Output quantity
-    for o in out:
-        # Reshape data
-        Data = reshape(df[o].values, (n_side, n_side))
-        # Threshold level
-        for t in levels[o]:
-            segments = marching_square(xv, yv, Data, t)
-            df_tmp = DataFrame(
-                data=array(segments).squeeze(),
-                columns=[var[0], var[1], var[0]+"_end", var[1]+"_end"],
-            )
-            df_tmp["out"] = [o] * df_tmp.shape[0]
-            df_tmp["level"] = [t] * df_tmp.shape[0]
+    for i in range(df.shape[0]):
+        df_in_tmp = (
+            df_input
+            >> tf_outer(df_outer=df.iloc[[i]])
+        )
+        df_out = eval_df(
+            model,
+            df=df_in_tmp,
+        )
 
-            df_res = concat((df_res, df_tmp), axis=0)
+        ## Set output threshold levels
+        if levels is None:
+            levels = dict(zip(
+                out,
+                [
+                    linspace(df_out[o].min(), df_out[o].max(), n_levels + 2)[1:-1]
+                    for o in out
+                ]
+            ))
 
-    ##
+        ## Run marching squares
+        # Output quantity
+        for o in out:
+            # Reshape data
+            Data = reshape(df_out[o].values, (n_side, n_side))
+            # Threshold level
+            for t in levels[o]:
+                segments = marching_square(xv, yv, Data, t)
+                df_tmp = DataFrame(
+                    data=array(segments).squeeze(),
+                    columns=[var[0], var[1], var[0]+"_end", var[1]+"_end"],
+                )
+                df_tmp["out"] = [o] * df_tmp.shape[0]
+                df_tmp["level"] = [t] * df_tmp.shape[0]
+                df_tmp = (
+                    df_tmp
+                    >> tf_outer(df_outer=df.iloc[[i]])
+                )
+
+                df_res = concat((df_res, df_tmp), axis=0)
+
+    ## Return the results
     return df_res
 
 
