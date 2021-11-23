@@ -70,28 +70,28 @@ class TestContour(unittest.TestCase):
         ## Check assertions
         # No var
         with self.assertRaises(ValueError):
-            (
+            res = (
                 md1
                 >> gr.ev_contour(out=["f"])
             )
 
         # Incorrect number of inputs
         with self.assertRaises(ValueError):
-            (
+            res = (
                 md1
                 >> gr.ev_contour(var=["x", "y", "z"])
             )
 
         # Unavailable inputs
         with self.assertRaises(ValueError):
-            (
+            res = (
                 md1
                 >> gr.ev_contour(var=["foo", "bar"])
             )
 
         # Unsupported input
         with self.assertRaises(ValueError):
-            (
+            res = (
                 md2
                 >> gr.ev_contour(
                     var=["x", "y"],
@@ -100,7 +100,7 @@ class TestContour(unittest.TestCase):
             )
 
         with self.assertRaises(ValueError):
-            (
+            res = (
                 md2
                 >> gr.ev_contour(
                     var=["x", "y"],
@@ -111,7 +111,7 @@ class TestContour(unittest.TestCase):
 
         # Zero bound width
         with self.assertRaises(ValueError):
-           (
+           res = (
                gr.Model()
                >> gr.cp_vec_function(
                    fun=lambda df: gr.df_make(
@@ -135,14 +135,14 @@ class TestContour(unittest.TestCase):
 
         # No out
         with self.assertRaises(ValueError):
-            (
+            res = (
                 md1
                 >> gr.ev_contour(var=["x", "y"])
             )
 
         # Output unavailable
         with self.assertRaises(ValueError):
-            (
+            res = (
                 md1
                 >> gr.ev_contour(var=["x", "y"], out=["foo"])
             )

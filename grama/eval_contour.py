@@ -133,9 +133,9 @@ def marching_square(xVector, yVector, Data, threshold):
                 squares[j, i].C = C
                 squares[j, i].D = D
 
-                list = squares[j, i].GetLines(threshold)
+                listTemp = squares[j, i].GetLines(threshold)
 
-                linesList = linesList + list
+                linesList = linesList + listTemp
     else:
         raise AssertionError
 
