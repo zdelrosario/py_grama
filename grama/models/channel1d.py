@@ -62,8 +62,27 @@ def make_channel():
 
     Instantiates a model for particle and fluid temperature rise; particles are suspended in a fluid with bulk velocity along a square cross-section channel. The walls of said channel are transparent, and radiation heats the particles as they travel down the channel.
 
+    Note that this takes the same inputs as the builtin dataset `df_channel`.
+
     References:
         Banko, A.J. "RADIATION ABSORPTION BY INERTIAL PARTICLES IN A TURBULENT SQUARE DUCT FLOW" (2018) PhD Thesis, Stanford University, Chapter 2
+
+    Examples:
+
+    >>> import grama as gr
+    >>> from grama.data import df_channel
+    >>> from grama.models import make_channel
+    >>> md_channel = make_channel()
+
+    >>> (
+    >>>     df_channel
+    >>>     >> gr.tf_md(md_channel)
+
+    >>>     >> gr.ggplot(gr.aes("T_f", "T_norm"))
+    >>>     + gr.geom_abline(slope=1, intercept=0, linetype="dashed")
+    >>>     + gr.geom_point()
+    >>>     + gr.labs(x="1D Model", y="3D DNS")
+    >>> )
 
     """
     md = (
