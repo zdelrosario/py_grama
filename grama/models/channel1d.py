@@ -151,13 +151,13 @@ def make_channel():
             L={"dist": "uniform", "loc": 0.152, "scale": 0.016},
             ## Fluid bulk velocity (m/s)
             U={"dist": "uniform", "loc": 1, "scale": 2.5},
-            ## Fluid kinematic viscosity (m/s^2)
+            ## Fluid kinematic viscosity (m^2/s)
             nu_f={"dist": "uniform", "loc": 1.4e-5, "scale": 0.1e-5},
             ## Particle isobaric heat capacity (J/(kg K))
             cp_p={"dist": "uniform", "loc": 100, "scale": 900},
             ## Fluid isobaric heat capacity (J/(kg K))
             cp_f={"dist": "uniform", "loc": 1000, "scale": 1000},
-            ## Fluid thermal diffusivity
+            ## Fluid thermal diffusivity (m^2/s)
             alpha_f={"dist": "uniform", "loc": 50e-6, "scale": 50e-6},
             ## Particle density (kg / m^3)
             rho_p={"dist": "uniform", "loc": 1e3, "scale": 9e3},
