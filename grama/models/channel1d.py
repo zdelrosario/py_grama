@@ -19,7 +19,7 @@ def make_channel_nondim():
         Model("1d Particle-laden Channel with Radiation; Dimensionless Form")
         >> cp_vec_function(
             fun=lambda df: df_make(
-                beta=1.0 * (1 + df.Phi_M * df.chi)
+                beta=120 * (1 + df.Phi_M * df.chi)
             ),
             var=["Phi_M", "chi"],
             out=["beta"],
