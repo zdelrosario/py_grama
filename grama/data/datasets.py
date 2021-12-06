@@ -67,6 +67,6 @@ df_channel["alpha_f"] = (
     + 1.327e-1 * df_channel.T_0
     + 1.026e-4 * df_channel.T_0**2
     - 5.270e-9 * df_channel.T_0**3
-)
+) * 1e-6
 # Back-calculate the proper number density
 df_channel["n"] = df_channel.N_p / df_channel.H**2 / df_channel.L
