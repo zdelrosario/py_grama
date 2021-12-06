@@ -92,14 +92,14 @@ def make_channel():
                 Re=df.U * df.H / df.nu_f,
                 chi=df.cp_p / df.cp_f,
                 Pr=df.nu_f / df.alpha_f,
-                Phi_M=df.rho_p * df.d_p**3 * df.n / df.rho_f,
+                Phi_M=df.rho_p * 0.5 * df.d_p**3 * df.n / df.rho_f,
                 tau_flow=df.L / df.U,
-                # tau_pt=(df.rho_p * df.cp_p * df.d_p**3) / (df.h_p * df.d_p**2),
-                tau_pt=(df.rho_p * df.cp_p * df.d_p) / (df.h_p),
-                # tau_rad=(df.rho_p * df.cp_p * df.d_p**3 * df.T_0)
-                #        /(df.Q_abs * df.d_p**2 * df.I_0),
-                tau_rad=(df.rho_p * df.cp_p * df.d_p * df.T_0)
-                       /(df.Q_abs * df.I_0),
+                # tau_pt=(df.rho_p * df.cp_p * 0.5 * df.d_p**3) / (df.h_p * 3.14 * df.d_p**2),
+                tau_pt=(df.rho_p * df.cp_p * 0.5 * df.d_p) / (3.14 * df.h_p),
+                # tau_rad=(df.rho_p * df.cp_p * 0.5 * df.d_p**3 * df.T_0)
+                #        /(df.Q_abs * 0.78 * df.d_p**2 * df.I_0),
+                tau_rad=(df.rho_p * df.cp_p * 0.5 * df.d_p * df.T_0)
+                       /(df.Q_abs * 0.78 * df.I_0),
             ),
             var=[
                 "U",        # Fluid bulk velocity
