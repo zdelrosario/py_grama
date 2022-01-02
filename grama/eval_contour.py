@@ -9,6 +9,10 @@ from pandas import concat, DataFrame
 from toolz import curry
 
 class Square():
+    # D -- C
+    # |    |
+    # |    |
+    # A -- B
     A = [0, 0]
     B = [0, 0]
     C = [0, 0]
@@ -31,6 +35,22 @@ class Square():
 
         return caseId
 
+    def InterpolateVertical(self, px, py, qx, qy, d, d1, thresh):
+        x = px
+        y = (
+            py +
+            (qy - py) * ((thresh - d) / (d1 - d))
+        )
+        return x, y
+
+    def InterpolateHorizontal(self, px, py, qx, qy, d, d1, thresh):
+        y = py
+        x = (
+            px +
+            (qx - px) * ((thresh - d) / (d1 - d))
+        )
+        return x, y
+
     def GetLines(self, Threshold):
         lines = []
         caseId = self.GetCaseId(Threshold)
@@ -39,60 +59,72 @@ class Square():
             return []
 
         if caseId in (1, 14, 10):
-            pX = (self.A[0] + self.B[0]) / 2
-            pY = self.B[1]
-            qX = self.D[0]
-            qY = (self.A[1] + self.D[1]) / 2
+            pX, pY = self.InterpolateVertical(
+                *self.A, *self.D, self.A_data, self.D_data, Threshold
+            )
+            qX, qY = self.InterpolateHorizontal(
+                *self.A, *self.B, self.A_data, self.B_data, Threshold
+            )
 
             line = (pX, pY, qX, qY)
 
             lines.append(line)
 
         if caseId in (2, 13, 5):
-            pX = (self.A[0] + self.B[0]) / 2
-            pY = self.A[1]
-            qX = self.C[0]
-            qY = (self.A[1] + self.D[1]) / 2
+            pX, pY = self.InterpolateHorizontal(
+                *self.A, *self.B, self.A_data, self.B_data, Threshold
+            )
+            qX, qY = self.InterpolateVertical(
+                *self.B, *self.C, self.B_data, self.C_data, Threshold
+            )
 
             line = (pX, pY, qX, qY)
 
             lines.append(line)
 
         if caseId in (3, 12):
-            pX = self.A[0]
-            pY = (self.A[1] + self.D[1]) / 2
-            qX = self.C[0]
-            qY = (self.B[1] + self.C[1]) / 2
+            pX, pY = self.InterpolateVertical(
+                *self.A, *self.D, self.A_data, self.D_data, Threshold
+            )
+            qX, qY = self.InterpolateVertical(
+                *self.C, *self.B, self.C_data, self.B_data, Threshold
+            )
 
             line = (pX, pY, qX, qY)
 
             lines.append(line)
 
         if caseId in (4, 11, 10):
-            pX = (self.C[0] + self.D[0]) / 2
-            pY = self.D[1]
-            qX = self.B[0]
-            qY = (self.B[1] + self.C[1]) / 2
+            pX, pY = self.InterpolateHorizontal(
+                *self.D, *self.C, self.D_data, self.C_data, Threshold
+            )
+            qX, qY = self.InterpolateVertical(
+                *self.B, *self.C, self.B_data, self.C_data, Threshold
+            )
 
             line = (pX, pY, qX, qY)
 
             lines.append(line)
 
         elif caseId in (6, 9):
-            pX = (self.A[0] + self.B[0]) / 2
-            pY = self.A[1]
-            qX = (self.C[0] + self.D[0]) / 2
-            qY = self.C[1]
+            pX, pY = self.InterpolateHorizontal(
+                *self.D, *self.C, self.D_data, self.C_data, Threshold
+            )
+            qX, qY = self.InterpolateHorizontal(
+                *self.A, *self.B, self.A_data, self.B_data, Threshold
+            )
 
             line = (pX, pY, qX, qY)
 
             lines.append(line)
 
         elif caseId in (7, 8, 5):
-            pX = (self.C[0] + self.D[0]) / 2
-            pY = self.C[1]
-            qX = self.A[0]
-            qY = (self.A[1] + self.D[1]) / 2
+            pX, pY = self.InterpolateVertical(
+                *self.A, *self.D, self.A_data, self.D_data, Threshold
+            )
+            qX, qY = self.InterpolateHorizontal(
+                *self.D, *self.C, self.D_data, self.C_data, Threshold
+            )
 
             line = (pX, pY, qX, qY)
 
@@ -312,7 +344,10 @@ def eval_contour(
             Data = reshape(df_out[o].values, (n_side, n_side))
             # Threshold level
             for t in levels[o]:
+                # Run marching squares
                 segments = marching_square(xv, yv, Data, t)
+
+                # Package
                 df_tmp = DataFrame(
                     data=array(segments).squeeze(),
                     columns=[var[0], var[1], var[0]+"_end", var[1]+"_end"],
@@ -331,7 +366,7 @@ def eval_contour(
         df_res.drop("_foo", axis=1, inplace=True)
 
     ## Return the results
-    return df_res
+    return df_res.reset_index(drop=True)
 
 
 ev_contour = add_pipe(eval_contour)
