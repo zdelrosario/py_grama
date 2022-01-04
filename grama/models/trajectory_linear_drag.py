@@ -1,6 +1,6 @@
 __all__ = ["make_trajectory_linear"]
 
-from grama import cp_bounds, cp_function, Model
+from grama import cp_bounds, cp_vec_function, Model, df_make
 from numpy import exp, Inf
 
 
@@ -10,15 +10,17 @@ y0 = 0  # Initial y-position (m)
 g = -9.8  # Gravitational acceleration (m/s^2)
 
 ## Responses (x and y trajectory components)
-def fun_x(x):
-    u0, v0, tau, t = x
-    return tau * u0 * (1 - exp(-t / tau)) + x0
+def fun_x(df):
+    return df_make(
+        x=df.tau * df.u0 * (1 - exp(-df.t / df.tau)) + x0
+    )
 
 
-def fun_y(x):
-    u0, v0, tau, t = x
-    v_inf = g * tau
-    return tau * (v0 - v_inf) * (1 - exp(-t / tau)) + v_inf * t + y0
+def fun_y(df):
+    v_inf = g * df.tau
+    return df_make(
+        y=df.tau * (df.v0 - v_inf) * (1 - exp(-df.t / df.tau)) + v_inf * df.t + y0
+    )
 
 
 # Units     (m/s) (m/s) (s)    (s)
@@ -29,8 +31,8 @@ def make_trajectory_linear():
     ## Assemble model
     md_trajectory = (
         Model("Trajectory Model")
-        >> cp_function(fun=fun_x, var=var_list, out=["x"], name="x_trajectory",)
-        >> cp_function(fun=fun_y, var=var_list, out=["y"], name="y_trajectory",)
+        >> cp_vec_function(fun=fun_x, var=var_list, out=["x"], name="x_trajectory",)
+        >> cp_vec_function(fun=fun_y, var=var_list, out=["y"], name="y_trajectory",)
         >> cp_bounds(
             u0=[0.1, Inf], v0=[0.1, Inf], tau=[0.05, Inf], t=[0, 600]
         )
