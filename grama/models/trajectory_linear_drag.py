@@ -11,14 +11,12 @@ g = -9.8  # Gravitational acceleration (m/s^2)
 
 ## Responses (x and y trajectory components)
 def fun_x(df):
-    # u0, v0, tau, t = x
     return df_make(
         x=df.tau * df.u0 * (1 - exp(-df.t / df.tau)) + x0
     )
 
 
 def fun_y(df):
-    # u0, v0, tau, t = x
     v_inf = g * df.tau
     return df_make(
         y=df.tau * (df.v0 - v_inf) * (1 - exp(-df.t / df.tau)) + v_inf * df.t + y0
