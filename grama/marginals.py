@@ -11,6 +11,7 @@ __all__ = [
 
 import copy
 import warnings
+from grama import make_symbolic
 from abc import ABC, abstractmethod
 from numpy import zeros, array, Inf, concatenate, sqrt
 from numpy import min as npmin
@@ -300,14 +301,17 @@ class MarginalNamed(Marginal):
         self.d_param = dict(zip(param_dist[dist], param))
 
     ## Likelihood function
+    @make_symbolic
     def l(self, x):
         return valid_dist[self.d_name].pdf(x, **self.d_param)
 
     ## Cumulative density function
+    @make_symbolic
     def p(self, x):
         return valid_dist[self.d_name].cdf(x, **self.d_param)
 
     ## Quantile function
+    @make_symbolic
     def q(self, p):
         return valid_dist[self.d_name].ppf(p, **self.d_param)
 
@@ -357,10 +361,12 @@ class MarginalGKDE(Marginal):
         self._set_bracket()
 
     ## Likelihood function
+    @make_symbolic
     def l(self, x):
         return self.kde.pdf(x)
 
     ## Cumulative density function
+    @make_symbolic
     def p(self, x):
         try:
             return array([self.kde.integrate_box_1d(-Inf, v) for v in x])
@@ -368,6 +374,7 @@ class MarginalGKDE(Marginal):
             return self.kde.integrate_box_1d(-Inf, x)
 
     ## Quantile function
+    @make_symbolic
     def q(self, p):
         p_bnd = self.p(self.bracket)
 

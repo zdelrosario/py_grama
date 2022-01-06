@@ -1,4 +1,5 @@
-from .marginals import *
+# Import core
+# --------------------------------------------------
 from .tools import *
 from .core import *
 
@@ -9,6 +10,9 @@ from .dfply import *
 # Add functionality to dfply
 from .string_helpers import *
 from .mutate_helpers import *
+
+# Marginals uses make_symbolic decorator
+from .marginals import *
 
 ## Load plotnine
 # --------------------------------------------------
