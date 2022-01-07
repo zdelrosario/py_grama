@@ -373,7 +373,7 @@ def qqvals(x, marg=None, dist=None):
     i = rankdata(x, method="ordinal")
     # Filliben order statistic medians
     p = (i - 0.3175) / (n + 0.365)
-    p[argmin(x)] = 0.5**n
-    p[argmax(x)] = 1 - 0.5**n
+    p[argmax(x)] = 0.5**(1/n)
+    p[argmin(x)] = 1 - 0.5**(1/n)
 
     return marg.q(p)
