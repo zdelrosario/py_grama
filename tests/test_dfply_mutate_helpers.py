@@ -88,8 +88,8 @@ class TestQQ(unittest.TestCase):
         n = 10
         i = arange(1, n + 1)
         p = (i - 0.3175) / (len(i) + 0.365)
-        p[0] = 0.5**n
-        p[-1] = 1 - 0.5**n
+        p[0] = 1 - 0.5**(1/n)
+        p[-1] = 0.5**(1/n)
         q = norm.ppf(p)
 
         # Correct values
