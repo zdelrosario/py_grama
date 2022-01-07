@@ -21,9 +21,10 @@ __all__ = [
     "dnorm",
     "pareto_min",
     "stratum_min",
+    "qqvals",
 ]
 
-from grama import make_symbolic
+from grama import make_symbolic, marg_named
 from numpy import argsort, array, median, zeros, ones, NaN, arange
 from numpy import any as npany
 from numpy import all as npall
@@ -38,7 +39,7 @@ from numpy import floor as npfloor
 from numpy import ceil as npceil
 from numpy import round as npround
 from pandas import Categorical, Series, to_numeric
-from scipy.stats import norm
+from scipy.stats import norm, rankdata
 
 
 # --------------------------------------------------
@@ -316,3 +317,58 @@ def fillna(*args, **kwargs):
 
 
 fillna.__doc__ = fillna.__doc__ + Series.fillna.__doc__
+
+# Q-Q Plot Helper
+# -------------------------
+@make_symbolic
+def qqvals(x, marg=None, dist=None):
+    r"""Generate theoretical quantiles
+
+    Generate theoretical quantiles for a Q-Q plot. Can provide either a
+    pre-defined Marginal object or the name of a distribution to fit.
+
+    Arguments:
+        x (array-like or gr.Intention()): Target observations
+
+    Keyword Arguments:
+        marg (gr.Marginal() or None): Pre-fitted marginal
+        dist (str or None): Name of scipy distribution to fit; see
+            gr.valid_dist for list of valid distributions
+
+    Returns:
+        Series: Theoretical quantiles, matched in order with target observations
+
+    Examples:
+        >>> import grama as gr
+        >>> from grama.data import df_shewhart
+        >>> DF = gr.Intention()
+        >>>
+        >>> (
+        >>>     ## Make a Q-Q plot
+        >>>     df_shewhart
+        >>>     >> gr.tf_mutate(q=gr.qqvals(DF.tensile_strength, dist="norm"))
+        >>>     >> gr.ggplot(gr.aes("q", "tensile_strength"))
+        >>>     + gr.geom_abline(intercept=0, slope=1, linetype="dashed")
+        >>>     + gr.geom_point()
+        >>> )
+
+    """
+    # Check invariants
+    if (marg is None) and (dist is None):
+        raise ValueError(
+            "Must provide one of marg or dist (exclusively)."
+        )
+    if (marg is not None) and (dist is not None):
+        raise ValueError(
+            "Must provide either marg or dist (exclusively)."
+        )
+
+    # Handle marginal input
+    if (dist is not None):
+        marg = marg_named(x, dist)
+
+    # Get sorted probability values
+    i = rankdata(x, method="ordinal")
+    p = (i - 1) / (len(x) - 1)
+
+    return marg.q(p)
