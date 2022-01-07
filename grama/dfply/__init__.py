@@ -1,4 +1,5 @@
 from .base import *
+from .count import *
 from .group import *
 from .join import *
 from .mask_helpers import *
@@ -11,7 +12,6 @@ from .transform import *
 from .summary_functions import *
 from .vector import *
 from .window_functions import *
-
 
 for verb in dir():
     if "ize" in verb:
