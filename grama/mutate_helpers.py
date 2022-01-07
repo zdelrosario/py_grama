@@ -339,6 +339,10 @@ def qqvals(x, dist=None, marg=None):
     Returns:
         Series: Theoretical quantiles, matched in order with target observations
 
+    References:
+        Filliben, J. J., "The Probability Plot Correlation Coefficient Test
+        for Normality" (1975) Technometrics. DOI: 10.1080/00401706.1975.10489279
+
     Examples:
         >>> import grama as gr
         >>> from grama.data import df_shewhart
