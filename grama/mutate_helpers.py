@@ -25,7 +25,8 @@ __all__ = [
 ]
 
 from grama import make_symbolic, marg_named
-from numpy import argsort, array, median, zeros, ones, NaN, arange
+from numpy import array, median, zeros, ones, NaN, arange
+from numpy import argsort, argmin, argmax
 from numpy import any as npany
 from numpy import all as npall
 from numpy import abs as npabs
@@ -368,7 +369,11 @@ def qqvals(x, marg=None, dist=None):
         marg = marg_named(x, dist)
 
     # Get sorted probability values
+    n = len(x)
     i = rankdata(x, method="ordinal")
-    p = (i - 1) / (len(x) - 1)
+    # Filliben order statistic medians
+    p = (i - 0.3175) / (n + 0.365)
+    p[argmin(x)] = 0.5**n
+    p[argmax(x)] = 1 - 0.5**n
 
     return marg.q(p)
