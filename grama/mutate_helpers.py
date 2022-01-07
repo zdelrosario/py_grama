@@ -322,7 +322,7 @@ fillna.__doc__ = fillna.__doc__ + Series.fillna.__doc__
 # Q-Q Plot Helper
 # -------------------------
 @make_symbolic
-def qqvals(x, marg=None, dist=None):
+def qqvals(x, dist=None, marg=None):
     r"""Generate theoretical quantiles
 
     Generate theoretical quantiles for a Q-Q plot. Can provide either a
