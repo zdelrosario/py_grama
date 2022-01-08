@@ -6,9 +6,8 @@ __all__ = [
 ## Fitting via sklearn package
 try:
     from lolopy.learners import RandomForestRegressor
-
 except ModuleNotFoundError:
-    raise ModuleNotFoundError("module lolopy not found")
+    pass
 
 import grama as gr
 from grama import add_pipe, pipe
@@ -142,14 +141,24 @@ def fit_lolo(
     ## Construct gaussian process for each output
     functions = []
 
-    for output in out:
-        rf = RandomForestRegressor(**kwargs)
-        set_seed(seed)
-        rf.fit(df[var].values, df[output].values)
-        name = "RF"
+    try:
+        for output in out:
+            rf = RandomForestRegressor(**kwargs)
+            set_seed(seed)
+            rf.fit(df[var].values, df[output].values)
+            name = "RF"
 
-        fun = FunctionRFR(rf, var, [output], name, 0, return_std)
-        functions.append(fun)
+            fun = FunctionRFR(rf, var, [output], name, 0, return_std)
+            functions.append(fun)
+
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `lolopy` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install lolopy"
+        )
 
     ## Construct model
     return gr.Model(functions=functions, domain=domain, density=density)

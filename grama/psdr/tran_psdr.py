@@ -6,6 +6,7 @@ __all__ = [
 ## Transforms via psdr package
 try:
     from psdr import PolynomialRidgeApproximation
+
 except ModuleNotFoundError:
     pass
 
@@ -105,6 +106,7 @@ def tran_polyridge(
             **kwargs,
         )
         pr.fit(df[var].values, df[out].values)
+
     except NameError as e:
         error_string = str(e)
         raise NameError(

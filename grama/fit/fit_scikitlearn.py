@@ -11,7 +11,6 @@ __all__ = [
 
 ## Fitting via sklearn package
 try:
-    from sklearn.base import clone
     from sklearn.linear_model import LinearRegression
     from sklearn.gaussian_process import GaussianProcessRegressor
     from sklearn.gaussian_process.kernels import Kernel, RBF, ConstantKernel as Con
@@ -19,7 +18,7 @@ try:
     from sklearn.ensemble import RandomForestRegressor
 
 except ModuleNotFoundError:
-    raise ModuleNotFoundError("module sklearn not found")
+    pass
 
 import grama as gr
 from copy import deepcopy
@@ -207,11 +206,21 @@ def fit_gp(
         raise ValueError("var must be subset of df.columns")
 
     ## Pre-process kernel selection
-    if kernels is None:
-        # Vectorize
-        kernels = {o: None for o in out}
-    elif isinstance(kernels, Kernel):
-        kernels = {o: kernels for o in out}
+    try:
+        if kernels is None:
+            # Vectorize
+            kernels = {o: None for o in out}
+        elif isinstance(kernels, Kernel):
+            kernels = {o: kernels for o in out}
+
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `sklearn` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install scikit-learn"
+        )
 
     ## Pre-process data
     var_min = df[var].min()
@@ -221,21 +230,31 @@ def fit_gp(
     ## Construct gaussian process for each output
     functions = []
 
-    for output in out:
-        # Define and fit model
-        gpr = GaussianProcessRegressor(
-            kernel=deepcopy(kernels[output]),
-            random_state=seed,
-            normalize_y=True,
-            copy_X_train=True,
-            n_restarts_optimizer=n_restart,
-            alpha=alpha,
-        )
-        gpr.fit(df_sd[var], df_sd[output])
-        name = "GP ({})".format(str(gpr.kernel_))
+    try:
+        for output in out:
+            # Define and fit model
+            gpr = GaussianProcessRegressor(
+                kernel=deepcopy(kernels[output]),
+                random_state=seed,
+                normalize_y=True,
+                copy_X_train=True,
+                n_restarts_optimizer=n_restart,
+                alpha=alpha,
+            )
+            gpr.fit(df_sd[var], df_sd[output])
+            name = "GP ({})".format(str(gpr.kernel_))
 
-        fun = FunctionGPR(gpr, var, [output], name, 0, var_min, var_max)
-        functions.append(fun)
+            fun = FunctionGPR(gpr, var, [output], name, 0, var_min, var_max)
+            functions.append(fun)
+
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `sklearn` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install scikit-learn"
+        )
 
     ## Construct model
     return gr.Model(functions=functions, domain=domain, density=density)
@@ -324,13 +343,23 @@ def fit_rf(
     ## Construct gaussian process for each output
     functions = []
 
-    for output in out:
-        rf = RandomForestRegressor(random_state=seed, **kwargs)
-        rf.fit(df[var], df[output])
-        name = "RF"
+    try:
+        for output in out:
+            rf = RandomForestRegressor(random_state=seed, **kwargs)
+            rf.fit(df[var], df[output])
+            name = "RF"
 
-        fun = FunctionRegressor(rf, var, [output], name, 0)
-        functions.append(fun)
+            fun = FunctionRegressor(rf, var, [output], name, 0)
+            functions.append(fun)
+
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `sklearn` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install scikit-learn"
+        )
 
     ## Construct model
     return gr.Model(functions=functions, domain=domain, density=density)
@@ -403,13 +432,23 @@ def fit_lm(
     ## Construct gaussian process for each output
     functions = []
 
-    for output in out:
-        lm = LinearRegression(**kwargs)
-        lm.fit(df[var], df[output])
-        name = "LM"
+    try:
+        for output in out:
+            lm = LinearRegression(**kwargs)
+            lm.fit(df[var], df[output])
+            name = "LM"
 
-        fun = FunctionRegressor(lm, var, [output], name, 0)
-        functions.append(fun)
+            fun = FunctionRegressor(lm, var, [output], name, 0)
+            functions.append(fun)
+
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `sklearn` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install scikit-learn"
+        )
 
     ## Construct model
     return gr.Model(functions=functions, domain=domain, density=density)
@@ -479,7 +518,17 @@ def fit_kmeans(df, var=None, colname="cluster_id", seed=None, **kwargs):
             )
 
     ## Generate clustering
-    kmeans = KMeans(random_state=seed, **kwargs).fit(df[var].values)
+    try:
+        kmeans = KMeans(random_state=seed, **kwargs).fit(df[var].values)
+
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `sklearn` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install scikit-learn"
+        )
 
     ## Build grama model
     def fun_cluster(df):

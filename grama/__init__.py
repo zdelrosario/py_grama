@@ -31,4 +31,7 @@ from .fit_synonyms import *
 
 ## Load extras
 # --------------------------------------------------
+from .eval import *
+from .fit import *
 from .psdr import *
+from .tran import *
