@@ -10,8 +10,8 @@ class TestAutoplot(unittest.TestCase):
 
     def setUp(self):
         self.md = models.make_test()
-        self.df_mc = gr.eval_monte_carlo(self.md, df_det="nom")
-        self.df_mc_skip = gr.eval_monte_carlo(self.md, df_det="nom", skip=True)
+        self.df_mc = gr.eval_sample(self.md, n=10, df_det="nom")
+        self.df_mc_skip = gr.eval_sample(self.md, n=10, df_det="nom", skip=True)
         self.df_sinew = gr.eval_sinews(self.md, n_density=2, n_sweeps=1, df_det="nom")
         self.df_sinew_skip = gr.eval_sinews(
             self.md,

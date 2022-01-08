@@ -63,13 +63,13 @@ def plot_scattermat(df, var=None):
         >>> ## Dispatch from autoplotter
         >>> (
         >>>     md
-        >>>     >> gr.ev_monte_carlo(n=100, df_det="nom", skip=True)
+        >>>     >> gr.ev_sample(n=100, df_det="nom", skip=True)
         >>>     >> gr.pt_auto()
         >>> )
         >>> ## Re-create plot without metadata
         >>> (
         >>>     md
-        >>>     >> gr.ev_monte_carlo(n=100, df_det="nom")
+        >>>     >> gr.ev_sample(n=100, df_det="nom")
         >>>     >> gr.pt_scattermat(var=md.var)
         >>> )
 
@@ -187,13 +187,13 @@ def plot_hists(df, out=None):
         >>> ## Dispatch from autoplotter
         >>> (
         >>>     md
-        >>>     >> gr.ev_monte_carlo(n=100, df_det="nom")
+        >>>     >> gr.ev_sample(n=100, df_det="nom")
         >>>     >> gr.pt_auto()
         >>> )
         >>> ## Re-create without metadata
         >>> (
         >>>     md
-        >>>     >> gr.ev_monte_carlo(n=100, df_det="nom")
+        >>>     >> gr.ev_sample(n=100, df_det="nom")
         >>>     >> gr.pt_hists(out=md.out)
         >>> )
 
@@ -430,8 +430,8 @@ pt_sinew_outputs = add_pipe(plot_sinew_outputs)
 plot_list = {
     "sinew_inputs": plot_sinew_inputs,
     "sinew_outputs": plot_sinew_outputs,
-    "monte_carlo_inputs": plot_scattermat,
-    "monte_carlo_outputs": plot_hists,
+    "sample_inputs": plot_scattermat,
+    "sample_outputs": plot_hists,
 }
 
 
