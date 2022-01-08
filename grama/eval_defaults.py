@@ -10,8 +10,7 @@ __all__ = [
 ]
 
 import itertools
-import grama as gr
-from grama import add_pipe, pipe
+from grama import add_pipe, tran_outer, pipe
 from numpy import ones, eye, tile, atleast_2d
 from pandas import DataFrame, concat
 from toolz import curry
@@ -184,7 +183,7 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
         ## Evaluate
         df_left = eval_df(
             model,
-            gr.tran_outer(
+            tran_outer(
                 DataFrame(
                     columns=var, data=-stencil + df_base[var].iloc[[row_i]].values
                 ),
@@ -195,7 +194,7 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
 
         df_right = eval_df(
             model,
-            gr.tran_outer(
+            tran_outer(
                 DataFrame(
                     columns=var, data=+stencil + df_base[var].iloc[[row_i]].values
                 ),

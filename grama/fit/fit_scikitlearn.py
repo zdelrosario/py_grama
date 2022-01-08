@@ -20,9 +20,8 @@ try:
 except ModuleNotFoundError:
     pass
 
-import grama as gr
 from copy import deepcopy
-from grama import add_pipe, pipe
+from grama import add_pipe, cp_vec_function, Function, Model, pipe
 from pandas import concat, DataFrame, Series
 from toolz import curry
 from warnings import filterwarnings
@@ -57,7 +56,7 @@ def restore_cols(df, ser_min, ser_max, var):
     return df_res
 
 
-class FunctionGPR(gr.Function):
+class FunctionGPR(Function):
     def __init__(self, gpr, var, out, name, runtime, var_min, var_max):
         self.gpr = gpr
         # self.df_train = df_train
@@ -107,7 +106,7 @@ class FunctionGPR(gr.Function):
         return func_new
 
 
-class FunctionRegressor(gr.Function):
+class FunctionRegressor(Function):
     def __init__(self, regressor, var, out, name, runtime):
         """
 
@@ -257,7 +256,7 @@ def fit_gp(
         )
 
     ## Construct model
-    return gr.Model(functions=functions, domain=domain, density=density)
+    return Model(functions=functions, domain=domain, density=density)
 
 
 ft_gp = add_pipe(fit_gp)
@@ -362,7 +361,7 @@ def fit_rf(
         )
 
     ## Construct model
-    return gr.Model(functions=functions, domain=domain, density=density)
+    return Model(functions=functions, domain=domain, density=density)
 
 
 ft_rf = add_pipe(fit_rf)
@@ -451,7 +450,7 @@ def fit_lm(
         )
 
     ## Construct model
-    return gr.Model(functions=functions, domain=domain, density=density)
+    return Model(functions=functions, domain=domain, density=density)
 
 
 ft_lm = add_pipe(fit_lm)
@@ -535,7 +534,7 @@ def fit_kmeans(df, var=None, colname="cluster_id", seed=None, **kwargs):
         res = kmeans.predict(df[var].values)
         return DataFrame(data={colname: res})
 
-    md = gr.Model() >> gr.cp_vec_function(fun=fun_cluster, var=var, out=[colname])
+    md = Model() >> cp_vec_function(fun=fun_cluster, var=var, out=[colname])
 
     return md
 

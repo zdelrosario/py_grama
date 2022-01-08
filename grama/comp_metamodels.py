@@ -1,8 +1,9 @@
 __all__ = ["comp_metamodel", "cp_metamodel"]
 
 ## Fitting via statsmodels package
-import grama as gr
 from grama import add_pipe, pipe
+from grama.eval import eval_lhs
+from grama.fit import fit_ols
 from toolz import curry
 
 
@@ -34,14 +35,14 @@ def comp_metamodel(model, n=1, ev=None, ft=None, seed=None):
 
     ## Assign default arguments
     if ev is None:
-        ev = gr.eval_lhs
+        ev = eval_lhs
 
     if ft is None:
         # Linear features for each output
         sum_inputs = "+".join(inputs)
         formulae = list(map(lambda output: output + "~" + sum_inputs, outputs))
 
-        ft = lambda df: gr.fit_ols(
+        ft = lambda df: fit_ols(
             df, formulae=formulae, domain=model.domain, density=model.density
         )
 

@@ -12,13 +12,28 @@ __all__ = [
     "plot_list",
 ]
 
-import grama as gr
-from grama import add_pipe, pipe
-from matplotlib.pyplot import hist
+from grama import add_pipe, pipe, tf_pivot_longer, tf_outer, tf_select, tf_rename, tf_filter
+from grama import Intention
 from pandas import melt
-from seaborn import pairplot, FacetGrid, relplot
+
+from plotnine import aes, annotate, ggplot, facet_grid, facet_wrap, labs, element_text, guides
+from plotnine import theme, theme_void, theme_minimal
+from plotnine import scale_x_continuous, scale_y_continuous
+from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_blank
+from matplotlib import gridspec
+
 from toolz import curry
 
+## Helper functions
+##################################################
+def _sci_format(v):
+    r"""Scientific format
+    """
+    return (
+        ["{0:1.1e}".format(v[0])] +
+        [""] * (len(v) - 2) +
+        ["{0:1.1e}".format(v[-1])]
+    )
 
 ## Function-specific plot functions
 ##################################################
@@ -30,6 +45,8 @@ def plot_scattermat(df, var=None):
 
     Create a scatterplot matrix. Often used to visualize a design (set of inputs
     points) before evaluating the functions.
+
+    Usually called as a dispatch from plot_auto().
 
     Args:
         var (list of strings): Variables to plot
@@ -43,17 +60,104 @@ def plot_scattermat(df, var=None):
         >>> import matplotlib.pyplot as plt
         >>> from grama.models import make_cantilever_beam
         >>> md = make_cantilever_beam()
-        >>> md >> \
-        >>>     gr.ev_monte_carlo(n=100, df_det="nom", skip=True) >> \
-        >>>     gr.pt_scattermat(var=md.var)
-        >>> plt.show()
+        >>> ## Dispatch from autoplotter
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sample(n=100, df_det="nom", skip=True)
+        >>>     >> gr.pt_auto()
+        >>> )
+        >>> ## Re-create plot without metadata
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sample(n=100, df_det="nom")
+        >>>     >> gr.pt_scattermat(var=md.var)
+        >>> )
 
     """
     if var is None:
         raise ValueError("Must provide input columns list as keyword var")
 
+    ## Define helpers
+    labels_blank = lambda v: [""] * len(v)
+    breaks_min = lambda lims: (lims[0], 0.5 * (lims[0] + lims[1]), lims[1])
+
+    ## Make blank figure
+    fig = (
+        df
+        >> ggplot()
+        + geom_blank()
+        + theme_void()
+    ).draw(show=False)
+
+    gs = gridspec.GridSpec(len(var), len(var))
+    for i, v1 in enumerate(var):
+        for j, v2 in enumerate(var):
+            ax = fig.add_subplot(gs[i, j])
+            ## Switch labels
+            if j == 0:
+                labels_y = _sci_format
+            else:
+                labels_y = labels_blank
+            if i == len(var) - 1:
+                labels_x = _sci_format
+            else:
+                labels_x = labels_blank
+
+            ## Density
+            if i == j:
+                xmid = 0.5 * (
+                    df[v1].min() + df[v1].max()
+                )
+
+                p = (
+                    df
+                    >> ggplot(aes(v1))
+                    + geom_density()
+                    + scale_x_continuous(
+                        breaks=breaks_min,
+                        labels=labels_x,
+                    )
+                    + scale_y_continuous(
+                        breaks=breaks_min,
+                        labels=labels_y,
+                    )
+                    + annotate(
+                        "label",
+                        x=xmid,
+                        y=0,
+                        label=v1,
+                        va="bottom",
+                    )
+                    + theme_minimal()
+                    + labs(title=v1)
+                )
+
+            ## Scatterplot
+            else:
+                p = (
+                    df
+                    >> ggplot(aes(v2, v1))
+                    + geom_point()
+                    + scale_x_continuous(
+                        breaks=breaks_min,
+                        labels=labels_x,
+                    )
+                    + scale_y_continuous(
+                        breaks=breaks_min,
+                        labels=labels_y,
+                    )
+                    + theme_minimal()
+                    + theme(
+                        axis_title=element_text(va="top", size=12),
+                    )
+                )
+
+            _ = p._draw_using_figure(fig, [ax])
+
+
     ## Plot
-    return pairplot(data=df, vars=var)
+    # NB Returning the figure causes a "double plot" in Jupyter....
+    fig.show()
 
 
 pt_scattermat = add_pipe(plot_scattermat)
@@ -65,6 +169,8 @@ def plot_hists(df, out=None):
 
     Create a set of histograms. Often used to visualize the results of random
     sampling for multiple outputs.
+
+    Usually called as a dispatch from plot_auto().
 
     Args:
         out (list of strings): Variables to plot
@@ -78,23 +184,39 @@ def plot_hists(df, out=None):
         >>> import matplotlib.pyplot as plt
         >>> from grama.models import make_cantilever_beam
         >>> md = make_cantilever_beam()
-        >>> md >> \
-        >>>     gr.ev_monte_carlo(n=100, df_det="nom") >> \
-        >>>     gr.pt_hists(out=md.out)
-        >>> plt.show()
+        >>> ## Dispatch from autoplotter
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sample(n=100, df_det="nom")
+        >>>     >> gr.pt_auto()
+        >>> )
+        >>> ## Re-create without metadata
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sample(n=100, df_det="nom")
+        >>>     >> gr.pt_hists(out=md.out)
+        >>> )
 
     """
     if out is None:
         raise ValueError("Must provide input columns list as keyword out")
 
-    ## Gather data
-    df_gathered = df >> gr.tf_gather("key", "out", out)
-
-    ## Faceted histograms
-    g = FacetGrid(df_gathered, col="key", sharex=False, sharey=False)
-    g.map(hist, "out").set_axis_labels("Output", "Count")
-
-    return g
+    return (
+        df
+        >> tf_pivot_longer(
+            columns=out,
+            names_to="var",
+            values_to="value",
+        )
+        >> ggplot(aes("value"))
+        + geom_histogram(bins=30)
+        + facet_wrap("var", scales="free")
+        + theme_minimal()
+        + labs(
+            x="Output Value",
+            y="Count",
+        )
+    )
 
 
 pt_hists = add_pipe(plot_hists)
@@ -107,6 +229,8 @@ def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
 
     Create a scatterplot matrix with hues. Often used to visualize a sinew
     design before evaluating the model functions.
+
+    Usually called as a dispatch from plot_auto().
 
     Args:
         df (Pandas DataFrame): Input design data
@@ -122,17 +246,91 @@ def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
         >>> import matplotlib.pyplot as plt
         >>> from grama.models import make_cantilever_beam
         >>> md = make_cantilever_beam()
-        >>> md >> \
-        >>>     gr.ev_sinews(df_det="swp", skip=True) >> \
-        >>>     gr.pt_sinew_inputs(var=md.var)
-        >>> plt.show()
+        >>> ## Dispatch from autoplotter
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sinews(df_det="swp", skip=True)
+        >>>     >> gr.pt_auto()
+        >>> )
+        >>> ## Re-create without metadata
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sinews(df_det="swp")
+        >>>     >> gr.pt_sinew_inputs(var=md.var)
+        >>> )
 
     """
     if var is None:
         raise ValueError("Must provide input columns list as keyword var")
 
+    ## Define helpers
+    labels_blank = lambda v: [""] * len(v)
+    breaks_min = lambda lims: (lims[0], 0.5 * (lims[0] + lims[1]), lims[1])
+
+    ## Make blank figure
+    fig = (
+        df
+        >> ggplot()
+        + geom_blank()
+        + theme_void()
+    ).draw(show=False)
+
+    gs = gridspec.GridSpec(len(var), len(var))
+    for i, v1 in enumerate(var):
+        for j, v2 in enumerate(var):
+            ax = fig.add_subplot(gs[i, j])
+            ## Switch labels
+            if j == 0:
+                labels_y = _sci_format
+            else:
+                labels_y = labels_blank
+            if i == len(var) - 1:
+                labels_x = _sci_format
+            else:
+                labels_x = labels_blank
+
+            ## Label
+            if i == j:
+                p = (
+                    df
+                    >> ggplot()
+                    + annotate(
+                        "label",
+                        x=0,
+                        y=0,
+                        label=v1,
+                    )
+                    + theme_void()
+                    + guides(color=None)
+                )
+
+            ## Scatterplot
+            else:
+                p = (
+                    df
+                    >> ggplot(aes(v2, v1, color="factor("+sweep_ind+")"))
+                    + geom_point(size=0.1)
+                    + scale_x_continuous(
+                        breaks=breaks_min,
+                        labels=labels_x,
+                    )
+                    + scale_y_continuous(
+                        breaks=breaks_min,
+                        labels=labels_y,
+                    )
+                    + guides(color=None)
+                    + theme_minimal()
+                    + theme(
+                        axis_title=element_text(va="top", size=12),
+                    )
+                )
+
+            _ = p._draw_using_figure(fig, [ax])
+
+
     ## Plot
-    return pairplot(data=df, vars=var, hue=sweep_ind)
+    # NB Returning the figure causes a "double plot" in Jupyter....
+    fig.show()
 
 
 pt_sinew_inputs = add_pipe(plot_sinew_inputs)
@@ -146,6 +344,8 @@ def plot_sinew_outputs(
 
     Create a relational lineplot with hues. Often used to visualize the outputs
     of a sinew design.
+
+    Usually called as a dispatch from plot_auto().
 
     Args:
         df (Pandas DataFrame): Input design data with output results
@@ -163,10 +363,18 @@ def plot_sinew_outputs(
         >>> import matplotlib.pyplot as plt
         >>> from grama.models import make_cantilever_beam
         >>> md = make_cantilever_beam()
-        >>> md >> \
-        >>>     gr.ev_sinews(df_det="swp") >> \
-        >>>     gr.pt_sinew_inputs(var=md.var, out=md.out)
-        >>> plt.show()
+        >>> ## Dispatch from autoplotter
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sinews(df_det="swp")
+        >>>     >> gr.pt_auto()
+        >>> )
+        >>> ## Re-create without metadata
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sinews(df_det="swp")
+        >>>     >> gr.pt_sinew_inputs(var=md.var, out=md.out)
+        >>> )
 
     """
     if var is None:
@@ -186,16 +394,32 @@ def plot_sinew_outputs(
     # Filter off-sweep values
     df_plot = df_plot[df_plot[sweep_var] == df_plot["_var"]]
 
-    # Plot
-    return relplot(
-        data=df_plot,
-        x="_x",
-        y="_y",
-        hue=sweep_ind,
-        col="_var",
-        row="_out",
-        kind="line",
-        facet_kws=dict(sharex=False, sharey=False),
+    breaks_min = lambda lims: (lims[0], 0.5 * (lims[0] + lims[1]), lims[1])
+    return (
+        df_plot
+        >> ggplot(aes(
+            "_x",
+            "_y",
+            color="factor(" + sweep_ind + ")",
+            group="factor(" + sweep_ind + ")",
+        ))
+        + geom_line()
+        + facet_grid("_out~_var", scales="free")
+
+        + scale_x_continuous(
+            breaks=breaks_min,
+            labels=_sci_format,
+        )
+        + scale_y_continuous(
+            breaks=breaks_min,
+            labels=_sci_format,
+        )
+        + guides(color=None)
+        + theme_minimal()
+        + labs(
+            x="Input Value",
+            y="Output Value",
+        )
     )
 
 
@@ -206,8 +430,8 @@ pt_sinew_outputs = add_pipe(plot_sinew_outputs)
 plot_list = {
     "sinew_inputs": plot_sinew_inputs,
     "sinew_outputs": plot_sinew_outputs,
-    "monte_carlo_inputs": plot_scattermat,
-    "monte_carlo_outputs": plot_hists,
+    "sample_inputs": plot_scattermat,
+    "sample_outputs": plot_hists,
 }
 
 

@@ -1,6 +1,7 @@
 __all__ = ["make_plate_buckle"]
 
-import grama as gr
+from grama import cp_bounds, cp_copula_gaussian, cp_function, cp_marginals, \
+    marg_named, Model
 from grama.data import df_stang
 from numpy import pi
 
@@ -19,23 +20,23 @@ def function_buckle_state(x):
 
 def make_plate_buckle():
     md = (
-        gr.Model("Plate Buckling")
-        >> gr.cp_function(
+        Model("Plate Buckling")
+        >> cp_function(
             fun=function_buckle_state,
             var=["t", "h", "w", "E", "mu", "L"],
             out=["g_buckle"],
             name="limit state",
         )
-        >> gr.cp_bounds(
+        >> cp_bounds(
             t=(0.5 * THICKNESS, 2 * THICKNESS),
             h=(6, 18),
             w=(6, 18),
             L=(LOAD / 2, LOAD * 2),
         )
-        >> gr.cp_marginals(
-            E=gr.marg_named(df_stang.E, "norm"), mu=gr.marg_named(df_stang.mu, "beta")
+        >> cp_marginals(
+            E=marg_named(df_stang.E, "norm"), mu=marg_named(df_stang.mu, "beta")
         )
-        >> gr.cp_copula_gaussian(df_data=df_stang)
+        >> cp_copula_gaussian(df_data=df_stang)
     )
 
     return md

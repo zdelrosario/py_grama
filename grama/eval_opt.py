@@ -6,7 +6,7 @@ __all__ = [
 ]
 
 from grama import add_pipe, pipe, custom_formatwarning, df_make, \
-    eval_df, eval_nominal, eval_monte_carlo, comp_marginals, \
+    eval_df, eval_nominal, eval_sample, comp_marginals, \
     comp_copula_independence, tran_outer
 from numpy import Inf, isfinite
 from numpy.random import seed as setseed
@@ -178,7 +178,7 @@ def eval_nls(
             md_sweep = comp_marginals(model, **dicts_var)
             md_sweep = comp_copula_independence(md_sweep)
             ## Generate random start points
-            df_rand = eval_monte_carlo(
+            df_rand = eval_sample(
                 md_sweep, n=n_restart - 1, df_det="nom", skip=True,
             )
             df_init = concat((df_init, df_rand[var_fit]), axis=0).reset_index(drop=True)
@@ -364,7 +364,7 @@ def eval_min(
             md_sweep = comp_marginals(model, **dicts_var)
             md_sweep = comp_copula_independence(md_sweep)
             ## Generate random start points
-            df_rand = eval_monte_carlo(
+            df_rand = eval_sample(
                 md_sweep, n=n_restart - 1, df_det="nom", skip=True,
             )
             df_start = concat((df_start, df_rand[model.var]), axis=0).reset_index(

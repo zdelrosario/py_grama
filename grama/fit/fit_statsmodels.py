@@ -10,8 +10,7 @@ try:
 except ModuleNotFoundError:
     pass
 
-import grama as gr
-from .. import add_pipe, pipe
+from grama import add_pipe, Model, pipe
 from numpy import zeros
 from pandas import DataFrame
 from toolz import curry
@@ -74,7 +73,7 @@ def fit_ols(df, formulae=[""], domain=None, density=None):
         return DataFrame(data=result, columns=outputs)
 
     ## Construct model
-    return gr.model_vectorized(
+    return model_vectorized(
         function=fit_all, outputs=outputs, domain=domain, density=density
     )
 

@@ -5,8 +5,8 @@ __all__ = [
     "ev_form_ria",
 ]
 
-import grama as gr
 from grama import add_pipe, pipe, custom_formatwarning
+from .eval_defaults import eval_df
 from numpy import array, argmin, ones, eye, zeros, sqrt, NaN, max
 from numpy.linalg import norm as length
 from numpy.random import multivariate_normal
@@ -115,7 +115,7 @@ def eval_form_pma(
                 df_rand = model.norm2rand(df_norm)
                 df = model.var_outer(df_rand, df_det=df_inner)
 
-                df_res = gr.eval_df(model, df=df)
+                df_res = eval_df(model, df=df)
                 g = df_res[key].iloc[0]
 
                 # return (g, jac)
@@ -291,7 +291,7 @@ def eval_form_ria(
                 df = model.var_outer(df_rand, df_det=df_inner)
 
                 ## Eval limit state
-                df_res = gr.eval_df(model, df=df)
+                df_res = eval_df(model, df=df)
                 g = df_res[key].iloc[0]
 
                 return g
