@@ -4,7 +4,7 @@ try:
     from pyDOE import lhs
 
 except ModuleNotFoundError:
-    raise ModuleNotFoundError("module pyDOE not found")
+    pass
 
 import warnings
 from grama import add_pipe, eval_df, custom_formatwarning, pipe
@@ -22,7 +22,7 @@ from toolz import curry
 # --------------------------------------------------
 @curry
 def eval_lhs(
-    model, n=1, df_det=None, seed=None, append=True, skip=False, criterion=None
+    model, n=None, df_det=None, seed=None, append=True, skip=False, criterion=None
 ):
     r"""Latin Hypercube evaluation
     Evaluates a given model on a latin hypercube sample (LHS) using the model's
@@ -53,7 +53,18 @@ def eval_lhs(
         n = int(n)
 
     ## Draw samples
-    df_quant = DataFrame(data=lhs(model.n_var_rand, samples=n), columns=model.var_rand)
+    try:
+        df_quant = DataFrame(
+            data=lhs(model.n_var_rand, samples=n), columns=model.var_rand
+        )
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `pyDOE` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install pyDOE"
+        )
 
     ## Convert samples to desired marginals
     df_rand = model.density.pr2sample(df_quant)

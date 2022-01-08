@@ -5,4 +5,3 @@ plotnine>=0.8.0
 scipy
 toolz
 networkx
-pathos>=0.2.7

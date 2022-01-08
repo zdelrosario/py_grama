@@ -6,8 +6,9 @@ __all__ = [
 ## Transforms via psdr package
 try:
     from psdr import PolynomialRidgeApproximation
+
 except ModuleNotFoundError:
-    raise ModuleNotFoundError("module psdr not found")
+    pass
 
 from grama import add_pipe
 from numpy import number as npnumber
@@ -98,12 +99,22 @@ def tran_polyridge(
         )
 
     ## Compute subspace reduction
-    pr = PolynomialRidgeApproximation(
-        n_degree,
-        n_dim,
-        **kwargs,
-    )
-    pr.fit(df[var].values, df[out].values)
+    try:
+        pr = PolynomialRidgeApproximation(
+            n_degree,
+            n_dim,
+            **kwargs,
+        )
+        pr.fit(df[var].values, df[out].values)
+
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `psdr` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install psdr"
+        )
 
     ## Package the results
     df_res = DataFrame(
