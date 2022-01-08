@@ -4,7 +4,6 @@ from scipy.stats import norm
 import unittest
 
 from context import grama as gr
-from context import fit
 from context import models
 from context import data
 
@@ -50,7 +49,7 @@ class TestFits(unittest.TestCase):
 
     def test_gp(self):
         ## Fit routine creates usable model
-        md_fit = fit.fit_gp(self.df_smooth, md=self.md_smooth)
+        md_fit = gr.fit_gp(self.df_smooth, md=self.md_smooth)
         df_res = gr.eval_df(md_fit, self.df_smooth[self.md_smooth.var])
 
         ## GP provides std estimates
@@ -78,7 +77,7 @@ class TestFits(unittest.TestCase):
 
     def test_rf(self):
         ## Fit routine creates usable model
-        md_fit = fit.fit_rf(
+        md_fit = gr.fit_rf(
             self.df_tree,
             md=self.md_tree,
             max_depth=1,  # True tree is a stump
@@ -105,7 +104,7 @@ class TestFits(unittest.TestCase):
 
     def test_lm(self):
         ## Fit routine creates usable model
-        md_fit = fit.fit_lm(self.df_smooth, md=self.md_smooth,)
+        md_fit = gr.fit_lm(self.df_smooth, md=self.md_smooth,)
         df_res = gr.eval_df(md_fit, self.df_smooth[self.md_smooth.var])
 
         ## LM can recover a linear model
@@ -126,7 +125,7 @@ class TestFits(unittest.TestCase):
 
     def test_lolo(self):
         ## Fit routine creates usable model
-        md_fit = fit.fit_lolo(
+        md_fit = gr.fit_lolo(
             self.df_tree,
             md=self.md_tree,
             max_depth=1,  # True tree is a stump
@@ -157,7 +156,7 @@ class TestFits(unittest.TestCase):
     def test_kmeans(self):
         ## Fit routine creates usable model
         var = ["x", "y"]
-        md_fit = fit.fit_kmeans(self.df_cluster, var=var, n_clusters=2)
+        md_fit = gr.fit_kmeans(self.df_cluster, var=var, n_clusters=2)
         df_res = gr.eval_df(md_fit, self.df_cluster[var])
 
         ## Check correctness

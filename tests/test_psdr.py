@@ -3,7 +3,6 @@ import io
 import sys
 
 from context import grama as gr
-from context import psdr
 
 DF = gr.Intention()
 
@@ -27,21 +26,21 @@ class TestSupportPoints(unittest.TestCase):
         ## Assertions
         # No `out` column
         with self.assertRaises(ValueError):
-            psdr.tran_polyridge(df_test)
+            gr.tran_polyridge(df_test)
         # Unrecognized `out` column
         with self.assertRaises(ValueError):
-            psdr.tran_polyridge(df_test, out="foo")
+            gr.tran_polyridge(df_test, out="foo")
         # Unrecognized `var` column(s)
         with self.assertRaises(ValueError):
-            psdr.tran_polyridge(df_test, var=["foo", "bar"])
+            gr.tran_polyridge(df_test, var=["foo", "bar"])
         # Invalid degree
         with self.assertRaises(ValueError):
-            psdr.tran_polyridge(df_test, out="f", n_degree=1, n_dim=2)
+            gr.tran_polyridge(df_test, out="f", n_degree=1, n_dim=2)
 
         ## Correctness
         df_res = (
             df_test
-            >> psdr.tf_polyridge(
+            >> gr.tf_polyridge(
                 out="f",
                 n_dim=1,
                 n_degree=1,
