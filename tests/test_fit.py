@@ -189,7 +189,7 @@ class TestFits(unittest.TestCase):
             >> gr.cp_marginals(epsilon={"dist": "norm", "loc": 0, "scale": 0.5})
             >> gr.cp_copula_independence()
         )
-        df_data = md_true >> gr.ev_monte_carlo(
+        df_data = md_true >> gr.ev_sample(
             n=5, seed=101, df_det=gr.df_make(x=[0, 1, 2, 3, 4])
         )
 
@@ -248,7 +248,7 @@ class TestFits(unittest.TestCase):
         )
 
         # Test that fixed model can evaluate successfully
-        gr.eval_monte_carlo(md_fit_fixed, n=1, df_det="nom")
+        gr.eval_sample(md_fit_fixed, n=1, df_det="nom")
 
         ## Trajectory model
         # -------------------------

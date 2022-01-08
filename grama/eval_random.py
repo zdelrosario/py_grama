@@ -1,6 +1,6 @@
 __all__ = [
-    "eval_monte_carlo",
-    "ev_monte_carlo",
+    "eval_sample",
+    "ev_sample",
     "eval_sinews",
     "ev_sinews",
     "eval_hybrid",
@@ -23,18 +23,18 @@ from toolz import curry
 warnings.formatwarning = custom_formatwarning
 
 
-## Simple Monte Carlo
+## Random sampling
 # --------------------------------------------------
 @curry
-def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False):
-    r"""Monte Carlo evaluation
+def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
+    r"""Draw a random sample
 
-    Evaluates a given model at a given dataframe. Generates outer product
+    Evaluates a given model at a given DataFrame. Generates outer product
     with deterministic samples.
 
     Args:
         model (gr.Model): Model to evaluate
-        n (numeric): number of Monte Carlo samples to draw
+        n (numeric): number of observations to draw
         df_det (DataFrame): Deterministic levels for evaluation; use "nom"
             for nominal deterministic levels.
         seed (int): random seed to use
@@ -49,17 +49,21 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
         >>> import grama as gr
         >>> from grama.models import make_test
         >>> md = make_test()
-        >>> df = md >> gr.ev_monte_carlo(n=1e2, df_det="nom")
+        >>> df = md >> gr.ev_sample(n=1e2, df_det="nom")
         >>> df.describe()
 
     """
+    ## Check invariants
+    if n is None:
+        raise ValueError("Must provide a valid n value.")
+
     ## Set seed only if given
     if seed is not None:
         set_seed(seed)
 
     ## Ensure sample count is int
     if not isinstance(n, Integral):
-        print("eval_monte_carlo() is rounding n...")
+        print("eval_sample() is rounding n...")
         n = int(n)
 
     ## Draw samples
@@ -83,7 +87,7 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             df_samp._plot_info = {
-                "type": "monte_carlo_inputs",
+                "type": "sample_inputs",
                 "var": model.var_rand,
             }
 
@@ -93,12 +97,12 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
     ## Attach metadata
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        df_res._plot_info = {"type": "monte_carlo_outputs", "out": model.out}
+        df_res._plot_info = {"type": "sample_outputs", "out": model.out}
 
     return df_res
 
 
-ev_monte_carlo = add_pipe(eval_monte_carlo)
+ev_sample = add_pipe(eval_sample)
 
 ## Marginal sweeps with random origins
 # --------------------------------------------------

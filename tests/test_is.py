@@ -37,7 +37,7 @@ class TestReweight(unittest.TestCase):
 
         df_base = (
             self.md
-            >> gr.ev_monte_carlo(n=500, df_det="nom", seed=101)
+            >> gr.ev_sample(n=500, df_det="nom", seed=101)
         )
 
         df = (
