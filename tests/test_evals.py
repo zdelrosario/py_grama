@@ -214,18 +214,14 @@ class TestRandom(unittest.TestCase):
         self.assertTrue(set(df_noappend.columns) == set(self.md.out))
 
     def test_lhs(self):
-        df_min = ev.eval_lhs(self.md, df_det="nom")
-        self.assertTrue(df_min.shape == (1, self.md.n_var + self.md.n_out))
-        self.assertTrue(set(df_min.columns) == set(self.md.var + self.md.out))
-
-        df_seeded = ev.eval_lhs(self.md, df_det="nom", seed=101)
-        df_piped = self.md >> ev.ev_lhs(df_det="nom", seed=101)
+        df_seeded = ev.eval_lhs(self.md, n=10, df_det="nom", seed=101)
+        df_piped = self.md >> ev.ev_lhs(df_det="nom", n=10, seed=101)
         self.assertTrue(df_seeded.equals(df_piped))
 
-        df_skip = ev.eval_lhs(self.md, df_det="nom", skip=True)
+        df_skip = ev.eval_lhs(self.md, n=1, df_det="nom", skip=True)
         self.assertTrue(set(df_skip.columns) == set(self.md.var))
 
-        df_noappend = ev.eval_lhs(self.md, df_det="nom", append=False)
+        df_noappend = ev.eval_lhs(self.md, n=1, df_det="nom", append=False)
         self.assertTrue(set(df_noappend.columns) == set(self.md.out))
 
     def test_sinews(self):
