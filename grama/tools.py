@@ -447,6 +447,15 @@ def tran_outer(df, df_outer):
         >>> 3  2  4
 
     """
+    # Check invariants
+    if (df.shape[0] == 0) and (df_outer.shape[0] == 0):
+        raise ValueError("At least one of df and df_outer must be non-empty")
+    # Handle single-empty cases
+    if (df.shape[0] == 0):
+        return df_outer
+    if (df_outer.shape[0] == 0):
+        return df
+
     n_rows = df.shape[0]
     list_df = []
 
