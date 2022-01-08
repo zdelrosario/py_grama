@@ -316,7 +316,10 @@ def add_pipe(fun):
 ## Safe length-checker
 def safelen(x):
     try:
+        if isinstance(x, str):
+            raise TypeError
         return len(x)
+
     except TypeError:
         return 1
 
