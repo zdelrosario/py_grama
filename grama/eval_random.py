@@ -49,17 +49,21 @@ def eval_monte_carlo(model, n=1, df_det=None, seed=None, append=True, skip=False
         >>> import grama as gr
         >>> from grama.models import make_test
         >>> md = make_test()
-        >>> df = md >> gr.ev_monte_carlo(n=1e2, df_det="nom")
+        >>> df = md >> gr.ev_sample(n=1e2, df_det="nom")
         >>> df.describe()
 
     """
+    ## Check invariants
+    if n is None:
+        raise ValueError("Must provide a valid n value.")
+
     ## Set seed only if given
     if seed is not None:
         set_seed(seed)
 
     ## Ensure sample count is int
     if not isinstance(n, Integral):
-        print("eval_monte_carlo() is rounding n...")
+        print("eval_sample() is rounding n...")
         n = int(n)
 
     ## Draw samples
