@@ -96,6 +96,16 @@ class TestTools(unittest.TestCase):
             check_column_type=False,
         )
 
+        # Empty cases
+        gr.df_equal(
+            df,
+            gr.tran_outer(pd.DataFrame(), df_outer=df)
+        )
+        gr.df_equal(
+            df,
+            gr.tran_outer(df, df_outer=pd.DataFrame())
+        )
+
     def test_gauss_copula(self):
         md = gr.Model() >> gr.cp_marginals(
             E=gr.marg_named(data.df_stang.E, "norm"),

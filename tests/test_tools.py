@@ -45,7 +45,7 @@ class TestMisc(unittest.TestCase):
             x=[0, 1, 2],
             y=["A", "B"],
             z=1,
-            w=["x"],
+            w="x",
         )
         df_true = pd.DataFrame(dict(
             x=[  0,   1,   2,   0,   1,   2],
