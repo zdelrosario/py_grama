@@ -17,7 +17,7 @@ def make_prlc():
     md_RLC_det = (
         Model("RLC Circuit")
         >> cp_vec_function(
-            fun=lambda df: df_make(sqrt(1 / df.L / df.C)),
+            fun=lambda df: df_make(omega0=sqrt(1 / df.L / df.C)),
             var=["L", "C"],
             out=["omega0"],
         )
