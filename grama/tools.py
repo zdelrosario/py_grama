@@ -4,6 +4,7 @@ __all__ = [
     "custom_formatwarning",
     "df_equal",
     "df_make",
+    "df_grid",
     "param_dist",
     "pipe",
     "valid_dist",
@@ -467,3 +468,39 @@ def tran_outer(df, df_outer):
 
 
 tf_outer = add_pipe(tran_outer)
+
+
+## DataFrame constructor utility; outer product
+def df_grid(**kwargs):
+    r"""Construct a DataFrame as outer-product
+
+    Helper function to construct a DataFrame as an outer-product of the given
+    columns.
+
+    Keyword Args:
+        varname (iterable): Column for constructed dataframe; column
+                            name inferred from variable name.
+    Returns:
+        DataFrame: Constructed DataFrame
+
+    Preconditions:
+        All provided variable names (keyword arguments) must be distinct.
+
+    Examples:
+        A common use-case is to use df_grid() to define a sweep across variables.
+
+
+    """
+    ## Construct dataframe
+    df_res = DataFrame()
+    for key in kwargs.keys():
+        # Switch based on argument length
+        l = safelen(kwargs[key])
+        if l == 1:
+            df_tmp = DataFrame(columns=[key], data=[kwargs[key]])
+        else:
+            df_tmp = DataFrame(columns=[key], data=kwargs[key])
+
+        df_res = tran_outer(df_res, df_outer=df_tmp)
+
+    return df_res
