@@ -22,6 +22,8 @@ class TestModels(unittest.TestCase):
         md_plane_laminate = models.make_composite_plate_tension([0])
         md_plate_buckling = models.make_plate_buckle()
         md_poly = models.make_poly()
+        md_prlc = models.make_prlc()
+        md_prlc_rand = models.make_prlc_rand()
         md_test = models.make_test()
         md_trajectory_linear = models.make_trajectory_linear()
 
@@ -32,5 +34,7 @@ class TestModels(unittest.TestCase):
         df_plane = md_plane_laminate >> gr.ev_nominal(df_det="nom")
         df_plate = md_plate_buckling >> gr.ev_nominal(df_det="nom")
         df_poly = md_poly >> gr.ev_nominal(df_det="nom")
+        df_prlc = md_prlc >> gr.ev_nominal(df_det="nom")
+        df_prlc_rand = md_prlc_rand >> gr.ev_nominal(df_det="nom")
         df_test = md_test >> gr.ev_nominal(df_det="nom")
         df_traj = md_trajectory_linear >> gr.ev_nominal(df_det="nom")
