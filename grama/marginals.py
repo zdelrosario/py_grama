@@ -429,6 +429,7 @@ def marg_mom(
         skew=None,
         kurt=None,
         kurt_excess=None,
+        floc=None,
         sign=0,
         dict_x0=None,
 ):
@@ -455,6 +456,10 @@ def marg_mom(
         kurt_excess (float): Excess kurtosis of distribution; kurt_excess = kurt - 3.
             Only one of `kurt` and `kurt_excess` can be provided.
 
+        floc (float or None): Frozen value for location parameter
+            Set floc=0 to access 2-parameter lognormal (dist="lognorm")
+            Set floc=0 to access 2-parameter Weibull (dist="weibull_min")
+
         sign (-1, 0, +1): Sign
         dict_x0 (dict): Dictionary of initial parameter guesses
 
@@ -465,10 +470,12 @@ def marg_mom(
         >>> import grama as gr
         >>> ## Fit a normal distribution
         >>> mg_norm = gr.marg_mom("norm", mean=0, sd=1)
-        >>> ## Fit a lognormal distribution
+        >>> ## Fit a (3-parameter) lognormal distribution
         >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, skew=1)
         >>> ## Fit a lognormal, controlling kurtosis instead
         >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, kurt=1)
+        >>> ## Fit a 2-parameter lognormal; no skewness or kurtosis needed
+        >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, floc=0)
         >>>
         >>> ## Not all moment combinations are feasible; this will fail
         >>> gr.marg_mom("beta", mean=1, sd=1, skew=0, kurt=4)
@@ -483,6 +490,8 @@ def marg_mom(
         raise NotImplementedError(
             "marg_nom does not yet handle distributions with more than 4 parameters"
         )
+    if floc is not None:
+        n_param = n_param - 1
 
     ## Check invariants
     if mean is None:
@@ -535,33 +544,57 @@ def marg_mom(
         )
 
     ## Generate helper function for optimization
-    def _obj(v):
-        kw = dict(zip(param_dist[dist], v))
-        return array(valid_dist[dist](**kw).stats(s)) - m_target
+    if floc is None:
+        key_wk = copy.copy(param_dist[dist])
+    else:
+        key_wk = {key for key in param_dist[dist] if key != "loc"}
+
+    if floc is None:
+        def _obj(v):
+            kw = dict(zip(key_wk, v))
+            return array(valid_dist[dist](**kw).stats(s)) - m_target
+    else:
+        def _obj(v):
+            kw = dict(zip(key_wk, v))
+            kw["loc"] = floc
+            return array(valid_dist[dist](**kw).stats(s)) - m_target
+
 
     ## Generate initial guess
     if dict_x0 is None:
-        # Manually coded initial guesses
-        dict_x0 = dict(
-            loc=mean,
-            scale=sqrt(var),
-            a=1,
-            b=1,
-            s=1,
-            df=10,
-            #K=None,
-            #chi=None,
-        )
+        if dist == "lognorm":
+            dict_x0 = dict(
+                loc=0,
+                scale=mean,
+                s=sqrt(var) / mean,
+            )
+
+        elif dist == "weibull_min":
+            dict_x0 = dict(
+                loc=0,
+                scale=mean,
+                c=1,
+            )
+
+        else:
+            # General-purpose initial guesses
+            dict_x0 = dict(
+                loc=mean,
+                scale=sqrt(var),
+                a=1,
+                b=1,
+                s=1,
+                df=10,
+                c=10,
+                #K=None,
+                #chi=None,
+            )
+
     # Repackage for optimizer
-    x0 = array([
-        dict_x0[key] for key in param_dist[dist]
-    ])
+    x0 = array([dict_x0[key] for key in key_wk])
 
     ## Run multidimensional root finding
-    res = root(
-        _obj,
-        x0
-    )
+    res = root(_obj, x0)
 
     ## Check for failed optimization
     if res.success is False:
@@ -572,7 +605,9 @@ def marg_mom(
         )
 
     ## Repackage and return
-    param = dict(zip(param_dist[dist], res.x))
+    param = dict(zip(key_wk, res.x))
+    if floc is not None:
+        param["loc"] = floc
     return MarginalNamed(sign=sign, d_name=dist, d_param=param)
 
 ## Fit a named scipy.stats distribution
