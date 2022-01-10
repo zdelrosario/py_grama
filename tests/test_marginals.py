@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from scipy.stats import norm, beta
+from scipy.stats import norm, beta, lognorm, weibull_min
 import unittest
 
 from context import grama as gr
@@ -75,6 +75,32 @@ class TestMarginalTools(unittest.TestCase):
         self.assertTrue(all(np.isclose(
             beta(**mg_cov.d_param).stats("mvsk"),
             np.array([1, 4, 0, 2 - 3])
+        )))
+
+        ## Test 2-parameter lognormal
+        mg_log = gr.marg_mom(
+            "lognorm",
+            mean=5e4,
+            var=5e2**2,
+            floc=0,
+        )
+
+        self.assertTrue(all(np.isclose(
+            lognorm(**mg_log.d_param).stats("mv"),
+            np.array([5e4, 5e2**2])
+        )))
+
+        ## Test 2-parameter Weibull fit
+        mg_weibull2 = gr.marg_mom(
+            "weibull_min",
+            mean=5e4,
+            var=5e2**2,
+            floc=0,
+        )
+
+        self.assertTrue(all(np.isclose(
+            weibull_min(**mg_weibull2.d_param).stats("mv"),
+            np.array([5e4, 5e2**2])
         )))
 
         ## Test invariants
