@@ -586,6 +586,7 @@ def marg_mom(
                 s=1,
                 df=10,
                 c=10,
+                beta=1,
                 #K=None,
                 #chi=None,
             )
