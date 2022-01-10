@@ -296,8 +296,8 @@ class MarginalNamed(Marginal):
         return new_marginal
 
     ## Fitting function
-    def fit(self, data):
-        param = valid_dist[self.d_name].fit(data)
+    def fit(self, data, **kwargs):
+        param = valid_dist[self.d_name].fit(data, **kwargs)
         self.d_param = dict(zip(param_dist[dist], param))
 
     ## Likelihood function
@@ -570,17 +570,25 @@ def marg_mom(
     return MarginalNamed(sign=sign, d_name=dist, d_param=param)
 
 ## Fit a named scipy.stats distribution
-def marg_named(data, dist, name=True, sign=None):
+def marg_named(data, dist, name=True, sign=None, **kwargs):
     r"""Fit scipy.stats continuous distirbution
 
     Fits a named scipy.stats continuous distribution. Intended to be used to
     define a marginal distribution from data.
 
-    Args:
+    Arguments:
         data (iterable): Data for fit
         dist (str): Distribution to fit
         name (bool): Include distribution name?
         sign (bool): Include sign? (Optional)
+
+        loc (float): Initial guess for location `loc` parameter (Optional)
+        scale (float): Initial guess for scale `scale` parameter (Optional)
+
+        floc (float): Value to fix the location `loc` parameter (Optional)
+        fscale (float): Value to fix the location `scale` parameter (Optional)
+        f* (float): Value to fix the specified shape parameter (Optional)
+            e.g. give fc to fix the `c` parameter
 
     Returns:
         gr.MarginalNamed: Distribution
@@ -588,12 +596,45 @@ def marg_named(data, dist, name=True, sign=None):
     Examples:
 
         >>> import grama as gr
-        >>> from grama.data import df_stang
-        >>>     gr.cp_marginals(
-        >>>         E=gr.marg_named(df_stang.E, "norm"),
-        >>>         mu=gr.marg_named(df_stang.mu, "beta")
+        >>> from grama.data import df_shewhart
+        >>> # Fit normal distribution
+        >>> mg_normal = gr.marg_named(
+        >>>     df_shewhart.tensile_strength,
+        >>>     "norm",
+        >>> )
+        >>> # Fit two-parameter Weibull distribution
+        >>> mg_weibull2 = gr.marg_named(
+        >>>     df_shewhart.tensile_strength,
+        >>>     "weibull_min",
+        >>>     floc=0,        # 2-parameter has frozen loc == 0
+        >>> )
+        >>> # Fit three-parameter Weibull distribution
+        >>> mg_weibull3 = gr.marg_named(
+        >>>     df_shewhart.tensile_strength,
+        >>>     "weibull_min",
+        >>>     loc=0,        # 3-parameter fit tends to be unstable;
+        >>>                   # an inital guess helps stabilize fit
+        >>> )
+        >>> # Inspect fits with QQ plot
+        >>> (
+        >>>     df_shewhart
+        >>>     >> gr.tf_mutate(
+        >>>         q_normal=gr.qqvals(DF.tensile_strength, marg=mg_normal),
+        >>>         q_weibull2=gr.qqvals(DF.tensile_strength, marg=mg_weibull2),
         >>>     )
-        >>> md.printpretty()
+        >>>     >> gr.tf_pivot_longer(
+        >>>         columns=[
+        >>>             "q_normal",
+        >>>             "q_weibull2",
+        >>>         ],
+        >>>         names_to=[".value", "Distribution"],
+        >>>         names_sep="_"
+        >>>     )
+        >>>
+        >>>     >> gr.ggplot(gr.aes("q", "tensile_strength"))
+        >>>     + gr.geom_abline(intercept=0, slope=1, linetype="dashed")
+        >>>     + gr.geom_point(gr.aes(color="Distribution"))
+        >>> )
 
     """
     ## Catch case where user provides entire DataFrame
@@ -603,7 +644,7 @@ def marg_named(data, dist, name=True, sign=None):
     ## Fit the distribution
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        param = valid_dist[dist].fit(data)
+        param = valid_dist[dist].fit(data, **kwargs)
 
     param = dict(zip(param_dist[dist], param))
 
