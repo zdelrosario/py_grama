@@ -596,15 +596,45 @@ def marg_named(data, dist, name=True, sign=None, **kwargs):
     Examples:
 
         >>> import grama as gr
-        >>> from grama.data import df_stang
-        >>>
-        >>> ## Incomplete example below; often used in model building
-        >>>     ...
-        >>>     gr.cp_marginals(
-        >>>         E=gr.marg_named(df_stang.E, "norm"),
-        >>>         mu=gr.marg_named(df_stang.mu, "beta")
+        >>> from grama.data import df_shewhart
+        >>> # Fit normal distribution
+        >>> mg_normal = gr.marg_named(
+        >>>     df_shewhart.tensile_strength,
+        >>>     "norm",
+        >>> )
+        >>> # Fit two-parameter Weibull distribution
+        >>> mg_weibull2 = gr.marg_named(
+        >>>     df_shewhart.tensile_strength,
+        >>>     "weibull_min",
+        >>>     floc=0,        # 2-parameter has frozen loc == 0
+        >>> )
+        >>> # Fit three-parameter Weibull distribution
+        >>> mg_weibull3 = gr.marg_named(
+        >>>     df_shewhart.tensile_strength,
+        >>>     "weibull_min",
+        >>>     loc=0,        # 3-parameter fit tends to be unstable;
+        >>>                   # an inital guess helps stabilize fit
+        >>> )
+        >>> # Inspect fits with QQ plot
+        >>> (
+        >>>     df_shewhart
+        >>>     >> gr.tf_mutate(
+        >>>         q_normal=gr.qqvals(DF.tensile_strength, marg=mg_normal),
+        >>>         q_weibull2=gr.qqvals(DF.tensile_strength, marg=mg_weibull2),
         >>>     )
-        >>> md
+        >>>     >> gr.tf_pivot_longer(
+        >>>         columns=[
+        >>>             "q_normal",
+        >>>             "q_weibull2",
+        >>>         ],
+        >>>         names_to=[".value", "Distribution"],
+        >>>         names_sep="_"
+        >>>     )
+        >>>
+        >>>     >> gr.ggplot(gr.aes("q", "tensile_strength"))
+        >>>     + gr.geom_abline(intercept=0, slope=1, linetype="dashed")
+        >>>     + gr.geom_point(gr.aes(color="Distribution"))
+        >>> )
 
     """
     ## Catch case where user provides entire DataFrame
