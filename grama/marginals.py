@@ -16,6 +16,7 @@ from abc import ABC, abstractmethod
 from numpy import zeros, array, Inf, concatenate, sqrt
 from numpy import min as npmin
 from numpy import max as npmax
+from numpy.random import uniform as runif
 from pandas import DataFrame
 from scipy.optimize import root_scalar, root
 from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
@@ -271,6 +272,11 @@ class Marginal(ABC):
     @abstractmethod
     def q(self, p):
         pass
+
+    ## Random variable sample
+    def r(self, n):
+        U = runif(size=n)
+        return self.q(U)
 
     ## Summary
     @abstractmethod

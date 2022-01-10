@@ -22,6 +22,11 @@ class TestMarginalTools(unittest.TestCase):
 
         self.assertTrue(np.isclose(q_gkde[2], self.median, atol=0, rtol=0.05))
 
+        # Test random variable sample
+        n = 10
+        n_gkde = mg_gkde.r(n)
+        self.assertTrue(len(n_gkde) == n)
+
     def test_named(self):
         mg_norm = gr.marg_named(data.df_stang.E, "norm")
 
@@ -31,6 +36,11 @@ class TestMarginalTools(unittest.TestCase):
         mg_norm.summary()
 
         self.assertTrue(np.isclose(q_norm[1], self.median, atol=0, rtol=0.05))
+
+        # Test random variable sample
+        n = 10
+        n_norm = mg_norm.r(n)
+        self.assertTrue(len(n_norm) == n)
 
         ## Raises error when dataframe passed
         with self.assertRaises(ValueError):
