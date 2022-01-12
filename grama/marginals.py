@@ -335,7 +335,7 @@ class MarginalNamed(Marginal):
             "s.d.": sqrt(stats[1]).round(dig),
             "COV": round(sqrt(stats[1]) / stats[0], dig),
             "skew.": stats[2].round(dig),
-            "kurt.": stats[3].round(dig),
+            "kurt.": stats[3].round(dig) + 3, # full kurtosis
         }
         return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, param)
 
