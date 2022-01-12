@@ -283,6 +283,12 @@ class Marginal(ABC):
     def summary(self):
         pass
 
+    def __str__(self):
+        return self.summary()
+
+    def __repr__(self):
+        return self.summary()
+
 
 ## Named marginal class
 class MarginalNamed(Marginal):
@@ -322,8 +328,16 @@ class MarginalNamed(Marginal):
         return valid_dist[self.d_name].ppf(p, **self.d_param)
 
     ## Summary
-    def summary(self):
-        return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, self.d_param)
+    def summary(self, dig=2):
+        stats = valid_dist[self.d_name](**self.d_param).stats("mvsk")
+        param = {
+            "mean": stats[0].round(dig),
+            "s.d.": sqrt(stats[1]).round(dig),
+            "COV": round(sqrt(stats[1]) / stats[0], dig),
+            "skew.": stats[2].round(dig),
+            "kurt.": stats[3].round(dig),
+        }
+        return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, param)
 
 
 ## Gaussian KDE marginal class
