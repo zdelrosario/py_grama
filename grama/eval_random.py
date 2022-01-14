@@ -1,15 +1,12 @@
 __all__ = [
-    "eval_sample",
-    "ev_sample",
     "eval_sinews",
     "ev_sinews",
     "eval_hybrid",
     "ev_hybrid",
 ]
 
-import warnings
-import grama as gr
-from grama import add_pipe, CopulaIndependence, custom_formatwarning, eval_df, pipe
+from grama import add_pipe, CopulaIndependence, custom_formatwarning
+from grama import comp_marginals, eval_df
 from numbers import Integral
 from numpy import tile, linspace, zeros, isfinite
 from numpy.linalg import cholesky, inv
@@ -18,91 +15,10 @@ from numpy.random import seed as set_seed
 from pandas import DataFrame
 from scipy.stats import norm, lognorm
 from toolz import curry
+from warnings import formatwarning, catch_warnings, simplefilter
 
+formatwarning = custom_formatwarning
 
-warnings.formatwarning = custom_formatwarning
-
-
-## Random sampling
-# --------------------------------------------------
-@curry
-def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
-    r"""Draw a random sample
-
-    Evaluates a given model at a given DataFrame. Generates outer product
-    with deterministic samples.
-
-    Args:
-        model (gr.Model): Model to evaluate
-        n (numeric): number of observations to draw
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels.
-        seed (int): random seed to use
-        append (bool): Append results to random values?
-        skip (bool): Skip evaluation of the functions?
-
-    Returns:
-        DataFrame: Results of evaluation or unevaluated design
-
-    Examples:
-
-        >>> import grama as gr
-        >>> from grama.models import make_test
-        >>> md = make_test()
-        >>> df = md >> gr.ev_sample(n=1e2, df_det="nom")
-        >>> df.describe()
-
-    """
-    ## Check invariants
-    if n is None:
-        raise ValueError("Must provide a valid n value.")
-
-    ## Set seed only if given
-    if seed is not None:
-        set_seed(seed)
-
-    ## Ensure sample count is int
-    if not isinstance(n, Integral):
-        print("eval_sample() is rounding n...")
-        n = int(n)
-
-    ## Draw samples
-    df_rand = model.density.sample(n=n, seed=seed)
-    ## Construct outer-product DOE
-    df_samp = model.var_outer(df_rand, df_det=df_det)
-
-    if skip:
-        ## Evaluation estimate
-        runtime_est = model.runtime(df_samp.shape[0])
-        if runtime_est > 0:
-            print(
-                "Estimated runtime for design with model ({0:1}):\n  {1:4.3} sec".format(
-                    model.name, runtime_est
-                )
-            )
-        else:
-            print("Design runtime estimates unavailable; model has no timing data.")
-
-        ## Attach metadata
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            df_samp._plot_info = {
-                "type": "sample_inputs",
-                "var": model.var_rand,
-            }
-
-        return df_samp
-
-    df_res = eval_df(model, df=df_samp, append=append)
-    ## Attach metadata
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        df_res._plot_info = {"type": "sample_outputs", "out": model.out}
-
-    return df_res
-
-
-ev_sample = add_pipe(eval_sample)
 
 ## Marginal sweeps with random origins
 # --------------------------------------------------
@@ -174,7 +90,7 @@ def eval_sinews(
                 "scale": model.domain.get_width(v),
             }
         ## Overwrite model
-        model = gr.comp_marginals(model, **dicts_var)
+        model = comp_marginals(model, **dicts_var)
         ## Restore flag
         df_det = "nom"
 
@@ -236,8 +152,8 @@ def eval_sinews(
             print("Design runtime estimates unavailable; model has no timing data.")
 
         ## For autoplot
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+        with catch_warnings():
+            simplefilter("ignore")
             df_samp._plot_info = {"type": "sinew_inputs", "var": model.var_rand}
 
         ## Pass-through
@@ -246,8 +162,8 @@ def eval_sinews(
     ## Apply
     df_res = eval_df(model, df=df_samp, append=append)
     ## For autoplot
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+    with catch_warnings():
+        simplefilter("ignore")
         df_res._plot_info = {
             "type": "sinew_outputs",
             "var": model.var_rand,
@@ -356,8 +272,8 @@ def eval_hybrid(
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
     if skip:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+        with catch_warnings():
+            simplefilter("ignore")
             df_samp._meta = dict(
                 type="eval_hybrid",
                 varname=varname,
@@ -369,8 +285,8 @@ def eval_hybrid(
         return df_samp
 
     df_res = eval_df(model, df=df_samp, append=append)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+    with catch_warnings():
+        simplefilter("ignore")
         df_res._meta = dict(
             type="eval_hybrid",
             varname=varname,
