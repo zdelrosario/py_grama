@@ -7,6 +7,7 @@ from grama import eval_df, add_pipe, tf_outer
 from numpy import array, linspace, isfinite, reshape, full
 from pandas import concat, DataFrame
 from toolz import curry
+from warnings import formatwarning, catch_warnings, simplefilter
 
 class Square():
     # D -- C
@@ -365,8 +366,21 @@ def eval_contour(
     if "_foo" in df_res.columns:
         df_res.drop("_foo", axis=1, inplace=True)
 
+    # Drop index
+    df_res = df_res.reset_index(drop=True)
+
+    ## Attach metadata
+    with catch_warnings():
+        simplefilter("ignore")
+        df_res._plot_info = {
+            "type": "contour",
+            "var": var,
+            "out": "out",
+            "level": "level",
+        }
+
     ## Return the results
-    return df_res.reset_index(drop=True)
+    return df_res
 
 
 ev_contour = add_pipe(eval_contour)

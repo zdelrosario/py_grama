@@ -1,4 +1,6 @@
 __all__ = [
+    "plot_contour",
+    "pt_contour",
     "plot_scattermat",
     "pt_scattermat",
     "plot_hists",
@@ -19,7 +21,8 @@ from pandas import melt
 from plotnine import aes, annotate, ggplot, facet_grid, facet_wrap, labs, element_text, guides
 from plotnine import theme, theme_void, theme_minimal
 from plotnine import scale_x_continuous, scale_y_continuous
-from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_blank
+from plotnine import geom_point, geom_density, geom_histogram, geom_line
+from plotnine import geom_segment, geom_blank
 from matplotlib import gridspec
 
 from toolz import curry
@@ -37,7 +40,51 @@ def _sci_format(v):
 
 ## Function-specific plot functions
 ##################################################
-## Monte Carlo
+##
+@curry
+def plot_contour(df, var=None, out="out", level="level"):
+    r"""Plot 2d contours
+
+    Plot contours.
+
+    Usually called as a dispatch from plot_auto().
+
+    Args:
+        var (array of str): Variables for plot axes
+        out (str): Name of output identifier column
+        level (str): Name of level identifier column
+
+    Returns:
+        DataFrame: Results of evaluation or unevaluated design
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.models import make_cantilever_beam
+
+    """
+    # Check invariants
+    if var is None:
+        raise ValueError("Must provide input columns list as keyword var")
+
+    return (
+        df
+        >> ggplot()
+        + geom_segment(
+            aes(
+                var[0],
+                var[1],
+                xend=var[0]+"_end",
+                yend=var[1]+"_end",
+                linetype=out,
+                color=level,
+            )
+        )
+    )
+
+pt_contour = add_pipe(plot_contour)
+
+## Sample
 # --------------------------------------------------
 @curry
 def plot_scattermat(df, var=None):
@@ -428,6 +475,7 @@ pt_sinew_outputs = add_pipe(plot_sinew_outputs)
 ## Autoplot dispatcher
 ## ##################################################
 plot_list = {
+    "contour": plot_contour,
     "sinew_inputs": plot_sinew_inputs,
     "sinew_outputs": plot_sinew_outputs,
     "sample_inputs": plot_scattermat,
