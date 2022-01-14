@@ -20,7 +20,7 @@ __all__ = [
 from grama import add_pipe, CopulaGaussian, CopulaIndependence, Density, \
     Function, FunctionModel, FunctionVectorized, Marginal, MarginalNamed, \
     pipe, tran_copula_corr
-from .eval_random import eval_sample
+from .eval_defaults import eval_sample
 from collections import ChainMap
 from pandas import concat, DataFrame
 from toolz import curry

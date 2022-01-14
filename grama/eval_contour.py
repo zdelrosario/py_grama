@@ -7,6 +7,7 @@ from grama import eval_df, add_pipe, tf_outer
 from numpy import array, linspace, isfinite, reshape, full
 from pandas import concat, DataFrame
 from toolz import curry
+from warnings import formatwarning, catch_warnings, simplefilter, warn
 
 class Square():
     # D -- C
@@ -182,7 +183,7 @@ def eval_contour(
         out=None,
         df=None,
         levels=None,
-        n_side=128,
+        n_side=20,
         n_levels=5,
 ):
     r"""Generate contours from a model
@@ -227,9 +228,8 @@ def eval_contour(
         >>>         var=["x", "y"],
         >>>         out=["f", "g"],
         >>>     )
-        >>>
-        >>>     >> gr.ggplot(gr.aes("x", "y"))
-        >>>     + gr.geom_segment(gr.aes(xend="x_end", yend="y_end", group="level", color="out"))
+        >>>     # Contours with no auxiliary variables can autoplot
+        >>>     >> gr.pt_auto()
         >>> )
         >>> ## Auxiliary inputs
         >>> (
@@ -283,6 +283,14 @@ def eval_contour(
                 "All model variables need values in provided df; " +
                 "missing values: {}".format(var_diff2)
             )
+
+        if df.shape[0] > 1:
+            has_aux = True
+        else:
+            has_aux = False
+    else:
+        has_aux = False
+
     # Finite bound width
     if not all([
             isfinite(model.domain.get_width(v)) and
@@ -329,13 +337,16 @@ def eval_contour(
 
         ## Set output threshold levels
         if levels is None:
-            levels = dict(zip(
+            # Do not overwrite `levels`, to adapt per loop
+            levels_wk = dict(zip(
                 out,
                 [
                     linspace(df_out[o].min(), df_out[o].max(), n_levels + 2)[1:-1]
                     for o in out
                 ]
             ))
+        else:
+            levels_wk = levels
 
         ## Run marching squares
         # Output quantity
@@ -343,30 +354,53 @@ def eval_contour(
             # Reshape data
             Data = reshape(df_out[o].values, (n_side, n_side))
             # Threshold level
-            for t in levels[o]:
+            for t in levels_wk[o]:
                 # Run marching squares
                 segments = marching_square(xv, yv, Data, t)
+                sqdata = array(segments).squeeze()
 
-                # Package
-                df_tmp = DataFrame(
-                    data=array(segments).squeeze(),
-                    columns=[var[0], var[1], var[0]+"_end", var[1]+"_end"],
-                )
-                df_tmp["out"] = [o] * df_tmp.shape[0]
-                df_tmp["level"] = [t] * df_tmp.shape[0]
-                df_tmp = (
-                    df_tmp
-                    >> tf_outer(df_outer=df.iloc[[i]])
-                )
+                if len(sqdata) > 0:
+                    # Package
+                    df_tmp = DataFrame(
+                        data=sqdata,
+                        columns=[var[0], var[1], var[0]+"_end", var[1]+"_end"],
+                    )
+                    df_tmp["out"] = [o] * df_tmp.shape[0]
+                    df_tmp["level"] = [t] * df_tmp.shape[0]
+                    df_tmp = (
+                        df_tmp
+                        >> tf_outer(df_outer=df.iloc[[i]])
+                    )
 
-                df_res = concat((df_res, df_tmp), axis=0)
+                    df_res = concat((df_res, df_tmp), axis=0)
+                else:
+                    warn(
+                        "Output {0:} had no contours at level {1:}".format(
+                            o,
+                            t,
+                        )
+                    )
 
     ## Remove dummy column, if present
     if "_foo" in df_res.columns:
         df_res.drop("_foo", axis=1, inplace=True)
 
+    # Drop index
+    df_res = df_res.reset_index(drop=True)
+
+    ## Attach metadata
+    with catch_warnings():
+        simplefilter("ignore")
+        df_res._plot_info = {
+            "type": "contour",
+            "var": var,
+            "out": "out",
+            "level": "level",
+            "aux": has_aux,
+        }
+
     ## Return the results
-    return df_res.reset_index(drop=True)
+    return df_res
 
 
 ev_contour = add_pipe(eval_contour)

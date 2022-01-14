@@ -21,8 +21,25 @@ class TestAutoplot(unittest.TestCase):
             skip=True
         )
 
+        self.df_contour = gr.eval_contour(
+            self.md,
+            var=["x0", "x1"],
+            out=["y0"],
+            df=gr.df_make(x2=0),
+        )
+        self.df_contour_aux = gr.eval_contour(
+            self.md,
+            var=["x0", "x1"],
+            out=["y0"],
+            df=gr.df_make(x2=[0, 1]),
+        )
+
     def test_autoplot(self):
         gr.plot_auto(self.df_mc)
         gr.plot_auto(self.df_mc_skip)
         gr.plot_auto(self.df_sinew)
         gr.plot_auto(self.df_sinew_skip)
+        gr.plot_auto(self.df_contour)
+
+        with self.assertRaises(ValueError):
+            gr.plot_auto(self.df_contour_aux)
