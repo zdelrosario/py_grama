@@ -67,6 +67,32 @@ class TestContour(unittest.TestCase):
         # Contains auxiliary variable
         self.assertTrue("c" in df_res2.columns)
 
+        df_res3 = (
+            md1
+            >> gr.ev_contour(
+                var=["x", "y"],
+                out=["g"],
+                levels=dict(g=[-1, 0, +1]),
+                n_side=10, # Coarse, for speed
+            )
+        )
+        # Correct manual levels
+        self.assertTrue(set(df_res3.level) == {-1, 0, +1})
+
+        # Correct manual levels
+        with self.assertWarns(Warning):
+            df_res4 = (
+                md1
+                >> gr.ev_contour(
+                    var=["x", "y"],
+                    out=["g"],
+                    levels=dict(g=[-1, 0, +1, +1e3]),
+                    n_side=10, # Coarse, for speed
+                )
+            )
+            # Correct manual levels
+            self.assertTrue(set(df_res4.level) == {-1, 0, +1})
+
         ## Check assertions
         # No var
         with self.assertRaises(ValueError):
