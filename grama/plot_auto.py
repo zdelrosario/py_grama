@@ -40,9 +40,9 @@ def _sci_format(v):
 
 ## Function-specific plot functions
 ##################################################
-##
+## eval_contour
 @curry
-def plot_contour(df, var=None, out="out", level="level"):
+def plot_contour(df, var=None, out="out", level="level", aux=False):
     r"""Plot 2d contours
 
     Plot contours.
@@ -53,9 +53,10 @@ def plot_contour(df, var=None, out="out", level="level"):
         var (array of str): Variables for plot axes
         out (str): Name of output identifier column
         level (str): Name of level identifier column
+        aux (bool): Auxillary variables present?
 
     Returns:
-        DataFrame: Results of evaluation or unevaluated design
+        ggplot: Contour image
 
     Examples:
 
@@ -66,6 +67,12 @@ def plot_contour(df, var=None, out="out", level="level"):
     # Check invariants
     if var is None:
         raise ValueError("Must provide input columns list as keyword var")
+    if aux:
+        raise ValueError(
+            "Autoplot plot_contour not designed to handle auxiliary variables. " +
+            "Regenerate contour data with fixed auxilary variables, " +
+            "or try creating a manual plot."
+        )
 
     return (
         df
@@ -81,6 +88,7 @@ def plot_contour(df, var=None, out="out", level="level"):
             )
         )
     )
+
 
 pt_contour = add_pipe(plot_contour)
 
@@ -99,7 +107,7 @@ def plot_scattermat(df, var=None):
         var (list of strings): Variables to plot
 
     Returns:
-        DataFrame: Results of evaluation or unevaluated design
+        ggplot: Scatterplot matrix
 
     Examples:
 
