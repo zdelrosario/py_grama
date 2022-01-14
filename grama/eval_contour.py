@@ -183,7 +183,7 @@ def eval_contour(
         out=None,
         df=None,
         levels=None,
-        n_side=128,
+        n_side=20,
         n_levels=5,
 ):
     r"""Generate contours from a model
@@ -228,9 +228,8 @@ def eval_contour(
         >>>         var=["x", "y"],
         >>>         out=["f", "g"],
         >>>     )
-        >>>
-        >>>     >> gr.ggplot(gr.aes("x", "y"))
-        >>>     + gr.geom_segment(gr.aes(xend="x_end", yend="y_end", group="level", color="out"))
+        >>>     # Contours with no auxiliary variables can autoplot
+        >>>     >> gr.pt_auto()
         >>> )
         >>> ## Auxiliary inputs
         >>> (
