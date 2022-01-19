@@ -100,3 +100,17 @@ class TestQQ(unittest.TestCase):
         # Handles shuffling
         shuffle(q)
         self.assertTrue((q == gr.qqvals(q, marg=marg)).all())
+
+class TestArray(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_linspace(self):
+        # Works in pipeline
+        (
+            gr.df_make(i=range(10))
+            >> gr.tf_mutate(
+                x=gr.linspace(0, 1, gr.n(X.index)),
+                l=gr.logspace(0, 1, gr.n(X.index)),
+            )
+        )
