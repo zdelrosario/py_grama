@@ -22,6 +22,8 @@ __all__ = [
     "pareto_min",
     "stratum_min",
     "qqvals",
+    "linspace",
+    "logspace",
 ]
 
 from grama import make_symbolic, marg_named
@@ -39,6 +41,8 @@ from numpy import power as nppower
 from numpy import floor as npfloor
 from numpy import ceil as npceil
 from numpy import round as npround
+from numpy import linspace as nplinspace
+from numpy import logspace as nplogspace
 from pandas import Categorical, Series, to_numeric
 from scipy.stats import norm, rankdata
 
@@ -381,3 +385,66 @@ def qqvals(x, dist=None, marg=None):
     p[argmin(x)] = 1 - 0.5**(1/n)
 
     return marg.q(p)
+
+
+# Array constructors
+# -------------------------
+@make_symbolic
+def linspace(a, b, n, **kwargs):
+    r"""Linearly-spaced values
+
+    Create an array of linearly-spaced values. Accepts keyword arguments for
+    numpy.linspace.
+
+    Arguments:
+        a (numeric): Smallest value
+        b (numeric): Largest value
+        n (int): Number of points
+
+    Returns:
+        numpy array: Array of requested values
+
+    Notes:
+        This is a symbolic alias for np.linspace(); you can use this in
+        pipe-enabled functions.
+
+    Examples:
+        >>> import grama as gr
+        >>> from grama.data import df_stang
+        >>> DF = gr.Intention()
+        >>> (
+        >>>     df_stang
+        >>>     >> gr.tf_mutate(c=gr.linspace(0, 1, gr.n(DF.index)))
+        >>> )
+    """
+    return nplinspace(a, b, num=n, **kwargs)
+
+@make_symbolic
+def logspace(a, b, n, **kwargs):
+    r"""Logarithmically-spaced values
+
+    Create an array of logarithmically-spaced values. Accepts keyword arguments for
+    numpy.logspace.
+
+    Arguments:
+        a (numeric): Smallest value
+        b (numeric): Largest value
+        n (int): Number of points
+
+    Returns:
+        numpy array: Array of requested values
+
+    Notes:
+        This is a symbolic alias for np.logspace(); you can use this in
+        pipe-enabled functions.
+
+    Examples:
+        >>> import grama as gr
+        >>> from grama.data import df_stang
+        >>> DF = gr.Intention()
+        >>> (
+        >>>     df_stang
+        >>>     >> gr.tf_mutate(c=gr.logspace(0, 1, gr.n(DF.index)))
+        >>> )
+    """
+    return nplogspace(a, b, num=n, **kwargs)
