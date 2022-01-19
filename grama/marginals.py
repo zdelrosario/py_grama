@@ -331,8 +331,8 @@ class MarginalNamed(Marginal):
     def summary(self, dig=2):
         stats = valid_dist[self.d_name](**self.d_param).stats("mvsk")
         param = {
-            "mean": stats[0].round(dig),
-            "s.d.": sqrt(stats[1]).round(dig),
+            "mean": "{0:4.3e}".format(stats[0].round(dig)),
+            "s.d.": "{0:4.3e}".format(sqrt(stats[1]).round(dig)),
             "COV": round(sqrt(stats[1]) / stats[0], dig),
             "skew.": stats[2].round(dig),
             "kurt.": stats[3].round(dig) + 3, # full kurtosis
