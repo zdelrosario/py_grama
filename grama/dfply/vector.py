@@ -226,7 +226,20 @@ def if_else(condition, when_true, otherwise):
             value to apply when the condition is `False`.
 
     Example:
-    df = pd.DataFrame
+        >>> import grama as gr
+        >>> from grama.data import df_diamonds
+        >>> DF = gr.Intention()
+        >>> (
+        >>>     df_diamonds
+        >>>     >> gr.tf_mutate(
+        >>>         # Recode nonsensical x values
+        >>>         x=gr.if_else(
+        >>>             DF.x == 0
+        >>>             gr.NaN,
+        >>>             DF.x,
+        >>>         )
+        >>>     )
+        >>> )
     """
 
     if not isinstance(when_true, collections.Iterable) or isinstance(when_true, str):
