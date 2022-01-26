@@ -1,6 +1,11 @@
 all = [
     "eval_pnd",
     "ev_pnd",
+    "pareto_min_rel",
+    "make_proposal_sigma",
+    "rprop",
+    "dprop",
+
 ]
 
 from grama import add_pipe, Model, tf_md
@@ -21,7 +26,7 @@ from toolz import curry
 
 
 @curry
-def eval_pnd(model, df_train, df_test, signs, seed=None):
+def eval_pnd(model, df_train, df_test, sign, n=int(1e4), seed=None):
     """ Evaluate a Model using a predictive model
 
     Evaluates a given model against a PND algorithm to determine
@@ -31,7 +36,10 @@ def eval_pnd(model, df_train, df_test, signs, seed=None):
         model (gr.model): predictive model to evaluate
         df_train (DataFrame): dataframe with training data
         df_test (DataFrame): dataframe with test data
-        signs (dict): contains signs for minimization and maximization of outputs
+        sign (numpy array of +/-1 values): Array of optimization signs: {-1: Minimize, +1 Maximize}
+
+    Kwargs:
+        n (int): Number of draws for importance sampler
         seed (int): declarble seed value for reproducibility
 
     Returns:
@@ -59,20 +67,36 @@ def eval_pnd(model, df_train, df_test, signs, seed=None):
             )
         )
     """
-    # Check for correct types
-    if not isinstance(model, Model):
-        raise TypeError('model must be a Model')
+    # # Check for correct types
+    # if not isinstance(model, Model):
+    #     raise TypeError('model must be a Model')
 
-    if not isinstance(df_train, DataFrame):
-        raise TypeError('df_train must be a DataFrame')
-
-    if not isinstance(df_test, DataFrame):
-        raise TypeError('df_test must be a DataFrame')
+    # if not isinstance(df_train, DataFrame):
+    #     raise TypeError('df_train must be a DataFrame')
+    #
+    # if not isinstance(df_test, DataFrame):
+    #     raise TypeError('df_test must be a DataFrame')
 
     # if not isinstance(signs, dict):
     #     raise TypeError('sign must be a Dictionary')
 
     # Check content
+    if len(model.out) < 2:
+        raise ValueError('Given Model needs multiple outputs')
+
+    if len(model.functions) == 0:
+        raise ValueError("Given model has no functions")
+
+    if not set(model.var).issubset(set(df_train.columns)):
+        raise ValueError("model.var must be subset of df_train.columns")
+
+    if not set(model.var).issubset(set(df_test.columns)):
+        raise ValueError("model.var must be subset of df_test.columns")
+
+
+    ### IF they are already numpy arrays for a quick use should their be a bypass
+    ### of sorts?
+
 
     ## Compute predictions and predicted uncertainties
     df_pred = (
@@ -80,11 +104,23 @@ def eval_pnd(model, df_train, df_test, signs, seed=None):
         >> tf_md(md=model)
     )
 
-    ### Reshape data, df_pred, df_sig, df_train from df_pred
-    ## Reshape data for algorithm
-    X_pred = df_pred[["y1_mean", "y2_mean"]].values # Predicted response values
-    X_sig = df_pred[["y1_sd", "y2_sd"]].values      # Predictive uncertainties
-    X_train = df_train[["y1", "y2"]].values         # Training
+    ## Setup for reshaping
+    means = []
+    sds = []
+    vars = df_train.columns.values
+    input = model.var
+    outputs = [value for value in vars if value not in input]
+
+    for i, value in enumerate(model.out):
+        if "mean" in value:
+            means.append(value)
+        if "sd" in value:
+            sds.append(value)
+
+    ## Reshape data for PND algorithm
+    X_pred = df_pred[means].values      # Predicted response values
+    X_sig = df_pred[sds].values         # Predictive uncertainties
+    X_train = df_train[outputs].values  # Training
 
     ### Create covariance matrices
     X_cov = zeros((X_sig.shape[0], 2, 2))
@@ -97,7 +133,8 @@ def eval_pnd(model, df_train, df_test, signs, seed=None):
         X_pred,
         X_cov,
         X_train,
-        sign = signs,
+        sign = sign,
+        n = n,
         seed = seed
     )
 
