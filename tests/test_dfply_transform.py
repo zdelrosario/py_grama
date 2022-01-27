@@ -40,25 +40,6 @@ class testTransform(unittest.TestCase):
         )
         self.assertTrue(df.equals(d.sort_index()))
 
-    def test_transmute(self):
-        df = data.df_diamonds.copy()
-        df["testcol"] = df["x"] * df["y"]
-        df = df[["testcol"]]
-        self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_transmute(testcol=X.x * X.y))
-        )
-
-    def test_group_transmute(self):
-        df = data.df_diamonds.copy()
-        df = df.groupby("cut").apply(group_mutate_helper).reset_index(drop=True)
-        df = df[["cut", "testcol"]]
-        d = (
-            data.df_diamonds
-            >> gr.tf_group_by("cut")
-            >> gr.tf_transmute(testcol=X.x * X.shape[0])
-        )
-        self.assertTrue(df.equals(d.sort_index()))
-
     def test_mutate_if(self):
         df = data.df_diamonds.copy()
         for col in df:
