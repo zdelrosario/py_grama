@@ -379,7 +379,7 @@ def df_make(**kwargs):
 
 
 ## DataFrame equality checker
-def df_equal(df1, df2, close=False, precision=3):
+def df_equal(df1, df2, close=False, rtol=1e-3):
     """Check DataFrame equality
 
     Check that two dataframes have the same columns and values. Allow column
@@ -404,7 +404,7 @@ def df_equal(df1, df2, close=False, precision=3):
                 df2,
                 check_dtype=False,
                 check_exact=False,
-                check_less_precise=precision,
+                rtol=rtol
             )
             return True
         except:
