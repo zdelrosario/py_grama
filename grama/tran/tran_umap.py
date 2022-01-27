@@ -6,8 +6,9 @@ __all__ = [
 ## Transforms via umap-learn package
 try:
     from umap import UMAP
+
 except ModuleNotFoundError:
-    raise ModuleNotFoundError("module umap not found")
+    pass
 
 from grama import add_pipe
 from pandas import concat, DataFrame
@@ -61,12 +62,22 @@ def tran_umap(
     var_leftover = list(set(df.columns).difference(set(var)))
 
     ## Reduce dimensionality
-    df_res = DataFrame(
-        data=UMAP(n_components=n_dim, random_state=seed, **kwargs).fit_transform(
-            df[var].values
-        ),
-        columns=[out + "{}".format(i) for i in range(n_dim)],
-    )
+    try:
+        df_res = DataFrame(
+            data=UMAP(n_components=n_dim, random_state=seed, **kwargs).fit_transform(
+                df[var].values
+            ),
+            columns=[out + "{}".format(i) for i in range(n_dim)],
+        )
+
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `umap` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install umap-learn"
+        )
 
     ## Concatenate as necessary
     if keep:

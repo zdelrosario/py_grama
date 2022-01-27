@@ -10,4 +10,5 @@ import grama.data as data
 import grama.fit as fit
 import grama.tran as tran
 import grama.eval as ev
-# import grama.eval_pnd as pnd
+import grama.psdr as psdr
+import grama.eval_pnd as pnd

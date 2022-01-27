@@ -7,8 +7,6 @@ import sys
 from context import grama as gr
 from context import data
 from context import models
-from context import tran
-from context import fit
 
 ## Test transform tools
 ##################################################
@@ -98,6 +96,16 @@ class TestTools(unittest.TestCase):
             check_column_type=False,
         )
 
+        # Empty cases
+        gr.df_equal(
+            df,
+            gr.tran_outer(pd.DataFrame(), df_outer=df)
+        )
+        gr.df_equal(
+            df,
+            gr.tran_outer(df, df_outer=pd.DataFrame())
+        )
+
     def test_gauss_copula(self):
         md = gr.Model() >> gr.cp_marginals(
             E=gr.marg_named(data.df_stang.E, "norm"),
@@ -132,7 +140,7 @@ class TestTools(unittest.TestCase):
         ## Unshuffled, auto-generated folds
         df_res = df_train >> gr.tf_kfolds(
             k=2,
-            ft=fit.ft_rf(out=["Y"], var=["X"]),
+            ft=gr.ft_rf(out=["Y"], var=["X"]),
             shuffle=False,
             summaries=dict(mse=gr.mse),
         )
@@ -147,7 +155,7 @@ class TestTools(unittest.TestCase):
 
         ## Manual folds
         df_manual = df_train >> gr.tf_kfolds(
-            ft=fit.ft_rf(out=["Y"], var=["X"]),
+            ft=gr.ft_rf(out=["Y"], var=["X"]),
             var_fold="_fold",
             summaries=dict(mse=gr.mse),
         )
@@ -345,13 +353,13 @@ class TestDR(unittest.TestCase):
     def test_tsne(self):
         ## t-SNE executes successfully
         df_tsne = (
-            data.df_diamonds >> gr.tf_sample(n=100) >> tran.tf_tsne(var=["x", "y", "z"])
+            data.df_diamonds >> gr.tf_sample(n=100) >> gr.tf_tsne(var=["x", "y", "z"])
         )
 
     def test_umap(self):
         ## UMAP executes successfully
         df_umap = (
-            data.df_diamonds >> gr.tf_sample(n=100) >> tran.tf_umap(var=["x", "y", "z"])
+            data.df_diamonds >> gr.tf_sample(n=100) >> gr.tf_umap(var=["x", "y", "z"])
         )
 
 
@@ -368,7 +376,7 @@ class TestFeaturize(unittest.TestCase):
         df_true["x y"] = [0.0, 0.0, 0.0]
         df_true["y^2"] = [0.0, 0.0, 1.0]
 
-        df_res = tran.tran_poly(df, var=["x", "y"], degree=2, keep=True)
+        df_res = gr.tran_poly(df, var=["x", "y"], degree=2, keep=True)
         self.assertTrue(gr.df_equal(df_true, df_res[df_true.columns]))
 
 
@@ -384,6 +392,6 @@ class TestFeaturize(unittest.TestCase):
 #         )
 #         df_test = gr.df_make(FORMULA=["C6H12O6"])
 
-#         df_res = df_test >> tran.tf_feat_composition()
+#         df_res = df_test >> gr.tf_feat_composition()
 
 #         self.assertTrue(gr.df_equal(df_test, df_res[df_test.columns]))

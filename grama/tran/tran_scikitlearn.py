@@ -9,8 +9,9 @@ __all__ = [
 try:
     from sklearn.manifold import TSNE
     from sklearn.preprocessing import PolynomialFeatures
+
 except ModuleNotFoundError:
-    raise ModuleNotFoundError("module sklearn not found")
+    pass
 
 from grama import add_pipe
 from pandas import concat, DataFrame
@@ -66,12 +67,24 @@ def tran_tsne(
     var_leftover = list(set(df.columns).difference(set(var)))
 
     ## Reduce dimensionality
-    df_res = DataFrame(
-        data=TSNE(n_components=n_dim, random_state=seed, **kwargs).fit_transform(
-            df[var].values
-        ),
-        columns=[out + "{}".format(i) for i in range(n_dim)],
-    )
+    try:
+        df_res = DataFrame(
+            data=TSNE(
+                n_components=n_dim,
+                random_state=seed,
+                **kwargs
+            ).fit_transform(df[var].values),
+            columns=[out + "{}".format(i) for i in range(n_dim)],
+        )
+
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `sklearn` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install scikit-learn"
+        )
 
     ## Concatenate as necessary
     if keep:
@@ -129,7 +142,18 @@ def tran_poly(df, degree=None, var=None, keep=True, **kwargs):
     var_leftover = list(set(df.columns).difference(set(var)))
 
     ## Compute the features
-    fit = PolynomialFeatures(degree)
+    try:
+        fit = PolynomialFeatures(degree)
+
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `sklearn` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install scikit-learn"
+        )
+
     X_feat = fit.fit_transform(df[var].values)
     var_feat = fit.get_feature_names(var)
 

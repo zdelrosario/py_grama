@@ -1,8 +1,7 @@
 matplotlib
 numpy>=1.15
 pandas
-seaborn>=0.9
+plotnine>=0.8.0
 scipy
 toolz
 networkx
-pathos>=0.2.7

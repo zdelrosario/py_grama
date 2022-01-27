@@ -58,14 +58,15 @@ class TestPlumbing(unittest.TestCase):
             gr.df_equal(df_res, self.model_default >> gr.ev_conservative(df_det="nom"))
         )
 
-    def test_ev_monte_carlo(self):
-        """Check ev_monte_carlo()
+    def test_ev_sample(self):
+        """Check ev_sample()
         """
-        df_res = gr.eval_monte_carlo(self.model_default, seed=101, df_det="nom")
+        df_res = gr.eval_sample(self.model_default, n=1, seed=101, df_det="nom")
 
         self.assertTrue(
             gr.df_equal(
-                df_res, self.model_default >> gr.ev_monte_carlo(seed=101, df_det="nom")
+                df_res,
+                self.model_default >> gr.ev_sample(seed=101, n=1, df_det="nom")
             )
         )
 

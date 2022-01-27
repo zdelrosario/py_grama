@@ -6,12 +6,11 @@ __all__ = [
 ]
 
 from grama import add_pipe, pipe, custom_formatwarning, df_make, \
-    eval_df, eval_nominal, eval_monte_carlo, comp_marginals, \
+    eval_df, eval_nominal, eval_sample, comp_marginals, \
     comp_copula_independence, tran_outer
 from numpy import Inf, isfinite
 from numpy.random import seed as setseed
 from pandas import DataFrame, concat
-from pathos.multiprocessing import ProcessingPool as Pool
 from scipy.optimize import minimize
 from toolz import curry
 
@@ -179,7 +178,7 @@ def eval_nls(
             md_sweep = comp_marginals(model, **dicts_var)
             md_sweep = comp_copula_independence(md_sweep)
             ## Generate random start points
-            df_rand = eval_monte_carlo(
+            df_rand = eval_sample(
                 md_sweep, n=n_restart - 1, df_det="nom", skip=True,
             )
             df_init = concat((df_init, df_rand[var_fit]), axis=0).reset_index(drop=True)
@@ -226,13 +225,10 @@ def eval_nls(
         df_tmp["mse"] = [res.fun]
         return df_tmp
 
-    num_process = n_process
-    if num_process > n_restart:
-        num_process = n_restart
-
-    pool = Pool(processes = num_process)
-    mp_out = pool.map(fun_mp, range(n_restart))
-    df_res = concat(mp_out, axis=0,).reset_index(drop=True)
+    df_res = DataFrame()
+    for i in range(n_restart):
+        df_tmp = fun_mp(i)
+        df_res = concat((df_res, df_tmp), axis=0).reset_index(drop=True)
 
     ## Post-process
     if append:
@@ -368,7 +364,7 @@ def eval_min(
             md_sweep = comp_marginals(model, **dicts_var)
             md_sweep = comp_copula_independence(md_sweep)
             ## Generate random start points
-            df_rand = eval_monte_carlo(
+            df_rand = eval_sample(
                 md_sweep, n=n_restart - 1, df_det="nom", skip=True,
             )
             df_start = concat((df_start, df_rand[model.var]), axis=0).reset_index(

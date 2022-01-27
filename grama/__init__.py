@@ -1,4 +1,5 @@
-from .marginals import *
+# Import core
+# --------------------------------------------------
 from .tools import *
 from .core import *
 
@@ -6,9 +7,16 @@ from .core import *
 # --------------------------------------------------
 from .dfply import *
 
+# Marginals uses make_symbolic decorator
+from .marginals import *
+
 # Add functionality to dfply
 from .string_helpers import *
 from .mutate_helpers import *
+
+## Load plotnine
+# --------------------------------------------------
+from plotnine import *
 
 ## Load grama tools
 # --------------------------------------------------
@@ -22,6 +30,7 @@ from .eval_tail import *
 from .eval_opt import *
 from .eval_pnd import *
 from .plot_auto import *
+from .eval_contour import *
 from .tran_pivot import *
 from .tran_shapley import *
 from .tran_summaries import *
@@ -29,3 +38,11 @@ from .support import *
 from .tran_is import *
 
 from .fit_synonyms import *
+from .plot_auto import *
+
+## Load extras
+# --------------------------------------------------
+from .eval import *
+from .fit import *
+from .psdr import *
+from .tran import *

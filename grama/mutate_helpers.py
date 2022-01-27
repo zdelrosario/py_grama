@@ -21,10 +21,14 @@ __all__ = [
     "dnorm",
     "pareto_min",
     "stratum_min",
+    "qqvals",
+    "linspace",
+    "logspace",
 ]
 
-from grama import make_symbolic
-from numpy import argsort, array, median, zeros, ones, NaN, arange
+from grama import make_symbolic, marg_named
+from numpy import array, median, zeros, ones, NaN, arange
+from numpy import argsort, argmin, argmax
 from numpy import any as npany
 from numpy import all as npall
 from numpy import abs as npabs
@@ -37,8 +41,10 @@ from numpy import power as nppower
 from numpy import floor as npfloor
 from numpy import ceil as npceil
 from numpy import round as npround
+from numpy import linspace as nplinspace
+from numpy import logspace as nplogspace
 from pandas import Categorical, Series, to_numeric
-from scipy.stats import norm
+from scipy.stats import norm, rankdata
 
 
 # --------------------------------------------------
@@ -316,3 +322,129 @@ def fillna(*args, **kwargs):
 
 
 fillna.__doc__ = fillna.__doc__ + Series.fillna.__doc__
+
+# Q-Q Plot Helper
+# -------------------------
+@make_symbolic
+def qqvals(x, dist=None, marg=None):
+    r"""Generate theoretical quantiles
+
+    Generate theoretical quantiles for a Q-Q plot. Can provide either a
+    pre-defined Marginal object or the name of a distribution to fit.
+
+    Arguments:
+        x (array-like or gr.Intention()): Target observations
+
+    Keyword Arguments:
+        marg (gr.Marginal() or None): Pre-fitted marginal
+        dist (str or None): Name of scipy distribution to fit; see
+            gr.valid_dist for list of valid distributions
+
+    Returns:
+        Series: Theoretical quantiles, matched in order with target observations
+
+    References:
+        Filliben, J. J., "The Probability Plot Correlation Coefficient Test
+        for Normality" (1975) Technometrics. DOI: 10.1080/00401706.1975.10489279
+
+    Examples:
+        >>> import grama as gr
+        >>> from grama.data import df_shewhart
+        >>> DF = gr.Intention()
+        >>>
+        >>> (
+        >>>     ## Make a Q-Q plot
+        >>>     df_shewhart
+        >>>     >> gr.tf_mutate(q=gr.qqvals(DF.tensile_strength, dist="norm"))
+        >>>     >> gr.ggplot(gr.aes("q", "tensile_strength"))
+        >>>     + gr.geom_abline(intercept=0, slope=1, linetype="dashed")
+        >>>     + gr.geom_point()
+        >>> )
+
+    """
+    # Check invariants
+    if (marg is None) and (dist is None):
+        raise ValueError(
+            "Must provide one of marg or dist (exclusively)."
+        )
+    if (marg is not None) and (dist is not None):
+        raise ValueError(
+            "Must provide either marg or dist (exclusively)."
+        )
+
+    # Handle marginal input
+    if (dist is not None):
+        marg = marg_named(x, dist)
+
+    # Get sorted probability values
+    n = len(x)
+    i = rankdata(x, method="ordinal")
+    # Filliben order statistic medians
+    p = (i - 0.3175) / (n + 0.365)
+    p[argmax(x)] = 0.5**(1/n)
+    p[argmin(x)] = 1 - 0.5**(1/n)
+
+    return marg.q(p)
+
+
+# Array constructors
+# -------------------------
+@make_symbolic
+def linspace(a, b, n, **kwargs):
+    r"""Linearly-spaced values
+
+    Create an array of linearly-spaced values. Accepts keyword arguments for
+    numpy.linspace.
+
+    Arguments:
+        a (numeric): Smallest value
+        b (numeric): Largest value
+        n (int): Number of points
+
+    Returns:
+        numpy array: Array of requested values
+
+    Notes:
+        This is a symbolic alias for np.linspace(); you can use this in
+        pipe-enabled functions.
+
+    Examples:
+        >>> import grama as gr
+        >>> from grama.data import df_stang
+        >>> DF = gr.Intention()
+        >>> (
+        >>>     df_stang
+        >>>     >> gr.tf_mutate(c=gr.linspace(0, 1, gr.n(DF.index)))
+        >>> )
+    """
+    return nplinspace(a, b, num=n, **kwargs)
+
+@make_symbolic
+def logspace(a, b, n, **kwargs):
+    r"""Logarithmically-spaced values
+
+    Create an array of logarithmically-spaced values. Accepts keyword arguments for
+    numpy.logspace.
+
+    Arguments:
+        a (numeric): Smallest value
+        b (numeric): Largest value
+        n (int): Number of points
+
+    Returns:
+        numpy array: Array of requested values
+
+    Notes:
+        This is a symbolic alias for np.logspace(); you can use this in
+        pipe-enabled functions.
+
+    Examples:
+        >>> import grama as gr
+        >>> from grama.data import df_stang
+        >>> DF = gr.Intention()
+        >>> (
+        >>>     df_stang
+        >>>     >> gr.tf_mutate(c=gr.logspace(0, 1, gr.n(DF.index)))
+        >>> )
+    """
+    return nplogspace(a, b, num=n, **kwargs)

@@ -5,3 +5,4 @@ sklearn
 statsmodels
 pyDOE
 umap-learn
+psdr

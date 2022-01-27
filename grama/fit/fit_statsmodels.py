@@ -1,11 +1,14 @@
-__all__ = ["fit_ols", "ft_ols"]
+__all__ = [
+    "fit_ols",
+    "ft_ols",
+]
 
 ## Fitting via statsmodels package
 try:
     import statsmodels.formula.api as smf
 
 except ModuleNotFoundError:
-    raise ModuleNotFoundError("module statsmodels not found")
+    pass
 
 from grama import add_pipe, Model, pipe
 from numpy import zeros
@@ -49,8 +52,18 @@ def fit_ols(df, formulae=[""], domain=None, density=None):
 
     ## Construct fits
     fits = []
-    for ind in range(n_out):
-        fits.append(smf.ols(formulae[ind], data=df).fit())
+    try:
+        for ind in range(n_out):
+            fits.append(smf.ols(formulae[ind], data=df).fit())
+
+    except NameError as e:
+        error_string = str(e)
+        raise NameError(
+            error_string +
+            "\n\nThis function requires the `statsmodels` package. " +
+            "Try running the following to install the package:\n"
+            "    pip install statsmodels"
+        )
 
     def fit_all(df_new):
         n_obs_new, _ = df_new.shape

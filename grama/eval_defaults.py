@@ -5,16 +5,22 @@ __all__ = [
     "ev_nominal",
     "eval_grad_fd",
     "ev_grad_fd",
+    "eval_sample",
+    "ev_sample",
     "eval_conservative",
     "ev_conservative",
 ]
 
 import itertools
-from grama import add_pipe, tran_outer, pipe
+from grama import add_pipe, tran_outer, custom_formatwarning
+from numbers import Integral
 from numpy import ones, eye, tile, atleast_2d
+from numpy.random import seed as set_seed
 from pandas import DataFrame, concat
 from toolz import curry
+from warnings import formatwarning, catch_warnings, simplefilter
 
+formatwarning = custom_formatwarning
 
 ## Default evaluation function
 # --------------------------------------------------
@@ -283,3 +289,84 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
 
 
 ev_conservative = add_pipe(eval_conservative)
+
+## Random sampling
+# --------------------------------------------------
+@curry
+def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
+    r"""Draw a random sample
+
+    Evaluates a given model at a given DataFrame. Generates outer product
+    with deterministic samples.
+
+    Args:
+        model (gr.Model): Model to evaluate
+        n (numeric): number of observations to draw
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
+            for nominal deterministic levels.
+        seed (int): random seed to use
+        append (bool): Append results to random values?
+        skip (bool): Skip evaluation of the functions?
+
+    Returns:
+        DataFrame: Results of evaluation or unevaluated design
+
+    Examples:
+
+        >>> import grama as gr
+        >>> from grama.models import make_test
+        >>> md = make_test()
+        >>> df = md >> gr.ev_sample(n=1e2, df_det="nom")
+        >>> df.describe()
+
+    """
+    ## Check invariants
+    if n is None:
+        raise ValueError("Must provide a valid n value.")
+
+    ## Set seed only if given
+    if seed is not None:
+        set_seed(seed)
+
+    ## Ensure sample count is int
+    if not isinstance(n, Integral):
+        print("eval_sample() is rounding n...")
+        n = int(n)
+
+    ## Draw samples
+    df_rand = model.density.sample(n=n, seed=seed)
+    ## Construct outer-product DOE
+    df_samp = model.var_outer(df_rand, df_det=df_det)
+
+    if skip:
+        ## Evaluation estimate
+        runtime_est = model.runtime(df_samp.shape[0])
+        if runtime_est > 0:
+            print(
+                "Estimated runtime for design with model ({0:1}):\n  {1:4.3} sec".format(
+                    model.name, runtime_est
+                )
+            )
+        else:
+            print("Design runtime estimates unavailable; model has no timing data.")
+
+        ## Attach metadata
+        with catch_warnings():
+            simplefilter("ignore")
+            df_samp._plot_info = {
+                "type": "sample_inputs",
+                "var": model.var_rand,
+            }
+
+        return df_samp
+
+    df_res = eval_df(model, df=df_samp, append=append)
+    ## Attach metadata
+    with catch_warnings():
+        simplefilter("ignore")
+        df_res._plot_info = {"type": "sample_outputs", "out": model.out}
+
+    return df_res
+
+
+ev_sample = add_pipe(eval_sample)
