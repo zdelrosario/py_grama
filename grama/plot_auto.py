@@ -35,7 +35,7 @@ def _sci_format(v):
     return (
         ["{0:1.1e}".format(v[0])] +
         [""] * (len(v) - 2) +
-        ["{0:1.1e}".format(v[-1])]
+        ["\n{0:1.1e}".format(v[-1])]
     )
 
 ## Function-specific plot functions
