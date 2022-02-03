@@ -43,7 +43,7 @@ setup(
         "statsmodels": ["statsmodels"],
         "pyDOE": ["pyDOE"],
         "umap": ["umap-learn"],
-        "psdr": ["psdr"],
+        # "psdr": ["psdr"],
         "dev": [
             "lolopy",
             "pymatgen==2021.2.8.1",
@@ -52,7 +52,7 @@ setup(
             "statsmodels",
             "pyDOE",
             "umap-learn",
-            "psdr",
+            # "psdr",
         ],
     }
 )
