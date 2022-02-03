@@ -362,7 +362,7 @@ class TestDensity(unittest.TestCase):
             * scipy.stats.norm(loc=0, scale=1).pdf(y)
         )
         # Computed
-        l_comp = self.density_ind.l(df)
+        l_comp = self.density_ind.d(df)
 
         self.assertTrue(all(l_true == l_comp))
 
@@ -385,7 +385,7 @@ class TestDensity(unittest.TestCase):
             * scipy.stats.norm(loc=0, scale=1).pdf(y)
         )
         # Computed
-        l_comp = self.density_gauss.l(df)
+        l_comp = self.density_gauss.d(df)
 
         self.assertTrue(np.allclose(l_true, l_comp, rtol=1e-3, atol=1e-3))
 

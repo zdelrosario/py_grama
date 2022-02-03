@@ -26,7 +26,7 @@ __all__ = [
     "logspace",
 ]
 
-from grama import make_symbolic, marg_named
+from grama import make_symbolic, marg_fit
 from numpy import array, median, zeros, ones, NaN, arange
 from numpy import argsort, argmin, argmax
 from numpy import any as npany
@@ -374,7 +374,7 @@ def qqvals(x, dist=None, marg=None):
 
     # Handle marginal input
     if (dist is not None):
-        marg = marg_named(x, dist)
+        marg = marg_fit(dist, x)
 
     # Get sorted probability values
     n = len(x)

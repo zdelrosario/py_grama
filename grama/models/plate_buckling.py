@@ -1,7 +1,7 @@
 __all__ = ["make_plate_buckle"]
 
 from grama import cp_bounds, cp_copula_gaussian, cp_vec_function, cp_marginals, \
-    marg_named, Model, df_make
+    marg_fit, Model, df_make
 from grama.data import df_stang
 from numpy import pi
 
@@ -59,8 +59,8 @@ def make_plate_buckle():
             L=(LOAD / 2, LOAD * 2),
         )
         >> cp_marginals(
-            E=marg_named(df_stang.E, "norm"),
-            mu=marg_named(df_stang.mu, "beta"),
+            E=marg_fit("norm", df_stang.E),
+            mu=marg_fit("beta", df_stang.mu),
         )
         >> cp_copula_gaussian(df_data=df_stang)
     )

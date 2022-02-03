@@ -302,7 +302,7 @@ class Copula(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def l(self, u):
+    def d(self, u):
         r"""Copula density
         """
         raise NotImplementedError
@@ -370,7 +370,7 @@ class CopulaIndependence(Copula):
 
         return DataFrame(data=random((n, len(self.var_rand))), columns=self.var_rand)
 
-    def l(self, u):
+    def d(self, u):
         """Density function
 
         Args:
@@ -516,7 +516,7 @@ class CopulaGaussian(Copula):
 
         return DataFrame(data=quantiles, columns=self.var_rand)
 
-    def l(self, u):
+    def d(self, u):
         """Copula density function
 
         Args:
@@ -628,7 +628,7 @@ class Density:
 
         return new_density
 
-    def l(self, df):
+    def d(self, df):
         r"""Evaluate PDF
 
         Evaluate the PDF of the density.
@@ -641,11 +641,11 @@ class Density:
         var = [key for key, _ in self.marginals.items()]
         df_u = self.sample2pr(df)[var]
         # Evaluate copula density
-        l_copula = self.copula.l(df_u.values)
+        l_copula = self.copula.d(df_u.values)
         # Evaluate marginal densities
         L_marginals = zeros((df.shape[0], len(var)))
         for i, v in enumerate(var):
-            L_marginals[:, i] = self.marginals[v].l(df[v])
+            L_marginals[:, i] = self.marginals[v].d(df[v])
         l_marginals = prod(L_marginals, axis=1)
 
         return l_copula * l_marginals
@@ -1052,7 +1052,7 @@ class Model:
         x = self.z2x(z)
         F = zeros(self.n_var_rand)
         for i in range(self.n_var_rand):
-            F[i] = 1 / self.density.marginals[self.var_rand[i]].l(x[i])
+            F[i] = 1 / self.density.marginals[self.var_rand[i]].d(x[i])
 
         return dot(dudz, diag(F))
 
