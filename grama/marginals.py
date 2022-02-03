@@ -258,9 +258,9 @@ class Marginal(ABC):
     def fit(self, data):
         pass
 
-    ## Likelihood function
+    ## Density function
     @abstractmethod
-    def l(self, x):
+    def d(self, x):
         pass
 
     ## Cumulative density function
@@ -312,9 +312,9 @@ class MarginalNamed(Marginal):
         param = valid_dist[self.d_name].fit(data, **kwargs)
         self.d_param = dict(zip(param_dist[dist], param))
 
-    ## Likelihood function
+    ## Density function
     @make_symbolic
-    def l(self, x):
+    def d(self, x):
         return valid_dist[self.d_name].pdf(x, **self.d_param)
 
     ## Cumulative density function
@@ -380,9 +380,9 @@ class MarginalGKDE(Marginal):
         self.kde = gaussian_kde(data)
         self._set_bracket()
 
-    ## Likelihood function
+    ## Density function
     @make_symbolic
-    def l(self, x):
+    def d(self, x):
         return self.kde.pdf(x)
 
     ## Cumulative density function

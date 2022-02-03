@@ -155,9 +155,9 @@ def tran_reweight(
 
     ## Compute weight values
     # Use base model for importance distribution
-    q = md_base.density.l(df_base)
+    q = md_base.density.d(df_base)
     # Use new model for nominal distribution
-    p = md_new.density.l(df_base)
+    p = md_new.density.d(df_base)
     # Compute likelihood ratio
     w = p / q
 

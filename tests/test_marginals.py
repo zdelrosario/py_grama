@@ -15,7 +15,7 @@ class TestMarginalTools(unittest.TestCase):
     def test_gkde(self):
         mg_gkde = gr.marg_gkde(data.df_stang.E)
 
-        l_gkde = mg_gkde.l(np.array([1, 10000, 10400, 10800, 1e6]))
+        d_gkde = mg_gkde.d(np.array([1, 10000, 10400, 10800, 1e6]))
         p_gkde = mg_gkde.p(np.array([1, 10000, 10400, 10800, 1e6]))
         q_gkde = mg_gkde.q(np.array([0.0, 0.25, 0.50, 0.75, 1.0]))
         mg_gkde.summary()
@@ -30,7 +30,7 @@ class TestMarginalTools(unittest.TestCase):
     def test_named(self):
         mg_norm = gr.marg_named(data.df_stang.E, "norm")
 
-        l_norm = mg_norm.l(np.array([10000, 10400, 10800]))
+        d_norm = mg_norm.d(np.array([10000, 10400, 10800]))
         p_norm = mg_norm.p(np.array([10000, 10400, 10800]))
         q_norm = mg_norm.q(np.array([0.25, 0.50, 0.75]))
         mg_norm.summary()
@@ -146,6 +146,6 @@ class TestMarginal(unittest.TestCase):
         self.marginal_named.summary()
 
         ## Correct values for normal distribution
-        self.assertTrue(self.marginal_named.l(0.5) == norm.pdf(0.5))
+        self.assertTrue(self.marginal_named.d(0.5) == norm.pdf(0.5))
         self.assertTrue(self.marginal_named.p(0.5) == norm.cdf(0.5))
         self.assertTrue(self.marginal_named.q(0.5) == norm.ppf(0.5))
