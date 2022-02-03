@@ -1,6 +1,6 @@
 __all__ = [
     "marg_gkde",
-    "marg_named",
+    "marg_fit",
     "marg_mom",
     "Marginal",
     "MarginalNamed",
@@ -471,8 +471,8 @@ def marg_mom(
             Only one of `kurt` and `kurt_excess` can be provided.
 
         floc (float or None): Frozen value for location parameter
-            Set floc=0 to access 2-parameter lognormal (dist="lognorm")
-            Set floc=0 to access 2-parameter Weibull (dist="weibull_min")
+            Note that for distributions such as "lognorm" or "weibull_min",
+            setting floc=0 selects the 2-parameter version of the distribution.
 
         sign (-1, 0, +1): Sign
         dict_x0 (dict): Dictionary of initial parameter guesses
@@ -626,15 +626,15 @@ def marg_mom(
     return MarginalNamed(sign=sign, d_name=dist, d_param=param)
 
 ## Fit a named scipy.stats distribution
-def marg_named(data, dist, name=True, sign=None, **kwargs):
+def marg_fit(dist, data, name=True, sign=None, **kwargs):
     r"""Fit scipy.stats continuous distirbution
 
-    Fits a named scipy.stats continuous distribution. Intended to be used to
-    define a marginal distribution from data.
+    Fits a scipy.stats continuous distribution. Intended to be used to define a
+    marginal distribution from data.
 
     Arguments:
-        data (iterable): Data for fit
         dist (str): Distribution to fit
+        data (iterable): Data for fit
         name (bool): Include distribution name?
         sign (bool): Include sign? (Optional)
 
@@ -642,6 +642,8 @@ def marg_named(data, dist, name=True, sign=None, **kwargs):
         scale (float): Initial guess for scale `scale` parameter (Optional)
 
         floc (float): Value to fix the location `loc` parameter (Optional)
+            Note that for distributions such as "lognorm" or "weibull_min",
+            setting floc=0 selects the 2-parameter version of the distribution.
         fscale (float): Value to fix the location `scale` parameter (Optional)
         f* (float): Value to fix the specified shape parameter (Optional)
             e.g. give fc to fix the `c` parameter
@@ -655,19 +657,19 @@ def marg_named(data, dist, name=True, sign=None, **kwargs):
         >>> from grama.data import df_shewhart
         >>> # Fit normal distribution
         >>> mg_normal = gr.marg_named(
-        >>>     df_shewhart.tensile_strength,
         >>>     "norm",
+        >>>     df_shewhart.tensile_strength,
         >>> )
         >>> # Fit two-parameter Weibull distribution
         >>> mg_weibull2 = gr.marg_named(
-        >>>     df_shewhart.tensile_strength,
         >>>     "weibull_min",
+        >>>     df_shewhart.tensile_strength,
         >>>     floc=0,        # 2-parameter has frozen loc == 0
         >>> )
         >>> # Fit three-parameter Weibull distribution
         >>> mg_weibull3 = gr.marg_named(
-        >>>     df_shewhart.tensile_strength,
         >>>     "weibull_min",
+        >>>     df_shewhart.tensile_strength,
         >>>     loc=0,        # 3-parameter fit tends to be unstable;
         >>>                   # an inital guess helps stabilize fit
         >>> )

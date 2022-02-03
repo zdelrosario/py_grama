@@ -27,8 +27,8 @@ class TestMarginalTools(unittest.TestCase):
         n_gkde = mg_gkde.r(n)
         self.assertTrue(len(n_gkde) == n)
 
-    def test_named(self):
-        mg_norm = gr.marg_named(data.df_stang.E, "norm")
+    def test_fit(self):
+        mg_norm = gr.marg_fit("norm", data.df_stang.E)
 
         d_norm = mg_norm.d(np.array([10000, 10400, 10800]))
         p_norm = mg_norm.p(np.array([10000, 10400, 10800]))
@@ -44,7 +44,7 @@ class TestMarginalTools(unittest.TestCase):
 
         ## Raises error when dataframe passed
         with self.assertRaises(ValueError):
-            gr.marg_named(data.df_stang, "norm")
+            gr.marg_fit("norm", data.df_stang)
         with self.assertRaises(ValueError):
             gr.marg_gkde(data.df_stang)
 
