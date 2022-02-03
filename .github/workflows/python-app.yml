@@ -24,7 +24,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install coverage nbformat nbconvert unittest-xml-reporting
-	pip install setuptools==57.5.0
+        pip install setuptools==57.5.0
         pip install -e .[dev]
 #    - name: Test notebooks
 #      run: |
