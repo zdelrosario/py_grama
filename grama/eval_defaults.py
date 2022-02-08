@@ -364,7 +364,11 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
     ## Attach metadata
     with catch_warnings():
         simplefilter("ignore")
-        df_res._plot_info = {"type": "sample_outputs", "out": model.out}
+        df_res._plot_info = {
+            "type": "sample_outputs",
+            "var": model.var,
+            "out": model.out,
+        }
 
     return df_res
 
