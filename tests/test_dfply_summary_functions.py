@@ -441,3 +441,16 @@ class TestSummaryFcn(unittest.TestCase):
 
         self.assertTrue(abs(gr.corr(df_data.x, df_data.y) - 1.0) < 1e-6)
         self.assertTrue(abs(gr.corr(df_data.x, df_data.z) + 1.0) < 1e-6)
+
+        ## Test NaN handling
+        df_nan = (
+            df_data
+            >> gr.tf_mutate(
+                x=gr.if_else(X.x == 1, gr.NaN, X.x),
+                y=gr.if_else(X.x == 4, gr.NaN, X.y),
+            )
+        )
+
+        with self.assertRaises(ValueError):
+            gr.corr(df_nan.x, df_nan.y)
+        self.assertTrue(abs(gr.corr(df_nan.x, df_nan.y, nan_drop=True) - 1.0) < 1e-6)

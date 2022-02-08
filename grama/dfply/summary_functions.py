@@ -26,7 +26,7 @@ __all__ = [
 
 from .base import make_symbolic
 from .vector import order_series_by
-from numpy import sqrt, power, nan
+from numpy import array, sqrt, power, nan, isnan
 from scipy.stats import norm, pearsonr, spearmanr, kurtosis
 from scipy.stats import skew as spskew
 
@@ -417,7 +417,7 @@ def binomial_ci(series, alpha=0.05, side="both"):
 
 
 @make_symbolic
-def corr(series1, series2, method="pearson", res="corr"):
+def corr(series1, series2, method="pearson", res="corr", nan_drop=False):
     r"""Computes a correlation coefficient
 
     Computes a correlation coefficient using either the pearson or spearman
@@ -428,15 +428,21 @@ def corr(series1, series2, method="pearson", res="corr"):
         series2 (pandas.Series): Column 2 to study
         method (str): Method to use; either "pearson" or "spearman"
         res (str): Quantities to return; either "corr" or "both"
+        na_drop (bool): Drop NaN values before computation?
 
     Returns:
         pandas.Series: correlation coefficient
 
     """
+    if nan_drop:
+        ids = (isnan(series1) | isnan(series2))
+    else:
+        ids = array([False] * len(series1))
+
     if method == "pearson":
-        r, p = pearsonr(series1, series2)
+        r, p = pearsonr(series1[~ids], series2[~ids])
     elif method == "spearman":
-        r, p = spearmanr(series1, b=series2)
+        r, p = spearmanr(series1[~ids], b=series2[~ids])
     else:
         raise ValueError("method {} not supported".format(method))
 
