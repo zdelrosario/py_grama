@@ -8,6 +8,8 @@ from context import grama as gr
 from context import data
 from context import models
 
+DF = gr.Intention()
+
 ## Test transform tools
 ##################################################
 class TestTools(unittest.TestCase):
@@ -219,6 +221,24 @@ class TestSummaries(unittest.TestCase):
         ## Check standardized form
         df_pca_scaled = df_test >> gr.tf_pca(standardize=True)
         self.assertTrue(gr.df_equal(df_pca, df_pca_scaled))
+
+    def test_iocorr(self):
+        df = (
+            gr.df_make(x=[1., 2., 3., 4.])
+            >> gr.tf_mutate(
+                y=+0.5 * DF.x,
+                z=-0.5 * DF.x,
+            )
+            >> gr.tf_iocorr(var=["x"], out=["y", "z"])
+        )
+        df_true = gr.df_make(
+            var=["x", "x"],
+            out=["y", "z"],
+            rho=[1.0, -1.0],
+        )
+
+        ## Check for correct values
+        self.assertTrue(gr.df_equal(df, df_true))
 
 
 # --------------------------------------------------
