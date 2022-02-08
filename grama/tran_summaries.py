@@ -421,7 +421,7 @@ def tran_iocorr(df, var=None, out=None, method="pearson", nan_drop=False):
                 index=[0],
             ))
             df_res = concat((df_res, df_tmp), axis=0)
-    df_res = df_res.reset_index(drop=True)
+    df_res = df_res.drop("index", axis=1).reset_index(drop=True)
 
     # Add metadata for plotting
     with catch_warnings():
