@@ -219,7 +219,7 @@ pt_scattermat = add_pipe(plot_scattermat)
 
 
 @curry
-def plot_hists(df, out=None):
+def plot_hists(df, out=None, **kwargs):
     r"""Construct histograms
 
     Create a set of histograms. Often used to visualize the results of random
