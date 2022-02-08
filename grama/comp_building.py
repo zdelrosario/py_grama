@@ -156,13 +156,15 @@ def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0)
     Examples:
 
         >>> import grama as gr
-        >>> md = gr.Model("test") >> \
-        >>>     gr.function(
-        >>>         fun=lambda df: df.assign(y=df.x0),
-        >>>         var=1,
+        >>> md = (
+        >>>     gr.Model("Test")
+        >>>     >> gr.cp_vec_function(
+        >>>         fun=lambda df: gr.df_make(y=1 + 0.5 * df.x),
+        >>>         var=["x"],
         >>>         out=["y"],
-        >>>         name="identity"
+        >>>         name="Simple linear function",
         >>>     )
+        >>> )
 
     """
     model_new = model.copy()
