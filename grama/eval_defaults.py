@@ -296,8 +296,9 @@ ev_conservative = add_pipe(eval_conservative)
 def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
     r"""Draw a random sample
 
-    Evaluates a given model at a given DataFrame. Generates outer product
-    with deterministic samples.
+    Evaluates a model with a random sample of the random model inputs. Generates outer product with deterministic samples.
+
+    For more expensive models, it can be helpful to tune n to achieve a reasonable runtime. An even more effective approach is to use skip evaluation along with tran_sp() to evaluate a small, representative sample. (See examples below.)
 
     Args:
         model (gr.Model): Model to evaluate
@@ -315,9 +316,57 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
 
         >>> import grama as gr
         >>> from grama.models import make_test
+        >>> DF = gr.Intention()
+        >>>
+        >>> # Simple random sample evaluation
         >>> md = make_test()
         >>> df = md >> gr.ev_sample(n=1e2, df_det="nom")
         >>> df.describe()
+        >>>
+        >>> ## Use autoplot to visualize results
+        >>> (
+        >>>     md
+        >>>     >> gr.ev_sample(n=1e2, df_det="nom")
+        >>>     >> gr.pt_auto()
+        >>> )
+        >>>
+        >>> ## Cantilever beam examples
+        >>> from grama.models import make_cantilever_beam
+        >>> md_beam = make_cantilever_beam()
+        >>>
+        >>> ## Use iocorr to generate input/output correlation tile plot
+        >>> (
+        >>>     md_beam
+        >>>     >> gr.ev_sample(n=1e3, df_det="nom", skip=True)
+        >>>     # Generate input/output correlation summary
+        >>>     >> gr.tf_iocorr()
+        >>>     # Visualize
+        >>>     >> gr.pt_auto()
+        >>> )
+        >>>
+        >>> ## Use support points to reduce model runtime
+        >>> (
+        >>>     md_beam
+        >>>     # Generate large input sample but don't evaluate outputs
+        >>>     >> gr.ev_sample(n=1e5, df_det="nom", skip=True)
+        >>>     # Reduce to a smaller---but representative---sample
+        >>>     >> gr.tf_sp(n=50)
+        >>>     # Evaluate the outputs
+        >>>     >> gr.tf_md(md_beam)
+        >>> )
+        >>>
+        >>> ## Estimate probabilities
+        >>> (
+        >>>     md_beam
+        >>>     # Generate large
+        >>>     >> gr.ev_sample(n=1e5, df_det="nom")
+        >>>     # Estimate probabilities of failure
+        >>>     >> gr.tf_summarize(
+        >>>         pof_stress=gr.mean(DF.g_stress <= 0),
+        >>>         pof_disp=gr.mean(DF.g_disp <= 0),
+        >>>     )
+        >>> )
+
 
     """
     ## Check invariants
