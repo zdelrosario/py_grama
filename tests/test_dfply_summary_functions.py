@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import unittest
+from scipy.stats import norm
 
 from context import grama as gr
 from context import data
@@ -454,3 +455,42 @@ class TestSummaryFcn(unittest.TestCase):
         with self.assertRaises(ValueError):
             gr.corr(df_nan.x, df_nan.y)
         self.assertTrue(abs(gr.corr(df_nan.x, df_nan.y, nan_drop=True) - 1.0) < 1e-6)
+
+class TestCIHelpers(unittest.TestCase):
+
+    def test_mean_ci(self):
+        # Basic functionality
+        y = pd.Series([-1, -1, 0, +1, +1]) # sd == 1
+        lo_true = 0 - (-norm.ppf(0.01)) * 1 / np.sqrt(5)
+        up_true = 0 + (-norm.ppf(0.01)) * 1 / np.sqrt(5)
+
+        self.assertTrue((lo_true - gr.mean_lo(y, alpha=0.01)) < 1e-6)
+        self.assertTrue((up_true - gr.mean_up(y, alpha=0.01)) < 1e-6)
+
+        # Grouped functionality
+        df = (
+            gr.df_grid(
+                y=[-1, -1, 0, +1, +1],
+                x=[0, 1],
+            )
+            >> gr.tf_mutate(y=X.y + X.x)
+            >> gr.tf_group_by(X.x)
+            >> gr.tf_summarize(
+                mean_lo=gr.mean_lo(X.y),
+                mean_up=gr.mean_up(X.y),
+            )
+        )
+
+        self.assertTrue(
+            (df[df.x==0].mean_lo.values[0] - lo_true) < 1e-6
+        )
+        self.assertTrue(
+            (df[df.x==0].mean_up.values[0] - up_true) < 1e-6
+        )
+
+        self.assertTrue(
+            (df[df.x==1].mean_lo.values[0] - (lo_true + 1)) < 1e-6
+        )
+        self.assertTrue(
+            (df[df.x==1].mean_up.values[0] - (up_true + 1)) < 1e-6
+        )
