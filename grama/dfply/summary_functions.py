@@ -1,27 +1,36 @@
 __all__ = [
+    "binomial_ci",
+    "corr",
     "mean",
-    "first",
-    "last",
-    "nth",
-    "n",
-    "n_distinct",
+    "mean_lo",
+    "mean_up",
     "IQR",
     "quant",
-    "colmin",
-    "colmax",
-    "colsum",
-    "median",
+    "pr",
+    "pr_lo",
+    "pr_up",
     "var",
     "sd",
     "skew",
     "kurt",
-    "binomial_ci",
+
+    "min",
+    "max",
+    "sum",
+    "median",
+
+    "first",
+    "last",
+
+    "n",
+    "nth",
+    "n_distinct",
+    "neff_is",
+
     "mse",
     "rmse",
     "ndme",
     "rsq",
-    "corr",
-    "neff_is",
 ]
 
 from .base import make_symbolic
