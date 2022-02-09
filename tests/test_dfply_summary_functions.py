@@ -207,47 +207,47 @@ class TestSummaryFcn(unittest.TestCase):
         test_vector = abs(t.i - df_truth.i)
         self.assertTrue(all(test_vector < 0.000000001))
 
-    def test_colmin(self):
+    def test_min(self):
         df = data.df_diamonds >> gr.tf_select(X.cut, X.x) >> gr.tf_head(5)
         # straight summarize
-        t = df >> gr.tf_summarize(m=gr.colmin(X.x))
+        t = df >> gr.tf_summarize(m=gr.min(X.x))
         df_truth = pd.DataFrame({"m": [3.89]})
         self.assertTrue(t.equals(df_truth))
         # grouped summarize
-        t = df >> gr.tf_group_by(X.cut) >> gr.tf_summarize(m=gr.colmin(X.x))
+        t = df >> gr.tf_group_by(X.cut) >> gr.tf_summarize(m=gr.min(X.x))
         df_truth = pd.DataFrame(
             {"cut": ["Good", "Ideal", "Premium"], "m": [4.05, 3.95, 3.89]}
         )
         self.assertTrue(t.equals(df_truth))
         # straight mutate
-        t = df >> gr.tf_mutate(m=gr.colmin(X.x))
+        t = df >> gr.tf_mutate(m=gr.min(X.x))
         df_truth = df.copy()
         df_truth["m"] = 3.89
         self.assertTrue(t.equals(df_truth))
         # grouped mutate
-        t = df >> gr.tf_group_by(X.cut) >> gr.tf_mutate(m=gr.colmin(X.x))
+        t = df >> gr.tf_group_by(X.cut) >> gr.tf_mutate(m=gr.min(X.x))
         df_truth["m"] = pd.Series([3.95, 3.89, 4.05, 3.89, 4.05])
         self.assertTrue(t.sort_index().equals(df_truth))
 
-    def test_colmax(self):
+    def test_max(self):
         df = data.df_diamonds >> gr.tf_select(X.cut, X.x) >> gr.tf_head(5)
         # straight summarize
-        t = df >> gr.tf_summarize(m=gr.colmax(X.x))
+        t = df >> gr.tf_summarize(m=gr.max(X.x))
         df_truth = pd.DataFrame({"m": [4.34]})
         self.assertTrue(t.equals(df_truth))
         # grouped summarize
-        t = df >> gr.tf_group_by(X.cut) >> gr.tf_summarize(m=gr.colmax(X.x))
+        t = df >> gr.tf_group_by(X.cut) >> gr.tf_summarize(m=gr.max(X.x))
         df_truth = pd.DataFrame(
             {"cut": ["Good", "Ideal", "Premium"], "m": [4.34, 3.95, 4.20]}
         )
         self.assertTrue(t.equals(df_truth))
         # straight mutate
-        t = df >> gr.tf_mutate(m=gr.colmax(X.x))
+        t = df >> gr.tf_mutate(m=gr.max(X.x))
         df_truth = df.copy()
         df_truth["m"] = 4.34
         self.assertTrue(t.equals(df_truth))
         # grouped mutate
-        t = df >> gr.tf_group_by(X.cut) >> gr.tf_mutate(m=gr.colmax(X.x))
+        t = df >> gr.tf_group_by(X.cut) >> gr.tf_mutate(m=gr.max(X.x))
         df_truth["m"] = pd.Series([3.95, 4.20, 4.34, 4.20, 4.34])
         self.assertTrue(t.sort_index().equals(df_truth))
 
