@@ -66,6 +66,18 @@ def mean(series):
 def mean_lo(series, alpha=0.01):
     """Return a confidence interval (lower bound) for the mean
 
+    Uses a central limit approximation for a lower confidence bound of an estimated mean. That is:
+
+        m - q(alpha) * s / sqrt(n)
+
+    where
+
+        m = sample mean
+        s = sample standard deviation
+        n = sample size
+        q(alpha) = alpha-level lower-quantile of standard normal
+                 = (-norm.ppf(alpha))
+
     Args:
         series (pandas.Series): column to summarize
 
@@ -82,6 +94,18 @@ def mean_lo(series, alpha=0.01):
 @make_symbolic
 def mean_up(series, alpha=0.01):
     """Return a confidence interval (upper bound) for the mean
+
+    Uses a central limit approximation for a upper confidence bound of an estimated mean. That is:
+
+        m + q(alpha) * s / sqrt(n)
+
+    where
+
+        m = sample mean
+        s = sample standard deviation
+        n = sample size
+        q(alpha) = alpha-level lower-quantile of standard normal
+                 = (-norm.ppf(alpha))
 
     Args:
         series (pandas.Series): column to summarize
@@ -467,6 +491,8 @@ def pr(series):
 
     Estimate a probability from a random sample. Provided series must be boolean, with 1 corresponding to the event of interest.
 
+    Use logical statements together with column values to construct a boolean indicator for the event you're interested in. Remember that you can chain multiple statements with logical and `&` and or `|` operators. See the examples below for more details.
+
     Args:
         series (pandas.Series): Column to summarize; must be boolean or 0/1.
 
@@ -486,8 +512,11 @@ def pr(series):
         >>>     >> gr.tf_summarize(
         >>>         pof_stress=gr.pr(DF.g_stress <= 0),
         >>>         pof_disp=gr.pr(DF.g_disp <= 0),
+        >>>         pof_joint=gr.pr( (DF.g_stress <= 0) & (DF.g_disp) ),
+        >>>         pof_either=gr.pr( (DF.g_stress <= 0) | (DF.g_disp) ),
         >>>     )
         >>> )
+
     """
     return series.mean()
 
@@ -499,6 +528,8 @@ def pr_lo(series, alpha=0.01):
     Estimate the lower side of a confidence interval for a probability from a random sample. Provided series must be boolean, with 1 corresponding to the event of interest.
 
     Uses Wilson interval method.
+
+    Use logical statements together with column values to construct a boolean indicator for the event you're interested in. Remember that you can chain multiple statements with logical and `&` and or `|` operators. See the documentation for `gr.pr()` for more details and examples.
 
     Args:
         series (pandas.Series): Column to summarize; must be boolean or 0/1.
@@ -539,12 +570,34 @@ def pr_up(series, alpha=0.01):
 
     Uses Wilson interval method.
 
+    Use logical statements together with column values to construct a boolean indicator for the event you're interested in. Remember that you can chain multiple statements with logical and `&` and or `|` operators. See the documentation for `gr.pr()` for more details and examples.
+
     Args:
         series (pandas.Series): Column to summarize; must be boolean or 0/1.
         alpha (float): Confidence level; value in (0, 1)
 
     Returns:
         float: Upper confidence interval
+
+    Examples:
+        >>> import grama as gr
+        >>> DF = gr.Intention()
+        >>> ## Cantilever beam examples
+        >>> from grama.models import make_cantilever_beam
+        >>> md_beam = make_cantilever_beam()
+        >>>
+        >>> ## Estimate probabilities
+        >>> (
+        >>>     md_beam
+        >>>     # Generate large
+        >>>     >> gr.ev_sample(n=1e5, df_det="nom")
+        >>>     # Estimate probabilities with a confidence interval
+        >>>     >> gr.tf_summarize(
+        >>>         pof_lo=gr.pr_lo(DF.g_stress <= 0),
+        >>>         pof=gr.pr(DF.g_stress <= 0),
+        >>>         pof_up=gr.pr_up(DF.g_stress <= 0),
+        >>>     )
+        >>> )
     """
     up = binomial_ci(series, alpha=alpha, side="up")
     return up
