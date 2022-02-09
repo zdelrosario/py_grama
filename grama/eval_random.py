@@ -36,12 +36,11 @@ def eval_sinews(
 ):
     r"""Sweep study
 
-    Perform coordinate sweeps over each model random variable ("sinew" design).
-    Use random starting points drawn from the joint density.
+    Perform coordinate sweeps over each model random variable ("sinew" design). Use random starting points drawn from the joint density. Optionally sweep the deterministic variables.
 
-    Use gr.plot_auto() to construct a quick visualization of the output
-    dataframe. Use `skip` version to visualize the design, and non-skipped
-    version to visualize the results.
+    For more expensive models, it can be helpful to tune n_density and n_sweeps to achieve a reasonable runtime.
+
+    Use gr.plot_auto() to construct a quick visualization of the output dataframe. Use `skip` version to visualize the design, and non-skipped version to visualize the results.
 
     Args:
         model (gr.Model): Model to evaluate
