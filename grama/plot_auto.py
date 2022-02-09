@@ -488,6 +488,7 @@ def plot_sinew_outputs(
         )
         + guides(color=None)
         + theme_minimal()
+        + theme(strip_text_y=element_text(angle=0))
         + labs(
             x="Input Value",
             y="Output Value",
