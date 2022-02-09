@@ -248,7 +248,7 @@ def quant(series, p=None):
 
 
 @make_symbolic
-def colmin(series):
+def min(series):
     """
     Returns the minimum value of a series.
 
@@ -261,7 +261,7 @@ def colmin(series):
 
 
 @make_symbolic
-def colmax(series):
+def max(series):
     """
     Returns the maximum value of a series.
 
@@ -321,7 +321,7 @@ def sd(series):
 
 
 @make_symbolic
-def colsum(series):
+def sum(series):
     """
     Returns the sum of values in a series.
 
@@ -578,10 +578,10 @@ def corr(series1, series2, method="pearson", res="corr", nan_drop=False):
     else:
         raise ValueError("res {} not supported".format(res))
 
+
 # ------------------------------------------------------------------------------
 # Effective Sample Size helpers
 # ------------------------------------------------------------------------------
-
 @make_symbolic
 def neff_is(series):
     """Importance sampling n_eff
