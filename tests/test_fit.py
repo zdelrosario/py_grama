@@ -161,8 +161,8 @@ class TestFits(unittest.TestCase):
 
         ## Check correctness
         # Match clusters by min(x)
-        id_true = (self.df_cluster >> gr.tf_filter(X.x == gr.colmin(X.x))).c[0]
-        id_res = (df_res >> gr.tf_filter(X.x == gr.colmin(X.x))).cluster_id[0]
+        id_true = (self.df_cluster >> gr.tf_filter(X.x == gr.min(X.x))).c[0]
+        id_res = (df_res >> gr.tf_filter(X.x == gr.min(X.x))).cluster_id[0]
 
         df_res1 = (
             self.df_cluster >> gr.tf_filter(X.c == id_true) >> gr.tf_select(X.x, X.y)
