@@ -494,3 +494,18 @@ class TestCIHelpers(unittest.TestCase):
         self.assertTrue(
             (df[df.x==1].mean_up.values[0] - (up_true + 1)) < 1e-6
         )
+
+
+    def test_pr_ci(self):
+        # Basic functionality
+        t = pd.Series([1, 1, 1])
+        f = pd.Series([0, 0, 0])
+
+        # Wilson intervals respect 0, 1 bounds
+        self.assertTrue(gr.pr_lo(f) > -1e-6)
+        self.assertTrue(gr.pr_up(t) < 1 + 1e-6)
+        # Correct ordering
+        self.assertTrue(gr.pr_lo(t) <= gr.pr(t))
+        self.assertTrue(gr.pr(t) <= gr.pr_up(t))
+        self.assertTrue(gr.pr_lo(f) <= gr.pr(f))
+        self.assertTrue(gr.pr(f) <= gr.pr_up(f))
