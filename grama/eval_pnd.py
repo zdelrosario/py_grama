@@ -5,6 +5,7 @@ all = [
     "make_proposal_sigma",
     "rprop",
     "dprop",
+    "approx_pnd"
 ]
 
 from grama import add_pipe, Model, tf_md
