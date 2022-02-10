@@ -1,6 +1,8 @@
 __all__ = [
     "plot_contour",
     "pt_contour",
+    "plot_corrtile",
+    "pt_corrtile",
     "plot_scattermat",
     "pt_scattermat",
     "plot_hists",
@@ -20,8 +22,8 @@ from pandas import melt
 
 from plotnine import aes, annotate, ggplot, facet_grid, facet_wrap, labs, element_text, guides
 from plotnine import theme, theme_void, theme_minimal
-from plotnine import scale_x_continuous, scale_y_continuous
-from plotnine import geom_point, geom_density, geom_histogram, geom_line
+from plotnine import scale_x_continuous, scale_y_continuous, scale_fill_gradient2
+from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_tile
 from plotnine import geom_segment, geom_blank
 from matplotlib import gridspec
 
@@ -91,6 +93,21 @@ def plot_contour(df, var=None, out="out", level="level", aux=False):
 
 
 pt_contour = add_pipe(plot_contour)
+
+## tran_iocorr
+# --------------------------------------------------
+@curry
+def plot_corrtile(df, var=None, out=None, corr=None):
+    r"""
+    """
+    return (
+        df
+        >> ggplot(aes(var, out))
+        + geom_tile(aes(fill=corr))
+        + scale_fill_gradient2(name="Corr", midpoint=0)
+    )
+
+pt_corrtile = add_pipe(plot_corrtile)
 
 ## Sample
 # --------------------------------------------------
@@ -219,7 +236,7 @@ pt_scattermat = add_pipe(plot_scattermat)
 
 
 @curry
-def plot_hists(df, out=None):
+def plot_hists(df, out=None, **kwargs):
     r"""Construct histograms
 
     Create a set of histograms. Often used to visualize the results of random
@@ -471,6 +488,7 @@ def plot_sinew_outputs(
         )
         + guides(color=None)
         + theme_minimal()
+        + theme(strip_text_y=element_text(angle=0))
         + labs(
             x="Input Value",
             y="Output Value",
@@ -488,6 +506,7 @@ plot_list = {
     "sinew_outputs": plot_sinew_outputs,
     "sample_inputs": plot_scattermat,
     "sample_outputs": plot_hists,
+    "iocorr": plot_corrtile,
 }
 
 

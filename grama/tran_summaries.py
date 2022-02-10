@@ -9,18 +9,20 @@ __all__ = [
     "tf_pca",
     "tran_sobol",
     "tf_sobol",
+    "tran_iocorr",
+    "tf_iocorr",
 ]
 
 import re
 import itertools
-import warnings
-from grama import add_pipe, pipe, custom_formatwarning
+from grama import add_pipe, pipe, custom_formatwarning, corr
 from numpy import round, dot
 from numpy.linalg import svd
 from pandas import concat, DataFrame
 from toolz import curry
+from warnings import catch_warnings, simplefilter, warn
 
-warnings.formatwarning = custom_formatwarning
+formatwarning = custom_formatwarning
 
 
 ## Compute Sobol' indices
@@ -324,7 +326,7 @@ def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
     ## Check column overlap
     diff = set(df_weights.columns).difference(set(df.columns))
     if len(diff) > 0:
-        warnings.warn("ignoring df_weights columns {}".format(diff), UserWarning)
+        warn("ignoring df_weights columns {}".format(diff), UserWarning)
     comm = list(set(df_weights.columns).difference(diff))
 
     ## Compute inner products
@@ -374,3 +376,64 @@ def tran_describe(df):
 
 
 tf_describe = add_pipe(tran_describe)
+
+## Input/Output Correlations
+# --------------------------------------------------
+@curry
+def tran_iocorr(df, var=None, out=None, method="pearson", nan_drop=False):
+    r"""Compute input-output correlations
+
+    Compute all correlations between input and output quantities.
+
+    Args:
+        df (DataFrame): Data to summarize
+        var (iterable of strings): Column names for inputs
+        out (iterable of strings): Column names for outputs
+        method (str): Method for correlation; one of "pearson" or "spearman"
+
+    Returns:
+        DataFrame: Correlations between each input and output
+    """
+    # Check for metadata
+    if var is None:
+        try:
+            var = df._plot_info["var"]
+        except AttributeError:
+            raise ValueError(
+                "Must provide var argument, or DataFrame with metadata."
+            )
+    if out is None:
+        try:
+            out = df._plot_info["out"]
+        except AttributeError:
+            raise ValueError(
+                "Must provide out argument, or DataFrame with metadata."
+            )
+
+    # Compute
+    df_res = DataFrame()
+    for v in var:
+        for o in out:
+            df_tmp = DataFrame(dict(
+                rho=corr(df[v], df[o], method=method, nan_drop=nan_drop),
+                var=v,
+                out=o,
+                index=[0],
+            ))
+            df_res = concat((df_res, df_tmp), axis=0)
+    df_res = df_res.drop("index", axis=1).reset_index(drop=True)
+
+    # Add metadata for plotting
+    with catch_warnings():
+        simplefilter("ignore")
+        df_res._plot_info = {
+            "type": "iocorr",
+            "var": "var",
+            "out": "out",
+            "corr": "rho",
+        }
+
+    return df_res
+
+
+tf_iocorr = add_pipe(tran_iocorr)

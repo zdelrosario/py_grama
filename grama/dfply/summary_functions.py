@@ -1,32 +1,41 @@
 __all__ = [
+    "binomial_ci",
+    "corr",
     "mean",
-    "first",
-    "last",
-    "nth",
-    "n",
-    "n_distinct",
+    "mean_lo",
+    "mean_up",
     "IQR",
     "quant",
-    "colmin",
-    "colmax",
-    "colsum",
-    "median",
+    "pr",
+    "pr_lo",
+    "pr_up",
     "var",
     "sd",
     "skew",
     "kurt",
-    "binomial_ci",
+
+    "min",
+    "max",
+    "sum",
+    "median",
+
+    "first",
+    "last",
+
+    "n",
+    "nth",
+    "n_distinct",
+    "neff_is",
+
     "mse",
     "rmse",
     "ndme",
     "rsq",
-    "corr",
-    "neff_is",
 ]
 
 from .base import make_symbolic
 from .vector import order_series_by
-from numpy import sqrt, power, nan
+from numpy import array, sqrt, power, nan, isnan
 from scipy.stats import norm, pearsonr, spearmanr, kurtosis
 from scipy.stats import skew as spskew
 
@@ -50,6 +59,65 @@ def mean(series):
     # else:
     #     return np.nan
     return series.mean()
+
+
+# Mean CI helpers
+@make_symbolic
+def mean_lo(series, alpha=0.01):
+    """Return a confidence interval (lower bound) for the mean
+
+    Uses a central limit approximation for a lower confidence bound of an estimated mean. That is:
+
+        m - q(alpha) * s / sqrt(n)
+
+    where
+
+        m = sample mean
+        s = sample standard deviation
+        n = sample size
+        q(alpha) = alpha-level lower-quantile of standard normal
+                 = (-norm.ppf(alpha))
+
+    Args:
+        series (pandas.Series): column to summarize
+
+    Returns:
+        float: Lower confidence interval for the mean
+    """
+    m = mean(series)
+    s = sd(series)
+    n_sample = len(series)
+
+    return m - (-norm.ppf(alpha)) * s / sqrt(n_sample)
+
+
+@make_symbolic
+def mean_up(series, alpha=0.01):
+    """Return a confidence interval (upper bound) for the mean
+
+    Uses a central limit approximation for a upper confidence bound of an estimated mean. That is:
+
+        m + q(alpha) * s / sqrt(n)
+
+    where
+
+        m = sample mean
+        s = sample standard deviation
+        n = sample size
+        q(alpha) = alpha-level lower-quantile of standard normal
+                 = (-norm.ppf(alpha))
+
+    Args:
+        series (pandas.Series): column to summarize
+
+    Returns:
+        float: Upper confidence interval for the mean
+    """
+    m = mean(series)
+    s = sd(series)
+    n_sample = len(series)
+
+    return m + (-norm.ppf(alpha)) * s / sqrt(n_sample)
 
 
 @make_symbolic
@@ -213,7 +281,7 @@ def quant(series, p=None):
 
 
 @make_symbolic
-def colmin(series):
+def min(series):
     """
     Returns the minimum value of a series.
 
@@ -226,7 +294,7 @@ def colmin(series):
 
 
 @make_symbolic
-def colmax(series):
+def max(series):
     """
     Returns the maximum value of a series.
 
@@ -286,7 +354,7 @@ def sd(series):
 
 
 @make_symbolic
-def colsum(series):
+def sum(series):
     """
     Returns the sum of values in a series.
 
@@ -415,9 +483,128 @@ def binomial_ci(series, alpha=0.05, side="both"):
     else:
         raise ValueError("side value {} not recognized".format(side))
 
+# Probability helpers
+# --------------------------------------------------
+@make_symbolic
+def pr(series):
+    """Estimate a probability
+
+    Estimate a probability from a random sample. Provided series must be boolean, with 1 corresponding to the event of interest.
+
+    Use logical statements together with column values to construct a boolean indicator for the event you're interested in. Remember that you can chain multiple statements with logical and `&` and or `|` operators. See the examples below for more details.
+
+    Args:
+        series (pandas.Series): Column to summarize; must be boolean or 0/1.
+
+    Examples:
+        >>> import grama as gr
+        >>> DF = gr.Intention()
+        >>> ## Cantilever beam examples
+        >>> from grama.models import make_cantilever_beam
+        >>> md_beam = make_cantilever_beam()
+        >>>
+        >>> ## Estimate probabilities
+        >>> (
+        >>>     md_beam
+        >>>     # Generate large
+        >>>     >> gr.ev_sample(n=1e5, df_det="nom")
+        >>>     # Estimate probabilities of failure
+        >>>     >> gr.tf_summarize(
+        >>>         pof_stress=gr.pr(DF.g_stress <= 0),
+        >>>         pof_disp=gr.pr(DF.g_disp <= 0),
+        >>>         pof_joint=gr.pr( (DF.g_stress <= 0) & (DF.g_disp) ),
+        >>>         pof_either=gr.pr( (DF.g_stress <= 0) | (DF.g_disp) ),
+        >>>     )
+        >>> )
+
+    """
+    return series.mean()
+
 
 @make_symbolic
-def corr(series1, series2, method="pearson", res="corr"):
+def pr_lo(series, alpha=0.01):
+    r"""Estimate a confidence interval for a probability
+
+    Estimate the lower side of a confidence interval for a probability from a random sample. Provided series must be boolean, with 1 corresponding to the event of interest.
+
+    Uses Wilson interval method.
+
+    Use logical statements together with column values to construct a boolean indicator for the event you're interested in. Remember that you can chain multiple statements with logical and `&` and or `|` operators. See the documentation for `gr.pr()` for more details and examples.
+
+    Args:
+        series (pandas.Series): Column to summarize; must be boolean or 0/1.
+        alpha (float): Confidence level; value in (0, 1)
+
+    Returns:
+        float: Lower confidence interval
+
+    Examples:
+        >>> import grama as gr
+        >>> DF = gr.Intention()
+        >>> ## Cantilever beam examples
+        >>> from grama.models import make_cantilever_beam
+        >>> md_beam = make_cantilever_beam()
+        >>>
+        >>> ## Estimate probabilities
+        >>> (
+        >>>     md_beam
+        >>>     # Generate large
+        >>>     >> gr.ev_sample(n=1e5, df_det="nom")
+        >>>     # Estimate probabilities with a confidence interval
+        >>>     >> gr.tf_summarize(
+        >>>         pof_lo=gr.pr_lo(DF.g_stress <= 0),
+        >>>         pof=gr.pr(DF.g_stress <= 0),
+        >>>         pof_up=gr.pr_up(DF.g_stress <= 0),
+        >>>     )
+        >>> )
+    """
+    up = binomial_ci(series, alpha=alpha, side="lo")
+    return up
+
+
+@make_symbolic
+def pr_up(series, alpha=0.01):
+    r"""
+
+    Estimate the upper side of a confidence interval for a probability from a random sample. Provided series must be boolean, with 1 corresponding to the event of interest.
+
+    Uses Wilson interval method.
+
+    Use logical statements together with column values to construct a boolean indicator for the event you're interested in. Remember that you can chain multiple statements with logical and `&` and or `|` operators. See the documentation for `gr.pr()` for more details and examples.
+
+    Args:
+        series (pandas.Series): Column to summarize; must be boolean or 0/1.
+        alpha (float): Confidence level; value in (0, 1)
+
+    Returns:
+        float: Upper confidence interval
+
+    Examples:
+        >>> import grama as gr
+        >>> DF = gr.Intention()
+        >>> ## Cantilever beam examples
+        >>> from grama.models import make_cantilever_beam
+        >>> md_beam = make_cantilever_beam()
+        >>>
+        >>> ## Estimate probabilities
+        >>> (
+        >>>     md_beam
+        >>>     # Generate large
+        >>>     >> gr.ev_sample(n=1e5, df_det="nom")
+        >>>     # Estimate probabilities with a confidence interval
+        >>>     >> gr.tf_summarize(
+        >>>         pof_lo=gr.pr_lo(DF.g_stress <= 0),
+        >>>         pof=gr.pr(DF.g_stress <= 0),
+        >>>         pof_up=gr.pr_up(DF.g_stress <= 0),
+        >>>     )
+        >>> )
+    """
+    up = binomial_ci(series, alpha=alpha, side="up")
+    return up
+
+
+@make_symbolic
+def corr(series1, series2, method="pearson", res="corr", nan_drop=False):
     r"""Computes a correlation coefficient
 
     Computes a correlation coefficient using either the pearson or spearman
@@ -428,15 +615,21 @@ def corr(series1, series2, method="pearson", res="corr"):
         series2 (pandas.Series): Column 2 to study
         method (str): Method to use; either "pearson" or "spearman"
         res (str): Quantities to return; either "corr" or "both"
+        na_drop (bool): Drop NaN values before computation?
 
     Returns:
         pandas.Series: correlation coefficient
 
     """
+    if nan_drop:
+        ids = (isnan(series1) | isnan(series2))
+    else:
+        ids = array([False] * len(series1))
+
     if method == "pearson":
-        r, p = pearsonr(series1, series2)
+        r, p = pearsonr(series1[~ids], series2[~ids])
     elif method == "spearman":
-        r, p = spearmanr(series1, b=series2)
+        r, p = spearmanr(series1[~ids], b=series2[~ids])
     else:
         raise ValueError("method {} not supported".format(method))
 
@@ -447,10 +640,10 @@ def corr(series1, series2, method="pearson", res="corr"):
     else:
         raise ValueError("res {} not supported".format(res))
 
+
 # ------------------------------------------------------------------------------
 # Effective Sample Size helpers
 # ------------------------------------------------------------------------------
-
 @make_symbolic
 def neff_is(series):
     """Importance sampling n_eff

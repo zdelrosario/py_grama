@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import unittest
+from scipy.stats import norm
 
 from context import grama as gr
 from context import data
@@ -207,47 +208,47 @@ class TestSummaryFcn(unittest.TestCase):
         test_vector = abs(t.i - df_truth.i)
         self.assertTrue(all(test_vector < 0.000000001))
 
-    def test_colmin(self):
+    def test_min(self):
         df = data.df_diamonds >> gr.tf_select(X.cut, X.x) >> gr.tf_head(5)
         # straight summarize
-        t = df >> gr.tf_summarize(m=gr.colmin(X.x))
+        t = df >> gr.tf_summarize(m=gr.min(X.x))
         df_truth = pd.DataFrame({"m": [3.89]})
         self.assertTrue(t.equals(df_truth))
         # grouped summarize
-        t = df >> gr.tf_group_by(X.cut) >> gr.tf_summarize(m=gr.colmin(X.x))
+        t = df >> gr.tf_group_by(X.cut) >> gr.tf_summarize(m=gr.min(X.x))
         df_truth = pd.DataFrame(
             {"cut": ["Good", "Ideal", "Premium"], "m": [4.05, 3.95, 3.89]}
         )
         self.assertTrue(t.equals(df_truth))
         # straight mutate
-        t = df >> gr.tf_mutate(m=gr.colmin(X.x))
+        t = df >> gr.tf_mutate(m=gr.min(X.x))
         df_truth = df.copy()
         df_truth["m"] = 3.89
         self.assertTrue(t.equals(df_truth))
         # grouped mutate
-        t = df >> gr.tf_group_by(X.cut) >> gr.tf_mutate(m=gr.colmin(X.x))
+        t = df >> gr.tf_group_by(X.cut) >> gr.tf_mutate(m=gr.min(X.x))
         df_truth["m"] = pd.Series([3.95, 3.89, 4.05, 3.89, 4.05])
         self.assertTrue(t.sort_index().equals(df_truth))
 
-    def test_colmax(self):
+    def test_max(self):
         df = data.df_diamonds >> gr.tf_select(X.cut, X.x) >> gr.tf_head(5)
         # straight summarize
-        t = df >> gr.tf_summarize(m=gr.colmax(X.x))
+        t = df >> gr.tf_summarize(m=gr.max(X.x))
         df_truth = pd.DataFrame({"m": [4.34]})
         self.assertTrue(t.equals(df_truth))
         # grouped summarize
-        t = df >> gr.tf_group_by(X.cut) >> gr.tf_summarize(m=gr.colmax(X.x))
+        t = df >> gr.tf_group_by(X.cut) >> gr.tf_summarize(m=gr.max(X.x))
         df_truth = pd.DataFrame(
             {"cut": ["Good", "Ideal", "Premium"], "m": [4.34, 3.95, 4.20]}
         )
         self.assertTrue(t.equals(df_truth))
         # straight mutate
-        t = df >> gr.tf_mutate(m=gr.colmax(X.x))
+        t = df >> gr.tf_mutate(m=gr.max(X.x))
         df_truth = df.copy()
         df_truth["m"] = 4.34
         self.assertTrue(t.equals(df_truth))
         # grouped mutate
-        t = df >> gr.tf_group_by(X.cut) >> gr.tf_mutate(m=gr.colmax(X.x))
+        t = df >> gr.tf_group_by(X.cut) >> gr.tf_mutate(m=gr.max(X.x))
         df_truth["m"] = pd.Series([3.95, 4.20, 4.34, 4.20, 4.34])
         self.assertTrue(t.sort_index().equals(df_truth))
 
@@ -441,3 +442,70 @@ class TestSummaryFcn(unittest.TestCase):
 
         self.assertTrue(abs(gr.corr(df_data.x, df_data.y) - 1.0) < 1e-6)
         self.assertTrue(abs(gr.corr(df_data.x, df_data.z) + 1.0) < 1e-6)
+
+        ## Test NaN handling
+        df_nan = (
+            df_data
+            >> gr.tf_mutate(
+                x=gr.if_else(X.x == 1, gr.NaN, X.x),
+                y=gr.if_else(X.x == 4, gr.NaN, X.y),
+            )
+        )
+
+        with self.assertRaises(ValueError):
+            gr.corr(df_nan.x, df_nan.y)
+        self.assertTrue(abs(gr.corr(df_nan.x, df_nan.y, nan_drop=True) - 1.0) < 1e-6)
+
+class TestCIHelpers(unittest.TestCase):
+
+    def test_mean_ci(self):
+        # Basic functionality
+        y = pd.Series([-1, -1, 0, +1, +1]) # sd == 1
+        lo_true = 0 - (-norm.ppf(0.01)) * 1 / np.sqrt(5)
+        up_true = 0 + (-norm.ppf(0.01)) * 1 / np.sqrt(5)
+
+        self.assertTrue((lo_true - gr.mean_lo(y, alpha=0.01)) < 1e-6)
+        self.assertTrue((up_true - gr.mean_up(y, alpha=0.01)) < 1e-6)
+
+        # Grouped functionality
+        df = (
+            gr.df_grid(
+                y=[-1, -1, 0, +1, +1],
+                x=[0, 1],
+            )
+            >> gr.tf_mutate(y=X.y + X.x)
+            >> gr.tf_group_by(X.x)
+            >> gr.tf_summarize(
+                mean_lo=gr.mean_lo(X.y),
+                mean_up=gr.mean_up(X.y),
+            )
+        )
+
+        self.assertTrue(
+            (df[df.x==0].mean_lo.values[0] - lo_true) < 1e-6
+        )
+        self.assertTrue(
+            (df[df.x==0].mean_up.values[0] - up_true) < 1e-6
+        )
+
+        self.assertTrue(
+            (df[df.x==1].mean_lo.values[0] - (lo_true + 1)) < 1e-6
+        )
+        self.assertTrue(
+            (df[df.x==1].mean_up.values[0] - (up_true + 1)) < 1e-6
+        )
+
+
+    def test_pr_ci(self):
+        # Basic functionality
+        t = pd.Series([1, 1, 1])
+        f = pd.Series([0, 0, 0])
+
+        # Wilson intervals respect 0, 1 bounds
+        self.assertTrue(gr.pr_lo(f) > -1e-6)
+        self.assertTrue(gr.pr_up(t) < 1 + 1e-6)
+        # Correct ordering
+        self.assertTrue(gr.pr_lo(t) <= gr.pr(t))
+        self.assertTrue(gr.pr(t) <= gr.pr_up(t))
+        self.assertTrue(gr.pr_lo(f) <= gr.pr(f))
+        self.assertTrue(gr.pr(f) <= gr.pr_up(f))
