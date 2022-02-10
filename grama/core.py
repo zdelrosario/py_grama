@@ -761,7 +761,8 @@ class Density:
                 + "Present model copula must be defined for sampling.\n"
                 + "Use CopulaIndependence only when inputs can be guaranteed\n"
                 + "independent. See the Documentation chapter on Random\n"
-                + "Variable Modeling for more information."
+                + "Variable Modeling for more information.\n"
+                + "https://py-grama.readthedocs.io/en/latest/source/rv_modeling.html"
             )
         return self.pr2sample(df_pr)
 
