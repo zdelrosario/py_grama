@@ -9,7 +9,7 @@ all = [
 
 from grama import add_pipe, Model, tf_md
 
-from numpy import array, diag, dot, ones, mean, sqrt, zeros
+from numpy import array, diag, dot, ones, mean, zeros
 from numpy import any as npany
 from numpy import all as npall
 from numpy import min as npmin
@@ -91,10 +91,6 @@ def eval_pnd(model, df_train, df_test, sign, n=int(1e4), seed=None):
 
     if not set(model.var).issubset(set(df_test.columns)):
         raise ValueError("model.var must be subset of df_test.columns")
-
-
-    ### IF they are already numpy arrays for a quick use should their be a bypass
-    ### of sorts?
 
 
     ## Compute predictions and predicted uncertainties
@@ -214,7 +210,7 @@ def make_proposal_sigma(X, idx_pareto, X_cov):
     ## Find largest predictive covariance component to avoid dangerously light tails
     sig_min = npmax(X_cov)
     ## Apply heuristic based on Owen "Monte Carlo", Exercise 9.7
-    sig_min = sqrt(5/4) * sig_min
+    sig_min = ((5/4)**1/2) * sig_min
 
     ## Floor the variances
     sig = floor_sig(sig, sig_min=sig_min)
