@@ -71,7 +71,11 @@ class TestEvalPND(unittest.TestCase):
                 seed = 101
             )
         )
-        print(pr_scores)
+
+        ## What is the value of
+        # self.assertTrue(np.abs(0.75 - pr_scores[0]) < 0.05)
+        #
+        # print(pr_scores)
 
 
 class TestUtilities(unittest.TestCase):
