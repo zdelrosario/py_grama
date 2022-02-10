@@ -81,7 +81,7 @@ def eval_pnd(model, df_train, df_test, sign, n=int(1e4), seed=None):
     #     raise TypeError('sign must be a Dictionary')
 
     # Check content
-    if len(model.out) < 2:
+    if len(model.out)/2 < 2:
         raise ValueError('Given Model needs multiple outputs')
 
     if len(model.functions) == 0:
@@ -106,6 +106,7 @@ def eval_pnd(model, df_train, df_test, sign, n=int(1e4), seed=None):
     vars = df_train.columns.values
     input = model.var
     outputs = [value for value in vars if value not in input]
+    length = int(len(model.out) / 2)
 
     for i, value in enumerate(model.out):
         if "mean" in value:
@@ -119,7 +120,7 @@ def eval_pnd(model, df_train, df_test, sign, n=int(1e4), seed=None):
     X_train = df_train[outputs].values  # Training
 
     ### Create covariance matrices
-    X_cov = zeros((X_sig.shape[0], 2, 2))
+    X_cov = zeros((X_sig.shape[0], length, length))
     for i in range(X_sig.shape[0]):
         X_cov[i, 0, 0] = X_sig[i, 0]
         X_cov[i, 1, 1] = X_sig[i, 1]
