@@ -28,7 +28,6 @@ grama.fit.fit\_statsmodels module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

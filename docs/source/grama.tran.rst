@@ -28,7 +28,6 @@ grama.tran.tran\_umap module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

@@ -12,7 +12,6 @@ grama.data.datasets module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

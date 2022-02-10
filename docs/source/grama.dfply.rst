@@ -12,6 +12,14 @@ grama.dfply.base module
    :undoc-members:
    :show-inheritance:
 
+grama.dfply.count module
+------------------------
+
+.. automodule:: grama.dfply.count
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.dfply.group module
 ------------------------
 
@@ -115,7 +123,6 @@ grama.dfply.window\_functions module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

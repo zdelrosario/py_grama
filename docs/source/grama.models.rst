@@ -12,6 +12,14 @@ grama.models.cantilever\_beam module
    :undoc-members:
    :show-inheritance:
 
+grama.models.channel1d module
+-----------------------------
+
+.. automodule:: grama.models.channel1d
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.models.circuit\_RLC module
 --------------------------------
 
@@ -83,7 +91,6 @@ grama.models.trajectory\_linear\_drag module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------
