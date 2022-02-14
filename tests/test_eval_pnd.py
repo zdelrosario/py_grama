@@ -61,21 +61,18 @@ class TestEvalPND(unittest.TestCase):
         vars = df_train.columns.values
         input = md_fit.var
         outputs = [value for value in vars if value not in input]
-
-        pr_scores, var_values = (
+        pnd_results = (
             md_fit
             >> gr.ev_pnd(
                 df_train,
                 df_test,
-                sign = array([+1, +1]),
-                seed = 101
+                signs = {"y1":1, "y2":1},
+                seed = 101,
+                append = True
             )
         )
 
-        ## What is the value of
-        # self.assertTrue(np.abs(0.75 - pr_scores[0]) < 0.05)
-        #
-        # print(pr_scores)
+        self.assertTrue(len(pnd_results) == 200)
 
 
 class TestUtilities(unittest.TestCase):
@@ -140,7 +137,7 @@ class TestUtilities(unittest.TestCase):
         ])
         X_cov = [np.eye(2)] * 3
         # A very coarse sample will suffice
-        pr_scores, var_values = gr.approx_pnd(X_pred, X_cov, self.X_base, sign=np.array([-1, -1]), n=int(1e2))
+        pr_scores, var_values = gr.approx_pnd(X_pred, X_cov, self.X_base, signs=np.array([-1, -1]), n=int(1e2))
         # Check basic ordering correctness
         self.assertTrue(pr_scores[0] > pr_scores[1])
         self.assertTrue(pr_scores[1] > pr_scores[2])
@@ -171,7 +168,7 @@ class TestUtilities(unittest.TestCase):
             X_pred,
             X_cov,
             X_base,
-            sign=np.array([+1, +1]),
+            signs=np.array([+1, +1]),
             n=n,
             seed=101,
         )

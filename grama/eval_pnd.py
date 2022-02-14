@@ -19,14 +19,14 @@ from numpy import sum as npsum
 from numpy.linalg import norm
 from numpy.random import choice, multivariate_normal
 from numpy.random import seed as set_seed
-from pandas import DataFrame
+from pandas import DataFrame, merge
 from scipy.linalg import svd
 from scipy.stats import multivariate_normal as mvnorm
 from toolz import curry
 
 
 @curry
-def eval_pnd(model, df_train, df_test, sign, n=int(1e4), seed=None):
+def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=False):
     """ Evaluate a Model using a predictive model
 
     Evaluates a given model against a PND algorithm to determine
@@ -36,7 +36,9 @@ def eval_pnd(model, df_train, df_test, sign, n=int(1e4), seed=None):
         model (gr.model): predictive model to evaluate
         df_train (DataFrame): dataframe with training data
         df_test (DataFrame): dataframe with test data
-        sign (numpy array of +/-1 values): Array of optimization signs: {-1: Minimize, +1 Maximize}
+        signs (dict): dict with the variables you would like to use and
+            minimization or maximization parameter for each
+        append (bool): Append df_test to pnd algorithm outputs
 
     Kwargs:
         n (int): Number of draws for importance sampler
@@ -52,18 +54,17 @@ def eval_pnd(model, df_train, df_test, sign, n=int(1e4), seed=None):
     >>>...
     >>> md = (
     >>>     df_train
-    >>>     >> gr.ft_foo()
+    >>>     >> gr.ft_gdp()
     >>> )
-    >>> ( pred_model
+    >>>
+    >>> pnd_results = (
+            pred_model
             >> gr.ev_pnd(
-                model,
                 df_train,
                 df_test,
-                signs = {
-                    'y1':-1,
-                    'y2':1
-                },
-                seed = 101
+                signs = {"y1":1, "y2":1},
+                seed = 101,
+                append = True
             )
         )
     """
@@ -76,9 +77,6 @@ def eval_pnd(model, df_train, df_test, sign, n=int(1e4), seed=None):
     #
     # if not isinstance(df_test, DataFrame):
     #     raise TypeError('df_test must be a DataFrame')
-
-    # if not isinstance(signs, dict):
-    #     raise TypeError('sign must be a Dictionary')
 
     # Check content
     if len(model.out)/2 < 2:
@@ -105,8 +103,9 @@ def eval_pnd(model, df_train, df_test, sign, n=int(1e4), seed=None):
     sds = []
     vars = df_train.columns.values
     input = model.var
-    outputs = [value for value in vars if value not in input]
+    outputs = [key for key in signs.keys() if key in df_test.columns.values]
     length = int(len(model.out) / 2)
+    signs = [value for value in signs.values()]
 
     for i, value in enumerate(model.out):
         if "mean" in value:
@@ -121,21 +120,32 @@ def eval_pnd(model, df_train, df_test, sign, n=int(1e4), seed=None):
 
     ### Create covariance matrices
     X_cov = zeros((X_sig.shape[0], length, length))
-    for i in range(X_sig.shape[0]):
-        X_cov[i, 0, 0] = X_sig[i, 0]
-        X_cov[i, 1, 1] = X_sig[i, 1]
+    for var in range(length):
+        for i in range(X_sig.shape[0]):
+            X_cov[i, var, var] = X_sig[i, var]
 
     ### Apply pnd
     pr_scores, var_values = approx_pnd(
         X_pred,
         X_cov,
         X_train,
-        sign = sign,
+        signs = signs,
         n = n,
         seed = seed
     )
 
-    return pr_scores, var_values
+    ### Package outputs
+    # pnd_results = DataFrame(pr_scores) + DataFrame(var_values)
+    pnd_results = DataFrame(
+        {
+            "pr_scores": pr_scores,
+            "var_values": var_values,
+        }
+    )
+
+    if append:
+        return df_test.merge(pnd_results, left_index=True, right_index=True)
+    return pnd_results
 
 ev_pnd = add_pipe(eval_pnd)
 
@@ -289,7 +299,7 @@ def dprop(X, Sigma, X_means):
     return npsum(L, axis=0) * w
 
 # Approximate PND via IS
-def approx_pnd(X_pred, X_cov, X_train, sign, n=int(1e4), seed=None):
+def approx_pnd(X_pred, X_cov, X_train, signs, n=int(1e4), seed=None):
     r"""Approximate the PND via mixture importance sampling
 
     Approximate the probability non-dominated (PND) for a set of predictive
@@ -301,7 +311,7 @@ def approx_pnd(X_pred, X_cov, X_train, sign, n=int(1e4), seed=None):
         X_pred (2d numpy array): Predictive values
         X_cov (iterable of 2d numpy arrays): Predictive covariance matrices
         X_train (2d numpy array): Training values, used to determine existing Pareto frontier
-        sign (numpy array of +/-1 values): Array of optimization signs: {-1: Minimize, +1 Maximize}
+        signs (numpy array of +/-1 values): Array of optimization signs: {-1: Minimize, +1 Maximize}
 
     Kwargs:
         n (int): Number of draws for importance sampler
@@ -316,8 +326,8 @@ def approx_pnd(X_pred, X_cov, X_train, sign, n=int(1e4), seed=None):
 
     """
     ## Setup
-    X_wk_train = -X_train * sign
-    X_wk_pred = -X_pred * sign
+    X_wk_train = -X_train * signs
+    X_wk_pred = -X_pred * signs
     n_train, n_dim = X_train.shape
     n_pred = X_pred.shape[0]
 
