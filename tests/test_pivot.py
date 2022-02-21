@@ -160,6 +160,7 @@ class TestPivotLonger(unittest.TestCase):
         long = gr.tran_pivot_longer(
             stang,
             columns=(gr.tran_select(stang,gr.matches("\\d+"))),
+            #columns=gr.matches("\\d+"), # desired syntax
             names_to="var",
             values_to="val"
         )

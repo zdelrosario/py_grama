@@ -4,7 +4,7 @@ from context import grama as gr
 from context import data
 import numpy as np
 from numpy import array, pi
-from grama.models import make_ishigami
+from grama.models import make_pareto_random
 from grama.fit import ft_gp
 
 class TestEvalPND(unittest.TestCase):
@@ -13,23 +13,8 @@ class TestEvalPND(unittest.TestCase):
     def test_eval_pnd(self):
         """ Test basic evaluation of pnd function
         """
-        # Model to make dataset
-        md_true = (
-            gr.Model()
-            >> gr.cp_vec_function(
-                fun=lambda df: gr.df_make(
-                    y1=df.x1 * gr.cos(df.x2),
-                    y2=df.x1 * gr.sin(df.x2),
-                ),
-                var=["x1", "x2"],
-                out=["y1", "y2"],
-            )
-            >> gr.cp_marginals(
-                x1=dict(dist="uniform", loc=0, scale=1),
-                x2=dict(dist="uniform", loc=0, scale=pi/2),
-            )
-            >> gr.cp_copula_independence()
-        )
+        # Model to make Dataset
+        md_true = make_pareto_random()
         # Create dataframe
         df_data = (
             md_true
@@ -58,21 +43,226 @@ class TestEvalPND(unittest.TestCase):
                 out=["y1", "y2"],
             )
         )
-        vars = df_train.columns.values
-        input = md_fit.var
-        outputs = [value for value in vars if value not in input]
-        pnd_results = (
+
+        # Call eval_pnd
+        df_pnd = (
             md_fit
             >> gr.ev_pnd(
                 df_train,
                 df_test,
                 signs = {"y1":1, "y2":1},
-                seed = 101,
-                append = True
+                seed = 101
             )
         )
 
-        self.assertTrue(len(pnd_results) == 200)
+        # Test for correctness by shape
+        self.assertTrue(len(df_pnd) == df_test.shape[0])
+        # Test for correctness by # of outputs
+        self.assertTrue(len(df_pnd.columns.values) == len(df_test.columns.values) + 2)
+
+    def test_eval_3D(self):
+        """ Test 3D case for eval_pnd()
+        """
+        # Model to make Dataset
+        md_true = make_pareto_random(twoDim=False)
+
+        # Create dataframe
+        df_data = (
+            md_true
+            >> gr.ev_sample(n=2e3, seed=101, df_det="nom")
+        )
+        ## Select training set
+        df_train = (
+            df_data
+            >> gr.tf_sample(n=10)
+        )
+        ## select test set
+        df_test = (
+            df_data
+                >> gr.tf_anti_join(
+                    df_train,
+                    by=["x1", "x2"],
+                )
+                >> gr.tf_sample(n=200)
+        )
+
+        # Create fitted model
+        md_fit = (
+            df_train
+            >> ft_gp(
+                var=["x1", "x2", "x3"],
+                out=["y1", "y2", "y3"],
+            )
+        )
+
+        # Call eval_pnd
+        df_pnd = (
+            md_fit
+            >> gr.ev_pnd(
+                df_train,
+                df_test,
+                signs = {"y1":1, "y2":1,"y3":1},
+                seed = 101
+            )
+        )
+
+        # Test for correctness by shape
+        self.assertTrue(len(df_pnd) == df_test.shape[0])
+        # Test for correctness by # of outputs
+        self.assertTrue(len(df_pnd.columns.values) == len(df_test.columns.values) + 2)
+
+    def test_eval_append(self):
+        """ Test append parameter on eval_pnd()
+        """
+        # Model to make Dataset
+        md_true = make_pareto_random(twoDim=False)
+
+        # Create dataframe
+        df_data = (
+            md_true
+            >> gr.ev_sample(n=2e3, seed=101, df_det="nom")
+        )
+        ## Select training set
+        df_train = (
+            df_data
+            >> gr.tf_sample(n=10)
+        )
+        ## select test set
+        df_test = (
+            df_data
+                >> gr.tf_anti_join(
+                    df_train,
+                    by=["x1", "x2"],
+                )
+                >> gr.tf_sample(n=200)
+        )
+
+        # Create fitted model
+        md_fit = (
+            df_train
+            >> ft_gp(
+                var=["x1", "x2", "x3"],
+                out=["y1", "y2", "y3"],
+            )
+        )
+
+        # Call eval_pnd
+        df_pnd = (
+            md_fit
+            >> gr.ev_pnd(
+                df_train,
+                df_test,
+                signs = {"y1":1, "y2":1,"y3":1},
+                seed = 101,
+                append = False
+            )
+        )
+
+        # Test for correctness by shape
+        self.assertTrue(len(df_pnd) == df_test.shape[0])
+        # Test for correctness by # of outputs
+        self.assertTrue(len(df_pnd.columns.values) == 2)
+
+
+    def test_eval_input_subsets(self):
+        """ Test inputs are subsets of the providel DataFrames for eval_pnd()
+        """
+        # Model to make Dataset
+        md_true = make_pareto_random(twoDim=False)
+
+        # Create dataframe
+        df_data = (
+            md_true
+            >> gr.ev_sample(n=2e3, seed=101, df_det="nom")
+        )
+        ## Select training set
+        df_train = (
+            df_data
+            >> gr.tf_sample(n=10)
+        )
+        ## select test set
+        df_test = (
+            df_data
+                >> gr.tf_anti_join(
+                    df_train,
+                    by=["x1", "x2"],
+                )
+                >> gr.tf_sample(n=200)
+        )
+
+        # Create fitted model
+        md_fit = (
+            df_train
+            >> ft_gp(
+                var=["x1", "x2", "x3"],
+                out=["y1", "y2", "y3"],
+            )
+        )
+
+        # Call eval_pnd w/ only "y1" and "y2"
+        df_pnd = (
+            md_fit
+            >> gr.ev_pnd(
+                df_train,
+                df_test,
+                signs = {"y1":1, "y2":1},
+                seed = 101
+            )
+        )
+        print(df_pnd)
+
+        ### how to imply x1 and x2 from y1 and y2?
+
+        # Test for correctness by shape
+        self.assertTrue(len(df_pnd) == df_test.shape[0])
+        # # Test for correctness by # of outputs
+        # self.assertTrue(len(df_pnd.columns.values) == len(df_test.columns.values) + 2 - 2)
+
+    def test_eval_false_inputs(self):
+        """ Test bad inputs to eval_pnd
+        """
+        # Model to make Dataset
+        md_true = make_pareto_random()
+        # Create dataframe
+        df_data = (
+            md_true
+            >> gr.ev_sample(n=2e3, seed=101, df_det="nom")
+        )
+        ## Select training set
+        df_train = (
+            df_data
+            >> gr.tf_sample(n=10)
+        )
+        ## select test set
+        df_test = (
+            df_data
+                >> gr.tf_anti_join(
+                    df_train,
+                    by=["x1", "x2"],
+                )
+                >> gr.tf_sample(n=200)
+        )
+
+        # Create fitted model
+        md_fit = (
+            df_train
+            >> ft_gp(
+                var=["x1", "x2"],
+                out=["y1", "y2"],
+            )
+        )
+
+        # Call eval_pnd
+        with self.assertRaises(IndexError):
+            df_pnd = (
+                md_fit
+                >> gr.ev_pnd(
+                    df_train,
+                    df_test,
+                    signs = {"y":1, "y2":1},
+                    seed = 101
+                )
+            )
 
 
 class TestUtilities(unittest.TestCase):

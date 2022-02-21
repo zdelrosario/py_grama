@@ -19,14 +19,15 @@ from numpy import sum as npsum
 from numpy.linalg import norm
 from numpy.random import choice, multivariate_normal
 from numpy.random import seed as set_seed
-from pandas import DataFrame, merge
+from pandas import DataFrame
 from scipy.linalg import svd
 from scipy.stats import multivariate_normal as mvnorm
 from toolz import curry
 
 
 @curry
-def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=False):
+def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True, \
+    mean_prefix="_mean", sd_prefix="_sd"):
     """ Evaluate a Model using a predictive model
 
     Evaluates a given model against a PND algorithm to determine
@@ -52,20 +53,44 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=Fals
     >>> import grama as gr
     >>>...
     >>>...
-    >>> md = (
-    >>>     df_train
-    >>>     >> gr.ft_gdp()
+    >>> md_true = gr.make_pareto_random()
+    >>>
+    >>> df_data = (
+    >>>     md_true
+    >>>     >> gr.ev_sample(n=2e3, seed=101, df_det="nom")
     >>> )
     >>>
-    >>> pnd_results = (
-            pred_model
+    >>> df_train = (
+    >>>     df_data
+    >>>     >> gr.tf_sample(n=10))
+    >>> )
+    >>>
+    >>> df_test = (
+    >>>     df_data
+    >>>     >> gr.anti_join(
+    >>>         df_train,
+    >>>         by = ["x1","x2"]
+    >>>     )
+    >>>     >> gr.tf_sample(n=200)
+    >>> )
+    >>>
+    >>> md_fit = (
+    >>>     df_train
+    >>>     >> gr.ft_gp(
+    >>>         var=["x1","x2"]
+    >>>         out=["y1","y2"]
+    >>>     )
+    >>> )
+    >>>
+    >>> df_pnd = (
+            md_fit
             >> gr.ev_pnd(
                 df_train,
                 df_test,
                 signs = {"y1":1, "y2":1},
-                seed = 101,
-                append = True
+                seed = 101
             )
+            >> gr.tf_arrange(gr.desc(DF.pr_scores))
         )
     """
     # # Check for correct types
@@ -91,7 +116,6 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=Fals
     if not set(model.var).issubset(set(df_test.columns)):
         raise ValueError("model.var must be subset of df_test.columns")
 
-
     ## Compute predictions and predicted uncertainties
     df_pred = (
         df_test
@@ -101,17 +125,18 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=Fals
     ## Setup for reshaping
     means = []
     sds = []
-    vars = df_train.columns.values
-    input = model.var
-    outputs = [key for key in signs.keys() if key in df_test.columns.values]
-    length = int(len(model.out) / 2)
+    columns = df_train.columns.values
+    length = int(len(signs.keys()))
+    outputs = [key for key in signs.keys() if key in columns]
     signs = [value for value in signs.values()]
 
-    for i, value in enumerate(model.out):
-        if "mean" in value:
-            means.append(value)
-        if "sd" in value:
-            sds.append(value)
+    ## append mean and sd prefixes
+    for i, value in enumerate(outputs):
+        means.append(value+mean_prefix)
+        sds.append(value+sd_prefix)
+
+    ## Remove extra columns from df_test
+    df_pred = df_pred[means + sds]
 
     ## Reshape data for PND algorithm
     X_pred = df_pred[means].values      # Predicted response values
@@ -120,9 +145,9 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=Fals
 
     ### Create covariance matrices
     X_cov = zeros((X_sig.shape[0], length, length))
-    for var in range(length):
+    for l in range(length):
         for i in range(X_sig.shape[0]):
-            X_cov[i, var, var] = X_sig[i, var]
+            X_cov[i, l, l] = X_sig[i, l]
 
     ### Apply pnd
     pr_scores, var_values = approx_pnd(
@@ -135,8 +160,7 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=Fals
     )
 
     ### Package outputs
-    # pnd_results = DataFrame(pr_scores) + DataFrame(var_values)
-    pnd_results = DataFrame(
+    df_pnd = DataFrame(
         {
             "pr_scores": pr_scores,
             "var_values": var_values,
@@ -144,8 +168,8 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=Fals
     )
 
     if append:
-        return df_test.merge(pnd_results, left_index=True, right_index=True)
-    return pnd_results
+        return df_test.reset_index(drop=True).merge(df_pnd, left_index=True, right_index=True)
+    return df_pnd
 
 ev_pnd = add_pipe(eval_pnd)
 

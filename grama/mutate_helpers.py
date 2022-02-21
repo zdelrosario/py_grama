@@ -2,6 +2,7 @@ __all__ = [
     "abs",
     "sin",
     "cos",
+    "tan",
     "log",
     "exp",
     "sqrt",
@@ -34,6 +35,7 @@ from numpy import all as npall
 from numpy import abs as npabs
 from numpy import sin as npsin
 from numpy import cos as npcos
+from numpy import tan as nptan
 from numpy import log as nplog
 from numpy import exp as npexp
 from numpy import sqrt as npsqrt
@@ -93,6 +95,11 @@ def cos(x):
     """
     return npcos(x)
 
+@make_symbolic
+def tan(x):
+    r"""Tangent
+    """
+    return nptan(x)
 
 @make_symbolic
 def log(x):
