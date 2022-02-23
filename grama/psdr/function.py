@@ -3,7 +3,7 @@ import numpy as np
 import textwrap
 import inspect
 
-import cloudpickle
+# import cloudpickle
 
 #from .domains import Domain
 
@@ -12,9 +12,9 @@ from .misc import merge
 
 __all__ = ['Function', 'BaseFunction']
 
-# I've stopped using dill entirely because this issue prevents 
+# I've stopped using dill entirely because this issue prevents
 # me from loading modules inside functions
-# https://github.com/uqfoundation/dill/issues/219	
+# https://github.com/uqfoundation/dill/issues/219
 
 class BaseFunction(object):
 	r""" Abstract base class for functions
@@ -46,8 +46,8 @@ class Function(BaseFunction):
 
 	Provided a function :math:`f: \mathcal{D} \subset \mathbb{R}^m \to \mathbb{R}^d`,
 	and a domain :math:`\mathcal{D}`, this class acts as a wrapper for both.
-	The key contribution of this class is to provide access to 
-	the function on the *normalized domain* :math:`\mathcal{D}_{\text{norm}}` 
+	The key contribution of this class is to provide access to
+	the function on the *normalized domain* :math:`\mathcal{D}_{\text{norm}}`
 	that is a subset of the :math:`[-1,1]^m` cube; i.e.,
 
 	.. math::
@@ -59,13 +59,13 @@ class Function(BaseFunction):
 	fun: function or list of functions
 		Either a python function or a list of functions to evaluate
 	domain: Domain
-		The domain on which the function is posed	
+		The domain on which the function is posed
 	vectorized: bool, default: False
 		If True, the functions are vectorized for use with numpy.
 	kwargs: dict, default: empty
 		Keyword arguments to pass to the functions when evaluating function
 	dask_client: dask.distributed.Client
-		Client to use for multiprocessing 
+		Client to use for multiprocessing
 	"""
 
 	def __init__(self, funs, domain, grads = None, fd_grad = None, vectorized = False, kwargs = {},
@@ -75,7 +75,7 @@ class Function(BaseFunction):
 		self.vectorized = vectorized
 		self.kwargs = kwargs
 		self.return_grad = return_grad
-		
+
 		if callable(funs):
 			self._funs = [funs]
 		else:
@@ -92,35 +92,35 @@ class Function(BaseFunction):
 		if dask_client is not None:
 			# Pickle the functions for later use when calling distributed code
 			self._funs_pickle = []
-			for fun in self._funs:	
+			for fun in self._funs:
 				# A big problem is when functions are imported from another module
 				# dill/cloudpickle will simply want to import these functions;
 				# i.e., the function is stored by a referrence to the file in which it originated.
 				# See discussion at https://github.com/uqfoundation/dill/issues/123
-				
-				# There are also otherways to handle this problem.  For example, 
+
+				# There are also otherways to handle this problem.  For example,
 				# dask.distributed allows you to ship python files to the workers
 				# see: https://stackoverflow.com/a/39295372/
-			
+
 				# So we do something more sophisticated in order to pickle these functions.
-			
+
 				# (1) We bring the function into the local scope, evaluating the function definition
 				# inside this loop.
-				# Specifically, we run the code inside a custom scope in order to 
+				# Specifically, we run the code inside a custom scope in order to
 				# have the code load into dill/cloudpickle rather than passing around
 				# as a reference.  The limited scope prevents this from overwriting any local functions
 
-				# Get the code 
+				# Get the code
 				code = inspect.getsource(fun)
-				
-				# Strip indentation 
+
+				# Strip indentation
 				code = textwrap.dedent(code)
-				
-				# Execute code	
+
+				# Execute code
 				scope = {}
 				exec(code, scope, scope)
-	
-				# (2) We now pickle this function 
+
+				# (2) We now pickle this function
 				# scope is a dictionary of functions, and the name allows us to specify which
 				self._funs_pickle.append(cloudpickle.dumps(scope[fun.__name__]))
 
@@ -144,7 +144,7 @@ class Function(BaseFunction):
 				fX = [fun(X, **kwargs) for fun in self._funs]
 				for fXi in fX:
 					assert len(fXi) == X.shape[0], "Must provide an array with %d entires; got %d" % (X.shape[0], len(fXi) )
-				
+
 				# Reshape if necessary so concatention works
 				for i, fXi in enumerate(fX):
 					fXi = np.array(fXi)
@@ -155,31 +155,31 @@ class Function(BaseFunction):
 				return np.vstack([ np.hstack([fun(x, **kwargs) for fun in self._funs]) for x in X])
 
 
-	def eval_async(self, X_norm, **kwargs):
-		r""" Evaluate the function asyncronously using dask.distributed
-		"""
-		assert self.dask_client is not None, "A dask_client must be specified on class initialization"
-		
-		kwargs = merge(self.kwargs, kwargs)
+	# def eval_async(self, X_norm, **kwargs):
+	# 	r""" Evaluate the function asyncronously using dask.distributed
+	# 	"""
+	# 	assert self.dask_client is not None, "A dask_client must be specified on class initialization"
 
-		X_norm = np.atleast_1d(X_norm)
-		X = self.domain_app.unnormalize(X_norm)
-		X = np.atleast_2d(X)
+	# 	kwargs = merge(self.kwargs, kwargs)
 
-		def subcall(funs_pickle, x, **kwargs_):
-			import cloudpickle
-			funs = [cloudpickle.loads(fun) for fun in funs_pickle]
-			return [fun(x, **kwargs_) for fun in funs]
+	# 	X_norm = np.atleast_1d(X_norm)
+	# 	X = self.domain_app.unnormalize(X_norm)
+	# 	X = np.atleast_2d(X)
 
-		results = [self.dask_client.submit(subcall, self._funs_pickle, x, **kwargs) for x in X]	
-		if len(X_norm.shape) == 1:
-			return results[0]
-		else:
-			return results
+	# 	def subcall(funs_pickle, x, **kwargs_):
+	# 		import cloudpickle
+	# 		funs = [cloudpickle.loads(fun) for fun in funs_pickle]
+	# 		return [fun(x, **kwargs_) for fun in funs]
+
+	# 	results = [self.dask_client.submit(subcall, self._funs_pickle, x, **kwargs) for x in X]
+	# 	if len(X_norm.shape) == 1:
+	# 		return results[0]
+	# 	else:
+	# 		return results
 
 
 	def _shape_grad(self, X, grads):
-		r""" This expects a 3-dimensional array in format [x sample #, fun #, input dim #] 
+		r""" This expects a 3-dimensional array in format [x sample #, fun #, input dim #]
 		"""
 		grads = np.array(grads)
 		if len(X.shape) == 1 and grads.shape[1] == 1:
@@ -193,7 +193,7 @@ class Function(BaseFunction):
 
 	def grad(self, X_norm, **kwargs):
 		kwargs = merge(self.kwargs, kwargs)
-		
+
 		X_norm = np.atleast_1d(X_norm)
 
 		# If we've asked to use a finite difference gradient
@@ -207,33 +207,33 @@ class Function(BaseFunction):
 					ei = np.zeros(x.shape)
 					ei[i] = 1.
 					grad[i] = (self.eval(x + h*ei, **kwargs) - fx)/h
-				# This ensures the dimensions match expectation for 
+				# This ensures the dimensions match expectation for
 				grads.append(np.atleast_2d(grad))
-			
+
 			return self._shape_grad(X_norm, grads)
 
 		X = self.domain_app.unnormalize(X_norm)
-		D = self.domain_app._unnormalize_der() 	
-		
+		D = self.domain_app._unnormalize_der()
+
 		# Return gradient if specified
-		if self._grads is not None: 
+		if self._grads is not None:
 			X = np.atleast_2d(X)
-			
+
 			if self.vectorized:
 				# TODO: I don't think this will get dimensions quite right
 				grads = np.array([ np.array(grad(X, **kwargs)) for grad in self._grads])
 				grads = np.transpose(grads, (1,0,2))
 			else:
 				grads = np.array([ np.vstack([grad(x, **kwargs) for grad in self._grads]) for x in X])
-		
+
 			# Correct to apply to normalized domain
 			grads = grads.dot(D.T)
 			return self._shape_grad(X_norm, grads)
 
 		# Try return_grad the function definition
 		elif self.return_grad:
-			X = np.atleast_2d(X)	
-			
+			X = np.atleast_2d(X)
+
 			if self.vectorized:
 				grads = []
 				for fun in self._funs:
@@ -248,7 +248,7 @@ class Function(BaseFunction):
 						fxi, gradi = fun(x, return_grad = True, **kwargs)
 						grad.append(gradi)
 					grads.append(np.vstack(grad))
-				grads = np.array(grads)	
+				grads = np.array(grads)
 			grads = grads.dot(D.T)
 			return self._shape_grad(X_norm, grads)
 		else:
@@ -264,7 +264,7 @@ class Function(BaseFunction):
 			# If the function can return both the value and gradient simultaneously
 			X = self.domain_app.unnormalize(X_norm)
 			X = np.atleast_2d(X)
-			D = self.domain_app._unnormalize_der() 	
+			D = self.domain_app._unnormalize_der()
 			if self.vectorized:
 				ret = [fun(X, return_grad = True, **kwargs) for fun in self._funs]
 				fX = np.hstack([r[0] for r in ret])
@@ -284,7 +284,7 @@ class Function(BaseFunction):
 
 				fX = np.vstack(fX)
 				grads = np.array(grads)
-			
+
 			grads = grads.dot(D.T)
 
 			if len(X_norm.shape) == 1:
@@ -292,21 +292,17 @@ class Function(BaseFunction):
 			grads = self._shape_grad(X_norm, grads)
 			return fX, grads
 		else:
-			return self.eval(X_norm, **kwargs), self.grad(X_norm, **kwargs)					
+			return self.eval(X_norm, **kwargs), self.grad(X_norm, **kwargs)
 
 	def call_async(self, X_norm, return_grad = False, **kwargs):
 		r""" Calls the function in an async. manner
-		
+
 		This mainly exists to cleanly separate eval_async which *only* returns function values
 		and this function, call_async, which can optionally return gradients, like __call__.
 		"""
 		kwargs = merge(self.kwargs, kwargs)
 		return self.eval_async(X_norm, return_grad = return_grad, **kwargs)
-	
+
 #	def __get__(self, i):
 #		"""Get a particular sub-function as another Function"""
 #		raise NotImplemented
-
-
-
-
