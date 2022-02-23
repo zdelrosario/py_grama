@@ -12,7 +12,7 @@ class TestSupportPoints(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_tran_sp(self):
+    def test_tran_polyridge(self):
         """Test the functionality and correctness of tran_polyridge()
         """
         ## Setup
@@ -50,6 +50,16 @@ class TestSupportPoints(unittest.TestCase):
 
         self.assertTrue(gr.df_equal(df_res, df_true, close=True))
 
+        ## Higher-dimensional functionality
+        df_higher = (
+            gr.df_grid(
+                x=range(10),
+                y=range(10),
+                z=range(10),
+            )
+            >> gr.tf_mutate(f=DF.x + DF.y + DF.z)
+        )
+        gr.tran_polyridge(df_higher, out="f", n_degree=2, n_dim=2)
 
 ## Run tests
 if __name__ == '__main__':
