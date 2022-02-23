@@ -3,19 +3,17 @@ __all__ = [
     "tf_polyridge",
 ]
 
-## Transforms via psdr package
-try:
-    from psdr import PolynomialRidgeApproximation
-
-except ModuleNotFoundError:
-    pass
-
 from grama import add_pipe
 from numpy import number as npnumber
 from pandas import DataFrame
 from toolz import curry
 
-## Polynomial Ridge Approximation
+from .polyridge import PolynomialRidgeApproximation
+
+## Implementation
+# --------------------------------------------------
+
+## Interfaces
 # --------------------------------------------------
 @curry
 def tran_polyridge(
@@ -99,22 +97,12 @@ def tran_polyridge(
         )
 
     ## Compute subspace reduction
-    try:
-        pr = PolynomialRidgeApproximation(
-            n_degree,
-            n_dim,
-            **kwargs,
-        )
-        pr.fit(df[var].values, df[out].values)
-
-    except NameError as e:
-        error_string = str(e)
-        raise NameError(
-            error_string +
-            "\n\nThis function requires the `psdr` package. " +
-            "Try running the following to install the package:\n"
-            "    pip install psdr"
-        )
+    pr = PolynomialRidgeApproximation(
+        n_degree,
+        n_dim,
+        **kwargs,
+    )
+    pr.fit(df[var].values, df[out].values)
 
     ## Package the results
     df_res = DataFrame(
