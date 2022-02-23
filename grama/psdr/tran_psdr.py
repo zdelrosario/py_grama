@@ -3,19 +3,17 @@ __all__ = [
     "tf_polyridge",
 ]
 
-## Transforms via psdr package
-try:
-    from psdr import PolynomialRidgeApproximation
-
-except ModuleNotFoundError:
-    pass
-
 from grama import add_pipe
 from numpy import number as npnumber
 from pandas import DataFrame
 from toolz import curry
 
-## Polynomial Ridge Approximation
+from .polyridge import PolynomialRidgeApproximation
+
+## Implementation
+# --------------------------------------------------
+
+## Interfaces
 # --------------------------------------------------
 @curry
 def tran_polyridge(
