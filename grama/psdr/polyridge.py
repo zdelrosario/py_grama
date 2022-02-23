@@ -4,7 +4,6 @@
 import numpy as np
 import scipy.linalg
 import scipy.special
-import cvxpy as cp
 import warnings
 from copy import deepcopy, copy
 
@@ -106,38 +105,6 @@ def orth(U):
 	U = np.dot(U, np.diag(np.sign(np.diag(R)))) 
 	return U
 
-def inf_norm_fit(A, b):
-	r""" Solve inf-norm linear optimization problem
-
-	.. math::
-
-		\min_{x} \| \mathbf{A} \mathbf{x} - \mathbf{b}\|_\infty
-
-	"""
-	with warnings.catch_warnings():
-		warnings.simplefilter('ignore', PendingDeprecationWarning)
-		x = cp.Variable(A.shape[1])
-		obj = cp.norm_inf(A @ x - b.flatten())
-		problem = cp.Problem(cp.Minimize(obj))
-		problem.solve(solver = 'ECOS')
-		return x.value
-
-def one_norm_fit(A, b):
-	r""" solve 1-norm linear optimization problem
-
-	.. math::
-
-		\min_{x} \| \mathbf{a} \mathbf{x} - \mathbf{b}\|_1
-
-	"""
-	with warnings.catch_warnings():
-		warnings.simplefilter('ignore', PendingDeprecationWarning)
-		x = cp.Variable(A.shape[1])
-		obj = cp.norm1(x.__rmatmul__(A) - b)
-		problem = cp.Problem(cp.Minimize(obj))
-		problem.solve(solver = 'ECOS')
-		return x.value
-
 def two_norm_fit(A,b):
 	r""" solve 2-norm linear optimization problem
 
@@ -147,34 +114,6 @@ def two_norm_fit(A,b):
 
 	"""
 	return scipy.linalg.lstsq(A, b)[0]
-
-def bound_fit(A, b, norm = 2):
-	r""" solve a norm constrained problem
-
-	.. math:: 
-
-		\min_{x} \| \mathbf{A}\mathbf{x} - \mathbf{b}\|_p
-		\text{such that} \mathbf{A}	\mathbf{x} -\mathbf{b} \ge 0
-	"""
-	with warnings.catch_warnings():
-		warnings.simplefilter('ignore', PendingDeprecationWarning)
-		x = cp.Variable(A.shape[1])
-		residual = x.__rmatmul__(A) - b
-		if norm == 1:
-			obj = cp.norm1(residual)
-		elif norm == 2:
-			obj = cp.norm(residual)
-		elif norm == np.inf:
-			obj = cp.norm_inf(residual)
-		constraint = [residual >= 0] 
-		#constraint = [x.__rmatmul__(A) - b >= 0]
-		problem = cp.Problem(cp.Minimize(obj), constraint)
-		problem.solve(feastol = 1e-10, solver = cp.ECOS)
-		#problem.solve(eps = 1e-10, solver = cp.SCS)
-		#problem.solve(feastol = 1e-10, solver = cp.CVXOPT)
-		# TODO: The solution doesn't obey the constraints for 1 and inf norm, but does for 2-norm.
-		return x.value
-
 
 class PolynomialRidgeApproximation(PolynomialRidgeFunction):
 	r""" Constructs a ridge approximation using a total degree approximation
