@@ -99,19 +99,22 @@ def eval_nls(
             var_fix.add(var)
     if verbose:
         print("... eval_nls setting var_fix = {}".format(list(var_fix)))
+    var_fix = list(var_fix)
 
     ## Determine variables for evaluation
     var_feat = set(model.var).intersection(set(df_data.columns))
     if verbose:
-        print("... eval_nls setting var_feat = {}".format(list(var_feat)))
+        print("... eval_nls setting var_feat = {}".format(var_feat))
+    var_feat = list(var_feat)
 
     ## Determine variables for fitting
-    var_fit = set(model.var).difference(var_fix.union(var_feat))
+    var_fit = set(model.var).difference(set(var_fix).union(set(var_feat)))
     if len(var_fit) == 0:
         raise ValueError(
             "No var selected for fitting!\n"
             + "Try checking model bounds and df_data.columns."
         )
+    var_fit = list(var_fit)
 
     ## Separate var_fit into det and rand
     var_fit_det = list(set(model.var_det).intersection(var_fit))
@@ -142,7 +145,7 @@ def eval_nls(
     ## Use specified initial guess(es)
     if not (df_init is None):
         # Check invariants
-        set_diff = set(var_fit).difference(set(df_init.columns))
+        set_diff = list(set(var_fit).difference(set(df_init.columns)))
         if len(set_diff) > 0:
             raise ValueError(
                 "var_fit must be subset of df_init.columns\n"
