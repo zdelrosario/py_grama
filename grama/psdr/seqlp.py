@@ -3,7 +3,6 @@
 from __future__ import print_function
 import numpy as np
 import scipy.optimize
-import cvxpy as cp
 import warnings
 
 from .domains import UnboundedDomain
@@ -41,7 +40,7 @@ def sequential_lp(f, x0, jac, search_constraints = None,
 	norm: [1,2, np.inf, None, 'hinge']
 		If hinge, sum of values of the objective exceeding 0.
 
-	
+
 	References
 	----------
 	.. FS89
@@ -52,7 +51,7 @@ def sequential_lp(f, x0, jac, search_constraints = None,
 
 	if search_constraints is None:
 		search_constraints = lambda x, p: []
-	
+
 	if domain is None:
 		domain = UnboundedDomain(len(x0))
 
@@ -65,12 +64,12 @@ def sequential_lp(f, x0, jac, search_constraints = None,
 
 	if constraints_lb is None:
 		constraints_lb = -np.inf*np.ones(len(constraints))
-	
+
 	if constraints_ub is None:
 		constraints_ub = np.inf*np.ones(len(constraints))
 
 
-	# The default solver for 1/inf-norm doesn't converge sharp enough, but ECOS does.	
+	# The default solver for 1/inf-norm doesn't converge sharp enough, but ECOS does.
 	if 'solver' not in kwargs:
 		kwargs['solver'] = 'ECOS'
 
@@ -119,7 +118,7 @@ def sequential_lp(f, x0, jac, search_constraints = None,
 		# TODO: Should really orthogonalize against unallowed search directions
 		#err = con_grad[I,:].T.dot(lam) + obj_grad
 		#print err
-	
+
 		return kkt_norm
 
 	# Start optimizaiton loop
@@ -139,12 +138,12 @@ def sequential_lp(f, x0, jac, search_constraints = None,
 	if verbose:
 		print('iter |     objective     |  norm px | TR radius | KKT norm | violation |')
 		print('-----|-------------------|----------|-----------|----------|-----------|')
-		print('%4d | %+14.10e |          |           | %8.2e |           |' % (0, objval, kkt_norm(fx, jacx))) 
+		print('%4d | %+14.10e |          |           | %8.2e |           |' % (0, objval, kkt_norm(fx, jacx)))
 
 	Delta = 1.
 
 	for it in range(maxiter):
-	
+
 		# Search direction
 		p = cp.Variable(len(x))
 
@@ -164,8 +163,8 @@ def sequential_lp(f, x0, jac, search_constraints = None,
 		if obj_lb is not None:
 			nonlinear_constraints.append(obj_lb <= f_lin)
 		if obj_ub is not None:
-			nonlinear_constraints.append(f_lin <= obj_ub)  
-		
+			nonlinear_constraints.append(f_lin <= obj_ub)
+
 		# Next, we add other nonlinear constraints
 		for con, congrad, con_lb, con_ub in zip(constraints, constraint_grads, constraints_lb, constraints_ub):
 			conx = con(x)
@@ -244,19 +243,19 @@ def sequential_lp(f, x0, jac, search_constraints = None,
 					break
 
 				Delta *=0.5
-		
+
 			else:
 				warnings.warn("Could not find acceptible step; stopping prematurely; %s" % (status,) )
 				stop = True
 				px = np.zeros(x.shape)
-				
+
 			#elif status in ['unbounded', 'unbounded_inaccurate']:
 			#	raise UnboundedException
 			#elirf status in ['infeasible']:
-			#	raaise InfeasibleException 
+			#	raaise InfeasibleException
 			#else:
 			#	raise Exception(status)
-	
+
 		if it2 == bt_maxiter-1:
 			stop = True
 
@@ -267,16 +266,16 @@ def sequential_lp(f, x0, jac, search_constraints = None,
 			jacx = np.array([jaci(x) for jaci in jac]).reshape(len(fx), len(x))
 
 		if verbose:
-			print('%4d | %+14.10e | %8.2e |  %8.2e | %8.2e |  %8.2e |' 
+			print('%4d | %+14.10e | %8.2e |  %8.2e | %8.2e |  %8.2e |'
 				% (it+1, objval, np.linalg.norm(px), Delta, kkt_norm(fx, jacx), constraint_violation))
 		if stop:
-			break	
+			break
 
 	return x
-			
+
 #if __name__ == '__main__':
 #	from polyridge import *
-#	
+#
 #	np.random.seed(3)
 #	p = 3
 #	m = 4
@@ -303,7 +302,7 @@ def sequential_lp(f, x0, jac, search_constraints = None,
 #		pra.set_scale(X, U)
 #		J = pra._jacobian(X, fX, U_c)
 #		return J
-#	
+#
 #	# Trajectory
 #	trajectory = lambda U_c, p, alpha: pra._trajectory(X, fX, U_c, p, alpha)
 #
@@ -315,14 +314,14 @@ def sequential_lp(f, x0, jac, search_constraints = None,
 #		constraints = [ pU_pc[k*m:(k+1)*m].__rmatmul__(U.T) == np.zeros(n) for k in range(n)]
 #		return constraints
 #
-#		
+#
 #	U0 = orth(np.random.randn(m,n))
 #	U0 = U
 #	c = np.random.randn(len(coef))
 #	pra.set_scale(X, U0)
 #	U_c0 = np.hstack([U0.flatten(), c])
 #
-#	U_c = sequential_lp(residual, U_c0, jacobian, search_constraints, norm = norm, 
+#	U_c = sequential_lp(residual, U_c0, jacobian, search_constraints, norm = norm,
 #		trajectory = trajectory, verbose = True)
 #	print(U_c)
-#	print(U)	
+#	print(U)

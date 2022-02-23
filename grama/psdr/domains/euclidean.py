@@ -13,8 +13,6 @@ except ImportError:
 	from backports.cached_property import cached_property
 
 
-import cvxpy as cp
-
 from .domain import Domain, TOL
 from ..exceptions import SolverError, EmptyDomainException, UnboundedDomainException
 from ..misc import merge
@@ -35,7 +33,7 @@ class EuclideanDomain(Domain):
 	################################################################################
 	# Naming of variables
 	################################################################################
-	
+
 	@property
 	def names(self):
 		r""" Names associated with each of the variables (coordinates) of the domain
@@ -58,7 +56,7 @@ class EuclideanDomain(Domain):
 		else:
 			assert len(self) == len(names), "Number of names must match dimension"
 			self._names = names
-	
+
 	################################################################################
 	# Properties of the domain
 	################################################################################
@@ -75,12 +73,12 @@ class EuclideanDomain(Domain):
 		return self._dimension
 
 
-	
+
 	@cached_property
 	def is_empty(self):
 		r""" Returns True if there are no points in the domain
 		"""
-		try: 
+		try:
 			# Try to find at least one point inside the domain
 			c = self.corner(np.ones(len(self)), verbose = False)
 			return False
@@ -89,7 +87,7 @@ class EuclideanDomain(Domain):
 		except UnboundedDomainException:
 			return False
 
-		
+
 	@cached_property
 	def is_point(self):
 		try:
@@ -136,250 +134,7 @@ class EuclideanDomain(Domain):
 	def _build_constraints_norm(self, x_norm):
 		raise NotImplementedError
 
-	def closest_point(self, x0, L = None, **kwargs):
-		r"""Given a point, find the closest point in the domain to it.
 
-		Given a point :math:`\mathbf x_0`, find the closest point :math:`\mathbf x`
-		in the domain :math:`\mathcal D` to it by solving the optimization problem
-
-		.. math::
-		
-			\min_{\mathbf x \in \mathcal D} \| \mathbf L (\mathbf x - \mathbf x_0)\|_2
-
-		where :math:`\mathbf L` is an optional weighting matrix.		
-
-		Parameters
-		----------
-		x0: array-like
-			Point in :math:`\mathbb R^m`  
-		L: array-like, optional
-			Matrix of size (p,m) to use as a weighting matrix in the 2-norm;
-			if not provided, the standard 2-norm is used.
-		kwargs: dict, optional
-			Additional arguments to pass to the optimizer
-	
-		Returns
-		-------
-		x: np.array (m,)
-			Coordinates of closest point in this domain to :math:`\mathbf x_0`
-
-		Raises
-		------
-		ValueError
-			When the dimensions of x0 or L do not match those of the domain
-		EmptyDomainException
-			When there are no points in the domain		
-		SolverError
-			Raised when CVXPY fails to find a solution 
-		"""
-		try: 
-			x0 = np.array(x0).reshape(len(self))
-		except ValueError:
-			raise ValueError('Dimension of x0 does not match dimension of the domain')
-
-		if L is not None:
-			try: 
-				L = np.array(L).reshape(-1,len(self))
-			except ValueError:
-				raise ValueError('The second dimension of L does not match that of the domain')
-
-		else:
-			L = np.eye(len(self))
-
-		local_kwargs = merge(self.kwargs, kwargs) 
-		return self._closest_point(x0, L = L, **local_kwargs)
-
-	def _closest_point(self, x0, L = None, **kwargs):
-		if not self.is_linquad_domain:
-			raise NotImplementedError
-
-		# Error out if we've already determined the domain is empty
-		try:
-			if self._empty: raise EmptyDomainException
-		except AttributeError:
-			pass	
-	
-		# First check if the point is inside; if so we can stop	
-		if self.isinside(x0):
-			self._empty = False
-			return np.copy(x0)
-		
-		# Setup the problem in CVXPY
-		x_norm = cp.Variable(len(self))
-		constraints = self._build_constraints_norm(x_norm)
-		x0_norm = self.normalize(x0)
-			
-		D = self._unnormalize_der() 	
-		LD = L.dot(D)
-		obj = cp.norm(LD @ x_norm - LD.dot(x0_norm))
-
-		problem = cp.Problem(cp.Minimize(obj), constraints)
-		problem.solve(**kwargs)
-		
-		if problem.status in ['infeasible']:
-			self._empty = True
-			raise EmptyDomainException
-		elif problem.status in ['optimal', 'optimal_inaccurate']:
-			return self.unnormalize(np.array(x_norm.value).reshape(len(self)))
-		else:
-			raise SolverError("CVXPY exited with status '%s'" % problem.status)
-
-	
-	def corner(self, p, **kwargs):
-		r""" Find the point furthest in direction p inside the domain
-
-		Given a direction :math:`\mathbf p`, find the point furthest away in that direction
-
-		.. math::
- 	
-			\max_{\mathbf{x} \in \mathcal D}  \mathbf{p}^\top \mathbf{x}
-
-		Parameters
-		----------
-		p: array-like (m,)
-			Direction in which to search for furthest point
-		kwargs: dict, optional
-			Additional parameters to be passed to cvxpy solve
-
-		Returns
-		-------
-		x: np.ndarray (m,)
-			Point on the boundary of the domain with :math:`m` active constraints
-
-		Raises
-		------
-		EmptyDomainException
-			If there is no point inside the domain
-
-		SolverError
-			If the solver errors for another reason, such as ill-conditioning			
-		"""
-		try:
-			p = np.array(p).reshape(len(self))
-		except ValueError:
-			raise ValueError("Dimension of search direction doesn't match the domain dimension")
-
-		local_kwargs = merge(self.kwargs, kwargs)
-		return self._corner(p, **local_kwargs)
-	
-	def _corner(self, p, **kwargs):
-		if not self.is_linquad_domain:
-			raise NotImplementedError
-
-		# Error out if we've already determined the domain is empty
-		try:
-			if self._empty: raise EmptyDomainException
-		except AttributeError:
-			pass
-	
-		# Setup the problem in CVXPY	
-		x_norm = cp.Variable(len(self))
-		D = self._unnormalize_der() 	
-		
-		# p.T @ x
-		if len(self) > 1:
-			obj = D.dot(p).reshape(1,-1) @ x_norm
-		else:
-			obj = x_norm*float(D.dot(p))
-
-		constraints = self._build_constraints_norm(x_norm)
-		problem = cp.Problem(cp.Maximize(obj), constraints)
-	
-		
-		problem.solve(**kwargs)
-		if problem.status in ['infeasible']:
-			#self._empty = True
-			#self._unbounded = False
-			#self._point = False
-			raise EmptyDomainException	
-		# For some reason, if no constraints are provided CVXPY doesn't note
-		# the domain is unbounded
-		elif problem.status in ['unbounded'] or len(constraints) == 0:
-			#self._unbounded = True
-			#self._empty = False
-			#self._point = False
-			raise UnboundedDomainException
-		elif problem.status not in ['optimal', 'optimal_inaccurate']:
-			raise SolverError("CVXPY exited with status '%s'" % problem.status)
-
-		# If we have found a solution, then the domain is not empty
-		self._empty = False
-		return self.unnormalize(np.array(x_norm.value).reshape(len(self)))
-		
-
-
-	def constrained_least_squares(self, A, b, **kwargs):
-		r"""Solves a least squares problem constrained to the domain
-
-		Given a matrix :math:`\mathbf{A} \in \mathbb{R}^{n\times m}`
-		and vector :math:`\mathbf{b} \in \mathbb{R}^n`,
-		solve least squares problem where the solution :math:`\mathbf{x}\in \mathbb{R}^m`
-		is constrained to the domain :math:`\mathcal{D}`:
-
-		.. math::
-		
-			\min_{\mathbf{x} \in \mathcal{D}} \| \mathbf{A} \mathbf{x} - \mathbf{b}\|_2^2
-		
-		Parameters
-		----------
-		A: array-like (n,m)	
-			Matrix in least squares problem
-		b: array-like (n,)
-			Right hand side of least squares problem
-		kwargs: dict, optional
-			Additional parameters to pass to solver
-		""" 
-		try:
-			A = np.array(A).reshape(-1,len(self))
-		except ValueError:
-			raise ValueError("Dimension of matrix A does not match that of the domain")
-		try:
-			b = np.array(b).reshape(A.shape[0])
-		except ValueError:
-			raise ValueError("dimension of b in least squares problem doesn't match A")
-
-		return self._constrained_least_squares(A, b, **kwargs)	
-	
-	def _constrained_least_squares(self, A, b, **kwargs):
-		if not self.is_linquad_domain:
-			raise NotImplementedError
-
-		# Error out if we've already determined the domain is empty
-		try:
-			if self._empty: raise EmptyDomainException
-		except AttributeError:
-			pass
-		
-		# Setup the problem in CVXPY	
-		x_norm = cp.Variable(len(self))
-		D = self._unnormalize_der() 
-		c = self._center()	
-			
-		# \| A x - b\|_2 
-		obj = cp.norm( (A @ D) @ x_norm - b - (A @ c) )
-		constraints = self._build_constraints_norm(x_norm)
-		problem = cp.Problem(cp.Minimize(obj), constraints)
-		problem.solve(**kwargs)
-		
-		if problem.status in ['infeasible']:
-			self._empty = True
-			self._unbounded = False
-			self._point = False
-			raise EmptyDomainException	
-		elif problem.status in ['unbounded']:
-			self._unbounded = True
-			self._empty = False
-			self._point = False
-			raise UnboundedDomainException
-		elif problem.status not in ['optimal', 'optimal_inaccurate']:
-			raise SolverError("CVXPY exited with status '%s'" % problem.status)
-
-		# If we have found a solution, then the domain is not empty
-		self._empty = False
-		return self.unnormalize(np.array(x_norm.value).reshape(len(self)))
-
-		
-	
 	################################################################################
 	# Utility functions for the domain
 	################################################################################
@@ -396,7 +151,7 @@ class EuclideanDomain(Domain):
 			Point in the domain through which the sweep runs.
 		p: array-like, optional [default: random]
 			Direction in which to sweep.
-		corner: bool, optional 
+		corner: bool, optional
 			If true, sweep between two opposite corners rather than until the boundary is hit.
 
 		Returns
@@ -404,7 +159,7 @@ class EuclideanDomain(Domain):
 		X: np.ndarray (n, len(self))
 			Points along the parameter sweep
 		y: np.ndarray (n,)
-			Length along sweep	
+			Length along sweep
 		"""
 		n = int(n)
 
@@ -412,7 +167,7 @@ class EuclideanDomain(Domain):
 			x = self.sample()
 		else:
 			assert self.isinside(x), "Provided x not inside the domain"
-	
+
 		if p is None:
 			# Choose a valid direction
 			p = np.random.randn(len(self))
@@ -424,7 +179,7 @@ class EuclideanDomain(Domain):
 			c1 = self.corner(p)
 			c2 = self.corner(-p)
 		else:
-			# Orthogonalize search direction against equality constraints 
+			# Orthogonalize search direction against equality constraints
 			Qeq = self._A_eq_basis
 			p -= Qeq.dot(Qeq.T.dot(p))
 
@@ -432,12 +187,12 @@ class EuclideanDomain(Domain):
 			c1 = x + a1*p
 			a2 = -self.extent(x, -p)
 			c2 = x + a2*p
-		
+
 		# Samples
 		X = np.array([ (1-alpha)*c1 + alpha*c2 for alpha in np.linspace(0,1,n)])
 
 		# line direction
-		d = (X[1] - X[0])/np.linalg.norm(X[1] - X[0])	
+		d = (X[1] - X[0])/np.linalg.norm(X[1] - X[0])
 		y = X.dot(d)
 		return X, y
 
@@ -447,13 +202,13 @@ class EuclideanDomain(Domain):
 		return len(self) - self.A_eq.shape[0]
 
 
-	
+
 
 
 	# To define the documentation once for all domains, these functions call internal functions
 	# to each subclass
-	
-	
+
+
 
 
 	def extent(self, x, p):
@@ -463,7 +218,7 @@ class EuclideanDomain(Domain):
 		find the furthest we can go in direction :math:`\mathbf p` and stay inside the domain:
 
 		.. math::
-	
+
 			\max_{\alpha > 0}   \alpha \quad\\text{such that} \quad \mathbf x +\\alpha \mathbf p \in \mathcal D
 
 		Parameters
@@ -484,7 +239,7 @@ class EuclideanDomain(Domain):
 		except ValueError:
 			raise ValueError("Starting point not the same dimension as the domain")
 
-		assert self.isinside(x), "Starting point must be inside the domain" 
+		assert self.isinside(x), "Starting point must be inside the domain"
 		return self._extent(x, p)
 
 	def _extent(self, x, p):
@@ -504,7 +259,7 @@ class EuclideanDomain(Domain):
 			# Check for dimension mismatch
 			if X.shape[0] != len(self):
 				return False
-			X = X.reshape(-1, len(self)) 	
+			X = X.reshape(-1, len(self))
 			return self._isinside(X, tol = tol).flatten()
 		else:
 			# Check if the dimensions match
@@ -517,7 +272,7 @@ class EuclideanDomain(Domain):
 
 	def normalize(self, X):
 		""" Given a points in the application space, convert it to normalized units
-		
+
 		Parameters
 		----------
 		X: np.ndarray((M,m))
@@ -528,44 +283,44 @@ class EuclideanDomain(Domain):
 		except AttributeError:
 			X = np.array(X)
 		if len(X.shape) == 1:
-			X = X.reshape(-1, len(self)) 
+			X = X.reshape(-1, len(self))
 			return self._normalize(X).flatten()
 		else:
 			return self._normalize(X)
 
 	def unnormalize(self, X_norm):
 		""" Convert points from normalized units into application units
-		
+
 		Parameters
 		----------
 		X_norm: np.ndarray((M,m))
 			points in the normalized domain to convert to the application domain
-		
+
 		"""
 		if len(X_norm.shape) == 1:
-			X_norm = X_norm.reshape(-1, len(self)) 
+			X_norm = X_norm.reshape(-1, len(self))
 			return self._unnormalize(X_norm).flatten()
 		else:
 			return self._unnormalize(X_norm)
-	
-	
+
+
 	def normalized_domain(self, **kwargs):
 		""" Return a domain with units normalized corresponding to this domain
 		"""
 		return self._normalized_domain(**kwargs)
-	
+
 	def __mul__(self, other):
 		""" Combine two domains
 		"""
 		from .tensor import TensorProductDomain
 		return TensorProductDomain([self, other])
-	
+
 	def __rmul__(self, other):
 		""" Combine two domains
 		"""
 		from .tensor import TensorProductDomain
 		return TensorProductDomain([self, other])
-	
+
 
 	def sample(self, draw = 1):
 		""" Sample points with uniform probability from the measure associated with the domain.
@@ -589,16 +344,16 @@ class EuclideanDomain(Domain):
 			If we are unable to find a point in the domain satisfying the constraints
 		"""
 		draw = int(draw)
-		
+
 		# If request a non positive number of samples, simply return zero
 		if draw <= 0:
 			return np.zeros((0, len(self)))
 
 		x_sample = self._sample(draw = draw)
-		if draw == 1: 
+		if draw == 1:
 			x_sample = x_sample.flatten()
 		return x_sample
-	
+
 	def _sample(self, draw = 1):
 		# By default, use the hit and run sampler
 
@@ -614,13 +369,13 @@ class EuclideanDomain(Domain):
 
 	def sample_grid(self, n):
 		r""" Sample points from a tensor product grid inside the domain
-	
+
 		For a bounded domain this function provides samples that come from a uniformly spaced grid.
 		This grid contains `n` points in each direction, linearly spaced between the lower and upper bounds.
 		For box domains, this will contain $n^d$ samples where $d$ is the dimension of the domain.
 		For other domains, this will potentially contain fewer samples since points on the grid outside the domain
 		are excluded.
-	
+
 		Parameters
 		----------
 		n: int
@@ -632,7 +387,7 @@ class EuclideanDomain(Domain):
 		Xs = np.meshgrid(*xs, indexing = 'ij')
 		Xgrid = np.vstack([X.flatten() for X in Xs]).T
 		I = self.isinside(Xgrid)
-		return Xgrid[I]	
+		return Xgrid[I]
 
 
 	def sample_boundary(self, draw):
@@ -644,15 +399,15 @@ class EuclideanDomain(Domain):
 			Number of points to sample
 		"""
 		draw = int(draw)
-	
+
 		dirs = [self.random_direction(self.center) for i in range(draw)]
 		X = np.array([self.corner(d) for d in dirs])
-	
+
 		if draw == 1:
 			return X.flatten()
-		
+
 		return X
-	
+
 
 
 	def random_direction(self, x):
@@ -662,7 +417,7 @@ class EuclideanDomain(Domain):
 		----------
 		x: array-like
 			Point in the domain
-		
+
 		Returns
 		-------
 		p: np.ndarray (m,)
@@ -674,29 +429,29 @@ class EuclideanDomain(Domain):
 
 		Qeq = self._A_eq_basis
 		while True:
-			# Generate a random direction inside 
+			# Generate a random direction inside
 			p = np.random.normal(size = (len(self),))
 			# Orthogonalize against equality constarints constraints
 			p = p - Qeq @ (Qeq.T @ p)
 			# check that the direction isn't hitting a constraint
 			if x is None or self.extent(x, p) > 0:
 				break
-		return p	
+		return p
 
 	def quadrature_rule(self, N, method = 'auto'):
 		r""" Constructs quadrature rule for the domain
 
-		Given a maximum number of samples N, 
+		Given a maximum number of samples N,
 		this function constructs a quadrature rule for the domain
-		using :math:`M \le N` samples such that 
+		using :math:`M \le N` samples such that
 
 		.. math::
-		
+
 			\int_{\mathbf x\in \mathcal D} f(\mathbb{x}) \mathrm{d}\mathbf{x}
 			\approx \sum_{j=1}^M w_j f(\mathbf{x}_j).
 
-		
-		
+
+
 		Parameters
 		----------
 		N: int
@@ -719,10 +474,10 @@ class EuclideanDomain(Domain):
 
 		# If we have a single point in the domain, we can't really integrate
 		if self.is_point:
-			return self.sample().reshape(1,-1), np.ones(1) 
-	
+			return self.sample().reshape(1,-1), np.ones(1)
+
 		N = int(N)
-	
+
 		# The number of points in each direction we could use for a tensor-product
 		# quadrature rule
 		q = int(np.floor( N**(1./len(self))))
@@ -748,21 +503,21 @@ class EuclideanDomain(Domain):
 					x, w = gauss(qs[i], self.norm_lb[i], self.norm_ub[i])
 					xs.append(x)
 					ws.append(w)
-				# Construct the samples	
+				# Construct the samples
 				Xs = np.meshgrid(*xs)
-				# Flatten into (M, len(self)) shape 
+				# Flatten into (M, len(self)) shape
 				X = np.hstack([X.reshape(-1,1) for X in Xs])
-			
+
 				# Construct the weights
 				Ws = np.meshgrid(*ws)
 				W = np.hstack([W.reshape(-1,1) for W in Ws])
 				w = np.prod(W, axis = 1)
-				
+
 				# remove those points outside the domain
 				I = self.isinside(X)
 				X = X[I]
-				w = w[I]	
-			
+				w = w[I]
+
 				return X, w
 
 			qs = q*np.ones(len(self))
@@ -773,10 +528,10 @@ class EuclideanDomain(Domain):
 				return X, w
 
 			# Now we iterate, increasing the density of the quadrature rule
-			# while staying below the maximum number of points 
+			# while staying below the maximum number of points
 			# TODO: Use a bisection search to find the right spacing
 			while True:
-				# increase dimension of the rule 
+				# increase dimension of the rule
 				qs += 1.
 				Xnew, wnew = quad(qs)
 				if len(Xnew) <= N:
@@ -785,14 +540,14 @@ class EuclideanDomain(Domain):
 				else:
 					break
 
-			return X, w 
+			return X, w
 
 		elif method == 'montecarlo':
 			# For a Monte-Carlo rule we simply sample the domain randomly.
 			w = (1./N)*np.ones(N)
 			X = self.sample(N)
 
-			# However, we need to include a correction to account for the 
+			# However, we need to include a correction to account for the
 			# volume of this domain
 			vol = self.volume()
 			w *= vol
@@ -809,14 +564,14 @@ class EuclideanDomain(Domain):
 			Xt = np.random.uniform(self.norm_lb, self.norm_ub, size = (N, len(self)))
 			vol = np.prod(self.norm_ub - self.norm_lb)*(np.sum(self.isinside(Xt))/(N))
 
-		return vol	
+		return vol
 
 
 	@cached_property
 	def _A_eq_basis(self):
 		r""" This contains an orthogonal basis for the directions that are *not* allowed to be moved along
 		"""
-		try: 
+		try:
 			if len(self.A_eq) == 0: raise AttributeError
 			Qeq = orth(self.A_eq.T)
 		except AttributeError:
@@ -841,8 +596,8 @@ class EuclideanDomain(Domain):
 				# If we have collected enough points and these
 				# are distinct, stop
 				break
-			
-		# If we still only have effectively one point, we are a point domain	
+
+		# If we still only have effectively one point, we are a point domain
 		if np.isclose(np.max(pdist(X)),0) and len(X) == 2*len(self):
 			self._point = True
 		else:
@@ -864,31 +619,31 @@ class EuclideanDomain(Domain):
 			x0 = self._hit_and_run_state
 			if x0 is None: raise AttributeError
 		except AttributeError:
-		
+
 			try:
 				# The simpliest and inexpensive approach is to start hit and run
-				# at the Chebyshev center of the domain.  This value is cached 
+				# at the Chebyshev center of the domain.  This value is cached
 				# and so will not require recomputation if reinitialized
 				x0, r = self.chebyshev_center()
-	
+
 				# TODO: chebyshev_center breaks when running test_lipschitz_sample yielding a SolverError
 				# It really shouldn't error
 			except (AttributeError, NotImplementedError):
 				x0 = self._corner_center()
 			self._hit_and_run_state = x0
-		
-		
+
+
 		# If we are point domain, there is no need go any further
 		if self.is_point:
 			return self._hit_and_run_state.copy()
-	
+
 		# See if there is an orthongonal basis for the equality constraints
 		# This is necessary so we can generate random directions that satisfy the equality constraint.
 		# TODO: Should we generalize this as a "tangent cone" or "feasible cone" that each domain implements?
 		Qeq = self._A_eq_basis
 
-		# Loop over multiple search directions if we have trouble 
-		for it in range(len(self)):	
+		# Loop over multiple search directions if we have trouble
+		for it in range(len(self)):
 			p = self.random_direction(x0)
 			# Orthogonalize against equality constarints constraints
 			p /= np.linalg.norm(p)
@@ -899,22 +654,22 @@ class EuclideanDomain(Domain):
 				alpha = np.random.uniform(alpha_min, alpha_max)
 				# We call closest point just to make sure we stay inside numerically
 				self._hit_and_run_state = self.closest_point(self._hit_and_run_state + alpha*p)
-				return np.copy(self._hit_and_run_state)	
-		
+				return np.copy(self._hit_and_run_state)
+
 		# If we've failed to find a good direction, reinitialize, and recurse
 		self._hit_and_run_state = None
 		return self._hit_and_run(_recurse = _recurse - 1)
 
 
-	################################################################################		
+	################################################################################
 	# Simple properties
-	################################################################################		
-	
-	@property
-	def lb(self): return -np.inf*np.ones(len(self)) 
+	################################################################################
 
 	@property
-	def ub(self): return np.inf*np.ones(len(self)) 
+	def lb(self): return -np.inf*np.ones(len(self))
+
+	@property
+	def ub(self): return np.inf*np.ones(len(self))
 
 	@property
 	def A(self): return np.zeros((0, len(self)))
@@ -923,7 +678,7 @@ class EuclideanDomain(Domain):
 	def b(self): return np.zeros((0,))
 
 	@property
-	def A_aug(self): 
+	def A_aug(self):
 		r""" Linear inequalities augmented with bound constraints as well
 		"""
 		I = np.eye(len(self))
@@ -948,10 +703,10 @@ class EuclideanDomain(Domain):
 
 	@property
 	def ys(self): return []
-	
+
 	@property
 	def rhos(self): return []
-	
+
 	@property
 	def lb_norm(self):
 		lb_norm = self.normalize(self.lb)
@@ -977,7 +732,7 @@ class EuclideanDomain(Domain):
 		return self.b - self.A.dot(c)
 
 	@property
-	def A_eq_norm(self):	
+	def A_eq_norm(self):
 		D = self._unnormalize_der()
 		return self.A_eq.dot(D)
 
@@ -990,26 +745,26 @@ class EuclideanDomain(Domain):
 	def Ls_norm(self):
 		D = self._unnormalize_der()
 		return [ L.dot(D) for L in self.Ls]
-			
+
 	@property
 	def ys_norm(self):
 		c = self._center()
-		return [y - c for y in self.ys]	
+		return [y - c for y in self.ys]
 
 	@property
 	def rhos_norm(self):
 		return self.rhos
 
-	################################################################################		
+	################################################################################
 	# Meta properties
-	################################################################################		
-	
+	################################################################################
+
 	def _is_linquad_domain(self):
 		return True
-	
+
 	def _is_linineq_domain(self):
 		return len(self.Ls) == 0
-	
+
 	def _is_box_domain(self):
 		return len(self.Ls) == 0 and len(self.b) == 0 and len(self.b_eq) == 0
 
@@ -1020,7 +775,7 @@ class EuclideanDomain(Domain):
 	def norm_lb(self):
 		r"""Lower bound used for normalization purposes; does not constrain the domain
 		"""
-		try: 
+		try:
 			return self._norm_lb
 		except AttributeError:
 			self._norm_lb = -np.inf*np.ones(len(self))
@@ -1035,7 +790,7 @@ class EuclideanDomain(Domain):
 				else:
 					try:
 						x_corner = self.corner(-ei)
-						self._norm_lb[i] = x_corner[i]	
+						self._norm_lb[i] = x_corner[i]
 					except (SolverError, UnboundedDomainException):
 						self._norm_lb[i] = -np.inf
 
@@ -1045,12 +800,12 @@ class EuclideanDomain(Domain):
 	def norm_ub(self):
 		r"""Upper bound used for normalization purposes; does not constrain the domain
 		"""
-		try: 
+		try:
 			return self._norm_ub
 		except AttributeError:
 			# Temporarly disable normalization
-			
-			# Note: since this will be called by corner, we need to 
+
+			# Note: since this will be called by corner, we need to
 			# choose a reasonable value to initialize this property, which
 			# will be used until the remainder of the corner calls are made
 			self._norm_ub = np.inf*np.ones(len(self))
@@ -1065,18 +820,18 @@ class EuclideanDomain(Domain):
 				else:
 					try:
 						x_corner = self.corner(ei)
-						self._norm_ub[i] = x_corner[i]	
+						self._norm_ub[i] = x_corner[i]
 					except (SolverError, UnboundedDomainException):
 						self._norm_ub[i] = np.inf
-			
+
 			return self._norm_ub
-	
-	################################################################################		
-	# Normalization functions 
-	################################################################################		
+
+	################################################################################
+	# Normalization functions
+	################################################################################
 
 	def isnormalized(self):
-		return np.all( (~np.isfinite(self.norm_lb)) | (self.norm_lb == -1.) ) and np.all( (~np.isfinite(self.norm_ub)) | (self.norm_ub == 1.) ) 
+		return np.all( (~np.isfinite(self.norm_lb)) | (self.norm_lb == -1.) ) and np.all( (~np.isfinite(self.norm_ub)) | (self.norm_ub == 1.) )
 
 	def _normalize_der(self):
 		"""Derivative of normalization function"""
@@ -1091,28 +846,28 @@ class EuclideanDomain(Domain):
 		I = (self.norm_ub != self.norm_lb) & np.isfinite(self.norm_lb) & np.isfinite(self.norm_ub)
 		slope[I] = (self.norm_ub[I] - self.norm_lb[I])/2.0
 		return np.diag(slope)
-	
+
 	def _center(self):
 		c = np.zeros(len(self))
 		I = np.isfinite(self.norm_lb) & np.isfinite(self.norm_ub)
 		c[I] = (self.norm_lb[I] + self.norm_ub[I])/2.0
-		return c	
+		return c
 
 	def _normalize(self, X):
 		c = self._center()
 		D = self._normalize_der()
 		X_norm = D.dot( (X - c.reshape(1,-1)).T ).T
 		return X_norm
-	
+
 	def _unnormalize(self, X_norm, **kwargs):
 		c = self._center()
 		Dinv = self._unnormalize_der()
 		X = Dinv.dot(X_norm.T).T + c.reshape(1,-1)
-		return X 
+		return X
 
-	################################################################################		
+	################################################################################
 	# Bound checking
-	################################################################################		
+	################################################################################
 	def _isinside_bounds(self, X, tol = None):
 		X = np.array(X)
 		if tol is None: tol = self.tol
@@ -1146,36 +901,36 @@ class EuclideanDomain(Domain):
 			Ldiff_norm = np.sum(Ldiff**2,axis=1)
 			inside = inside & (np.sqrt(Ldiff_norm) <= rho + tol)
 		return inside
-	
 
-	################################################################################		
-	# Extent functions 
-	################################################################################		
-	
+
+	################################################################################
+	# Extent functions
+	################################################################################
+
 	def _extent_bounds(self, x, p):
 		"""Check the extent from the box constraints"""
 		alpha = np.inf
-		
+
 		# If on the boundary, the direction needs to point inside the domain
 		# otherwise we cannot move
 		if np.any(p[self.lb == x] < 0):
 			return 0.
 		if np.any(p[self.ub == x] > 0):
-			return 0.	
-		
+			return 0.
+
 		# To prevent divide-by-zero we ignore directions we are not moving in
 		I = np.nonzero(p)
 
 		# Check upper bounds
 		y = (self.ub - x)[I]/p[I]
 		if np.any(y>0):
-			alpha = min(alpha, np.min(y[y>0]))	
+			alpha = min(alpha, np.min(y[y>0]))
 
 		# Check lower bounds
 		y = (self.lb - x)[I]/p[I]
 		if np.any(y>0):
 			alpha = min(alpha, np.min(y[y>0]))
-		
+
 		return alpha
 
 	def _extent_ineq(self, x, p):
@@ -1188,7 +943,7 @@ class EuclideanDomain(Domain):
 			alpha = min(alpha, np.min(y[y>0]))
 
 		return alpha
-	
+
 	def _extent_quad(self, x, p):
 		""" check the extent from the quadratic constraints"""
 		alpha = np.inf
@@ -1199,7 +954,7 @@ class EuclideanDomain(Domain):
 			a = Lp.T.dot(Lp)
 			b = 2*Lp.T.dot(Lxy)
 			c = Lxy.T.dot(Lxy) - rho**2
-			
+
 			roots = np.roots([a,b,c])
 			real_roots = roots[np.isreal(roots)]
 			pos_roots = real_roots[real_roots>=0]

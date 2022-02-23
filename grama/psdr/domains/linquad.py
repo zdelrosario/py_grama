@@ -3,7 +3,7 @@ r""" LinQuadDomain definition
 Philosophically, LinQuad domains consist of those convex domains specified by a combination
 of linear inequality, linear equality, and quadratic inequality constraints.
 
-From a code perspective, this is where a dependency on CVXPY is introduced to 
+From a code perspective, this is where a dependency on CVXPY is introduced to
 handle domain properities from within this domain
 
 """
@@ -11,8 +11,7 @@ handle domain properities from within this domain
 from __future__ import division
 
 import numpy as np
-import cvxpy as cp
-from .domain import TOL, DEFAULT_CVXPY_KWARGS
+from .domain import TOL#, DEFAULT_CVXPY_KWARGS
 from .euclidean import EuclideanDomain
 from .tensor import TensorProductDomain
 
@@ -28,7 +27,7 @@ class LinQuadDomain(EuclideanDomain):
 	.. math::
 
 		\mathcal{D} := \left \lbrace
-			\mathbf{x} : \text{lb} \le \mathbf{x} \le \text{ub}, \ 
+			\mathbf{x} : \text{lb} \le \mathbf{x} \le \text{ub}, \
 			\mathbf{A} \mathbf{x} \le \mathbf{b}, \
 			\mathbf{A}_{\text{eq}} \mathbf{x} = \mathbf{b}_{\text{eq}}, \
 			\| \mathbf{L}_i (\mathbf{x} - \mathbf{y}_i)\|_2 \le \rho_i
@@ -43,26 +42,26 @@ class LinQuadDomain(EuclideanDomain):
 		Vector in right-hand side of the ineqaluty constraint
 	A_eq: array-like (p,n)
 		Matrix in left-hand side of equality constraint
-	b_eq: array-like (p,) 
+	b_eq: array-like (p,)
 		Vector in right-hand side of equality constraint
 	lb: array-like (n,)
-		Vector of lower bounds 
+		Vector of lower bounds
 	ub: array-like (n,)
-		Vector of upper bounds 
+		Vector of upper bounds
 	Ls: list of array-likes (p,m)
 		List of matrices with m columns defining the quadratic constraints
 	ys: list of array-likes (m,)
 		Centers of the quadratic constraints
-	rhos: list of positive floats 
+	rhos: list of positive floats
 		Radii of quadratic constraints
 	names: list of strings, optional
 		Names for each of the parameters in the space
 	kwargs: dict, optional
-		Additional parameters to be passed to cvxpy Problem.solve() 
+		Additional parameters to be passed to cvxpy Problem.solve()
 	"""
-	def __init__(self, A = None, b = None, 
-		lb = None, ub = None, 
-		A_eq = None, b_eq = None, 
+	def __init__(self, A = None, b = None,
+		lb = None, ub = None,
+		A_eq = None, b_eq = None,
 		Ls = None, ys = None, rhos = None,
 		names = None, **kwargs):
 
@@ -74,13 +73,13 @@ class LinQuadDomain(EuclideanDomain):
 		self._lb = self._init_lb(lb)
 		self._ub = self._init_ub(ub)
 		self._A, self._b = self._init_ineq(A, b)
-		self._A_eq, self._b_eq = self._init_eq(A_eq, b_eq)	
+		self._A_eq, self._b_eq = self._init_eq(A_eq, b_eq)
 		self._Ls, self._ys, self._rhos = self._init_quad(Ls, ys, rhos)
-		
-		self._init_names(names)	
 
-		
-		self.kwargs = merge(DEFAULT_CVXPY_KWARGS, kwargs)
+		self._init_names(names)
+
+
+		# self.kwargs = merge(DEFAULT_CVXPY_KWARGS, kwargs)
 
 	def __str__(self):
 		ret = "<%s on R^%d" % (self.__class__.__name__, len(self))
@@ -93,11 +92,11 @@ class LinQuadDomain(EuclideanDomain):
 		ret +=">"
 
 		return ret
-	
-	
-	################################################################################		
-	# Initialization helpers 
-	################################################################################		
+
+
+	################################################################################
+	# Initialization helpers
+	################################################################################
 	def _init_dim(self, lb = None, ub = None, A = None, A_eq = None, Ls = None):
 		"""determine the dimension of the space we are working on"""
 		if lb is not None:
@@ -130,7 +129,7 @@ class LinQuadDomain(EuclideanDomain):
 				lb = [lb]
 			assert len(lb) == len(self), "Lower bound has wrong dimensions"
 			return np.array(lb)
-		
+
 	def _init_ub(self, ub):
 		if ub is None:
 			return np.inf*np.ones(len(self))
@@ -139,7 +138,7 @@ class LinQuadDomain(EuclideanDomain):
 				ub = [ub]
 			assert len(ub) == len(self), "Upper bound has wrong dimensions"
 			return np.array(ub)
-		
+
 	def _init_ineq(self, A, b):
 		if A is None and b is None:
 			A = np.zeros((0,len(self)))
@@ -151,16 +150,16 @@ class LinQuadDomain(EuclideanDomain):
 				b = b.reshape(1)
 
 			assert len(b.shape) == 1, "b must have only one dimension"
-			
+
 			if len(A.shape) == 1 and len(b) == 1:
 				A = A.reshape(1,-1)
-	
+
 			assert A.shape[1] == len(self), "A has wrong number of columns"
 			assert A.shape[0] == b.shape[0], "The number of rows of A and b do not match"
 		else:
 			raise AssertionError("If using inequality constraints, both A and b must be specified")
-		return A, b	
-	
+		return A, b
+
 	def _init_eq(self, A_eq, b_eq):
 		if A_eq is None and b_eq is None:
 			A_eq = np.zeros((0,len(self)))
@@ -172,7 +171,7 @@ class LinQuadDomain(EuclideanDomain):
 				b_eq = b_eq.reshape(1)
 
 			assert len(b_eq.shape) == 1, "b_eq must have only one dimension"
-			
+
 			if len(A_eq.shape) == 1 and len(b_eq) == 1:
 				A_eq = A_eq.reshape(1,-1)
 
@@ -180,7 +179,7 @@ class LinQuadDomain(EuclideanDomain):
 			assert A_eq.shape[0] == b_eq.shape[0], "The number of rows of A_eq and b_eq do not match"
 		else:
 			raise AssertionError("If using equality constraints, both A_eq and b_eq must be specified")
-		
+
 		return A_eq, b_eq
 
 	def _init_quad(self, Ls, ys, rhos):
@@ -190,7 +189,7 @@ class LinQuadDomain(EuclideanDomain):
 			_rhos = []
 		elif Ls is not None and ys is not None and rhos is not None:
 			assert len(Ls) == len(ys) == len(rhos), "Length of all quadratic constraints must be the same"
-			
+
 			_Ls = []
 			_ys = []
 			_rhos = []
@@ -203,17 +202,17 @@ class LinQuadDomain(EuclideanDomain):
 				_rhos.append(rho)
 				# TODO: If constraint is rank-1, should we implicitly convert to a linear inequality constriant
 		else:
-			raise AssertionError("If providing quadratic constraint, each of Ls, ys, and rhos must be defined") 
-		return _Ls, _ys, _rhos 
+			raise AssertionError("If providing quadratic constraint, each of Ls, ys, and rhos must be defined")
+		return _Ls, _ys, _rhos
 
-	################################################################################		
+	################################################################################
 	# Simple properties
-	################################################################################		
+	################################################################################
 	def __len__(self): return self._dimension
-	
+
 	@property
 	def lb(self): return self._lb
-	
+
 	@property
 	def ub(self): return self._ub
 
@@ -234,20 +233,20 @@ class LinQuadDomain(EuclideanDomain):
 
 	@property
 	def ys(self): return self._ys
-	
+
 	@property
 	def rhos(self): return self._rhos
 
 
 
-		
-	################################################################################		
-	# Normalization 
-	################################################################################		
+
+	################################################################################
+	# Normalization
+	################################################################################
 	def _normalized_domain(self, **kwargs):
 		names_norm = [name + ' (normalized)' for name in self.names]
-		
-		return LinQuadDomain(lb = self.lb_norm, ub = self.ub_norm, A = self.A_norm, b = self.b_norm, 
+
+		return LinQuadDomain(lb = self.lb_norm, ub = self.ub_norm, A = self.A_norm, b = self.b_norm,
 			A_eq = self.A_eq_norm, b_eq = self.b_eq_norm, Ls = self.Ls_norm, ys = self.ys_norm, rhos = self.rhos_norm,
 			names = names_norm, **merge(self.kwargs, kwargs))
 
@@ -259,71 +258,71 @@ class LinQuadDomain(EuclideanDomain):
 		if self.A_eq.shape[0] == 0 or np.all(np.abs(self.A_eq.dot(p) ) < self.tol):
 			return min(self._extent_bounds(x, p), self._extent_ineq(x, p), self._extent_quad(x, p))
 		else:
-			return 0. 
+			return 0.
 
-	################################################################################		
-	# Convex Solver Functions 
-	################################################################################		
+	################################################################################
+	# Convex Solver Functions
+	################################################################################
 
-	def _build_constraints_norm(self, x_norm):
-		r""" Build the constraints corresponding to the domain given a vector x
-		"""
-		constraints = []
-		
-		# Numerical issues emerge with unbounded constraints
-		I = np.isfinite(self.lb_norm)
-		if np.sum(I) > 0:
-			constraints.append( self.lb_norm[I] <= x_norm[I])
-		
-		I = np.isfinite(self.ub_norm)
-		if np.sum(I) > 0:
-			constraints.append( x_norm[I] <= self.ub_norm[I])
-	
-		if self.A.shape[0] > 0:	
-			constraints.append( x_norm.__rmatmul__(self.A_norm) <= self.b_norm)
-		if self.A_eq.shape[0] > 0:
-			constraints.append( x_norm.__rmatmul__(self.A_eq_norm) == self.b_eq_norm)
+	# def _build_constraints_norm(self, x_norm):
+	# 	r""" Build the constraints corresponding to the domain given a vector x
+	# 	"""
+	# 	constraints = []
 
-		for L, y, rho in zip(self.Ls_norm, self.ys_norm, self.rhos_norm):
-			if len(L) > 1:
-				constraints.append( cp.norm( L @ x_norm - L @ y) <= rho )
-			elif len(L) == 1:
-				constraints.append( cp.norm(L @ x_norm - L @ y) <= rho)
+	# 	# Numerical issues emerge with unbounded constraints
+	# 	I = np.isfinite(self.lb_norm)
+	# 	if np.sum(I) > 0:
+	# 		constraints.append( self.lb_norm[I] <= x_norm[I])
 
-		return constraints
-	
+	# 	I = np.isfinite(self.ub_norm)
+	# 	if np.sum(I) > 0:
+	# 		constraints.append( x_norm[I] <= self.ub_norm[I])
 
-	def _build_constraints(self, x):
-		r""" Build the constraints corresponding to the domain given a vector x
-		"""
-		constraints = []
-		
-		# Numerical issues emerge with unbounded constraints
-		I = np.isfinite(self.lb)
-		if np.sum(I) > 0:
-			constraints.append( self.lb[I] <= x[I])
-		
-		I = np.isfinite(self.ub)
-		if np.sum(I) > 0:
-			constraints.append( x[I] <= self.ub[I])
-		
-		if self.A.shape[0] > 0:	
-			constraints.append( x.__rmatmul__(self.A) <= self.b)
-		if self.A_eq.shape[0] > 0:
-			constraints.append( x.__rmatmul__(self.A_eq) == self.b_eq)
+	# 	if self.A.shape[0] > 0:
+	# 		constraints.append( x_norm.__rmatmul__(self.A_norm) <= self.b_norm)
+	# 	if self.A_eq.shape[0] > 0:
+	# 		constraints.append( x_norm.__rmatmul__(self.A_eq_norm) == self.b_eq_norm)
 
-		for L, y, rho in zip(self.Ls, self.ys, self.rhos):
-			if len(L) > 1:
-				constraints.append( cp.norm(L @ x - L.dot(y)) <= rho )
-			elif len(L) == 1:
-				constraints.append( cp.norm(L @ x - L.dot(y)) <= rho)
+	# 	for L, y, rho in zip(self.Ls_norm, self.ys_norm, self.rhos_norm):
+	# 		if len(L) > 1:
+	# 			constraints.append( cp.norm( L @ x_norm - L @ y) <= rho )
+	# 		elif len(L) == 1:
+	# 			constraints.append( cp.norm(L @ x_norm - L @ y) <= rho)
 
-		return constraints
-	
+	# 	return constraints
 
-	################################################################################		
-	# 
-	################################################################################		
+
+	# def _build_constraints(self, x):
+	# 	r""" Build the constraints corresponding to the domain given a vector x
+	# 	"""
+	# 	constraints = []
+
+	# 	# Numerical issues emerge with unbounded constraints
+	# 	I = np.isfinite(self.lb)
+	# 	if np.sum(I) > 0:
+	# 		constraints.append( self.lb[I] <= x[I])
+
+	# 	I = np.isfinite(self.ub)
+	# 	if np.sum(I) > 0:
+	# 		constraints.append( x[I] <= self.ub[I])
+
+	# 	if self.A.shape[0] > 0:
+	# 		constraints.append( x.__rmatmul__(self.A) <= self.b)
+	# 	if self.A_eq.shape[0] > 0:
+	# 		constraints.append( x.__rmatmul__(self.A_eq) == self.b_eq)
+
+	# 	for L, y, rho in zip(self.Ls, self.ys, self.rhos):
+	# 		if len(L) > 1:
+	# 			constraints.append( cp.norm(L @ x - L.dot(y)) <= rho )
+	# 		elif len(L) == 1:
+	# 			constraints.append( cp.norm(L @ x - L.dot(y)) <= rho)
+
+	# 	return constraints
+
+
+	################################################################################
+	#
+	################################################################################
 
 	def add_constraints(self, A = None, b = None, lb = None, ub = None, A_eq = None, b_eq = None,
 		Ls = None, ys = None, rhos = None):
@@ -339,7 +338,7 @@ class LinQuadDomain(EuclideanDomain):
 		lb = np.maximum(lb, self.lb)
 		ub = np.minimum(ub, self.ub)
 
-		A = np.vstack([self.A, A])	
+		A = np.vstack([self.A, A])
 		b = np.hstack([self.b, b])
 
 		A_eq = np.vstack([self.A_eq, A_eq])

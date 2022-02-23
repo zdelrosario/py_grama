@@ -15,22 +15,18 @@ import scipy.optimize
 import scipy.sparse
 
 
-import cvxpy as cp
-import cvxopt
-
 from .pgf import PGF
-from .domains.domain import DEFAULT_CVXPY_KWARGS
 from .misc import merge
 
 __all__ = ['SubspaceBasedDimensionReduction',
-	'ActiveSubspace', 
+	'ActiveSubspace',
 	]
 
 class SubspaceBasedDimensionReduction(object):
 	r""" Abstract base class for Subspace-Based Dimension Reduction
 
-	Given a function :math:`f : \mathcal{D} \to \mathbb{R}`, 
-	subspace-based dimension reduction identifies a subspace, 
+	Given a function :math:`f : \mathcal{D} \to \mathbb{R}`,
+	subspace-based dimension reduction identifies a subspace,
 	described by a matrix :math:`\mathbf{U} \in \mathbb{R}^{m\times n}`
 	with orthonormal columns for some :math:`n \le m`.
 
@@ -74,15 +70,15 @@ class SubspaceBasedDimensionReduction(object):
 			if dim == 1:
 				fig, ax = plt.subplots(figsize = (6,6))
 			else:
-				# Hack so that plot is approximately square after adding colorbar 
+				# Hack so that plot is approximately square after adding colorbar
 				fig, ax = plt.subplots(figsize = (7.5,6))
-	
+
 		if X is None:
 			X = self.X
-	
+
 		# Check dimensions
 		X = np.atleast_2d(X)
-		assert X.shape[1] == len(self), "Samples do not match dimension of space"	
+		assert X.shape[1] == len(self), "Samples do not match dimension of space"
 
 		if U is None:
 			U = self.U
@@ -92,7 +88,7 @@ class SubspaceBasedDimensionReduction(object):
 			else:
 				assert U.shape[0] == len(self), "Dimensions do not match"
 
-		
+
 		if dim == 1:
 			if ax is not None:
 				ax.plot(X.dot(U[:,0]), fX, 'k.')
@@ -107,14 +103,14 @@ class SubspaceBasedDimensionReduction(object):
 
 		elif dim == 2:
 			Y = U[:,0:2].T.dot(X.T).T
-			
+
 			if ax is not None:
 				sc = ax.scatter(Y[:,0], Y[:,1], c = fX.flatten(), s = 3)
 				ax.set_xlabel(r'active coordinate 1 $\mathbf{u}_1^\top \mathbf{x}$')
 				ax.set_ylabel(r'active coordinate 2 $\mathbf{u}_2^\top \mathbf{x}$')
 
 				plt.colorbar(sc).set_label('f(x)')
-			
+
 			if pgfname is not None:
 				pgf = PGF()
 				pgf.add('y1', Y[:,0])
@@ -123,104 +119,10 @@ class SubspaceBasedDimensionReduction(object):
 				pgf.write(pgfname)
 
 		else:
-			raise NotImplementedError		
+			raise NotImplementedError
 
 		return ax
 
-	def shadow_envelope(self, X, fX, ax = None, ngrid = None, pgfname = None, verbose = True, U = None, **kwargs):
-		r""" Draw a 1-d shadow plot of a large number of function samples
-
-		Returns
-		-------
-		y: np.ndarray
-			Projected coordinates
-		lb: np.ndarray
-			piecewise linear lower bound values
-		ub: np.ndarray
-			piecewise linear upper bound values
-		"""
-		if U is None:
-			U = self.U[:,0]		
-		else:
-			if len(U.shape) > 1:
-				U = U[:,0]
-
-		# Since this is for plotting purposes, we reduce accuracy to 3 digits	
-		solver_kwargs = {'verbose': verbose, 'solver': 'OSQP', 'eps_abs': 1e-3, 'eps_rel': 1e-3}				
-
-		X = np.array(X)
-		fX = np.array(fX)
-		assert len(X) == len(fX), "Number of inputs did not match number of outputs"
-		if len(fX.shape) > 1:
-			fX = fX.flatten()
-			assert len(fX) == len(X), "Expected fX to be a vector"
-
-		y = X.dot(U)
-		if ngrid is None:
-			# Determine the minimum number of bins
-			ngrid = 25
-			while True:
-				yy = np.linspace(np.min(y), np.max(y), ngrid)
-				h = yy[1] - yy[0]	
-				if ngrid == 3:
-					break 
-				# Make sure we have at least two entries in every bin:
-				items, counts = np.unique(np.floor( (y - yy[0])/h), return_counts = True)
-				# We ignore the last count of the bins as that is the right endpoint and will only ever have one
-				if (np.min(counts[:-1]) >= 5) and len(items) == ngrid:
-					break
-				else:
-					ngrid -= 1
-		else:
-			yy = np.linspace(np.min(y), np.max(y), ngrid)
-			h = yy[1] - yy[0]
-
-		h = float(h)
-
-		# Build the piecewise linear interpolation matrix
-		j = np.floor( (y - yy[0])/h ).astype(np.int)
-		row = []
-		col = []
-		val = []
-
-		# Points not at the right endpoint
-		row += np.arange(len(y)).tolist()
-		col += j.tolist()
-		val += ((  (yy[0]+ (j+1)*h) - y )/h).tolist()
-
-		# Points not at the right endpoint
-		I = (j != len(yy) - 1)
-		row += np.argwhere(I).flatten().tolist()
-		col += (j[I]+1).tolist()
-		val += ( (y[I] - (yy[0] + j[I]*h)  )/h).tolist()
-
-		A = scipy.sparse.coo_matrix((val, (row, col)), shape = (len(y), len(yy)))
-		A = cp.Constant(A)
-		ub = cp.Variable(len(yy))
-		#ub0 = [ max(max(fX[j == i]), max(fX[j== i+1]))  for i in np.arange(0,ngrid-1)] +[max(fX[j == ngrid - 1])]
-		#ub.value = np.array(ub0).flatten()
-		prob = cp.Problem(cp.Minimize(cp.sum(ub)), [A*ub >= fX.flatten()])
-		prob.solve(**solver_kwargs)
-		ub = ub.value
-		
-		lb = cp.Variable(len(yy))
-		#lb0 = [ min(min(fX[j == i]), min(fX[j== i+1]))  for i in np.arange(0,ngrid-1)] +[min(fX[j == ngrid - 1])]
-		#lb.value = np.array(lb0).flatten()
-		prob = cp.Problem(cp.Maximize(cp.sum(lb)), [A*lb <= fX.flatten()])
-		prob.solve(**solver_kwargs)
-		lb = lb.value
-
-		if ax is not None:
-			ax.fill_between(yy, lb, ub, **kwargs) 
-
-		if pgfname is not None:
-			pgf = PGF()
-			pgf.add('y', yy)
-			pgf.add('lb', lb)
-			pgf.add('ub', ub)	
-			pgf.write(pgfname)
-		
-		return y, lb, ub
 
 
 	def _init_dim(self, X = None, grads = None):
@@ -238,7 +140,7 @@ class SubspaceBasedDimensionReduction(object):
 	@property
 	def X(self):
 		return np.zeros((0,len(self)))
-	
+
 	@property
 	def fX(self):
 		return np.zeros((0,len(self)))
@@ -258,7 +160,7 @@ class SubspaceBasedDimensionReduction(object):
 		if grads is not None and len(grads) > 0:
 			return self._fix_subspace_signs_grads(U, grads)
 		else:
-			return self._fix_subspace_signs_samps(U, X, fX)	
+			return self._fix_subspace_signs_samps(U, X, fX)
 
 	def _fix_subspace_signs_samps(self, U, X, fX):
 		sgn = np.zeros(len(U[0]))
@@ -271,12 +173,12 @@ class SubspaceBasedDimensionReduction(object):
 
 		# If the sign is zero, keep the current orientation
 		sgn[sgn == 0] = 1
-		return U.dot(np.diag(np.sign(sgn)))	
+		return U.dot(np.diag(np.sign(sgn)))
 
 	def _fix_subspace_signs_grads(self, U, grads):
 		return U.dot(np.diag(np.sign(np.mean(grads.dot(U), axis = 0))))
 
-	
+
 	def approximate_lipschitz(self, X = None, fX = None, grads = None,  dim = None):
 		r""" Approximate the Lipschitz matrix on the low-dimensional subspace
 		"""
@@ -287,7 +189,7 @@ class ActiveSubspace(SubspaceBasedDimensionReduction):
 	r"""Computes the active subspace gradient samples
 
 	Given the function :math:`f:\mathcal{D} \to \mathbb{R}`,
-	the active subspace is defined as the eigenvectors corresponding to the 
+	the active subspace is defined as the eigenvectors corresponding to the
 	largest eigenvalues of the average outer-product of gradients:
 
 	.. math::
@@ -299,7 +201,7 @@ class ActiveSubspace(SubspaceBasedDimensionReduction):
 	evaluated at random samples over the domain and estimates the matrix :math:`\mathbf{C}`
 	using Monte-Carlo integration. However, if provided a weight corresponding to a quadrature rule,
 	this will be used instead to approximate this matrix; i.e.,
-		
+
 	.. math::
 
 		\mathbf{C} \approx \sum_{i=1}^N w_i \nabla f(\mathbf{x}_i) \nabla f(\mathbf{x}_i)^\top.
@@ -328,15 +230,15 @@ class ActiveSubspace(SubspaceBasedDimensionReduction):
 		N = len(self._grads)
 		if weights is None:
 			weights = np.ones(N)/N
-			
+
 		self._weights = np.array(weights)
 		self._U, self._s, VT = scipy.linalg.svd(np.sqrt(self._weights)*self._grads.T)
 		# Pad s with zeros if we don't have as many gradient samples as dimension of the space
 		self._s = np.hstack([self._s, np.zeros(self._dimension - len(self._s))])
 		self._C = self._U @ np.diag(self._s**2) @ self._U.T
 
-		# Fix +/- scaling so average gradient is positive	
-		self._U = self._fix_subspace_signs_grads(self._U, self._grads)		
+		# Fix +/- scaling so average gradient is positive
+		self._U = self._fix_subspace_signs_grads(self._U, self._grads)
 
 
 	def fit_function(self, fun, N_gradients):
@@ -347,12 +249,12 @@ class ActiveSubspace(SubspaceBasedDimensionReduction):
 		fun: Function
 			function object for which to estimate the active subspace via the average outer-product of gradients
 		N_gradients: int
-			Maximum number of gradient samples to use 
+			Maximum number of gradient samples to use
 		"""
 		X, w = fun.domain.quadrature_rule(N_gradients)
 		grads = fun.grad(X)
 		self.fit(grads, w)
-			
+
 
 	@property
 	def U(self):
@@ -369,5 +271,3 @@ class ActiveSubspace(SubspaceBasedDimensionReduction):
 	# TODO: Plot of eigenvalues (with optional boostrapped estimate)
 
 	# TODO: Plot of eigenvector angles with bootstrapped replicates.
-
-
