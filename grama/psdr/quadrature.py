@@ -32,7 +32,7 @@ def gauss(N, a = 0, b = 1):
 	"""
 	a, b = float(a), float(b)
 
-	beta = 0.5/np.sqrt(1 - ((np.arange(2,2*N, 2, dtype = float)**(-2) ))
+	beta = 0.5/np.sqrt(1 - ((np.arange(2,2*N, 2, dtype = float)**(-2) )))
 	T = np.diag(beta, 1) + np.diag(beta, -1)
 
 	# Because eigenvalues come sorted in increasing order, there is no need to sort
