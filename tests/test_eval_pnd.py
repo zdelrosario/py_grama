@@ -218,7 +218,7 @@ class TestEvalPND(unittest.TestCase):
         self.assertTrue(len(df_pnd.columns.values) == len(df_test.columns.values) + 2)
 
     def test_eval_faulty_inputs(self):
-        """ Test bad inputs to eval_pnd
+        """ Test faulty inputs to eval_pnd
         """
         # Model to make Dataset
         md_true = make_pareto_random()

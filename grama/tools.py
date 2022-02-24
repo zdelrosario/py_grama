@@ -404,7 +404,8 @@ def df_equal(df1, df2, close=False, precision=3):
                 df2,
                 check_dtype=False,
                 check_exact=False,
-                check_less_precise=precision,
+                # check_less_precise=precision,
+                rtol=1e5
             )
             return True
         except:

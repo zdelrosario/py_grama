@@ -10,7 +10,7 @@ __all__ = [
 import warnings
 from .base import dfdelegate
 from .. import add_pipe
-from pandas import merge
+from pandas import merge, concat
 
 
 def validate_set_ops(df, other):
@@ -58,7 +58,7 @@ def tran_union(df, other, index=False, keep="first"):
             and `'last'`.
     """
     validate_set_ops(df, other)
-    stacked = df.append(other)
+    stacked = concat([df, other])
     if index:
         stacked_reset_indexes = stacked.reset_index()
         index_cols = [

@@ -118,6 +118,8 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
     for key in signs.keys():
         if key+mean_prefix not in model.out:
             raise ValueError(f"signs.{key} implies output {key+mean_prefix}, which is not found in provided md.out")
+        if key+sd_prefix not in model.out:
+            raise ValueError(f"signs{key} implies output {key+sd_prefix}, which is not found in provided sd.out")
 
     ## Compute predictions and predicted uncertainties
     df_pred = (
