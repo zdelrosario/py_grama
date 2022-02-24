@@ -10,7 +10,7 @@ __all__ = [
 import collections
 from .base import make_symbolic
 from numpy import argmin, arange, unique, repeat, nan, array
-from pandas import concat, DataFrame, Series, isnull, melt
+from pandas import concat, DataFrame, Series, isnull
 
 
 # ------------------------------------------------------------------------------
