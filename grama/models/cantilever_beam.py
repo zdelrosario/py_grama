@@ -1,7 +1,7 @@
 __all__ = ["make_cantilever_beam"]
 
-from grama import cp_bounds, cp_copula_independence, cp_function, cp_marginals, \
-    Model
+from grama import cp_bounds, cp_copula_independence, cp_vec_function, cp_marginals, \
+    Model, df_make
 from collections import OrderedDict as od
 from numpy import sqrt, array, Inf, float64
 from scipy.stats import norm
@@ -20,18 +20,21 @@ TAU_V  = 100.
 TAU_E  = 1.45e6
 TAU_Y  = 2000.
 
-def function_area(x):
-    w, t = x
-    return w * t
+def function_area(df):
+    return df_make(c_area=df.w * df.t)
 
-def function_stress(x):
-    w, t, H, V, E, Y = x
-    return (Y - 600 * V / w / t**2 - 600 * H / w**2 / t) / MU_Y
+def function_stress(df):
+    return df_make(
+        g_stress=(
+            df.Y - 600 * df.V / df.w / df.t**2 - 600 * df.H / df.w**2 / df.t
+        ) / MU_Y
+    )
 
-def function_displacement(x):
-    w, t, H, V, E, Y = x
-    return D_MAX - float64(4) * LENGTH**3 / E / w / t * sqrt(
-        V**2 / t**4 + H**2 / w**4
+def function_displacement(df):
+    return df_make(
+        g_disp=D_MAX - float64(4) * LENGTH**3 / df.E / df.w / df.t * sqrt(
+            df.V**2 / df.t**4 + df.H**2 / df.w**4
+        )
     )
 
 def make_cantilever_beam():
@@ -70,21 +73,21 @@ def make_cantilever_beam():
     """
 
     md = Model(name = "Cantilever Beam") >> \
-         cp_function(
+         cp_vec_function(
              fun=function_area,
              var=["w", "t"],
              out=["c_area"],
              name="cross-sectional area",
              runtime=1.717e-7
          ) >> \
-         cp_function(
+         cp_vec_function(
              fun=function_stress,
              var=["w", "t", "H", "V", "E", "Y"],
              out=["g_stress"],
              name="limit state: stress",
              runtime=8.88e-7
          ) >> \
-         cp_function(
+         cp_vec_function(
              fun=function_displacement,
              var=["w", "t", "H", "V", "E", "Y"],
              out=["g_disp"],

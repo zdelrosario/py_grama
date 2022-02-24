@@ -11,6 +11,9 @@ coverage:
 	cd tests; coverage html
 	open tests/htmlcov/index.html
 
+doc:
+	sphinx-build -b html docs build
+
 autodoc:
 	rm docs/source/grama*
 	rm docs/source/modules.rst

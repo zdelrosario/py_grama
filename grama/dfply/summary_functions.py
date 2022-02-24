@@ -80,6 +80,8 @@ def mean_lo(series, alpha=0.01):
 
     Args:
         series (pandas.Series): column to summarize
+        alpha (float): alpha-level for calculation
+            Note that the confidence level C is given by C = 1 - alpha
 
     Returns:
         float: Lower confidence interval for the mean
@@ -109,6 +111,8 @@ def mean_up(series, alpha=0.01):
 
     Args:
         series (pandas.Series): column to summarize
+        alpha (float): alpha-level for calculation
+            Note that the confidence level C is given by C = 1 - alpha
 
     Returns:
         float: Upper confidence interval for the mean
@@ -533,7 +537,8 @@ def pr_lo(series, alpha=0.01):
 
     Args:
         series (pandas.Series): Column to summarize; must be boolean or 0/1.
-        alpha (float): Confidence level; value in (0, 1)
+        alpha (float): alpha-level for calculation, in (0, 1)
+            Note that the confidence level C is given by C = 1 - alpha
 
     Returns:
         float: Lower confidence interval
@@ -574,7 +579,8 @@ def pr_up(series, alpha=0.01):
 
     Args:
         series (pandas.Series): Column to summarize; must be boolean or 0/1.
-        alpha (float): Confidence level; value in (0, 1)
+        alpha (float): alpha-level for calculation, in (0, 1)
+            Note that the confidence level C is given by C = 1 - alpha
 
     Returns:
         float: Upper confidence interval

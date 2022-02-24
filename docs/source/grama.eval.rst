@@ -12,7 +12,6 @@ grama.eval.eval\_pyDOE module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

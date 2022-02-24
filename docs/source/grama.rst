@@ -5,12 +5,14 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
    grama.data
    grama.dfply
    grama.eval
    grama.fit
    grama.models
+   grama.psdr
    grama.tran
 
 Submodules
@@ -36,6 +38,14 @@ grama.core module
 -----------------
 
 .. automodule:: grama.core
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+grama.eval\_contour module
+--------------------------
+
+.. automodule:: grama.eval_contour
    :members:
    :undoc-members:
    :show-inheritance:
@@ -128,6 +138,14 @@ grama.tools module
    :undoc-members:
    :show-inheritance:
 
+grama.tran\_is module
+---------------------
+
+.. automodule:: grama.tran_is
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.tran\_pivot module
 ------------------------
 
@@ -159,7 +177,6 @@ grama.tran\_tools module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

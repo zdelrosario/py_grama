@@ -105,6 +105,7 @@ def plot_corrtile(df, var=None, out=None, corr=None):
         >> ggplot(aes(var, out))
         + geom_tile(aes(fill=corr))
         + scale_fill_gradient2(name="Corr", midpoint=0)
+        + theme(axis_text_x=element_text(angle=270))
     )
 
 pt_corrtile = add_pipe(plot_corrtile)
