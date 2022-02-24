@@ -165,7 +165,7 @@ class TestEvalPND(unittest.TestCase):
 
 
     def test_eval_input_subsets(self):
-        """ Test inputs are subsets of the providel DataFrames for eval_pnd()
+        """ Test inputs are subsets of the provided DataFrames for eval_pnd()
         """
         # Model to make Dataset
         md_true = make_pareto_random(twoDim=False)
@@ -209,16 +209,15 @@ class TestEvalPND(unittest.TestCase):
                 seed = 101
             )
         )
-        print(df_pnd)
 
         ### how to imply x1 and x2 from y1 and y2?
 
         # Test for correctness by shape
         self.assertTrue(len(df_pnd) == df_test.shape[0])
-        # # Test for correctness by # of outputs
-        # self.assertTrue(len(df_pnd.columns.values) == len(df_test.columns.values) + 2 - 2)
+        # Test for correctness by # of outputs
+        self.assertTrue(len(df_pnd.columns.values) == len(df_test.columns.values) + 2)
 
-    def test_eval_false_inputs(self):
+    def test_eval_faulty_inputs(self):
         """ Test bad inputs to eval_pnd
         """
         # Model to make Dataset
@@ -253,7 +252,7 @@ class TestEvalPND(unittest.TestCase):
         )
 
         # Call eval_pnd
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             df_pnd = (
                 md_fit
                 >> gr.ev_pnd(

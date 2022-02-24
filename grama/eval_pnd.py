@@ -51,8 +51,7 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
 
     Example:
     >>> import grama as gr
-    >>>...
-    >>>...
+    >>>
     >>> md_true = gr.make_pareto_random()
     >>>
     >>> df_data = (
@@ -115,6 +114,10 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
 
     if not set(model.var).issubset(set(df_test.columns)):
         raise ValueError("model.var must be subset of df_test.columns")
+
+    for key in signs.keys():
+        if key+mean_prefix not in model.out:
+            raise ValueError(f"signs.{key} implies output {key+mean_prefix}, which is not found in provided md.out")
 
     ## Compute predictions and predicted uncertainties
     df_pred = (
