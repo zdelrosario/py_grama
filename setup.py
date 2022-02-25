@@ -4,7 +4,7 @@ setup(
     name="py_grama",
     author="Zachary del Rosario",
     author_email="zdelrosario@outlook.com",
-    version="0.3.0",
+    version="0.3.1",
     packages=[
         "grama",
         "grama.data",
@@ -43,7 +43,6 @@ setup(
         "statsmodels": ["statsmodels"],
         "pyDOE": ["pyDOE"],
         "umap": ["umap-learn"],
-        # "psdr": ["psdr"],
         "dev": [
             "lolopy",
             "pymatgen==2021.2.8.1",
@@ -52,7 +51,6 @@ setup(
             "statsmodels",
             "pyDOE",
             "umap-learn",
-            # "psdr",
         ],
     }
 )
