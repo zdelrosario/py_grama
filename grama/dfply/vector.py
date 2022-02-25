@@ -180,9 +180,9 @@ def case_when(*conditions):
 
     lengths = []
     for logical, outcome in conditions:
-        if isinstance(logical, collections.Iterable):
+        if isinstance(logical, collections.abc.Iterable):
             lengths.append(len(logical))
-        if isinstance(outcome, collections.Iterable) and not isinstance(outcome, str):
+        if isinstance(outcome, collections.abc.Iterable) and not isinstance(outcome, str):
             lengths.append(len(outcome))
     unique_lengths = unique(lengths)
     assert len(unique_lengths) == 1
@@ -194,7 +194,7 @@ def case_when(*conditions):
             logical = repeat(logical, output_len)
         if isinstance(logical, Series):
             logical = logical.values
-        if not isinstance(outcome, collections.Iterable) or isinstance(outcome, str):
+        if not isinstance(outcome, collections.abc.Iterable) or isinstance(outcome, str):
             outcome = Series(repeat(outcome, output_len))
         outcome[~logical] = nan
         output.append(outcome)
@@ -242,9 +242,9 @@ def if_else(condition, when_true, otherwise):
         >>> )
     """
 
-    if not isinstance(when_true, collections.Iterable) or isinstance(when_true, str):
+    if not isinstance(when_true, collections.abc.Iterable) or isinstance(when_true, str):
         when_true = repeat(when_true, len(condition))
-    if not isinstance(otherwise, collections.Iterable) or isinstance(otherwise, str):
+    if not isinstance(otherwise, collections.abc.Iterable) or isinstance(otherwise, str):
         otherwise = repeat(otherwise, len(condition))
     assert (len(condition) == len(when_true)) and (len(condition) == len(otherwise))
 
