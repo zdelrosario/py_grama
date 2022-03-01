@@ -25,6 +25,7 @@ __all__ = [
     "qqvals",
     "linspace",
     "logspace",
+    "consec",
 ]
 
 from grama import make_symbolic, marg_fit
@@ -45,7 +46,7 @@ from numpy import ceil as npceil
 from numpy import round as npround
 from numpy import linspace as nplinspace
 from numpy import logspace as nplogspace
-from pandas import Categorical, Series, to_numeric
+from pandas import Categorical, Series, to_numeric, concat
 from scipy.stats import norm, rankdata
 
 
@@ -455,3 +456,32 @@ def logspace(a, b, n, **kwargs):
         >>> )
     """
     return nplogspace(a, b, num=n, **kwargs)
+
+
+@make_symbolic
+def consec(series, i=3):
+    r"""Flag consecutive runs of True values
+
+    Flag as True all entries associated with a "run" of True values. A "run" is
+    defined as a user-defined count (given by i) of consecutive True values.
+
+    Args:
+        series (pd.Series): Series of boolean values
+        i (int): User-defined count to define a run
+
+    Returns:
+        series: Boolean series flagging consecutive True values
+
+    """
+    # Pad the series
+    s = concat((
+        Series([False] * i),
+        series,
+        Series([False] * i),
+    ))
+    # Find the runs
+    run = s.rolling(i, center=True).sum() \
+           .rolling(i+1, center=True).max() \
+           [i:-i] >= i
+    # Touches run and is True
+    return run & series
