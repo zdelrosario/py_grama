@@ -1,5 +1,8 @@
 # Statistical Process Control tools
 __all__ = [
+    "c_sd",
+    "B3",
+    "B4",
     "plot_xbs",
     "pt_xbs",
 ]
