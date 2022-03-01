@@ -44,3 +44,4 @@ from .eval import *
 from .fit import *
 from .psdr import *
 from .tran import *
+from .spc import *
