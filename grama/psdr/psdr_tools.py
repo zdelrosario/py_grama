@@ -151,31 +151,31 @@ def tran_polyridge(
         - J. M. Hokanson and Paul G. Constantine. Data-driven Polynomial Ridge Approximation Using Variable Projection. SIAM J. Sci. Comput. Vol 40, No 3, pp A1566–A1589, DOI:10.1137/17M1117690.
 
     Examples:
-        >>> import grama as gr
-        >>> from grama.psdr import tf_polyridge
-        >>> DF = gr.Intention()
-        >>>
-        >>> ## Set up a dataset to reduce
-        >>> df_data = (
-        >>>     gr.df_make(x=range(10))
-        >>>     >> gr.tf_outer(gr.df_make(y=range(10)))
-        >>>     >> gr.tf_outer(gr.df_make(z=range(10)))
-        >>>     >> gr.tf_mutate(f=DF.x - DF.y)
-        >>> )
-        >>>
-        >>> ## Use polynomial ridge approximation to derive weights
-        >>> df_weights = (
-        >>>     df_data
-        >>>     >> tf_polyridge(out="f", n_dim=1, n_degree=1)
-        >>> )
-        >>>
-        >>> ## Construct a shadow plot
-        >>> (
-        >>>     df_data
-        >>>     >> gr.tf_inner(df_weights)
-        >>>     >> gr.ggplot(gr.aes("dot", "f"))
-        >>>     + gr.geom_point()
-        >>> )
+        import grama as gr
+        from grama.psdr import tf_polyridge
+        DF = gr.Intention()
+
+        ## Set up a dataset to reduce
+        df_data = (
+            gr.df_make(x=range(10))
+            >> gr.tf_outer(gr.df_make(y=range(10)))
+            >> gr.tf_outer(gr.df_make(z=range(10)))
+            >> gr.tf_mutate(f=DF.x - DF.y)
+        )
+
+        ## Use polynomial ridge approximation to derive weights
+        df_weights = (
+            df_data
+            >> tf_polyridge(out="f", n_dim=1, n_degree=1)
+        )
+
+        ## Construct a shadow plot
+        (
+            df_data
+            >> gr.tf_inner(df_weights)
+            >> gr.ggplot(gr.aes("dot", "f"))
+            + gr.geom_point()
+        )
 
     """
     ## Run the low-level implementation
@@ -222,31 +222,40 @@ def fit_polyridge(
         - J. M. Hokanson and Paul G. Constantine. Data-driven Polynomial Ridge Approximation Using Variable Projection. SIAM J. Sci. Comput. Vol 40, No 3, pp A1566–A1589, DOI:10.1137/17M1117690.
 
     Examples:
-            import grama as gr
-            DF = gr.Intention()
+        import grama as gr
+        DF = gr.Intention()
 
-            ## Set up a dataset to reduce
-            df_data = (
-                gr.df_make(x=range(10))
-                >> gr.tf_outer(gr.df_make(y=range(10)))
-                >> gr.tf_outer(gr.df_make(z=range(10)))
-                >> gr.tf_mutate(f=DF.x - DF.y)
-            )
+        ## Set up a dataset to reduce
+        df_data = (
+            gr.df_make(x=range(10))
+            >> gr.tf_outer(gr.df_make(y=range(10)))
+            >> gr.tf_outer(gr.df_make(z=range(10)))
+            >> gr.tf_mutate(f=DF.x - DF.y)
+        )
 
-            ## Use polynomial ridge approximation to derive weights
-            md_poly = (
-                df_data
-                >> gr.ft_polyridge(out="f", n_dim=1, n_degree=1)
-            )
+        ## Use polynomial ridge approximation to fit a surrogate model
+        md_poly = (
+            df_data
+            >> gr.ft_polyridge(out="f", n_dim=1, n_degree=1)
+        )
 
-            ## Fit routine is useful for cross-validation of hyperparameters
-            (
-                df_data
-                >> gr.tf_kfolds(
-                    ft=gr.ft_polyridge(out="f", n_dim=1, n_degree=1),
-                    k=5,
-                )
+        ## Fit routine is useful for cross-validation of hyperparameters;
+        # compare two different hyperparameter settings
+        (
+            df_data
+            >> gr.tf_kfolds(
+                ft=gr.ft_polyridge(out="f", n_dim=1, n_degree=1),
+                k=5,
             )
+        )
+
+        (
+            df_data
+            >> gr.tf_kfolds(
+                ft=gr.ft_polyridge(out="f", n_dim=2, n_degree=2),
+                k=5,
+            )
+        )
 
     """
     ## Run the low-level implementation
