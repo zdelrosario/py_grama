@@ -8,9 +8,30 @@ DF = gr.Intention()
 
 ## Test support points
 ##################################################
-class TestSupportPoints(unittest.TestCase):
+class TestPolyridge(unittest.TestCase):
     def setUp(self):
         pass
+
+    def test_fit_polyridge(self):
+        """Test the functionality and correctness of ft_polyridge()
+        """
+        df_test = (
+            gr.df_make(x=range(10))
+            >> gr.tf_outer(gr.df_make(y=range(10)))
+            >> gr.tf_outer(gr.df_make(z=range(10)))
+            >> gr.tf_mutate(f=DF.x - DF.y)
+        )
+
+        md = gr.fit_polyridge(df_test, out="f", n_degree=1, n_dim=1)
+
+        df1 = gr.eval_df(md, df=gr.df_make(x=[2,1], y=[1], z=[0]))
+        df2 = gr.df_make(x=[2,1], y=[1], z=[0], f_mean=[1, 0])
+
+        self.assertTrue(gr.df_equal(
+            df1,
+            df2,
+            close=True,
+        ))
 
     def test_tran_polyridge(self):
         """Test the functionality and correctness of tran_polyridge()
