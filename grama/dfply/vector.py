@@ -119,8 +119,10 @@ def coalesce(*series):
     coalescer = concat(series, axis=1)
     min_nonna = argmin(isnull(coalescer).values, axis=1)
     min_nonna = [coalescer.columns[i] for i in min_nonna]
-    return coalescer.lookup(arange(coalescer.shape[0]), min_nonna)
-
+    print(coalescer)
+    print(array(coalescer[min_nonna].bfill(axis=1).iloc[:, 0]))
+    # print(type(coalescer.lookup(arange(coalescer.shape[0]), min_nonna)))
+    return array(coalescer[min_nonna].bfill(axis=1).iloc[:,0])
 
 # ------------------------------------------------------------------------------
 # case_when
@@ -198,6 +200,7 @@ def case_when(*conditions):
             outcome = Series(repeat(outcome, output_len))
         outcome[~logical] = nan
         output.append(outcome)
+    # print(type(output))
 
     return coalesce(*output)
 
