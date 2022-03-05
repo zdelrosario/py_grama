@@ -10,7 +10,7 @@ __all__ = [
 import collections
 from .base import make_symbolic
 from numpy import argmin, arange, unique, repeat, nan, array
-from pandas import concat, DataFrame, Series, isnull
+from pandas import concat, DataFrame, Series, isnull, factorize
 
 
 # ------------------------------------------------------------------------------
@@ -115,14 +115,40 @@ def coalesce(*series):
         4  np.nan
     """
 
-    series = [Series(s) for s in series]
+    df = DataFrame({'col': ["A", "A", "B", "B"],
+                   'A': [80, 23, nan, 22],
+                   'B': [80, 55, 76, 67]})
+
     coalescer = concat(series, axis=1)
+    cols = coalescer.columns
+    # print(cols)
+    idx1, cols1 = factorize(df['col'])
+    series = [Series(s) for s in series]
     min_nonna = argmin(isnull(coalescer).values, axis=1)
-    min_nonna = [coalescer.columns[i] for i in min_nonna]
-    print(coalescer)
-    print(array(coalescer[min_nonna].bfill(axis=1).iloc[:, 0]))
-    # print(type(coalescer.lookup(arange(coalescer.shape[0]), min_nonna)))
-    return array(coalescer[min_nonna].bfill(axis=1).iloc[:,0])
+    # print(min_nonna)
+    # min_nonna = [coalescer.columns[i] for i,v in enumerate(min_nonna)]
+
+    coalescer.insert(loc=0,column="nonna",value=min_nonna)
+    idx, not_cols = factorize(coalescer['nonna'])
+    # print(min_nonna)
+    # # print(coalescer)
+    # print(f"df: {idx1}")
+    # print(f"coal: {idx}")
+    # print("\n")
+    # print(f"df: {cols1}")
+    # print(f"coal: {cols}")
+
+
+    # print(df.reindex(cols1, axis=1).to_numpy()[arange(len(df)), idx1])
+    print(coalescer.reindex(cols, axis=1).to_numpy()[arange(len(coalescer)), idx])
+    # # print(min_nonna)
+    # #print(array(coalescer[min_nonna].bfill(axis=1).iloc[:, 0]))
+    # # print(coalescer.lookup(arange(coalescer.shape[0]), min_nonna))
+    # print(factorize(coalescer.columns[0]))
+    # # pandas.factorize
+    # return coalescer.lookup(arange(coalescer.shape[0]), min_nonna)
+    return coalescer.reindex(cols, axis=1).to_numpy()[arange(len(coalescer)), idx]
+
 
 # ------------------------------------------------------------------------------
 # case_when
@@ -200,7 +226,11 @@ def case_when(*conditions):
             outcome = Series(repeat(outcome, output_len))
         outcome[~logical] = nan
         output.append(outcome)
-    # print(type(output))
+    #output = DataFrame({i: o for i, o in enumerate(output)})
+    # print("Pre-coalesce")
+    # print(output)
+    # print("coalesce")
+    # print(coalesce(*output))
 
     return coalesce(*output)
 
