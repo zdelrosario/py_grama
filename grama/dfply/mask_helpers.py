@@ -16,7 +16,8 @@ from pandas import Series
 
 @make_symbolic
 def var_in(series, collection):
-    """
+    """Determine if value is in collection
+
     Returns a boolean series where each entry denotes inclusion in the
     provided collection. Intended for use in tran_filter() calls.
 
@@ -31,7 +32,7 @@ def var_in(series, collection):
 
 @make_symbolic
 def is_nan(series, inv=False):
-    """Determine if boolean
+    """Determine if nan
 
     Returns a boolean series where each entry denotes NaN or not. Intended for
     use in tran_filter() calls.
@@ -50,7 +51,7 @@ def is_nan(series, inv=False):
 
 @make_symbolic
 def not_nan(series, inv=False):
-    """Determine if NOT boolean
+    """Determine if NOT nan
 
     Returns a boolean series where each entry denotes NOT NaN or yes. Intended
     for use in tran_filter() calls.
