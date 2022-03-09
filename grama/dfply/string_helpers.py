@@ -21,8 +21,16 @@ from pandas import Series
 # --------------------------------------------------
 @make_symbolic
 def str_detect(string, pattern):
-    """
-    Detect the presence of a pattern match in a string.
+    """Detect patterns in strings
+
+    Detect the presence of a pattern match in a string. Note that you can use
+    regular expressions in these patterns.
+
+    Examples:
+        import grama as gr
+        gr.str_detect(["foo", "bar", "foo"], "foo") # Exact match
+        gr.str_detect(["A1", "Bx"], "\\d")          # Detect digits
+
     """
     try:
         ## Escape by raise if string is single string
@@ -37,8 +45,16 @@ def str_detect(string, pattern):
 
 @make_symbolic
 def str_locate(string, pattern):
-    """
-    Find the indices of all pattern matches.
+    """Locate all patterns in strings
+
+    Find the indices of *all* pattern matches. Returns an array for each string.
+    Note that you can use regular expressions in these patterns.
+
+    Examples:
+        import grama as gr
+        gr.str_locate(["foobar", "foo", "foofoo", "bar"], "foo") # Find all pattern matches
+        gr.str_which(["foobar", "foo", "foofoo", "bar"], "foo") # Find first pattern match
+
     """
     try:
         if isinstance(string, str):
@@ -58,8 +74,17 @@ def _safe_index(l, ind=0):
 
 @make_symbolic
 def str_which(string, pattern):
-    """
-    Find the index of the first pattern match.
+    """Locate first pattern in strings.
+
+    Find the index of the first pattern match. Returns indices or nan. Note that
+    you can use regular expressions in these patterns.
+
+    Examples:
+        import grama as gr
+        gr.str_locate(["foobar", "foo", "foofoo", "bar"], "foo") # Find all pattern matches
+        gr.str_which(["foobar", "foo", "foofoo", "bar"], "foo") # Find first pattern match
+        gr.str_count(["foobar", "foo", "foofoo", "bar"], "foo") # Count pattern matches
+
     """
     indices = str_locate(string, pattern)
 
@@ -74,8 +99,17 @@ def str_which(string, pattern):
 
 @make_symbolic
 def str_count(string, pattern):
-    """
-    Count the number of matches in a string.
+    """Count pattern matches in strings.
+
+    Count the number of matches in a string. Returns integers. Note that you can
+    use regular expressions in these patterns.
+
+    Examples:
+        import grama as gr
+        gr.str_locate(["foobar", "foo", "foofoo", "bar"], "foo") # Find all pattern matches
+        gr.str_which(["foobar", "foo", "foofoo", "bar"], "foo") # Find first pattern match
+        gr.str_count(["foobar", "foo", "foofoo", "bar"], "foo") # Count pattern matches
+
     """
     indices = str_locate(string, pattern)
 
