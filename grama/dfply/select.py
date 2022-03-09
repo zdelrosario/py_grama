@@ -80,6 +80,51 @@ def resolve_selection(df, *args, drop=False):
 @group_delegation
 @symbolic_evaluation(eval_as_selector=True)
 def tran_select(df, *args):
+    r"""Select columns in a DataFrame
+
+    Down-select or re-arrange columns in a DataFrame, usually for readability.
+    Provide specific column names, or make use of the following selection
+    helpers:
+
+        starts_with() - column name begins with string
+        ends_with() - column name ends with string
+        contains() - column name contains string
+        matches() - column name matches pattern (regular expression)
+        everything() - all columns not already selected; useful for re-arranging columns without dropping
+
+    Arguments:
+        df (pandas.DataFrame): DataFrame to modify
+        *args (str or selection helper): Specific column name OR selection helper.
+
+    Returns:
+        DataFrame: Data with selected columns
+
+    Examples:
+
+        ## Setup
+        import grama as gr
+        DF = gr.Intention()
+        ## Load example dataset
+        from grama.data import df_stang_wide
+
+        ## Move "alloy" column to left
+        (
+            df_stang_wide
+            >> gr.tf_select("alloy", gr.everything())
+        )
+
+        ## Find columns that start with "mu_"
+        (
+            df_stang_wide
+            >> gr.tf_select(gr.starts_with("mu"))
+        )
+
+        ## Find columns with digits in names
+        (
+            df_stang_wide
+            >> gr.tf_select(gr.matches("\\d+"))
+        )
+    """
     ordering, column_indices = resolve_selection(df, *args)
     if (column_indices == 0).all():
         return df[[]]
