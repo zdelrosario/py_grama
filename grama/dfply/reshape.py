@@ -74,15 +74,41 @@ tf_arrange = add_pipe(tran_arrange)
 @dfdelegate
 @symbolic_evaluation(eval_as_label=True)
 def tran_rename(df, **kwargs):
-    """Renames columns, where keyword argument values are the current names
-    of columns and keys are the new names.
+    """Renames columns
+
+    Renames columns, where keyword argument values are the current names of
+    columns and keys are the new names.
+
+    You can think of the keyword argument values as `newname="oldname"`; note
+    that new variable names must follow Python variable naming conventions (no
+    spaces, names can't start with numbers, etc.). See the Examples below for
+    more information.
 
     Args:
-        df (:obj:`pandas.DataFrame`): DataFrame passed in via `>>` pipe.
+        df (:obj:`pandas.DataFrame`): DataFrame
 
     Kwargs:
         **kwargs: key:value pairs where keys are new names for columns and
             values are current names of columns.
+
+    Examples:
+        ## Setup
+        import grama as gr
+        DF = gr.Intention()
+        ## Load example dataset
+        from grama.data import df_stang
+        ## Rename columns
+        (
+            df_stang
+            >> gr.tf_rename(
+                thickness="thick",
+                alloy_name="alloy",
+                elasticity="E",
+                poissons_ratio="mu",
+                measurement_angle="ang",
+            )
+        )
+
     """
 
     return df.rename(columns={v: k for k, v in kwargs.items()})
