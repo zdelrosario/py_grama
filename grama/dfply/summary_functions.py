@@ -145,11 +145,7 @@ def skew(series, bias=True, nan_policy="propagate"):
 def kurt(series, bias=True, nan_policy="propagate", excess=False):
     """Returns the kurtosis of a series.
 
-    A distribution with kurtosis greater than three is called *leptokurtic*;
-    such a distribution has "fatter" tails and will tend to exhibit more
-    outliers. A distribution with kurtosis less than three is called
-    *platykurtic*; such a distribution has less-fat tails and will tend to
-    exhibit fewer outliers.
+    A distribution with kurtosis greater than three is called *leptokurtic*; such a distribution has "fatter" tails and will tend to exhibit more outliers. A distribution with kurtosis less than three is called *platykurtic*; such a distribution has less-fat tails and will tend to exhibit fewer outliers.
 
     Args:
         series (pandas.Series): column to summarize.
@@ -194,8 +190,7 @@ def last(series, order_by=None):
         series (pandas.Series): column to summarize.
 
     Kwargs:
-        order_by: a pandas.Series or list of series (can be symbolic) to order
-            the input series by before summarization.
+        order_by: a pandas.Series or list of series (can be symbolic) to order the input series by before summarization.
     """
 
     if order_by is not None:
@@ -214,8 +209,7 @@ def nth(series, n, order_by=None):
         n (integer): position of desired value. Returns `NaN` if out of range.
 
     Kwargs:
-        order_by: a pandas.Series or list of series (can be symbolic) to order
-            the input series by before summarization.
+        order_by: a pandas.Series or list of series (can be symbolic) to order the input series by before summarization.
     """
 
     if order_by is not None:
@@ -272,13 +266,12 @@ def quant(series, p=None):
     """
     Returns the specified quantile value.
 
-    @param series column to summarize
-    @param p quantile
+    Args:
+        series (pandas.Series): Column to summarize
+        p (float): Fraction for desired quantile, 0 <= p <= 1
 
-    @type series Pandas series
-    @type p float
-
-    @pre 0 <= p <= 1
+    Returns:
+        float: Desired quantile
     """
 
     return series.quantile(p)
@@ -377,9 +370,11 @@ def mse(series_pred, series_meas):
     values.
 
     Args:
-        series_pred (pandas.Series): column of predictions
-        series_meas (pandas.Series): column of predictions
+        series_pred (pandas.Series): column of predicted values
+        series_meas (pandas.Series): column of measured values
 
+    Returns:
+        float: Mean squared error (MSE)
     """
 
     return (series_pred - series_meas).pow(2).mean()
@@ -393,8 +388,11 @@ def rmse(series_pred, series_meas):
     values.
 
     Args:
-        series_pred (pandas.Series): column of predictions
-        series_meas (pandas.Series): column of predictions
+        series_pred (pandas.Series): column of predicted values
+        series_meas (pandas.Series): column of measured values
+
+    Returns:
+        float: Root-mean squared error (RMSE)
 
     """
 
@@ -403,14 +401,16 @@ def rmse(series_pred, series_meas):
 
 @make_symbolic
 def rel_mse(series_pred, series_meas):
-    """Compute MSE
+    """Compute relative MSE
 
-    Returns the relative mean-square-error (MSE) between predicted and measured
-    values.
+    Returns the "relative" mean-square-error (MSE) between predicted and measured values. All differences between predictions and measured values are normalized by the measured value prior to taking the MSE.
 
     Args:
-        series_pred (pandas.Series): column of predictions
-        series_meas (pandas.Series): column of predictions
+        series_pred (pandas.Series): column of predicted values
+        series_meas (pandas.Series): column of measured values
+
+    Returns:
+        float: Mean Squared Error (MSE)
 
     """
 
@@ -421,12 +421,11 @@ def rel_mse(series_pred, series_meas):
 def rsq(series_pred, series_meas):
     """Compute coefficient of determination
 
-    Returns the coefficient of determination (aka R^2) between predicted and
-    measured values.
+    Returns the coefficient of determination (aka R^2) between predicted and measured values. Theoretically 0 <= R^2 <= 1, with R^2 == 0 corresponding to a model no more predictive than guessing the mean of observed values, and R^2 == 1 corresponding to a perfect model. Note that sampling variability can lead to R^2 < 0 or R^2 > 1.
 
     Args:
-        series_pred (pandas.Series): column of predictions
-        series_meas (pandas.Series): column of predictions
+        series_pred (pandas.Series): column of predicted values
+        series_meas (pandas.Series): column of measured values
 
     """
 
@@ -442,12 +441,13 @@ def rsq(series_pred, series_meas):
 def ndme(series_pred, series_meas):
     """Compute non-dimensional model error
 
-    Returns the non-dimensional model error (NDME) between predicted and
-    measured values.
+    Returns the non-dimensional model error (NDME) between predicted and measured values. The NDME is related to the coefficient of determination (aka R^2) via
+
+        NDME = sqrt(1 - R^2)
 
     Args:
-        series_pred (pandas.Series): column of predictions
-        series_meas (pandas.Series): column of predictions
+        series_pred (pandas.Series): column of predicted values
+        series_meas (pandas.Series): column of measured values
 
     """
 
@@ -613,8 +613,7 @@ def pr_up(series, alpha=0.01):
 def corr(series1, series2, method="pearson", res="corr", nan_drop=False):
     r"""Computes a correlation coefficient
 
-    Computes a correlation coefficient using either the pearson or spearman
-    formulation.
+    Computes a correlation coefficient using either the pearson or spearman formulation.
 
     Args:
         series1 (pandas.Series): Column 1 to study
