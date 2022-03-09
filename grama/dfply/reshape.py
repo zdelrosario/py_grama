@@ -321,7 +321,7 @@ def tran_separate(
         (
             df
             >> gr.tf_separate(
-                DF.x,
+                column=DF.x,
                 into=["letter", "number"],
                 sep="_",
             )
@@ -337,7 +337,7 @@ def tran_separate(
                 values_to="value",
             )
             >> gr.tf_separate(
-                DF.name,
+                column=DF.name,
                 into=["variable", "angle"],
                 sep="_",
             )
