@@ -13,12 +13,9 @@ from .. import add_pipe
 def tran_mutate(df, **kwargs):
     """Create new columns
 
-    Creates new variables (columns) in the DataFrame specified by keyword
-    argument pairs, where the key is the column name and the value is the
-    new column value(s).
+    Creates new variables (columns) in the DataFrame specified by keyword argument pairs, where the key is the column name and the value is the new column value(s).
 
-    Use the Intention operator (usually `DF = gr.Intention()`)as a convenient
-    way to access columns in the DataFrame.
+    Use the Intention operator (usually `DF = gr.Intention()`) as a convenient way to access columns in the DataFrame.
 
     Args:
         df (pandas.DataFrame): Data to modify

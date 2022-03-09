@@ -127,12 +127,12 @@ tf_row_slice = add_pipe(tran_row_slice)
 def mask(df, *args):
     r"""Select rows based on provided conditions
 
-    Select for rows based on logical conditions. This can include equality
-    between columns `DF.x == DF.y`, comparisons with a threshold `0 <= DF.z`, or
-    other expressions that return a boolean value.
+    Select for rows based on logical conditions. This can include equality between columns `DF.x == DF.y`, comparisons with a threshold `0 <= DF.z`, or other expressions that return a boolean value.
 
-    There are a number of helper functions that make working with filters
-    easier. See also:
+    Use the Intention operator (usually `DF = gr.Intention()`) as a convenient way to access columns in the DataFrame.
+
+    There are a number of helper functions that make working with filters easier / more powerful. See also:
+
     - var_in() : Check if given value is one of a set of values
     - is_nan() : Check if given value is not a number (nan)
     - not_nan() : Check if given value is *not* not a number (nan)

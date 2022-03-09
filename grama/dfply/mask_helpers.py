@@ -18,12 +18,12 @@ from pandas import Series
 def var_in(series, collection):
     """Determine if value is in collection
 
-    Returns a boolean series where each entry denotes inclusion in the
-    provided collection. Intended for use in tran_filter() calls.
+    Returns a boolean series where each entry denotes inclusion in the provided collection. Intended for use in tran_filter() calls.
 
     Args:
         series: column to compute inclusion bools
         collection: set for inclusion calcs
+
     """
     bools = Series([s in collection for s in series])
 
@@ -34,8 +34,7 @@ def var_in(series, collection):
 def is_nan(series, inv=False):
     """Determine if nan
 
-    Returns a boolean series where each entry denotes NaN or not. Intended for
-    use in tran_filter() calls.
+    Returns a boolean series where each entry denotes NaN or not. Intended for use in tran_filter() calls.
 
     Args:
         series (Pandas series): column to compute NaN bools
@@ -53,8 +52,7 @@ def is_nan(series, inv=False):
 def not_nan(series, inv=False):
     """Determine if NOT nan
 
-    Returns a boolean series where each entry denotes NOT NaN or yes. Intended
-    for use in tran_filter() calls.
+    Returns a boolean series where each entry denotes NOT NaN or yes. Intended for use in tran_filter() calls.
 
     Args:
         series (Pandas series): column to compute NOT NaN bools

@@ -14,15 +14,11 @@ from pandas import DataFrame, Series
 def tran_summarize(df, **kwargs):
     r"""Compute specified summaries
 
-    Compute summaries: Takes values across multiple rows and combines them into
-    fewer rows using the functions that you specify. If the DataFrame is not
-    grouped, then there will be just one resulting row. If the DataFrame is
-    grouped, then there will be one row per group.
+    Compute summaries: Takes values across multiple rows and combines them into fewer rows using the functions that you specify. If the DataFrame is not grouped, then there will be just one resulting row. If the DataFrame is grouped, then there will be one row per group.
 
     Use tran_group_by() to group by column values before a summarize.
 
-    Use the Intention operator (usually `DF = gr.Intention()`)as a convenient
-    way to access columns in the DataFrame.
+    Use the Intention operator (usually `DF = gr.Intention()`) as a convenient way to access columns in the DataFrame.
 
     Some useful summary functions are:
     - mean(x) - compute the mean, see mean_lo() and mean_up() for confidence interval bounds

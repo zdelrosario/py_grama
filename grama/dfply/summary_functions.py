@@ -613,8 +613,7 @@ def pr_up(series, alpha=0.01):
 def corr(series1, series2, method="pearson", res="corr", nan_drop=False):
     r"""Computes a correlation coefficient
 
-    Computes a correlation coefficient using either the pearson or spearman
-    formulation.
+    Computes a correlation coefficient using either the pearson or spearman formulation.
 
     Args:
         series1 (pandas.Series): Column 1 to study
