@@ -140,8 +140,6 @@ def mask(df, *args):
 
     Args:
         df (pandas.DataFrame): data passed in through the pipe.
-
-    Kwargs:
         *args: Logical conditions
 
     Example:
@@ -150,6 +148,7 @@ def mask(df, *args):
         DF = gr.Intention()
         ## Load example dataset
         from grama.data import df_diamonds
+
         ## Apply some filters
         (
             df_diamonds
