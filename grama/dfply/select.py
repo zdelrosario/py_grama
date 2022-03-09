@@ -82,9 +82,7 @@ def resolve_selection(df, *args, drop=False):
 def tran_select(df, *args):
     r"""Select columns in a DataFrame
 
-    Down-select or re-arrange columns in a DataFrame, usually for readability.
-    Provide specific column names, or make use of the following selection
-    helpers:
+    Down-select or re-arrange columns in a DataFrame, usually for readability. Provide specific column names, or make use of the following selection helpers:
 
         starts_with() - column name begins with string
         ends_with() - column name ends with string
@@ -124,6 +122,7 @@ def tran_select(df, *args):
             df_stang_wide
             >> gr.tf_select(gr.matches("\\d+"))
         )
+
     """
     ordering, column_indices = resolve_selection(df, *args)
     if (column_indices == 0).all():
@@ -193,26 +192,51 @@ tf_drop_if = add_pipe(tran_drop_if)
 
 @selection_filter
 def starts_with(columns, prefix):
+    r"""Select columns starting with a prefix, for use in tran_select()
+
+    Args:
+        prefix (str): Prefix to detect
+
+    """
     return [c for c in columns if c.startswith(prefix)]
 
 
 @selection_filter
 def ends_with(columns, suffix):
+    r"""Select columns ending in a suffix, for use in tran_select()
+
+    Args:
+        suffix (str): Suffix to detect
+
+    """
     return [c for c in columns if c.endswith(suffix)]
 
 
 @selection_filter
 def contains(columns, substr):
+    r"""Select columns containing a substring, for use in tran_select()
+
+    Args:
+        substr (str): Substring to detect
+
+    """
     return [c for c in columns if substr in c]
 
 
 @selection_filter
 def matches(columns, pattern):
+    r"""Select columns matching a pattern, for use in tran_select()
+
+    Args:
+        pattern (str): String pattern to match, can be a regular expression
+
+    """
     return [c for c in columns if re.search(pattern, c)]
 
 
 @selection_filter
 def everything(columns):
+    "Select all columns, for use in tran_select()"
     return columns
 
 
