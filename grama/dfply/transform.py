@@ -11,7 +11,8 @@ from .. import add_pipe
 
 @dfdelegate
 def tran_mutate(df, **kwargs):
-    """
+    """Create new columns
+
     Creates new variables (columns) in the DataFrame specified by keyword
     argument pairs, where the key is the column name and the value is the
     new column value(s).
@@ -26,6 +27,19 @@ def tran_mutate(df, **kwargs):
     Example:
         diamonds >> mutate(x_plus_y=X.x + X.y) >> select_from('x') >> head(3)
 
+        ## Setup
+        import grama as gr
+        DF = gr.Intention()
+        ## Load example dataset
+        from grama.data import df_diamonds
+        ## Rename columns
+        (
+            df_diamonds
+            >> gr.tf_mutate(
+                x_plus_y=DF.x + DF.y,
+            )
+            >> gr.tf_select("x", "y", "z", "x_plus_y")
+        )
               x     y     z  x_plus_y
         0  3.95  3.98  2.43      7.93
         1  3.89  3.84  2.31      7.73
