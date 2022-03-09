@@ -25,8 +25,6 @@ def tran_mutate(df, **kwargs):
             what the new column values will be.
 
     Example:
-        diamonds >> mutate(x_plus_y=X.x + X.y) >> select_from('x') >> head(3)
-
         ## Setup
         import grama as gr
         DF = gr.Intention()
