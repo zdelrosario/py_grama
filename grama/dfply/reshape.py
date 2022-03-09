@@ -81,15 +81,16 @@ def tran_rename(df, **kwargs):
 
     You can think of the keyword argument values as `newname="oldname"`; note
     that new variable names must follow Python variable naming conventions (no
-    spaces, names can't start with numbers, etc.). See the Examples below for
-    more information.
+    spaces, names can't start with numbers, etc.). See the Examples section
+    below for an example of the renaming syntax.
 
     Args:
-        df (:obj:`pandas.DataFrame`): DataFrame
+        df (pandas.DataFrame): DataFrame
 
     Kwargs:
-        **kwargs: key:value pairs where keys are new names for columns and
-            values are current names of columns.
+        **kwargs: Renaming pair
+            the name of the argument (left of `=`) will be the new column name,
+            the value of the argument (right of `=`) is the old column name (as a string).
 
     Examples:
         ## Setup
@@ -97,10 +98,12 @@ def tran_rename(df, **kwargs):
         DF = gr.Intention()
         ## Load example dataset
         from grama.data import df_stang
+
         ## Rename columns
         (
             df_stang
             >> gr.tf_rename(
+                ## Remember, the pattern is new="old"
                 thickness="thick",
                 alloy_name="alloy",
                 elasticity="E",
