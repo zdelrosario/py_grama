@@ -33,6 +33,8 @@ from pandas import Series
 
 @dfdelegate
 def tran_head(df, n=5):
+    r"""Return the first n rows of a DataFrame
+    """
     return df.head(n)
 
 tf_head = add_pipe(tran_head)
@@ -40,6 +42,8 @@ tf_head = add_pipe(tran_head)
 
 @dfdelegate
 def tran_tail(df, n=5):
+    r"""Return the last n rows of a DataFrame
+    """
     return df.tail(n)
 
 tf_tail = add_pipe(tran_tail)
@@ -52,6 +56,37 @@ tf_tail = add_pipe(tran_tail)
 
 @dfdelegate
 def tran_sample(df, *args, **kwargs):
+    r"""Return a random subset of a DataFrame
+
+    Arguments:
+        n (int): Number of rows to return. Cannot be used with `frac`.
+        frac (float): Fraction of items to return. Cannot be used with `n`.
+
+    Returns:
+        DataFrame: A random subset of rows from the original data.
+
+    Notes:
+        Alias for pandas DataFrame.sample(). See the docs for DataFrame.sample()
+    for more information
+
+    Examples:
+
+        ## Setup
+        import grama as gr
+        ## Load example dataset
+        from grama.data import df_diamonds
+        ## Sample based on count
+        (
+            df_diamonds
+            >> gr.tf_sample(n=100)
+        )
+        ## Sample based on fraction
+        (
+            df_diamonds
+            >> gr.tf_sample(frac=0.01)
+        )
+
+    """
     return df.sample(*args, **kwargs).reset_index(drop=True)
 
 tf_sample = add_pipe(tran_sample)
