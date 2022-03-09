@@ -289,8 +289,11 @@ def tran_separate(
     extra="drop",
     fill="right",
 ):
-    """
-    Splits columns into multiple columns.
+    """Splits one column into multiple columns.
+
+    Split a single column containing string values into multiple columns by *separating* the strings on a specified pattern. The separator pattern is specified via the `sep` argument, and may be a regular expression.
+
+    This verb is often used in conjunction with pivoting (e.g. tran_pivot_longer()) to separate column names from data.
 
     Args:
         df (pandas.DataFrame): DataFrame passed in through the pipe.
@@ -302,14 +305,43 @@ def tran_separate(
             column. If a list, a list of integer positions to split strings
             on.
         remove (bool): Boolean indicating whether to remove the original column.
-        convert (bool): Boolean indicating whether the new columns should be
-            converted to the appropriate type.
-        extra (str): either `'drop'`, where split pieces beyond the specified
-            new columns are dropped, or `'merge'`, where the final split piece
-            contains the remainder of the original column.
-        fill (str): either `'right'`, where `np.nan` values are filled in the
-            right-most columns for missing pieces, or `'left'` where `np.nan`
-            values are filled in the left-most columns.
+        convert (bool): Boolean indicating whether the new columns should be converted to the appropriate type.
+        extra (str): either `'drop'`, where split pieces beyond the specified new columns are dropped, or `'merge'`, where the final split piece contains the remainder of the original column.
+        fill (str): either `'right'`, where `np.nan` values are filled in the right-most columns for missing pieces, or `'left'` where `np.nan` values are filled in the left-most columns.
+
+    Returns:
+        pandas.DataFrame: Modified data
+
+    Examples:
+        import grama as gr
+        DF = gr.Intention
+
+        ## Simple example
+        df = gr.df_make(x=["a_1", "b_2", "c_3"])
+        (
+            df
+            >> gr.tf_separate(
+                DF.x,
+                into=["letter", "number"],
+                sep="_",
+            )
+        )
+
+        ## tran_separate is helpful when pivoting data
+        from grama.data import df_stang_wide
+        (
+            df_stang_wide
+            >> gr.tf_pivot_longer(
+                columns=["E_00", "mu_00", "E_45", "mu_45", "E_90", "mu_90"],
+                names_to="name",
+                values_to="value",
+            )
+            >> gr.tf_separate(
+                DF.name,
+                into=["variable", "angle"],
+                sep="_",
+            )
+        (
     """
 
     assert isinstance(into, (tuple, list))
@@ -365,9 +397,9 @@ tf_separate = add_pipe(tran_separate)
 @dfdelegate
 @symbolic_evaluation(eval_as_label=["*"])
 def tran_unite(df, colname, *args, **kwargs):
-    """
-    Does the inverse of `separate`, joining columns together by a specified
-    separator.
+    """Unite multiple columns into one
+
+    Does the inverse of `tran_separate`; joins columns together by a specified separator.
 
     Any columns that are not strings will be converted to strings.
 
@@ -387,6 +419,7 @@ def tran_unite(df, colname, *args, **kwargs):
             row contained `NaN`. '`ignore'` will treat any `NaN` value as an
             empty string during joining. `'as_string'` will convert any `NaN`
             value to the string `'nan'` prior to joining.
+
     """
 
     to_unite = list([a for a in flatten(args)])
