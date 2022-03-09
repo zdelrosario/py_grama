@@ -17,12 +17,16 @@ def tran_mutate(df, **kwargs):
     argument pairs, where the key is the column name and the value is the
     new column value(s).
 
+    Use the Intention operator (usually `DF = gr.Intention()`)as a convenient
+    way to access columns in the DataFrame.
+
     Args:
-        df (pandas.DataFrame): data passed in through the pipe.
+        df (pandas.DataFrame): Data to modify
 
     Kwargs:
-        **kwargs: keys are the names of the new columns, values indicate
-            what the new column values will be.
+        **kwargs: Compute new column values
+            the name of the argument (left of `=`) will be the new column name,
+            the value of the argument (right of `=`) defines the new column's value
 
     Example:
         ## Setup
@@ -30,18 +34,16 @@ def tran_mutate(df, **kwargs):
         DF = gr.Intention()
         ## Load example dataset
         from grama.data import df_diamonds
-        ## Rename columns
+
+        ## Compute a rough estimate of volume
         (
             df_diamonds
             >> gr.tf_mutate(
-                x_plus_y=DF.x + DF.y,
+                vol=DF.x * DF.y * DF.z
             )
-            >> gr.tf_select("x", "y", "z", "x_plus_y")
+            >> gr.tf_select("x", "y", "z", "vol")
         )
-              x     y     z  x_plus_y
-        0  3.95  3.98  2.43      7.93
-        1  3.89  3.84  2.31      7.73
-        2  4.05  4.07  2.31      8.12
+
     """
 
     return df.assign(**kwargs)
