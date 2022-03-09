@@ -21,6 +21,9 @@ def tran_summarize(df, **kwargs):
 
     Use tran_group_by() to group by column values before a summarize.
 
+    Use the Intention operator (usually `DF = gr.Intention()`)as a convenient
+    way to access columns in the DataFrame.
+
     Some useful summary functions are:
     - mean(x) - compute the mean, see mean_lo() and mean_up() for confidence interval bounds
     - median(x) - compute the median
