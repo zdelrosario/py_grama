@@ -76,13 +76,9 @@ tf_arrange = add_pipe(tran_arrange)
 def tran_rename(df, **kwargs):
     """Renames columns
 
-    Renames columns, where keyword argument values are the current names of
-    columns and keys are the new names.
+    Renames columns, where keyword argument values are the current names of columns and keys are the new names.
 
-    You can think of the keyword argument values as `newname="oldname"`; note
-    that new variable names must follow Python variable naming conventions (no
-    spaces, names can't start with numbers, etc.). See the Examples section
-    below for an example of the renaming syntax.
+    You can think of the keyword argument values as `newname="oldname"`; note that new variable names must follow Python variable naming conventions (no spaces, names can't start with numbers, etc.). See the Examples section below for an example of the renaming syntax.
 
     Args:
         df (pandas.DataFrame): DataFrame
