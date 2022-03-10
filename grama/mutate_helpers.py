@@ -169,7 +169,7 @@ def as_factor(x, categories=None, ordered=True, dtype=None):
 
 @make_symbolic
 def as_numeric(x):
-    r"""Cast to factor
+    r"""Cast to numeric
     """
     return to_numeric(x, errors="coerce")
 
