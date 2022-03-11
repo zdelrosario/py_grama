@@ -57,23 +57,28 @@ from scipy.stats import norm, rankdata
 # -------------------------
 @make_symbolic
 def floor(x):
-    r"""Absolute value
+    r"""Round downwards to nearest integer
     """
     return npfloor(x)
 
 
 @make_symbolic
 def ceil(x):
-    r"""Absolute value
+    r"""Round upwards to nearest integer
     """
     return npceil(x)
 
 
 @make_symbolic
-def round(x):
-    r"""Absolute value
+def round(x, decimals=0):
+    r"""Round value to desired precision
+
+    Args:
+        x (float or iterable of floats): Value(s) to round
+        decimals (int): Number of decimal places for rounding; decimals=0 rounds to integers
+
     """
-    return npround(x)
+    return npround(x, decimals=decimals)
 
 
 @make_symbolic
