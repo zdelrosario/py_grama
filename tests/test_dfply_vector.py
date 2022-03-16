@@ -86,8 +86,6 @@ class TestVector(unittest.TestCase):
                 [True, X.num.astype(str)],
             )
         )
-        # print(df_truth)
-        # print(df)
         self.assertTrue(df_truth.equals(d))
 
     ##==============================================================================
