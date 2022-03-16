@@ -66,8 +66,7 @@ def tran_sample(df, *args, **kwargs):
         DataFrame: A random subset of rows from the original data.
 
     Notes:
-        Alias for pandas DataFrame.sample(). See the docs for DataFrame.sample()
-    for more information
+        Alias for pandas DataFrame.sample(). See the docs for DataFrame.sample() for more information
 
     Examples:
 
@@ -95,6 +94,44 @@ tf_sample = add_pipe(tran_sample)
 @group_delegation
 @symbolic_evaluation(eval_as_label=["*"])
 def tran_distinct(df, *args, **kwargs):
+    r"""Return unique rows of a DataFrame
+
+    Return unique rows of a DataFrame, determining uniqueness according to a user-defined set of columns.
+
+    Args:
+        *args (str or gr.Intention): Columns to consider when determining uniqueness. If empty, all columns are used for determining unique rows.
+
+    Kwargs:
+        keep ('first', 'last', False): Determines which, if any, duplicates to keep. 'first' returns the first occurrence, 'last' keeps the last occurrence, and `False` removes all duplicates.
+
+    Returns:
+        DataFrame: Data with unique rows
+
+    Notes:
+        Alias for pandas DataFrame.drop_duplicates(). See the docs for DataFrame.drop_duplicates for more information.
+
+    Examples:
+        ## Setup
+        import grama as gr
+        DF = gr.Intention()
+        ## Load example dataset
+        from grama.data import df_stang
+        ## Find distinct thicknesses
+        (
+            df_stang
+            >> gr.tf_distinct(DF.thick)
+        )
+        ## Find distinct combinations of thickness and angle
+        (
+            df_stang
+            >> gr.tf_distinct(DF.thick, DF.angle)
+        )
+        ## Find all distinct rows
+        (
+            df_stang
+            >> gr.tf_distinct()
+        )
+    """
     if not args:
         return df.drop_duplicates(**kwargs).reset_index(drop=True)
     return df.drop_duplicates(list(args), **kwargs).reset_index(drop=True)
