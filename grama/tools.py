@@ -529,25 +529,25 @@ def lookup(df, row_labels, col_labels):
     n = len(row_labels)
     if n != len(col_labels):
         raise ValueError("Row labels must have same size as column labels")
-    if not (self.index.is_unique and self.columns.is_unique):
+    if not (df.index.is_unique and df.columns.is_unique):
         raise ValueError("DataFrame.lookup requires unique index and columns")
 
     thresh = 1000
-    if not self._is_mixed_type or n > thresh:
-        values = self.values
-        ridx = self.index.get_indexer(row_labels)
-        cidx = self.columns.get_indexer(col_labels)
+    if not df._is_mixed_type or n > thresh:
+        values = df.values
+        ridx = df.index.get_indexer(row_labels)
+        cidx = df.columns.get_indexer(col_labels)
         if (ridx == -1).any():
             raise KeyError("One or more row labels was not found")
         if (cidx == -1).any():
             raise KeyError("One or more column labels was not found")
-        flat_index = ridx * len(self.columns) + cidx
+        flat_index = ridx * len(df.columns) + cidx
         result = values.flat[flat_index]
     else:
         result = empty(n, dtype="O")
         for i, (r, c) in enumerate(zip(row_labels, col_labels)):
             print(r,c)
-            result[i] = self._get_value(r, c)
+            result[i] = df._get_value(r, c)
 
     if is_object_dtype(result):
         result = lib.maybe_convert_objects(result)
