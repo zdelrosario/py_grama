@@ -6,14 +6,8 @@ from scipy.special import xlogy
 from scipy.spatial.distance import cdist
 import scipy.linalg
 
-try:
-    from functools import lru_cache
-except ImportError:
-    from backports.functools_lru_cache import lru_cache
-
 __all__ = ['perplexity_bandwidth', 'local_linear_grads', 'local_linear']
 
-@lru_cache(maxsize = int(10))
 def _compute_p1(M, perplexity):
 	r""" The constant appearing in VC13, eq. 9
 	"""
@@ -34,7 +28,7 @@ def _compute_p1(M, perplexity):
 			x = 0
 		else:
 			raise ValueError
- 
+
 	p1 = 1. - x/2.
 	return p1
 
@@ -42,8 +36,8 @@ def _compute_p1(M, perplexity):
 def log_entropy(beta, d):
 	p = np.exp(-beta*d)
 	sum_p = np.sum(p)
-	# Shannon entropy H = np.sum(-p*np.log2(p)) 
-	# More stable formula 
+	# Shannon entropy H = np.sum(-p*np.log2(p))
+	# More stable formula
 	return beta*np.sum(p*d/sum_p) + np.log(sum_p)
 
 
@@ -55,7 +49,7 @@ def perplexity_bandwidth(d, perplexity):
 	d: array-like (M,)
 		List of squared Euclidean distances
 	perplexity: float, positive
-		Target entropy of 
+		Target entropy of
 
 	Returns
 	-------
@@ -79,7 +73,7 @@ def perplexity_bandwidth(d, perplexity):
 	beta1 = max(M*np.log(M/perplexity)/((M-1)*deltaM), np.sqrt(np.log(M/perplexity)/(dM**4 - d1**4)))
 	# upper bound VC13 (8)
 	beta2 = 1/delta2*np.log(p1/(1-p1)*(M - 1))
-	
+
 	log_perplexity = np.log(perplexity)
 
 	# TODO: Ideally we would use (root) Newton to find the optimal bandwidth
@@ -108,28 +102,28 @@ def perplexity_bandwidth(d, perplexity):
 
 
 def local_linear(X, fX, perplexity = None, bandwidth = None, Xt = None):
-	r""" Construct local linear models at specified points 
+	r""" Construct local linear models at specified points
 
 	In several dimension reduction settings we want to estimate gradients using only samples.
 	If we had freedom to place these samples anywhere we wanted, we would use a finite difference
-	approach.  As this is often not the case, we need some way to estimate gradients given a 
+	approach.  As this is often not the case, we need some way to estimate gradients given a
 	fixed and arbitrary set of data.
 
-	Local linear models provide one approach for estimating the gradient. 
+	Local linear models provide one approach for estimating the gradient.
 	This approach constructs a local linear model centered around each :math:`\mathbf{x}_t`
 	with weights depending on the distance between points
 
 	.. math::
 		\min_{a_0\in \mathbb{R}, \mathbf{a}\in \mathbb{R}^m}
-			\sum_{i=1}^M [(a_0 + \mathbf{a}^\top \mathbf{x}_i) - f(\mathbf{x}_i)]^2 e^{-\beta_t \| \mathbf{x}_i - \mathbf{x}_t\|_2^2}.	
+			\sum_{i=1}^M [(a_0 + \mathbf{a}^\top \mathbf{x}_i) - f(\mathbf{x}_i)]^2 e^{-\beta_t \| \mathbf{x}_i - \mathbf{x}_t\|_2^2}.
 
-	The choice of :math:`\beta_t` is critical. Here we provide two main options.  
-	By default, we choose :math:`\beta_t` for each :math:`\mathbf{x}_t` 
+	The choice of :math:`\beta_t` is critical. Here we provide two main options.
+	By default, we choose :math:`\beta_t` for each :math:`\mathbf{x}_t`
 	such that the perplexity corresponds to :math:`m+1`; other values of perplexity are avalible setting :code:`perplexity`.
 	The other option is to specify the bandwidth :math:`\beta` explicitly.
-	
 
-	*Note* The cost of this method scales quadratically in the dimension of input space.	
+
+	*Note* The cost of this method scales quadratically in the dimension of input space.
 
 	Parameters
 	----------
@@ -142,12 +136,12 @@ def local_linear(X, fX, perplexity = None, bandwidth = None, Xt = None):
 	bandwidth: None, 'xia' or positive float
 		If specified, set the global bandwidth to the specified float.
 		If 'xia', use the bandwidth selection heuristic of Xia mentioned
-		in [Li18]_. 
+		in [Li18]_.
 
 	Returns
 	-------
 	A: np.array (M, m+1)
-		Matrix of coefficients of linear model; 
+		Matrix of coefficients of linear model;
 		A[:,0] is the constant term and A[:,1:m+1] is the linear coefficients.
 	"""
 
@@ -166,14 +160,14 @@ def local_linear(X, fX, perplexity = None, bandwidth = None, Xt = None):
 	elif bandwidth is not None:
 		perplexity = None
 		if bandwidth == 'xia':
-			# Bandwidth from Xia 2007, [Li18, eq. 11.5] 
+			# Bandwidth from Xia 2007, [Li18, eq. 11.5]
 			bandwidth = 2.34*M**(-1./(max(M, 3) +6))
 
 
 	# Storage for the gradients
 	grads = np.zeros((len(Xt), m))
 	Y = np.hstack([np.ones((M, 1)), X])
-	
+
 	# Coefficients in linear models
 	A = np.zeros((M, m+1))
 	for i, xi in enumerate(Xt):
@@ -182,7 +176,7 @@ def local_linear(X, fX, perplexity = None, bandwidth = None, Xt = None):
 			beta = perplexity_bandwidth(d, perplexity)
 		else:
 			beta = 0.5*bandwidth
-	
+
 		try:
 			# Weights associated with each point
 			sqrt_weights = np.exp(-0.5*beta*d).reshape(-1,1)
