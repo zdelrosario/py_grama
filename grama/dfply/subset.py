@@ -33,6 +33,8 @@ from pandas import Series
 
 @dfdelegate
 def tran_head(df, n=5):
+    r"""Return the first n rows of a DataFrame
+    """
     return df.head(n)
 
 tf_head = add_pipe(tran_head)
@@ -40,6 +42,8 @@ tf_head = add_pipe(tran_head)
 
 @dfdelegate
 def tran_tail(df, n=5):
+    r"""Return the last n rows of a DataFrame
+    """
     return df.tail(n)
 
 tf_tail = add_pipe(tran_tail)
@@ -52,6 +56,36 @@ tf_tail = add_pipe(tran_tail)
 
 @dfdelegate
 def tran_sample(df, *args, **kwargs):
+    r"""Return a random subset of a DataFrame
+
+    Arguments:
+        n (int): Number of rows to return. Cannot be used with `frac`.
+        frac (float): Fraction of items to return. Cannot be used with `n`.
+
+    Returns:
+        DataFrame: A random subset of rows from the original data.
+
+    Notes:
+        Alias for pandas DataFrame.sample(). See the docs for DataFrame.sample() for more information
+
+    Examples:
+
+        ## Setup
+        import grama as gr
+        ## Load example dataset
+        from grama.data import df_diamonds
+        ## Sample based on count
+        (
+            df_diamonds
+            >> gr.tf_sample(n=100)
+        )
+        ## Sample based on fraction
+        (
+            df_diamonds
+            >> gr.tf_sample(frac=0.01)
+        )
+
+    """
     return df.sample(*args, **kwargs).reset_index(drop=True)
 
 tf_sample = add_pipe(tran_sample)
@@ -60,6 +94,44 @@ tf_sample = add_pipe(tran_sample)
 @group_delegation
 @symbolic_evaluation(eval_as_label=["*"])
 def tran_distinct(df, *args, **kwargs):
+    r"""Return unique rows of a DataFrame
+
+    Return unique rows of a DataFrame, determining uniqueness according to a user-defined set of columns.
+
+    Args:
+        *args (str or gr.Intention): Columns to consider when determining uniqueness. If empty, all columns are used for determining unique rows.
+
+    Kwargs:
+        keep ('first', 'last', False): Determines which, if any, duplicates to keep. 'first' returns the first occurrence, 'last' keeps the last occurrence, and `False` removes all duplicates.
+
+    Returns:
+        DataFrame: Data with unique rows
+
+    Notes:
+        Alias for pandas DataFrame.drop_duplicates(). See the docs for DataFrame.drop_duplicates for more information.
+
+    Examples:
+        ## Setup
+        import grama as gr
+        DF = gr.Intention()
+        ## Load example dataset
+        from grama.data import df_stang
+        ## Find distinct thicknesses
+        (
+            df_stang
+            >> gr.tf_distinct(DF.thick)
+        )
+        ## Find distinct combinations of thickness and angle
+        (
+            df_stang
+            >> gr.tf_distinct(DF.thick, DF.angle)
+        )
+        ## Find all distinct rows
+        (
+            df_stang
+            >> gr.tf_distinct()
+        )
+    """
     if not args:
         return df.drop_duplicates(**kwargs).reset_index(drop=True)
     return df.drop_duplicates(list(args), **kwargs).reset_index(drop=True)
@@ -90,6 +162,44 @@ tf_row_slice = add_pipe(tran_row_slice)
 
 @dfdelegate
 def mask(df, *args):
+    r"""Select rows based on provided conditions
+
+    Select for rows based on logical conditions. This can include equality between columns `DF.x == DF.y`, comparisons with a threshold `0 <= DF.z`, or other expressions that return a boolean value.
+
+    Use the Intention operator (usually `DF = gr.Intention()`) as a convenient way to access columns in the DataFrame.
+
+    There are a number of helper functions that make working with filters easier / more powerful. See also:
+
+    - var_in() : Check if given value is one of a set of values
+    - is_nan() : Check if given value is not a number (nan)
+    - not_nan() : Check if given value is *not* not a number (nan)
+    - str_detect() : Check for the presence of a pattern in a string column
+
+    Args:
+        df (pandas.DataFrame): data passed in through the pipe.
+        *args: Logical conditions
+
+    Example:
+        ## Setup
+        import grama as gr
+        DF = gr.Intention()
+        ## Load example dataset
+        from grama.data import df_diamonds
+
+        ## Apply some filters
+        (
+            df_diamonds
+            >> gr.tf_filter(
+                ## Remove invalid dimensions
+                0 < DF.x,
+                0 < DF.y,
+                0 < DF.z,
+                ## Remove missing values
+                gr.not_nan(DF.carat),
+            )
+        )
+
+    """
     mask = Series(ones(df.shape[0], dtype=bool))
     for arg in args:
         if arg.dtype != bool:

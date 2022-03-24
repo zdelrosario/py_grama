@@ -11,25 +11,36 @@ from .. import add_pipe
 
 @dfdelegate
 def tran_mutate(df, **kwargs):
-    """
-    Creates new variables (columns) in the DataFrame specified by keyword
-    argument pairs, where the key is the column name and the value is the
-    new column value(s).
+    """Create new columns
+
+    Creates new variables (columns) in the DataFrame specified by keyword argument pairs, where the key is the column name and the value is the new column value(s).
+
+    Use the Intention operator (usually `DF = gr.Intention()`) as a convenient way to access columns in the DataFrame.
 
     Args:
-        df (pandas.DataFrame): data passed in through the pipe.
+        df (pandas.DataFrame): Data to modify
 
     Kwargs:
-        **kwargs: keys are the names of the new columns, values indicate
-            what the new column values will be.
+        **kwargs: Compute new column values
+            the name of the argument (left of `=`) will be the new column name,
+            the value of the argument (right of `=`) defines the new column's value
 
     Example:
-        diamonds >> mutate(x_plus_y=X.x + X.y) >> select_from('x') >> head(3)
+        ## Setup
+        import grama as gr
+        DF = gr.Intention()
+        ## Load example dataset
+        from grama.data import df_diamonds
 
-              x     y     z  x_plus_y
-        0  3.95  3.98  2.43      7.93
-        1  3.89  3.84  2.31      7.73
-        2  4.05  4.07  2.31      8.12
+        ## Compute a rough estimate of volume
+        (
+            df_diamonds
+            >> gr.tf_mutate(
+                vol=DF.x * DF.y * DF.z
+            )
+            >> gr.tf_select("x", "y", "z", "vol")
+        )
+
     """
 
     return df.assign(**kwargs)

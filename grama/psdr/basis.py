@@ -1,7 +1,7 @@
 """ Descriptions of various bases"""
 
-__all__ = ['PolynomialTensorBasis', 
-	'MonomialTensorBasis', 
+__all__ = ['PolynomialTensorBasis',
+	'MonomialTensorBasis',
 	'LegendreTensorBasis',
 	'ChebyshevTensorBasis',
 	'LaguerreTensorBasis',
@@ -11,7 +11,7 @@ __all__ = ['PolynomialTensorBasis',
 
 import numpy as np
 from numpy.polynomial.polynomial import polyvander, polyder, polyroots
-from numpy.polynomial.legendre import legvander, legder, legroots 
+from numpy.polynomial.legendre import legvander, legder, legroots
 from numpy.polynomial.chebyshev import chebvander, chebder, chebroots
 from numpy.polynomial.hermite import hermvander, hermder, hermroots
 from numpy.polynomial.laguerre import lagvander, lagder, lagroots
@@ -27,11 +27,11 @@ class Basis(object):
 # Indexing utility functions for total degree
 ################################################################################
 
-#TODO: Should these be moved into PolynomialTensorBasis class? 
+#TODO: Should these be moved into PolynomialTensorBasis class?
 
 def _full_index_set(n, d):
 	""" A helper function for index_set.
-	
+
 	Parameters
 	----------
 	n : int
@@ -54,7 +54,7 @@ def _full_index_set(n, d):
 
 def index_set(n, d):
 	"""Enumerate multi-indices for a total degree of order `n` in `d` variables.
-	
+
 	Parameters
 	----------
 	n : int
@@ -66,7 +66,7 @@ def index_set(n, d):
 	I : ndarray
 		multi-indices ordered as columns
 	"""
-	I = np.zeros((1, d), dtype = np.int)
+	I = np.zeros((1, d), dtype = int)
 	for i in range(1, n+1):
 		II = _full_index_set(i, d)
 		I = np.vstack((I, II))
@@ -82,7 +82,7 @@ class PolynomialTensorBasis(Basis):
 
 	.. math::
 
-		\psi_j(\mathbf x) := \prod_{i=1}^n \phi_{[\boldsymbol \alpha_j]_i}(x_i) 
+		\psi_j(\mathbf x) := \prod_{i=1}^n \phi_{[\boldsymbol \alpha_j]_i}(x_i)
 			\quad \sum_{i=1}^n [\boldsymbol \alpha_j]_i \le p;
 			\quad \phi_i \in \mathcal{P}_{i}(\mathbb{R})
 
@@ -96,8 +96,8 @@ class PolynomialTensorBasis(Basis):
 	polyvander: function
 		Function providing the scalar Vandermonde matrix (i.e., numpy.polynomial.polynomial.polyvander)
 	polyder: function
-		Function providing the derivatives of scalar polynomials (i.e., numpy.polynomial.polynomial.polyder)	
- 
+		Function providing the derivatives of scalar polynomials (i.e., numpy.polynomial.polynomial.polyder)
+
 	"""
 
 	def __init__(self, degree, X = None, dim = None):
@@ -109,7 +109,7 @@ class PolynomialTensorBasis(Basis):
 		elif dim is not None:
 			self.dim = int(dim)
 			self.X = None
-	
+
 		self.indices = index_set(self.degree, self.dim).astype(int)
 		self._build_Dmat()
 
@@ -154,7 +154,7 @@ class PolynomialTensorBasis(Basis):
 	def V(self, X = None):
 		r""" Builds the Vandermonde matrix associated with this basis
 
-		Given points :math:`\mathbf x_i \in \mathbb{R}^n`, 
+		Given points :math:`\mathbf x_i \in \mathbb{R}^n`,
 		this creates the Vandermonde matrix
 
 		.. math::
@@ -166,9 +166,9 @@ class PolynomialTensorBasis(Basis):
 		Parameters
 		----------
 		X: array-like (M, n)
-			Points at which to evaluate the basis at where :code:`X[i]` is one such point in 
+			Points at which to evaluate the basis at where :code:`X[i]` is one such point in
 			:math:`\mathbf{R}^n`.
-		
+
 		Returns
 		-------
 		V: np.array
@@ -184,9 +184,9 @@ class PolynomialTensorBasis(Basis):
 		M = X.shape[0]
 		assert X.shape[1] == self.dim, "Expected %d dimensions, got %d" % (self.dim, X.shape[1])
 		V_coordinate = [self.vander(X[:,k], self.degree) for k in range(self.dim)]
-		
+
 		V = np.ones((M, len(self.indices)), dtype = X.dtype)
-		
+
 		for j, alpha in enumerate(self.indices):
 			for k in range(self.dim):
 				V[:,j] *= V_coordinate[k][:,alpha[k]]
@@ -198,16 +198,16 @@ class PolynomialTensorBasis(Basis):
 		This evaluates the product :math:`\mathbf{V}\mathbf{c}`
 		where :math:`\mathbf{V}` is the Vandermonde matrix defined in :code:`V`.
 		This is done without explicitly constructing the Vandermonde matrix to save
-		memory.	
-		 
+		memory.
+
 		Parameters
 		----------
 		X: array-like (M,n)
-			Points at which to evaluate the basis at where :code:`X[i]` is one such point in 
+			Points at which to evaluate the basis at where :code:`X[i]` is one such point in
 			:math:`\mathbf{R}^n`.
-		c: array-like 
+		c: array-like
 			The vector to take the inner product with.
-		
+
 		Returns
 		-------
 		Vc: np.array (M,)
@@ -226,7 +226,7 @@ class PolynomialTensorBasis(Basis):
 			oneD = True
 
 		V_coordinate = [self.vander(X[:,k], self.degree) for k in range(self.dim)]
-		out = np.zeros((M, c.shape[1]))	
+		out = np.zeros((M, c.shape[1]))
 		for j, alpha in enumerate(self.indices):
 
 			# If we have a non-zero coefficient
@@ -244,40 +244,40 @@ class PolynomialTensorBasis(Basis):
 	def DV(self, X):
 		r""" Column-wise derivative of the Vandermonde matrix
 
-		Given points :math:`\mathbf x_i \in \mathbb{R}^n`, 
+		Given points :math:`\mathbf x_i \in \mathbb{R}^n`,
 		this creates the Vandermonde-like matrix whose entries
 		correspond to the derivatives of each of basis elements;
-		i.e., 
+		i.e.,
 
 		.. math::
 
-			[\mathbf{V}]_{i,j} = \left. \frac{\partial}{\partial x_k} \psi_j(\mathbf{x}) 
+			[\mathbf{V}]_{i,j} = \left. \frac{\partial}{\partial x_k} \psi_j(\mathbf{x})
 				\right|_{\mathbf{x} = \mathbf{x}_i}.
 
 		Parameters
 		----------
 		X: array-like (M, n)
-			Points at which to evaluate the basis at where :code:`X[i]` is one such point in 
+			Points at which to evaluate the basis at where :code:`X[i]` is one such point in
 			:math:`\mathbf{R}^n`.
 
 		Returns
 		-------
 		Vp: np.array (M, N, n)
 			Derivative of Vandermonde matrix where :code:`Vp[i,j,:]`
-			is the gradient of :code:`V[i,j]`. 
+			is the gradient of :code:`V[i,j]`.
 		"""
 		X = X.reshape(-1, self.dim)
 		X = self._scale(np.array(X))
 		M = X.shape[0]
 		V_coordinate = [self.vander(X[:,k], self.degree) for k in range(self.dim)]
-		
+
 		N = len(self.indices)
 		DV = np.ones((M, N, self.dim), dtype = X.dtype)
 
 		try:
 			dscale = self._dscale()
 		except NotImplementedError:
-			dscale = np.ones(X.shape[1])	
+			dscale = np.ones(X.shape[1])
 
 
 		for k in range(self.dim):
@@ -288,47 +288,47 @@ class PolynomialTensorBasis(Basis):
 					else:
 						DV[:,j,k] *= V_coordinate[q][:,alpha[q]]
 			# Correct for transform
-			DV[:,:,k] *= dscale[k] 		
+			DV[:,:,k] *= dscale[k]
 
 		return DV
-	
+
 	def DDV(self, X):
 		r""" Column-wise second derivative of the Vandermonde matrix
 
-		Given points :math:`\mathbf x_i \in \mathbb{R}^n`, 
+		Given points :math:`\mathbf x_i \in \mathbb{R}^n`,
 		this creates the Vandermonde-like matrix whose entries
 		correspond to the derivatives of each of basis elements;
-		i.e., 
+		i.e.,
 
 		.. math::
 
-			[\mathbf{V}]_{i,j} = \left. \frac{\partial^2}{\partial x_k\partial x_\ell} \psi_j(\mathbf{x}) 
+			[\mathbf{V}]_{i,j} = \left. \frac{\partial^2}{\partial x_k\partial x_\ell} \psi_j(\mathbf{x})
 				\right|_{\mathbf{x} = \mathbf{x}_i}.
 
 		Parameters
 		----------
 		X: array-like (M, n)
-			Points at which to evaluate the basis at where :code:`X[i]` is one such point in 
+			Points at which to evaluate the basis at where :code:`X[i]` is one such point in
 			:math:`\mathbf{R}^m`.
 
 		Returns
 		-------
 		Vpp: np.array (M, N, n, n)
 			Second derivative of Vandermonde matrix where :code:`Vpp[i,j,:,:]`
-			is the Hessian of :code:`V[i,j]`. 
+			is the Hessian of :code:`V[i,j]`.
 		"""
 		X = X.reshape(-1, self.dim)
 		X = self._scale(np.array(X))
 		M = X.shape[0]
 		V_coordinate = [self.vander(X[:,k], self.degree) for k in range(self.dim)]
-		
+
 		N = len(self.indices)
 		DDV = np.ones((M, N, self.dim, self.dim), dtype = X.dtype)
 
 		try:
 			dscale = self._dscale()
 		except NotImplementedError:
-			dscale = np.ones(X.shape[1])	
+			dscale = np.ones(X.shape[1])
 
 
 		for k in range(self.dim):
@@ -356,7 +356,7 @@ class PolynomialTensorBasis(Basis):
 			raise NotImplementedError
 		r = self.polyroots(coef)
 		return r*(self._ub[0] - self._lb[0])/2.0 + (self._ub[0] + self._lb[0])/2.
-		 
+
 
 class MonomialTensorBasis(PolynomialTensorBasis):
 	"""A tensor product basis of bounded total degree built from the monomials"""
@@ -364,9 +364,9 @@ class MonomialTensorBasis(PolynomialTensorBasis):
 		self.vander = np.polynomial.polynomial.polyvander
 		self.polyder = np.polynomial.polynomial.polyder
 		self.polyroots = np.polynomial.polynomial.polyroots
-		PolynomialTensorBasis.__init__(self, *args, **kwargs)	
+		PolynomialTensorBasis.__init__(self, *args, **kwargs)
 
-	
+
 class LegendreTensorBasis(PolynomialTensorBasis):
 	"""A tensor product basis of bounded total degree built from the Legendre polynomials
 
@@ -375,19 +375,19 @@ class LegendreTensorBasis(PolynomialTensorBasis):
 		self.vander = legvander
 		self.polyder = legder
 		self.polyroots = legroots
-		PolynomialTensorBasis.__init__(self, *args, **kwargs)	
+		PolynomialTensorBasis.__init__(self, *args, **kwargs)
 
 class ChebyshevTensorBasis(PolynomialTensorBasis):
 	"""A tensor product basis of bounded total degree built from the Chebyshev polynomials
-	
+
 	"""
 	def __init__(self, *args, **kwargs):
 		self.vander = chebvander
 		self.polyder = chebder
 		self.polyroots = chebroots
-		PolynomialTensorBasis.__init__(self, *args, **kwargs)	
-	
-	
+		PolynomialTensorBasis.__init__(self, *args, **kwargs)
+
+
 
 class LaguerreTensorBasis(PolynomialTensorBasis):
 	"""A tensor product basis of bounded total degree built from the Laguerre polynomials
@@ -397,7 +397,7 @@ class LaguerreTensorBasis(PolynomialTensorBasis):
 		self.vander = lagvander
 		self.polyder = lagder
 		self.polyroots = lagroots
-		PolynomialTensorBasis.__init__(self, *args, **kwargs)	
+		PolynomialTensorBasis.__init__(self, *args, **kwargs)
 
 class HermiteTensorBasis(PolynomialTensorBasis):
 	"""A tensor product basis of bounded total degree built from the Hermite polynomials
@@ -407,7 +407,7 @@ class HermiteTensorBasis(PolynomialTensorBasis):
 		self.vander = hermvander
 		self.polyder = hermder
 		self.polyroots = hermroots
-		PolynomialTensorBasis.__init__(self, *args, **kwargs)	
+		PolynomialTensorBasis.__init__(self, *args, **kwargs)
 
 	def _set_scale(self, X):
 		self._mean = np.mean(X, axis = 0)
@@ -442,7 +442,7 @@ class ArnoldiPolynomialBasis(Basis):
 		self.indices = index_set(self.degree, self.dim)
 
 		self.Q, self.R = self.arnoldi()
-	
+
 	def __len__(self):
 		return len(self.indices)
 
@@ -452,7 +452,7 @@ class ArnoldiPolynomialBasis(Basis):
 		# Here we pick the most recent column that is one off
 		j = np.max(np.argwhere( (np.sum(np.abs(diff), axis = 1) <= 1) & (np.min(diff, axis = 1) == -1)))
 		i = int(np.argwhere(diff[j] == -1))
-		return i, j	
+		return i, j
 
 	def arnoldi(self):
 		r""" Apply the Arnoldi proceedure to build up columns of the Vandermonde matrix
@@ -463,24 +463,24 @@ class ArnoldiPolynomialBasis(Basis):
 		# Allocate memory for matrices
 		Q = np.zeros((M, len(idx)))
 		R = np.zeros((len(idx), len(idx)))
-	
+
 		# Generate columns of the Vandermonde matrix
 		iteridx = enumerate(idx)
 		# As the first column is the ones vector, we treat it as a special case
 		next(iteridx)
 		Q[:,0] = 1/np.sqrt(M)
-		R[0,0] = np.sqrt(M)	
+		R[0,0] = np.sqrt(M)
 
 		# Now work on the remaining columns
 		for k, ids in iteridx:
-			i, j = self._update_vec(ids) 
+			i, j = self._update_vec(ids)
 			# Form new column
 			q = self.X[:,i] * Q[:,j]
-	
+
 			for j in range(k):
 				R[j,k] = Q[:,j].T @ q
 				q -= R[j,k]*Q[:,j]
-			
+
 			R[k,k] = np.linalg.norm(q)
 			Q[:,k] = q/R[k,k]
 
@@ -498,17 +498,17 @@ class ArnoldiPolynomialBasis(Basis):
 
 		# Now work on the remaining columns
 		for k, ids in iteridx:
-			i, j = self._update_vec(ids) 
+			i, j = self._update_vec(ids)
 			# Form new column
 			w = X[:,i] * W[:,j]
-	
+
 			for j in range(k):
 				w -= self.R[j,k]*W[:,j]
-			
+
 			W[:,k] = w/self.R[k,k]
 
 		return W
-		
+
 
 	def V(self, X = None):
 		if X is None or np.array_equal(X, self.X):
@@ -536,11 +536,11 @@ class ArnoldiPolynomialBasis(Basis):
 				i, j = self._update_vec(ids)
 				# Q[:,k] = X[:,i] * Q[:,j] - sum_s Q[:,s] * R[s, k]
 				if i == ell:
-					DV[:,k,ell] = V[:,j] + X[:,i] * DV[:,j,ell] - DV[:,0:k,ell] @ self.R[0:k,k] 
+					DV[:,k,ell] = V[:,j] + X[:,i] * DV[:,j,ell] - DV[:,0:k,ell] @ self.R[0:k,k]
 				else:
-					DV[:,k,ell] = X[:,i] * DV[:,j,ell] - DV[:,0:k,ell] @ self.R[0:k,k] 
-				DV[:,k,ell] /= self.R[k,k]	
-		
+					DV[:,k,ell] = X[:,i] * DV[:,j,ell] - DV[:,0:k,ell] @ self.R[0:k,k]
+				DV[:,k,ell] /= self.R[k,k]
+
 		return DV
 
 	def DDV(self, X = None):

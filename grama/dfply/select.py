@@ -80,6 +80,50 @@ def resolve_selection(df, *args, drop=False):
 @group_delegation
 @symbolic_evaluation(eval_as_selector=True)
 def tran_select(df, *args):
+    r"""Select columns in a DataFrame
+
+    Down-select or re-arrange columns in a DataFrame, usually for readability. Provide specific column names, or make use of the following selection helpers:
+
+        starts_with() - column name begins with string
+        ends_with() - column name ends with string
+        contains() - column name contains string
+        matches() - column name matches pattern (regular expression)
+        everything() - all columns not already selected; useful for re-arranging columns without dropping
+
+    Arguments:
+        df (pandas.DataFrame): DataFrame to modify
+        *args (str or selection helper): Specific column name OR selection helper.
+
+    Returns:
+        DataFrame: Data with selected columns
+
+    Examples:
+
+        ## Setup
+        import grama as gr
+        DF = gr.Intention()
+        ## Load example dataset
+        from grama.data import df_stang_wide
+
+        ## Move "alloy" column to left
+        (
+            df_stang_wide
+            >> gr.tf_select("alloy", gr.everything())
+        )
+
+        ## Find columns that start with "mu_"
+        (
+            df_stang_wide
+            >> gr.tf_select(gr.starts_with("mu"))
+        )
+
+        ## Find columns with digits in names
+        (
+            df_stang_wide
+            >> gr.tf_select(gr.matches("\\d+"))
+        )
+
+    """
     ordering, column_indices = resolve_selection(df, *args)
     if (column_indices == 0).all():
         return df[[]]
@@ -148,26 +192,51 @@ tf_drop_if = add_pipe(tran_drop_if)
 
 @selection_filter
 def starts_with(columns, prefix):
+    r"""Select columns starting with a prefix, for use in tran_select()
+
+    Args:
+        prefix (str): Prefix to detect
+
+    """
     return [c for c in columns if c.startswith(prefix)]
 
 
 @selection_filter
 def ends_with(columns, suffix):
+    r"""Select columns ending in a suffix, for use in tran_select()
+
+    Args:
+        suffix (str): Suffix to detect
+
+    """
     return [c for c in columns if c.endswith(suffix)]
 
 
 @selection_filter
 def contains(columns, substr):
+    r"""Select columns containing a substring, for use in tran_select()
+
+    Args:
+        substr (str): Substring to detect
+
+    """
     return [c for c in columns if substr in c]
 
 
 @selection_filter
 def matches(columns, pattern):
+    r"""Select columns matching a pattern, for use in tran_select()
+
+    Args:
+        pattern (str): String pattern to match, can be a regular expression
+
+    """
     return [c for c in columns if re.search(pattern, c)]
 
 
 @selection_filter
 def everything(columns):
+    "Select all columns, for use in tran_select()"
     return columns
 
 

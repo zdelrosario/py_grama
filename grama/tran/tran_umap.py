@@ -26,7 +26,7 @@ def tran_umap(
     Apply the UMAP algorithm to reduce the dimensionality of a dataset.
 
     Args:
-        df (DataFrame): Hybrid point results from gr.eval_hybrid()
+        df (DataFrame): Data to summarize
         var (list or None): Variables in df on which to perform dimension reduction.
             Use None to compute with all variables.
         out (string): Name of reduced-dimensionality output; indexed from 0 .. n_dim-1

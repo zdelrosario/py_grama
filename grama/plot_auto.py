@@ -20,8 +20,9 @@ from grama import add_pipe, pipe, tf_pivot_longer, tf_outer, tf_select, tf_renam
 from grama import Intention
 from pandas import melt
 
-from plotnine import aes, annotate, ggplot, facet_grid, facet_wrap, labs, element_text, guides
+from plotnine import aes, annotate, ggplot, facet_grid, facet_wrap, labs, guides
 from plotnine import theme, theme_void, theme_minimal
+from plotnine import element_text, element_rect
 from plotnine import scale_x_continuous, scale_y_continuous, scale_fill_gradient2
 from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_tile
 from plotnine import geom_segment, geom_blank
@@ -415,8 +416,8 @@ def plot_sinew_outputs(
 ):
     r"""Construct sinew plot
 
-    Create a relational lineplot with hues. Often used to visualize the outputs
-    of a sinew design.
+    Create a relational lineplot with hues for each sweep. Often used to
+    visualize the outputs of a sinew design.
 
     Usually called as a dispatch from plot_auto().
 
@@ -489,7 +490,10 @@ def plot_sinew_outputs(
         )
         + guides(color=None)
         + theme_minimal()
-        + theme(strip_text_y=element_text(angle=0))
+        + theme(
+            strip_text_y=element_text(angle=0),
+            panel_border=element_rect(color="black", size=0.5),
+        )
         + labs(
             x="Input Value",
             y="Output Value",

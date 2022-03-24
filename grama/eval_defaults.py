@@ -306,7 +306,7 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
         df_det (DataFrame): Deterministic levels for evaluation; use "nom"
             for nominal deterministic levels.
         seed (int): random seed to use
-        append (bool): Append results to random values?
+        append (bool): Append results to input values?
         skip (bool): Skip evaluation of the functions?
 
     Returns:

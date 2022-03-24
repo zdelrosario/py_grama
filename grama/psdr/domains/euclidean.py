@@ -7,12 +7,6 @@ from scipy.spatial.distance import pdist
 from functools import lru_cache
 
 
-try:
-	from functools import cached_property
-except ImportError:
-	from backports.cached_property import cached_property
-
-
 from .domain import Domain, TOL
 from ..exceptions import SolverError, EmptyDomainException, UnboundedDomainException
 from ..misc import merge
