@@ -53,6 +53,7 @@ setup(
             "statsmodels",
             "pyDOE",
             "umap-learn",
+            "coverage",
         ],
     }
 )
