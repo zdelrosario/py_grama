@@ -286,21 +286,21 @@ def fct_reorder(f, x, fun=median):
     Args:
         f (iterable OR DataFrame column): factor to reorder
         x (iterable OR DataFrame column): variable on which to reorder; specify aggregation method with fun
-        fun (function): aggregation function for reordering
+        fun (function): aggregation function for reordering, default=median
 
     Returns:
         Categorical: Iterable with levels sorted according to x
 
     Examples:
-        >>> import grama as gr
-        >>> from grama.data import df_diamonds
-        >>> X = gr.Intention()
-        >>> (
-        >>>     df_diamonds
-        >>>     >> gr.tf_mutate(cut=gr.fct_reorder(X.cut, X.price, fun=gr.colmax))
-        >>>     >> gr.tf_group_by(X.cut)
-        >>>     >> gr.tf_summarize(max=gr.colmax(X.price), mean=gr.mean(X.price))
-        >>> )
+        import grama as gr
+        from grama.data import df_diamonds
+        DF = gr.Intention()
+        (
+            df_diamonds
+            >> gr.tf_mutate(cut=gr.fct_reorder(DF.cut, DF.price))
+            >> gr.tf_group_by(DF.cut)
+            >> gr.tf_summarize(max=gr.colmax(DF.price), mean=gr.mean(DF.price))
+        )
     """
 
     # Get factor levels
