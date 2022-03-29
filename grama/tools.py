@@ -487,8 +487,11 @@ def df_grid(**kwargs):
         All provided variable names (keyword arguments) must be distinct.
 
     Examples:
-        A common use-case is to use df_grid() to define a sweep across variables.
-
+        import grama as gr
+        ## Make an empty DataFrame
+        gr.df_grid()
+        ## Create a row for every pair of values (6 rows total)
+        gr.df_grid(x=["A", "B"], y=[1, 2, 3])
 
     """
     ## Construct dataframe
