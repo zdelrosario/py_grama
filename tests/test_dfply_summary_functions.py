@@ -158,6 +158,15 @@ class TestSummaryFcn(unittest.TestCase):
         t = df >> gr.tf_group_by(X.cut) >> gr.tf_mutate(n=gr.n(X.x))
         df_truth["n"] = pd.Series([1, 2, 2, 2, 2, 2])
         self.assertTrue(t.sort_index().equals(df_truth))
+        # Implicit mode summarize
+        t = df >> gr.tf_summarize(n=gr.n())
+        df_truth = pd.DataFrame({"n": [5]})
+        self.assertTrue(t.equals(df_truth))
+        # Implicit mode mutate
+        t = df >> gr.tf_group_by(X.cut) >> gr.tf_mutate(n=gr.n())
+        df_truth = df.copy()
+        df_truth["n"] = pd.Series([1, 2, 2, 2, 2, 2])
+        self.assertTrue(t.sort_index().equals(df_truth))
 
     def test_n_distinct(self):
         df = pd.DataFrame(
