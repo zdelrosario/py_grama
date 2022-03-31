@@ -8,9 +8,10 @@ __all__ = [
 ]
 
 import collections
+from grama import lookup
 from .base import make_symbolic
 from numpy import argmin, arange, unique, repeat, nan, array
-from pandas import concat, DataFrame, Series, isnull
+from pandas import concat, DataFrame, Series, isnull, factorize
 
 
 # ------------------------------------------------------------------------------
@@ -115,11 +116,27 @@ def coalesce(*series):
         4  np.nan
     """
 
+    ### FACTORIZE SOLUTION
+    # coalescer = concat(series, axis=1)
+    # cols = coalescer.columns
+    # series = [Series(s) for s in series]
+    # min_nonna = argmin(isnull(coalescer).values, axis=1)
+    # coalescer.insert(loc=0,column="nonna",value=min_nonna)
+    # idx, not_cols = factorize(coalescer['nonna'])
+    # print(coalescer.reindex(cols, axis=1).to_numpy()[arange(len(coalescer)), idx])
+
+    ### BFILL SOLUTION_TEXT
+    # print(array(coalescer[min_nonna].bfill(axis=1).iloc[:, 0]))
+
+    ### ORIGINAL CODE
+    # print(coalescer.lookup(arange(coalescer.shape[0]), min_nonna))
+
     series = [Series(s) for s in series]
     coalescer = concat(series, axis=1)
     min_nonna = argmin(isnull(coalescer).values, axis=1)
     min_nonna = [coalescer.columns[i] for i in min_nonna]
-    return coalescer.lookup(arange(coalescer.shape[0]), min_nonna)
+
+    return lookup(coalescer,arange(coalescer.shape[0]), min_nonna)
 
 
 # ------------------------------------------------------------------------------

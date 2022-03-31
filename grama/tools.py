@@ -5,6 +5,7 @@ __all__ = [
     "df_equal",
     "df_make",
     "df_grid",
+    "lookup",
     "param_dist",
     "pipe",
     "valid_dist",
@@ -16,7 +17,14 @@ import warnings
 from functools import wraps
 from inspect import signature
 from numbers import Integral
+from numpy import empty
 from pandas import DataFrame, concat
+from pandas.core.dtypes.common import is_object_dtype
+from pandas._libs import (
+    algos as libalgos,
+    lib,
+    properties,
+)
 from pandas.testing import assert_frame_equal
 from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
     bradford, burr, burr12, cauchy, chi, chi2, cosine, crystalball, dgamma, \
@@ -507,3 +515,44 @@ def df_grid(**kwargs):
         df_res = tran_outer(df_res, df_outer=df_tmp)
 
     return df_res
+
+
+def lookup(df, row_labels, col_labels):
+    r"""2D lookup function for a dataframe
+    (Old Pandas Lookup Method)
+
+    Args:
+        df (DataFrame): DataFrame for lookup
+        row_labels (List): Row labels to use for lookup.
+        col_labels (List): Column labels to use for lookup.
+
+    Returns:
+        numpy.ndarray: Found values
+    """
+    n = len(row_labels)
+    if n != len(col_labels):
+        raise ValueError("Row labels must have same size as column labels")
+    if not (df.index.is_unique and df.columns.is_unique):
+        raise ValueError("DataFrame.lookup requires unique index and columns")
+
+    thresh = 1000
+    if not df._is_mixed_type or n > thresh:
+        values = df.values
+        ridx = df.index.get_indexer(row_labels)
+        cidx = df.columns.get_indexer(col_labels)
+        if (ridx == -1).any():
+            raise KeyError("One or more row labels was not found")
+        if (cidx == -1).any():
+            raise KeyError("One or more column labels was not found")
+        flat_index = ridx * len(df.columns) + cidx
+        result = values.flat[flat_index]
+    else:
+        result = empty(n, dtype="O")
+        for i, (r, c) in enumerate(zip(row_labels, col_labels)):
+            print(r,c)
+            result[i] = df._get_value(r, c)
+
+    if is_object_dtype(result):
+        result = lib.maybe_convert_objects(result)
+
+    return result
