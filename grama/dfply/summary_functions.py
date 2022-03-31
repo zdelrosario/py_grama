@@ -33,7 +33,7 @@ __all__ = [
     "rsq",
 ]
 
-from .base import make_symbolic
+from .base import make_symbolic, Intention
 from .vector import order_series_by
 from numpy import array, sqrt, power, nan, isnan
 from scipy.stats import norm, pearsonr, spearmanr, kurtosis
@@ -221,13 +221,37 @@ def nth(series, n, order_by=None):
 
 
 @make_symbolic
-def n(series):
+def n(series=None):
     """
     Returns the length of a series.
 
     Args:
-        series (pandas.Series): column to summarize.
+        series (pandas.Series): column to summarize. Default is the size of the parent DataFrame.
+
+    Examples:
+        import grama as gr
+        from grama.data import df_diamonds
+        DF = gr.Intention()
+
+        ## Count entries in series
+        gr.n(df_diamonds.cut)
+        ## Use implicit mode to get size of current DataFrame
+        (
+            df_diamonds
+            >> gr.tf_mutate(n_total=gr.n())
+        )
+        ## Use implicit mode in groups
+        (
+            df_diamonds
+            >> gr.tf_group_by(DF.cut)
+            >> gr.tf_mutate(n_cut=gr.n())
+        )
+
     """
+    # "Implicit mode": Default to current DataFrame
+    if series is None:
+        DF = Intention()
+        series = DF.index
 
     n_s = series.size
     return n_s
