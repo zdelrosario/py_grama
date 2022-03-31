@@ -30,7 +30,7 @@ jobs:
 #        cd tutorials; python -m unittest discover
     - name: Test source
       run: |
-        cd tests; coverage run -m xmlrunner discover
+        cd tests; coverage run -m unittest discover
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
