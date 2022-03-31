@@ -31,8 +31,8 @@ jobs:
     - name: Test source
       run: |
         cd tests; coverage run -m unittest discover
+        mv tests/.coverage . # Move coverage file for upload to Codecov
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
         fail_ci_if_error: false
-        files: ./tests/htmlcov/*.html
