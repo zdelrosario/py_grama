@@ -35,4 +35,4 @@ jobs:
       uses: codecov/codecov-action@v2
       with:
         fail_ci_if_error: false
-        files: ./tests/*.xml
+        files: ./tests/htmlcov/*.html
