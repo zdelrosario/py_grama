@@ -17,6 +17,7 @@ __all__ = [
     "columns_between",
     "columns_from",
     "columns_to",
+    "resolve_selection"
 ]
 
 import re
@@ -62,7 +63,6 @@ def resolve_selection(df, *args, drop=False):
         ordering = []
         column_indices = zeros(df.shape[1])
         for selector in args:
-            print(selector)
             visible = where(selector != 0)[0]
             if not drop:
                 column_indices[visible] = selector[visible]

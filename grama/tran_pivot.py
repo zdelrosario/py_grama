@@ -6,16 +6,15 @@ __all__ = [
 ]
 
 
-from grama import add_pipe, flatten, group_delegation, Intention, tran_select, \
-    symbolic_evaluation
+from grama import add_pipe, tran_select, symbolic_evaluation, \
+    group_delegation, resolve_selection, Intention
+from numpy import max as npmax
 from numpy import NaN, where, zeros
 from pandas import DataFrame, IndexSlice, MultiIndex, RangeIndex, Series, \
     concat, isnull, pivot, pivot_table
 from pandas.api.types import is_int64_dtype
 
 
-@group_delegation
-@symbolic_evaluation(eval_as_selector=True)
 def tran_pivot_longer (
     df,
     columns,
@@ -31,7 +30,6 @@ def tran_pivot_longer (
     #values_drop_na = False,
     #values_ptypes = list(),
     #values_transform = list(),
-    *args = None,
 ):
     """
 
@@ -76,18 +74,15 @@ def tran_pivot_longer (
 
     """
 
-    if isinstance(columns, Intention):
-        ordering, column_indices = resolve_selection(df, columns)
-        print(column_indices)
-        return 0
 
     ########### Pre-Check List #############
     ### Check if tran_select was used
     if isinstance(columns, DataFrame):
         columns = columns.columns.values
-    ### Check if gr.tran_select helper was used:
-    # NEEDS to be implmented, currently gr.tran_select needs to provided with
-    # gr.matches or other helper function for this to work
+
+    ### Check if selection helper was used:
+    if isinstance(columns,Intention):
+        columns = pivot_select(df, columns)
 
     ### Check if names_to is a list or str
     names_str = False
@@ -110,6 +105,7 @@ def tran_pivot_longer (
     ### Check values_to argument
     if values_to is None:
         values_to = "values"
+
 
     #######################################
 
@@ -483,29 +479,19 @@ def index_to_cleanup(df, longer, data_index):
     return(longer)
 
 
+@group_delegation
+@symbolic_evaluation(eval_as_selector=True)
+def pivot_select(df, columns):
+    """
+        pivot_select helps resolve the use of a selection helper in the columns
+        argument (e.g: columns = gr.matches("\\d+"))
+    """
+    ordering, column_indices = resolve_selection(df, columns)
+    if (column_indices == 0).all():
+        return df[[]]
+    selection = where(
+        (column_indices == npmax(column_indices)) & (column_indices >= 0)
+    )[0]
+    df = df.iloc[:, selection]
 
-
-
-
-
-
-
-def resolve_selection(df, *args, drop=False):
-    if len(args) > 0:
-        args = [a for a in flatten(args)]
-        ordering = []
-        column_indices = zeros(df.shape[1])
-        for selector in args:
-            print(selector)
-            visible = where(selector != 0)[0]
-            if not drop:
-                column_indices[visible] = selector[visible]
-            else:
-                column_indices[visible] = selector[visible] * -1
-            for selection in where(selector == 1)[0]:
-                if not df.columns[selection] in ordering:
-                    ordering.append(df.columns[selection])
-    else:
-        ordering = list(df.columns)
-        column_indices = ones(df.shape[1])
-    return ordering, column_indices
+    return df.columns.values
