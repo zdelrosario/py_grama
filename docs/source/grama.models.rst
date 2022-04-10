@@ -44,6 +44,14 @@ grama.models.linear\_normal module
    :undoc-members:
    :show-inheritance:
 
+grama.models.pareto\_random module
+----------------------------------
+
+.. automodule:: grama.models.pareto_random
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.models.plane\_laminate module
 -----------------------------------
 

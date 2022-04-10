@@ -89,6 +89,7 @@ grama.dfply.summarize module
 
 .. automodule:: grama.dfply.summarize
    :members:
+   :imported-members:
    :undoc-members:
    :show-inheritance:
 
