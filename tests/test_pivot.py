@@ -194,13 +194,26 @@ class TestPivotLonger(unittest.TestCase):
         assert_frame_equal(long, expected)
 
 
+    def test_pivot_longer_matches_error(self):
+        """ Test if selection helper retrieves no matches
+        """
+        with self.assertRaises(ValueError):
+            stang = data.df_stang_wide
+            long = gr.tran_pivot_longer(
+                stang,
+                columns = gr.matches("0123"),
+                names_to="var",
+                values_to="val"
+            )
+
+
     def test_pivot_longer_names_pattern(self):
         """ Test if pivot_longer properly works with names_pattern
         """
         stang = data.df_stang_wide
         long = gr.tran_pivot_longer(
             stang,
-            names_pattern="(E_|mu_)(\\d+)",
+            names_pattern="(E|mu)_(\\d+)",
             columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
             names_to=("property", "angle"),
             values_to="val"
@@ -224,7 +237,7 @@ class TestPivotLonger(unittest.TestCase):
             stang = data.df_stang_wide
             long = gr.tran_pivot_longer(
                 stang,
-                names_pattern="(E_|mu_)(\\d+)",
+                names_pattern="(E|mu)_(\\d+)",
                 names_sep="_",
                 columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
                 names_to=("property", "angle"),
@@ -282,7 +295,7 @@ class TestPivotLonger(unittest.TestCase):
         stang = data.df_stang_wide
         long = gr.tran_pivot_longer(
             stang,
-            names_sep=-3,
+            names_sep=[-3],
             columns=["E_00","mu_00","E_45","mu_45","E_90","mu_90"],
             names_to=("property", "angle"),
             values_to="val"
@@ -305,6 +318,27 @@ class TestPivotLonger(unittest.TestCase):
         long = gr.tran_pivot_longer(
             wide,
             names_sep="_",
+            columns=["A_1_hello","B_2_bye"],
+            names_to=("letter","num","saying"),
+            values_to="val"
+        )
+        names_to = ["letter","num","saying"]
+        names_to_check = [x for x in long.columns.values if x in names_to]
+
+        result = False
+        if names_to == names_to_check:
+            result = True
+
+        self.assertTrue(result)
+
+
+    def test_pivot_longer_names_sep_position_thrice(self):
+        """ Test if pivot_longer works with names_sep argument being a position
+        """
+        wide = gr.df_make(A_1_hello=[1,2,3], B_2_bye=[4,5,6])
+        long = gr.tran_pivot_longer(
+            wide,
+            names_sep=[1, 3],
             columns=["A_1_hello","B_2_bye"],
             names_to=("letter","num","saying"),
             values_to="val"

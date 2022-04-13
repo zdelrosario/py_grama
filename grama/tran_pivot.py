@@ -10,7 +10,7 @@ import re
 from grama import add_pipe, tran_select, symbolic_evaluation, \
     group_delegation, resolve_selection, Intention
 from numpy import max as npmax
-from numpy import NaN, where, zeros
+from numpy import NaN, size, where, zeros
 from pandas import DataFrame, IndexSlice, MultiIndex, RangeIndex, Series, \
     concat, isnull, pivot, pivot_table
 from pandas.api.types import is_int64_dtype
@@ -84,6 +84,9 @@ def tran_pivot_longer (
     ### Check if selection helper was used:
     if isinstance(columns,Intention):
         columns = pivot_select(df, columns)
+        if size(columns) == 0:
+            raise ValueError("""Selection helper has found no matches. Revise
+                columns input.""")
 
     ### Check if names_to is a list or str
     names_str = False
@@ -431,13 +434,49 @@ def split_cleanup(
     ### clean up DataFrame
     # split columns based on character/regex or position via int
     if names_sep:
-        if isinstance(names_sep, int):
+
+        # if a positional argument is used
+        if isinstance(names_sep, list):
             split = longer.split.str
-            left, right = split[:names_sep], split[names_sep+1:]
-            split_columns = DataFrame({
-                0:left,
-                1:right
-            })
+            names_sep.sort()
+
+            # if one positional split is called
+            if len(names_sep) == 1:
+                left, right = split[:names_sep[0]], split[names_sep[0]+1:]
+                split_columns = DataFrame({
+                    0:left,
+                    1:right
+                })
+            # if multiple positional splits are called
+            else:
+                splits = [] # split container
+
+                # initial split
+                left, right = split[:names_sep[0]], split[names_sep[0]+1:]
+                splits.append(left)
+
+                # convert and make a pointer of the remaining right half
+                point = right.to_frame().split.str
+
+                # iteratively seperate across the remaining names
+                for i in range(len(names_sep)-1):
+                    sep = i+1                 # current seperator
+                    offset = names_sep[sep-1] # previous seperator value
+
+                    left = point[:(names_sep[sep]-offset-1)]  # extra -1 to offset
+                    right = point[names_sep[sep]-offset-1+1:] # range(len(x)-1)
+                    splits.append(left)
+                    point = right.to_frame().split.str # convert and re-point
+
+                splits.append(right) # append final split
+
+                # create final DataFrame of split values
+                split_columns = DataFrame()
+                for i, name in enumerate(splits):
+                    column = name.to_frame()
+                    split_columns[i] = column
+
+        # if a string argument is used
         else:
             split_columns = longer.split.str.split(
                 names_sep,
@@ -470,6 +509,19 @@ def split_cleanup(
     longer = longer[[c for c in longer if c not in values_to] + [values_to]]
 
     return longer
+
+
+def position_split(names, names_sep):
+    if len(names_sep) == 1:
+        return split[:sep], split[sep+1:]
+
+    left, right = split[:sep], split[sep+1:]
+
+    seperated_names = position_split(right, names_sep[1:])
+
+    return left.append(seperated_names)
+
+
 
 
 def collect_indexes(df, columns):
