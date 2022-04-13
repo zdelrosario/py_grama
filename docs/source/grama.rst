@@ -42,6 +42,14 @@ grama.core module
    :undoc-members:
    :show-inheritance:
 
+grama.dataframe module
+----------------------
+
+.. automodule:: grama.dataframe
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 grama.eval\_contour module
 --------------------------
 
@@ -62,6 +70,14 @@ grama.eval\_opt module
 ----------------------
 
 .. automodule:: grama.eval_opt
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+grama.eval\_pnd module
+----------------------
+
+.. automodule:: grama.eval_pnd
    :members:
    :undoc-members:
    :show-inheritance:
@@ -110,6 +126,14 @@ grama.plot\_auto module
 -----------------------
 
 .. automodule:: grama.plot_auto
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+grama.spc module
+----------------
+
+.. automodule:: grama.spc
    :members:
    :undoc-members:
    :show-inheritance:

@@ -16,10 +16,13 @@ Welcome to py_grama's documentation!
    source/modules
 
 .. autosummary::
-   :toctree: stubs
+   :toctree: _autosummary
+   :recursive:
 
 .. automodule:: grama
    :members:
+   :imported-members:
+   :recursive:
 
 Indices and tables
 ==================

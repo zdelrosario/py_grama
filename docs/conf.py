@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'py_grama'
-copyright = '2019, Zachary del Rosario'
+copyright = '2022, Zachary del Rosario'
 author = 'Zachary del Rosario'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '0.3.3'
 
 
 # -- General configuration ---------------------------------------------------
@@ -33,17 +33,21 @@ master_doc = "index"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    # "sphinx.ext.mathjax",
+    "sphinx.ext.mathjax",
     "sphinx.ext.imgmath",
     "recommonmark",
     "sphinx_markdown_tables"
 ]
 
 autodoc_default_flags = ["members"]
+# autodoc_default_options = {
+#     'imported-members': True,
+# }
 autosummary_generate = True
+autosummary_imported_members = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
