@@ -33,12 +33,11 @@ def fit_nls(
 ):
     r"""Fit a model with Nonlinear Least Squares (NLS)
 
-    Estimate best-fit variable levels with nonlinear least squares (NLS), and
-    return an executable model with those frozen best-fit levels. Optionally,
-    fit a distribution on the parameters to quantify parametric uncertainty.
+    Estimate best-fit variable levels with nonlinear least squares (NLS), and return an executable model with those frozen best-fit levels. Optionally, fit a distribution on the parameters to quantify parametric uncertainty.
 
-    Note: This is a *synonym* for eval_nls(); see the documentation for
-    eval_nls() for keyword argument options available beyond those listed here.
+    Note that it is **highly likely** you will need to adjust either the bounds of your model or the initial guess of the optimizer (via `df_init`). Use these to guide the optimizer towards *reasonable* input values, otherwise you are likely to get nonsensical results.
+
+    Note: This is a *synonym* for eval_nls(); see the documentation for eval_nls() for keyword argument options available beyond those listed here.
 
     Args:
         df_data (DataFrame): Data for estimating best-fit variable levels.
@@ -46,6 +45,7 @@ def fit_nls(
         md (gr.Model): Model to analyze. All model variables
             selected for fitting must be bounded or random. Deterministic
             variables may have semi-infinite bounds.
+
         var_fix (list or None): Variables to fix to nominal levels. Note that
             variables with domain width zero will automatically be fixed.
         df_init (DataFrame): Initial guesses for parameters; overrides n_restart
@@ -64,19 +64,38 @@ def fit_nls(
             optimized levels.
 
     Examples:
-        >>> import grama as gr
-        >>> from grama.data import df_trajectory_windowed
-        >>> from grama.models import make_trajectory_linear
-        >>> X = gr.Intention()
-        >>>
-        >>> md_trajectory = make_trajectory_linear()
-        >>> md_fitted = (
-        >>>     df_trajectory_windowed
-        >>>     >> gr.ft_nls(
-        >>>         md=md_trajectory,
-        >>>         uq_method="linpool",
-        >>>     )
-        >>> )
+        import grama as gr
+        from grama.data import df_trajectory_windowed
+        from grama.models import make_trajectory_linear
+        DF = gr.Intention()
+
+        md_trajectory = make_trajectory_linear()
+
+        ## Fit
+        md_fitted = (
+            df_trajectory_windowed
+            >> gr.ft_nls(md=md_trajectory)
+        )
+
+        ## Fit, stabilize with initial guess
+        md_fitted = (
+            df_trajectory_windowed
+            >> gr.ft_nls(
+                md=md_trajectory,
+                df_init=gr.df_make(u0=18, v0=18, tau=16),
+            )
+        )
+
+        ## Fit, and return input uncertainties
+        md_fitted_uq = (
+            df_trajectory_windowed
+            >> gr.ft_nls(
+                md=md_trajectory,
+                df_init=gr.df_make(u0=18, v0=18, tau=16),
+                uq_method="linpool",
+            )
+        )
+
     """
     ## Check `out` invariants
     if out is None:
