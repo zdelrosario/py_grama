@@ -32,7 +32,7 @@ def tran_pivot_longer (
     #values_ptypes = list(),
     #values_transform = list(),
 ):
-    """
+    """Lengthen a dataset
 
     "Lengthens" data by increasing the number of rows and decreasing the
     number of columns.
@@ -355,7 +355,7 @@ def tran_pivot_wider (
      #values_fill = None,
      #values_fn = None
  ):
-    """
+    """Widen a dataset
 
      "Widens" data by increasing the number of columns and decreasing the
      number of rows.
@@ -371,21 +371,15 @@ def tran_pivot_wider (
         DataFrame: result of being pivoted wider
 
      Example:
-        >>> import grama as gr
-        >>> from pandas import DataFrame
-        >>> long = DataFrame(
-                {
-                    "index": ["A", "B", "C", "A", "B", "C"],
-                    "columns": ["One", "One", "One", "Two", "Two", "Two"],
-                    "values": [1.0, 2.0, 3.0, 1.0, 2.0, 3.0],
-                }
+        import grama as gr
+        ## Simple example
+        (
+            gr.df_make(var=["x", "x", "y", "y"], value=[0, 1, 2, 3])
+            >> gr.tf_pivot_wider(
+                names_from="var",
+                values_from="value",
             )
-        >>> wide = gr.tran_pivot_wider(
-                long,
-                indexes_from="index",
-                names_from="columns",
-                values_from="values"
-            )
+        (
 
     """
 
