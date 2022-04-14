@@ -17,6 +17,7 @@ __all__ = [
     "columns_between",
     "columns_from",
     "columns_to",
+    "resolve_selection"
 ]
 
 import re
