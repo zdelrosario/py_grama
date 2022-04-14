@@ -511,19 +511,6 @@ def split_cleanup(
     return longer
 
 
-def position_split(names, names_sep):
-    if len(names_sep) == 1:
-        return split[:sep], split[sep+1:]
-
-    left, right = split[:sep], split[sep+1:]
-
-    seperated_names = position_split(right, names_sep[1:])
-
-    return left.append(seperated_names)
-
-
-
-
 def collect_indexes(df, columns):
     """
         collect_indexes finds unused column to pivot around
