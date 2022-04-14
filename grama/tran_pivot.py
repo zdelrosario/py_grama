@@ -40,38 +40,70 @@ def tran_pivot_longer (
     Args:
         df (DataFrame): DataFrame passed through
         columns (str): Label of column(s) to pivot into longer format
-        index_to(str): str name to create a new representation index of
-                        observations
+        index_to(str): str name to create a new representation index of observations; Optional.
         names_to (str): name to use for the 'variable' column, if None frame.columns.name
                         is used or ‘variable’
                           • .value indicates that component of the name defines
                             the name of the column containing the cell values,
                             overriding values_to
-        names_sep (str): delimter to seperate the values of the argument(s) from
+        names_sep (str OR list of int): delimter to seperate the values of the argument(s) from
                         the 'columns' parameter into 2 new columns with those
                         values split by that delimeter
                           • Regex expression is a valid input for names_sep
-        values_to (str): name to use for the 'value' column
+        names_pattern (str): Regular expression with capture groups to define targets for names_to.
+        values_to (str): name to use for the 'value' column; overridden if ".value" is provided in names_to argument.
+
+    Notes:
+        Only one of names_sep OR names_pattern may be given.
 
     Returns:
         DataFrame: result of being pivoted into a longer format
 
     Examples:
 
-        >>> import grama as gr
-        >>> from pandas import DataFrame
-        >>> wide = DataFrame(
-                {
-                    "One": {"A": 1.0, "B": 2.0, "C": 3.0},
-                    "Two": {"A": 1.0, "B": 2.0, "C": 3.0},
-                }
+        import grama as gr
+
+        ## Simple example
+        (
+            gr.df_make(
+                A=[1, 2, 3],
+                B=[4, 5, 6],
+                C=[7, 8, 9],
             )
-        >>> long = gr.tran_pivot_longer(
-                    wide,
-                    columns=("One","Two"),
-                    index_to="index",
-                    names_to="columns",
-                    values_to="values")
+            >> gr.tf_pivot_longer(
+                columns=["A", "B", "C"],
+                names_to="variable",
+                values_to="value",
+            )
+        )
+
+        ## Matching columns on patterns
+        (
+            gr.df_make(
+                x1=[1, 2, 3],
+                x2=[4, 5, 6],
+                x3=[7, 8, 9],
+            )
+            >> gr.tf_pivot_longer(
+                columns=gr.matches("\\d+"),
+                names_to="variable",
+                values_to="value",
+            )
+        )
+
+        ## Separating column names and data on a names_pattern
+        (
+            gr.df_make(
+                E00=[1, 2, 3],
+                E45=[4, 5, 6],
+                E90=[7, 8, 9],
+            )
+            >> gr.tf_pivot_longer(
+                columns=gr.matches("\\d+"),
+                names_to=[".value", "angle"],
+                names_pattern="(E)(\\d+)",
+            )
+        )
 
     """
 
