@@ -141,7 +141,7 @@ def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0)
 
     Composition. Add a function to an existing model. Function must be
     vectorized over DataFrames, and must add new columns matching its `out`
-    set. See ``gr.cp_function()` to add a non-vectorized function.
+    set. See ``gr.cp_function()`` to add a non-vectorized function.
 
     Notes:
         The helper function ``gr.df_make()`` is useful for constructing a vectorized lambda function (see Examples below).
