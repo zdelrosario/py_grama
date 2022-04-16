@@ -59,10 +59,9 @@ def tran_pivot_longer (
     Returns:
         DataFrame: result of being pivoted into a longer format
 
-    Examples:
+    Examples::
 
         import grama as gr
-
         ## Simple example
         (
             gr.df_make(
@@ -370,7 +369,8 @@ def tran_pivot_wider (
      Returns:
         DataFrame: result of being pivoted wider
 
-     Example:
+     Examples::
+
         import grama as gr
         ## Simple example
         (
