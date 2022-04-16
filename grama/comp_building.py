@@ -87,7 +87,7 @@ def _comp_function_data(model, fun, var, out, name, runtime):
 def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
     r"""Add a function to a model
 
-    Composition. Add a function to an existing model.
+    Composition. Add a (non-vectorized) function to an existing model. See ``gr.comp_vec_function()`` to add a function that is vectorized over DataFrames.
 
     Args:
         model (gr.model): Model to compose
@@ -102,16 +102,19 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
     @pre (len(var) == d) | (var == d)
     @pre (len(out) == r) | (var == r)
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> md = gr.Model("test") >> \
-        >>>     gr.function(
-        >>>         fun=lambda x: x,
-        >>>         var=1,
-        >>>         out=["y"],
-        >>>         name="identity"
-        >>>     )
+        import grama as gr
+        ## Simple example
+        md = (
+            gr.Model("test")
+            >> gr.cp_function(
+                fun=lambda x: x,
+                var=["x"],
+                out=["y"],
+                name="identity"
+            )
+        )
 
     """
     model_new = model.copy()
@@ -138,7 +141,10 @@ def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0)
 
     Composition. Add a function to an existing model. Function must be
     vectorized over DataFrames, and must add new columns matching its `out`
-    set.
+    set. See ``gr.cp_function()` to add a non-vectorized function.
+
+    Notes:
+        The helper function ``gr.df_make()`` is useful for constructing a vectorized lambda function (see Examples below).
 
     Args:
         model (gr.model): Model to compose
@@ -153,18 +159,19 @@ def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0)
     @pre (len(var) == d) | (var == d)
     @pre (len(out) == r) | (var == r)
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> md = (
-        >>>     gr.Model("Test")
-        >>>     >> gr.cp_vec_function(
-        >>>         fun=lambda df: gr.df_make(y=1 + 0.5 * df.x),
-        >>>         var=["x"],
-        >>>         out=["y"],
-        >>>         name="Simple linear function",
-        >>>     )
-        >>> )
+        import grama as gr
+        ## Simple example
+        md = (
+            gr.Model("Test")
+            >> gr.cp_vec_function(
+                fun=lambda df: gr.df_make(y=1 + 0.5 * df.x),
+                var=["x"],
+                out=["y"],
+                name="Simple linear function",
+            )
+        )
 
     """
     model_new = model.copy()
@@ -199,7 +206,20 @@ def comp_md_det(model, md=None):
     Returns:
         gr.model: New model with added function
 
-    Examples:
+    Examples::
+
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        ## Use functions from beam model, but introduce new marginals
+        md_plate = (
+            gr.Model("New beam model")
+            >> gr.cp_md_det(md=make_cantilever_beam())
+            >> gr.cp_marginals(
+                H=gr.marg_mom("norm", mean=1000, cov=0.1),
+                V=gr.marg_mom("norm", mean=500, cov=0.1),
+            )
+            >> gr.cp_copula_independence()
+        )
 
     """
     if md is None:
@@ -235,7 +255,7 @@ def comp_md_sample(model, md=None, param=None, rand2out=False):
     Returns:
         gr.model: New model with added function
 
-    Examples:
+    Examples::
 
     """
     ## Check invariants
@@ -307,32 +327,34 @@ cp_md_sample = add_pipe(comp_md_sample)
 def comp_bounds(model, **kwargs):
     r"""Add variable bounds to a model
 
-    Composition. Add variable bounds to an existing model. Bounds are specified
-    by iterable; the model variable name is specified by the keyword argument
-    name.
+    Composition. Add variable bounds to an existing model. Bounds are specified by iterable; the model variable name is specified by the keyword argument name.
 
     Args:
         model (gr.model): Model to modify
-        var (iterable): Bound information
+
+    Kwargs:
+        var (iterable): Bound information; keyword argument name is targeted variable, value should be a length 2 iterable of the form (lower_bound, upper_bound)
 
     Returns:
         gr.model: Model with new marginals
 
     @pre len(var) >= 2
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> md = gr.Model() >> \
-        >>>     cp_function(
-        >>>         lambda x: x[0] + x[1],
-        >>>         var=["x0", "x1"],
-        >>>         out=1
-        >>>     ) >> \
-        >>>     cp_bounds(
-        >>>         x0=(-1, 1),
-        >>>         x1=(0, np.inf)
-        >>>     )
+        import grama as gr
+        md = (
+            gr.Model("Simple Model")
+            >> gr.cp_function(
+                lambda x: x[0] + x[1],
+                var=["x0", "x1"],
+                out=1
+            )
+            >> gr.cp_bounds(
+                x0=(-1, 1),    # Finite bounds
+                x1=(0, np.inf) # Semi-infinite bounds
+            )
+        )
 
     """
     new_model = model.copy()
@@ -358,6 +380,13 @@ def comp_marginals(model, **kwargs):
     either by dictionary entries or by gr.Marginal() object. The model variable
     name is specified by the keyword argument name.
 
+    Notes:
+        Several helper functions are available to fit marginal distributions
+
+        - ``gr.marg_fit()`` fits a distribution using a dataset (via maximum likelihood estimation)
+        - ``gr.marg_mom()`` fits a distribution using moments (via the method of moments)
+        - ``gr.marg_gkde()`` fits a gaussian kernel density using a dataset
+
     Args:
         model (gr.model): Model to modify
         var (dict OR gr.Marginal): Marginal information
@@ -365,19 +394,23 @@ def comp_marginals(model, **kwargs):
     Returns:
         gr.model: Model with new marginals
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> print(gr.valid_dist.keys()) # Supported distributions
-        >>> md = gr.Model() >> \
-        >>>     cp_function(
-        >>>         lambda x: x[0] + x[1],
-        >>>         var=["x0", "x1"],
-        >>>         out=1
-        >>>     ) >> \
-        >>>     cp_marginals(
-        >>>         x0={"dist": "norm", "loc": 0, "scale": 1}
-        >>>     )
+        import grama as gr
+        ## Print all of the grama-supported distributions
+        print(gr.valid_dist.keys())
+        ## Construct a simple example model
+        md = (
+            gr.Model()
+            >> gr.cp_function(
+                lambda x: x[0] + x[1],
+                var=["x0", "x1"],
+                out=["y"],
+            )
+            >> gr.cp_marginals(
+                x0=gr.marg_mom("norm", mean=0, sd=1),
+            )
+        )
 
     """
     new_model = model.copy()
@@ -432,12 +465,17 @@ def comp_copula_independence(model):
     Returns:
         gr.model: Model with independence copula
 
-        >>> import grama as gr
-        >>> md = gr.Model() >> \
-        >>>     cp_marginals(
-        >>>         x0={"dist": "norm", "loc": 0, "scale": 1}
-        >>>     ) >> \
-        >>>     cp_copula_independence()
+    Examples::
+
+        import grama as gr
+        md = (
+            gr.Model()
+            >> gr.cp_marginals(
+                x0=gr.marg_mom("norm", mean=0, sd=1),
+                x1=gr.marg_mom("beta", mean=0, sd=1, skew=0, kurt=2),
+            )
+            >> gr.cp_copula_independence()
+        )
 
     """
     new_model = model.copy()
@@ -467,31 +505,31 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
     Returns:
         gr.model: Model with Gaussian copula
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> ## Manual assignment
-        >>> md = gr.Model() >> \
-        >>>     cp_marginals(
-        >>>         x0={"dist": "norm", "loc": 0, "scale": 1}
-        >>>         x1={"dist": "uniform", "loc": -1, "scale": 2}
-        >>>     ) >> \
-        >>>     cp_copula_gaussian(
-        >>>         df_corr=pd.DataFrame(dict(
-        >>>             var1=["x0"],
-        >>>             var2=["x1"],
-        >>>             corr=[0.5]
-        >>>         ))
-        >>>     )
-        >>> ## Automated fitting
-        >>> from grama.data import df_stang
-        >>> md = gr.Model() >> \
-        >>>     gr.cp_marginals(
-        >>>         E=gr.marg_named(df_stang.E, "norm"),
-        >>>         mu=gr.marg_named(df_stang.mu, "beta"),
-        >>>         thick=gr.marg_named(df_stang.thick, "norm")
-        >>>     ) >> \
-        >>>     gr.cp_copula_gaussian(df_data=df_stang)
+        import grama as gr
+        ## Manual assignment
+        md_manual = (gr.Model()
+            >> gr.cp_marginals(
+                x0=gr.marg_mom("norm", mean=0, sd=1),
+                x1=gr.marg_mom("uniform", mean=0, sd=1),
+            )
+            >> gr.cp_copula_gaussian(
+                # Specify correlation structure explicitly
+                df_corr=gr.df_make(var1="x0", var2="x1", corr=0.5)
+            )
+        )
+        ## Automated fitting
+        from grama.data import df_stang
+        md_auto = (
+            gr.Model()
+            >> gr.cp_marginals(
+                E=gr.marg_fit("norm", df_stang.E),
+                mu=gr.marg_fit("beta", df_stang.mu),
+                thick=gr.marg_fit("norm", df_stang.thick)
+            )
+            >> gr.cp_copula_gaussian(df_data=df_stang)
+        )
 
     """
     if not (df_corr is None):
