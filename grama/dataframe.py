@@ -25,32 +25,30 @@ def safelen(x):
 def df_make(**kwargs):
     r"""Construct a DataFrame
 
-    Helper function to construct a DataFrame.
+    Helper function to construct a DataFrame. A common use-case is to use df_make() to pass values to the df (and related) keyword arguments succinctly.
 
-    Keyword Args:
-        varname (iterable): Column for constructed dataframe; column
-                            name inferred from variable name.
+    Kwargs:
+        varname (iterable): Column for constructed dataframe; column name inferred from variable name.
+
     Returns:
         DataFrame: Constructed DataFrame
 
     Preconditions:
-        All provided iterables must have identical length or be of
-        length one.
-
+        All provided iterables must have identical length or be of length one.
         All provided variable names (keyword arguments) must be distinct.
 
-    Examples:
-        A common use-case is to use df_make() to pass values to
-        the df_det keyword argument succinctly;
+    Examples::
 
-        >>> import grama as gr
-        >>> from models import make_test
-        >>> md = make_test()
-        >>> md >> \
-        >>>     gr.ev_monte_carlo(
-        >>>         n=1e3,
-        >>>         df_det=gr.df_make(x2=[1, 2])
-        >>>     )
+        import grama as gr
+        from models import make_test
+        md = make_test()
+        (
+            md
+            >> gr.ev_sample(
+                n=1e3,
+                df_det=gr.df_make(x2=[1, 2])
+            )
+        )
 
     """
     ## Catch passed Intention operator
@@ -89,8 +87,7 @@ def df_make(**kwargs):
 def df_equal(df1, df2, close=False, precision=3):
     """Check DataFrame equality
 
-    Check that two dataframes have the same columns and values. Allow column
-    order to differ.
+    Check that two dataframes have the same columns and values. Allows column order to differ.
 
     Args:
         df1 (DataFrame): Comparison input 1
@@ -123,19 +120,19 @@ def df_equal(df1, df2, close=False, precision=3):
 def df_grid(**kwargs):
     r"""Construct a DataFrame as outer-product
 
-    Helper function to construct a DataFrame as an outer-product of the given
-    columns.
+    Helper function to construct a DataFrame as an outer-product of the given columns.
 
-    Keyword Args:
-        varname (iterable): Column for constructed dataframe; column
-                            name inferred from variable name.
+    Kwargs:
+        varname (iterable): Column for constructed dataframe; column name inferred from variable name.
+
     Returns:
         DataFrame: Constructed DataFrame
 
     Preconditions:
         All provided variable names (keyword arguments) must be distinct.
 
-    Examples:
+    Examples::
+
         import grama as gr
         ## Make an empty DataFrame
         gr.df_grid()
