@@ -23,17 +23,9 @@ def powerset(iterable):
 def tran_shapley_cohort(df, var=None, out=None, bins=20, inds=None):
     """Compute cohort shapley values
 
-    Assess the impact of each variable on selected observations via cohort
-    shapley [1]. Shapley values are a game-theoretic way to assess the
-    importance of input variables (var) on each of a set of outputs (out). Since
-    values are computed on each observation, cohort shapley can distinguish
-    cases where a variable has a positive impact on one observation, and a
-    negative impact on a different observation.
+    Assess the impact of each variable on selected observations via cohort shapley [1]. Shapley values are a game-theoretic way to assess the importance of input variables (var) on each of a set of outputs (out). Since values are computed on each observation, cohort shapley can distinguish cases where a variable has a positive impact on one observation, and a negative impact on a different observation.
 
-    Note that cohort shapley is combinatorialy expensive in the number of
-    variables, and this expense is multiplied by the number of observations. Use
-    with caution in cases of high dimensionality. Consider using the `inds`
-    argument to analyze a small subset of your observations.
+    Note that cohort shapley is combinatorialy expensive in the number of variables, and this expense is multiplied by the number of observations. Use with caution in cases of high dimensionality. Consider using the `inds` argument to analyze a small subset of your observations.
 
     Args:
         df (DataFrame): Variable and output data to analyze
@@ -43,35 +35,36 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20, inds=None):
         inds (iterable of indices or None): Indices of rows to analyze
 
     References:
-        - [1] Mase, Owen, and Seiler, "Explaining black box decisions by Shapley cohort refinement" (2019) Arxiv
+        [1] Mase, Owen, and Seiler, "Explaining black box decisions by Shapley cohort refinement" (2019) Arxiv
 
-    Examples:
-        >>> import grama as gr
-        >>> from grama.data import df_stang
-        >>> X = gr.Intention()
-        >>> # Analyze all observations
-        >>> (
-        >>>     gr.tran_shapley_cohort(
-        >>>         df_stang,
-        >>>         var=["thick", "ang"],
-        >>>         out=["E"],
-        >>>     )
-        >>>     >> gr.tf_bind_cols(df_stang)
-        >>>     >> gr.tf_filter(X.E_thick < 0)
-        >>> )
-        >>> # Compute subset of values
-        >>> (
-        >>>     gr.tran_shapley_cohort(
-        >>>         df_stang,
-        >>>         var=["thick", "ang"],
-        >>>         out=["E"],
-        >>>         inds=(
-        >>>             df_stang
-        >>>             >> gr.tf_filter(X.thick > 0.08)
-        >>>         ).index
-        >>>     )
-        >>>     >> gr.tf_bind_cols(df_stang)
-        >>> )
+    Examples::
+
+        import grama as gr
+        from grama.data import df_stang
+        DF = gr.Intention()
+        # Analyze all observations
+        (
+            gr.tran_shapley_cohort(
+                df_stang,
+                var=["thick", "ang"],
+                out=["E"],
+            )
+            >> gr.tf_bind_cols(df_stang)
+            >> gr.tf_filter(DF.E_thick < 0)
+        )
+        # Compute subset of values
+        (
+            gr.tran_shapley_cohort(
+                df_stang,
+                var=["thick", "ang"],
+                out=["E"],
+                inds=(
+                    df_stang
+                    >> gr.tf_filter(DF.thick > 0.08)
+                ).index
+            )
+            >> gr.tf_bind_cols(df_stang)
+        )
 
     """
     ## Check invariants
