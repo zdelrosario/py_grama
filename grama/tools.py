@@ -340,18 +340,19 @@ def tran_outer(df, df_outer):
     Returns:
         DataFrame: Merged data
 
-    Examples:
-        >>> import grama as gr
-        >>> import pandas as pd
-        >>> df = pd.DataFrame(dict(x=[1,2]))
-        >>> df_outer = pd.DataFrame(dict(y=[3,4]))
-        >>> df_res = gr.tran_outer(df, df_outer)
-        >>> df_res
-        >>>    x  y
-        >>> 0  1  3
-        >>> 1  2  3
-        >>> 2  1  4
-        >>> 3  2  4
+    Examples::
+
+        import grama as gr
+        import pandas as pd
+        df = pd.DataFrame(dict(x=[1,2]))
+        df_outer = pd.DataFrame(dict(y=[3,4]))
+        df_res = gr.tran_outer(df, df_outer)
+        df_res
+             x  y
+          0  1  3
+          1  2  3
+          2  1  4
+          3  2  4
 
     """
     # Check invariants
