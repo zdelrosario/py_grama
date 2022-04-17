@@ -275,6 +275,10 @@ def eval_contour(
                 "Must provide values for remaining model variables using df; " +
                 "missing values: {}".format(var_diff)
             )
+        # Drop the swept variables
+        df = df.drop(columns=var, errors="ignore")
+
+        # Check for unsupported inputs
         var_diff2 = var_diff.difference(set(df.columns))
         if len(var_diff2) > 0:
             raise ValueError(
