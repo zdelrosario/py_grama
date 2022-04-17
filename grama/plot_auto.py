@@ -48,9 +48,7 @@ def _sci_format(v):
 def plot_contour(df, var=None, out="out", level="level", aux=False):
     r"""Plot 2d contours
 
-    Plot contours.
-
-    Usually called as a dispatch from plot_auto().
+    Plot contours. Usually called as a dispatch from plot_auto().
 
     Args:
         var (array of str): Variables for plot axes
@@ -61,10 +59,21 @@ def plot_contour(df, var=None, out="out", level="level", aux=False):
     Returns:
         ggplot: Contour image
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.models import make_cantilever_beam
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+        (
+            md_beam
+            >> gr.ev_contour(
+                var=["w", "t"],
+                out=["g_stress"],
+                # Set auxilliary inputs to nominal levels
+                df=gr.eval_nominal(md_beam, df_det="nom"),
+            )
+            >> gr.pt_auto()
+        )
 
     """
     # Check invariants
@@ -128,24 +137,23 @@ def plot_scattermat(df, var=None):
     Returns:
         ggplot: Scatterplot matrix
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> import matplotlib.pyplot as plt
-        >>> from grama.models import make_cantilever_beam
-        >>> md = make_cantilever_beam()
-        >>> ## Dispatch from autoplotter
-        >>> (
-        >>>     md
-        >>>     >> gr.ev_sample(n=100, df_det="nom", skip=True)
-        >>>     >> gr.pt_auto()
-        >>> )
-        >>> ## Re-create plot without metadata
-        >>> (
-        >>>     md
-        >>>     >> gr.ev_sample(n=100, df_det="nom")
-        >>>     >> gr.pt_scattermat(var=md.var)
-        >>> )
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+        ## Dispatch from autoplotter
+        (
+            md_beam
+            >> gr.ev_sample(n=100, df_det="nom", skip=True)
+            >> gr.pt_auto()
+        )
+        ## Re-create plot without metadata
+        (
+            md_beam
+            >> gr.ev_sample(n=100, df_det="nom")
+            >> gr.pt_scattermat(var=md.var)
+        )
 
     """
     if var is None:
@@ -252,24 +260,23 @@ def plot_hists(df, out=None, **kwargs):
     Returns:
         Seaborn histogram plot
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> import matplotlib.pyplot as plt
-        >>> from grama.models import make_cantilever_beam
-        >>> md = make_cantilever_beam()
-        >>> ## Dispatch from autoplotter
-        >>> (
-        >>>     md
-        >>>     >> gr.ev_sample(n=100, df_det="nom")
-        >>>     >> gr.pt_auto()
-        >>> )
-        >>> ## Re-create without metadata
-        >>> (
-        >>>     md
-        >>>     >> gr.ev_sample(n=100, df_det="nom")
-        >>>     >> gr.pt_hists(out=md.out)
-        >>> )
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+        ## Dispatch from autoplotter
+        (
+            md_beam
+            >> gr.ev_sample(n=100, df_det="nom")
+            >> gr.pt_auto()
+        )
+        ## Re-create without metadata
+        (
+            md_beam
+            >> gr.ev_sample(n=100, df_det="nom")
+            >> gr.pt_hists(out=md.out)
+        )
 
     """
     if out is None:
@@ -314,24 +321,23 @@ def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
     Returns:
         Seaborn scatterplot matrix
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> import matplotlib.pyplot as plt
-        >>> from grama.models import make_cantilever_beam
-        >>> md = make_cantilever_beam()
-        >>> ## Dispatch from autoplotter
-        >>> (
-        >>>     md
-        >>>     >> gr.ev_sinews(df_det="swp", skip=True)
-        >>>     >> gr.pt_auto()
-        >>> )
-        >>> ## Re-create without metadata
-        >>> (
-        >>>     md
-        >>>     >> gr.ev_sinews(df_det="swp")
-        >>>     >> gr.pt_sinew_inputs(var=md.var)
-        >>> )
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+        ## Dispatch from autoplotter
+        (
+            md_beam
+            >> gr.ev_sinews(df_det="swp", skip=True)
+            >> gr.pt_auto()
+        )
+        ## Re-create without metadata
+        (
+            md_beam
+            >> gr.ev_sinews(df_det="swp")
+            >> gr.pt_sinew_inputs(var=md.var)
+        )
 
     """
     if var is None:
@@ -431,24 +437,23 @@ def plot_sinew_outputs(
     Returns:
         Seaborn relational lineplot
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> import matplotlib.pyplot as plt
-        >>> from grama.models import make_cantilever_beam
-        >>> md = make_cantilever_beam()
-        >>> ## Dispatch from autoplotter
-        >>> (
-        >>>     md
-        >>>     >> gr.ev_sinews(df_det="swp")
-        >>>     >> gr.pt_auto()
-        >>> )
-        >>> ## Re-create without metadata
-        >>> (
-        >>>     md
-        >>>     >> gr.ev_sinews(df_det="swp")
-        >>>     >> gr.pt_sinew_inputs(var=md.var, out=md.out)
-        >>> )
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+        ## Dispatch from autoplotter
+        (
+            md_beam
+            >> gr.ev_sinews(df_det="swp")
+            >> gr.pt_auto()
+        )
+        ## Re-create without metadata
+        (
+            md_beam
+            >> gr.ev_sinews(df_det="swp")
+            >> gr.pt_sinew_inputs(var=md.var, out=md.out)
+        )
 
     """
     if var is None:
@@ -519,13 +524,10 @@ plot_list = {
 def plot_auto(df):
     r"""Automagic plotting
 
-    Convenience tool for various grama outputs. Prints delegated plotting
-    function, which can be called manually with different arguments for
-    more tailored plotting.
+    Convenience tool for various grama outputs. Prints delegated plotting function, which can be called manually with different arguments for more tailored plotting.
 
     Args:
-        df (DataFrame): Data output from appropriate grama routine. See
-            gr.plot_list.keys() for list of supported methods.
+        df (DataFrame): Data output from appropriate grama routine. See gr.plot_list.keys() for list of supported methods.
 
     Returns:
         Plot results
