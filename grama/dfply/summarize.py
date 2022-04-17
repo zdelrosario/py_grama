@@ -37,7 +37,8 @@ def tran_summarize(df, **kwargs):
     Returns:
         DataFrame: Summarized data
 
-    Examples:
+    Examples::
+
         ## Setup
         import grama as gr
         DF = gr.Intention()

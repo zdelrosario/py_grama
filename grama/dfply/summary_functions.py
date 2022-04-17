@@ -228,7 +228,8 @@ def n(series=None):
     Args:
         series (pandas.Series): column to summarize. Default is the size of the parent DataFrame.
 
-    Examples:
+    Examples::
+
         import grama as gr
         from grama.data import df_diamonds
         DF = gr.Intention()
@@ -524,26 +525,27 @@ def pr(series):
     Args:
         series (pandas.Series): Column to summarize; must be boolean or 0/1.
 
-    Examples:
-        >>> import grama as gr
-        >>> DF = gr.Intention()
-        >>> ## Cantilever beam examples
-        >>> from grama.models import make_cantilever_beam
-        >>> md_beam = make_cantilever_beam()
-        >>>
-        >>> ## Estimate probabilities
-        >>> (
-        >>>     md_beam
-        >>>     # Generate large
-        >>>     >> gr.ev_sample(n=1e5, df_det="nom")
-        >>>     # Estimate probabilities of failure
-        >>>     >> gr.tf_summarize(
-        >>>         pof_stress=gr.pr(DF.g_stress <= 0),
-        >>>         pof_disp=gr.pr(DF.g_disp <= 0),
-        >>>         pof_joint=gr.pr( (DF.g_stress <= 0) & (DF.g_disp) ),
-        >>>         pof_either=gr.pr( (DF.g_stress <= 0) | (DF.g_disp) ),
-        >>>     )
-        >>> )
+    Examples::
+
+        import grama as gr
+        DF = gr.Intention()
+        ## Cantilever beam examples
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+
+        ## Estimate probabilities
+        (
+            md_beam
+            # Generate large
+            >> gr.ev_sample(n=1e5, df_det="nom")
+            # Estimate probabilities of failure
+            >> gr.tf_summarize(
+                pof_stress=gr.pr(DF.g_stress <= 0),
+                pof_disp=gr.pr(DF.g_disp <= 0),
+                pof_joint=gr.pr( (DF.g_stress <= 0) & (DF.g_disp) ),
+                pof_either=gr.pr( (DF.g_stress <= 0) | (DF.g_disp) ),
+            )
+        )
 
     """
     return series.mean()
@@ -567,25 +569,26 @@ def pr_lo(series, alpha=0.01):
     Returns:
         float: Lower confidence interval
 
-    Examples:
-        >>> import grama as gr
-        >>> DF = gr.Intention()
-        >>> ## Cantilever beam examples
-        >>> from grama.models import make_cantilever_beam
-        >>> md_beam = make_cantilever_beam()
-        >>>
-        >>> ## Estimate probabilities
-        >>> (
-        >>>     md_beam
-        >>>     # Generate large
-        >>>     >> gr.ev_sample(n=1e5, df_det="nom")
-        >>>     # Estimate probabilities with a confidence interval
-        >>>     >> gr.tf_summarize(
-        >>>         pof_lo=gr.pr_lo(DF.g_stress <= 0),
-        >>>         pof=gr.pr(DF.g_stress <= 0),
-        >>>         pof_up=gr.pr_up(DF.g_stress <= 0),
-        >>>     )
-        >>> )
+    Examples::
+
+        import grama as gr
+        DF = gr.Intention()
+        ## Cantilever beam examples
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+
+        ## Estimate probabilities
+        (
+            md_beam
+            # Generate large
+            >> gr.ev_sample(n=1e5, df_det="nom")
+            # Estimate probabilities with a confidence interval
+            >> gr.tf_summarize(
+                pof_lo=gr.pr_lo(DF.g_stress <= 0),
+                pof=gr.pr(DF.g_stress <= 0),
+                pof_up=gr.pr_up(DF.g_stress <= 0),
+            )
+        )
     """
     up = binomial_ci(series, alpha=alpha, side="lo")
     return up
@@ -609,25 +612,26 @@ def pr_up(series, alpha=0.01):
     Returns:
         float: Upper confidence interval
 
-    Examples:
-        >>> import grama as gr
-        >>> DF = gr.Intention()
-        >>> ## Cantilever beam examples
-        >>> from grama.models import make_cantilever_beam
-        >>> md_beam = make_cantilever_beam()
-        >>>
-        >>> ## Estimate probabilities
-        >>> (
-        >>>     md_beam
-        >>>     # Generate large
-        >>>     >> gr.ev_sample(n=1e5, df_det="nom")
-        >>>     # Estimate probabilities with a confidence interval
-        >>>     >> gr.tf_summarize(
-        >>>         pof_lo=gr.pr_lo(DF.g_stress <= 0),
-        >>>         pof=gr.pr(DF.g_stress <= 0),
-        >>>         pof_up=gr.pr_up(DF.g_stress <= 0),
-        >>>     )
-        >>> )
+    Examples::
+
+        import grama as gr
+        DF = gr.Intention()
+        ## Cantilever beam examples
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+
+        ## Estimate probabilities
+        (
+            md_beam
+            # Generate large
+            >> gr.ev_sample(n=1e5, df_det="nom")
+            # Estimate probabilities with a confidence interval
+            >> gr.tf_summarize(
+                pof_lo=gr.pr_lo(DF.g_stress <= 0),
+                pof=gr.pr(DF.g_stress <= 0),
+                pof_up=gr.pr_up(DF.g_stress <= 0),
+            )
+        )
     """
     up = binomial_ci(series, alpha=alpha, side="up")
     return up
@@ -677,11 +681,10 @@ def corr(series1, series2, method="pearson", res="corr", nan_drop=False):
 def neff_is(series):
     """Importance sampling n_eff
 
-    Computes the effective sample size according to Equation 9.13 of Owen
-    (2013).
+    Computes the effective sample size based on importance sampling weights. See Equation 9.13 of Owen (2013) for details. See ``gr.tran_reweight()`` for more details.
 
     Args:
-        series (pandas.Series): column to summarize.
+        series (pandas.Series): column of importance sampling weights.
 
     References:
         A.B. Owen, "Monte Carlo theory, methods and examples" (2013)
