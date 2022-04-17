@@ -79,6 +79,17 @@ class TestContour(unittest.TestCase):
         # Correct manual levels
         self.assertTrue(set(df_res3.level) == {-1, 0, +1})
 
+        # Drops redundant (swept) inputs under-the-hood
+        (
+            md2
+            >> gr.ev_contour(
+                var=["x", "y"],
+                out=["f"],
+                df=gr.eval_nominal(md2, df_det="nom"),
+                n_side=10, # Coarse, for speed
+            )
+        )
+
         # Correct manual levels
         with self.assertWarns(Warning):
             df_res4 = (
