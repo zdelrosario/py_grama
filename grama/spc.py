@@ -23,10 +23,7 @@ from numpy import sqrt
 def c_sd(n):
     r"""Anti-biasing constant for aggregate standard deviation
 
-    Returns the anti-biasing constant for aggregated standard deviation
-    estimates. If the average of $k$ samples each size $n$ are averaged to
-    produce $\overline{S} = (1/k) \sum_{i=1}^k S_i$, then the de-biased standard
-    deviation is:
+    Returns the anti-biasing constant for aggregated standard deviation estimates. If the average of $k$ samples each size $n$ are averaged to produce $\overline{S} = (1/k) \sum_{i=1}^k S_i$, then the de-biased standard deviation is:
 
         $$\hat{\sigma} = \overline{S} / c(n)$$
 
@@ -109,7 +106,7 @@ def plot_xbs(df, group, var, n_side=9, n_delta=6):
     Returns:
         plotnine object: Xbar and S chart
 
-    Examples:
+    Examples::
 
         import grama as gr
         DF = gr.Intention()

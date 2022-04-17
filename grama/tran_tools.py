@@ -53,8 +53,7 @@ def tran_kfolds(
 ):
     r"""Perform k-fold CV
 
-    Perform k-fold cross-validation (CV) using a given fitting procedure (ft).
-    Optionally provide a fold identifier column, or (randomly) assign folds.
+    Perform k-fold cross-validation (CV) using a given fitting procedure (ft). Optionally provide a fold identifier column, or (randomly) assign folds.
 
     Args:
         df (DataFrame): Data to pass to given fitting procedure
@@ -82,17 +81,17 @@ def tran_kfolds(
     References:
         [1] James, Witten, Hastie, and Tibshirani, "An introduction to statistical learning" (2017), Chapter 5. Resampling Methods
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.data import df_stang
-        >>> from grama.fit import ft_rf
-        >>> df_kfolds = (
-        >>>     df_stang
-        >>>     >> gr.tf_kfolds(
-        >>>         k=5,
-        >>>         ft=ft_rf(out=["thick"], var=["E", "mu"]),
-        >>>     )
+        import grama as gr
+        from grama.data import df_stang
+        from grama.fit import ft_rf
+        df_kfolds = (
+            df_stang
+            >> gr.tf_kfolds(
+                k=5,
+                ft=ft_rf(out=["thick"], var=["E", "mu"]),
+            )
 
     """
     ## Check invariants
@@ -209,7 +208,7 @@ def tran_bootstrap(
        for more general problems, like setting a confidence interval for a
        correlation coefficient."
 
-    Examples:
+    Examples::
 
     """
     ## Set seed only if given
@@ -290,9 +289,7 @@ tf_bootstrap = add_pipe(tran_bootstrap)
 def tran_angles(df, df2):
     r"""Subspace angles
 
-    Compute the subspace angles between two matrices. A wrapper for
-    scipy.linalg.subspace_angles that corrects for column ordering. Row ordering
-    is assumed.
+    Compute the subspace angles between two matrices. A wrapper for scipy.linalg.subspace_angles that corrects for column ordering. Row ordering is assumed.
 
     Args:
         df (DataFrame): First matrix to compare
@@ -301,15 +298,15 @@ def tran_angles(df, df2):
     Returns:
         array: Array of angles (in radians)
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> import pandas as pd
-        >>> df = pd.DataFrame(dict(v=[+1, +1]))
-        >>> df_v1 = pd.DataFrame(dict(w=[+1, -1]))
-        >>> df_v2 = pd.DataFrame(dict(w=[+1, +1]))
-        >>> theta1 = angles(df, df_v1)
-        >>> theta2 = angles(df, df_v2)
+        import grama as gr
+        import pandas as pd
+        df = pd.DataFrame(dict(v=[+1, +1]))
+        df_v1 = pd.DataFrame(dict(w=[+1, -1]))
+        df_v2 = pd.DataFrame(dict(w=[+1, +1]))
+        theta1 = angles(df, df_v1)
+        theta2 = angles(df, df_v2)
 
     """
     ## Compute subspace angles
@@ -327,9 +324,9 @@ tf_angles = add_pipe(tran_angles)
 def tran_copula_corr(df, model=None, density=None):
     r"""Compute Gaussian copula correlations from data
 
-    Convenience function to fit a Gaussian copula (correlations) based on data
-    and pre-fitted marginals. Intended for use with gr.comp_copula_gaussian().
-    Must provide either `model` or `density`.
+    Convenience function to fit a Gaussian copula (correlations) based on data and pre-fitted marginals. Intended for use with ``gr.comp_copula_gaussian()``. Must provide either `model` or `density`.
+
+    Note: This is called automatically when you provide a dataset to ``gr.comp_copula_gaussian()``.
 
     Args:
         df (DataFrame): Matrix of data for correlation estimation
@@ -337,19 +334,34 @@ def tran_copula_corr(df, model=None, density=None):
         density (gr.Density): Density with defined marginals
 
     Returns:
-        DataFrame: Correlation data ready for use with gr.comp_copula_gaussian()
+        DataFrame: Correlation data ready for use with ``gr.comp_copula_gaussian()``
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.data import df_stang
-        >>> md = gr.Model() >> \
-        >>>     gr.cp_marginals(
-        >>>         E=gr.marg_named(df_stang.E, "norm"),
-        >>>         mu=gr.marg_named(df_stang.mu, "beta"),
-        >>>         thick=gr.marg_named(df_stang.thick, "norm")
-        >>>     )
-        >>> df_corr = gr.tran_copula_corr(df_stang, model=md)
+        import grama as gr
+        from grama.data import df_stang
+        ## Verbose, manual approach
+        md = (
+            gr.Model()
+            >> gr.cp_marginals(
+                E=gr.marg_named(df_stang.E, "norm"),
+                mu=gr.marg_named(df_stang.mu, "beta"),
+                thick=gr.marg_named(df_stang.thick, "norm"),
+            )
+        )
+        df_corr = gr.tran_copula_corr(df_stang, model=md)
+        md = gr.comp_copula_gaussian(md, df_corr=df_corr)
+
+        ## Automatic approach
+        md = (
+            gr.Model()
+            >> gr.cp_marginals(
+                E=gr.marg_named(df_stang.E, "norm"),
+                mu=gr.marg_named(df_stang.mu, "beta"),
+                thick=gr.marg_named(df_stang.thick, "norm"),
+            )
+            >> gr.cp_copula_gaussian(df_data=df_stang)
+        )
 
     """
     if density is None:
@@ -389,8 +401,7 @@ tf_copula_corr = add_pipe(tran_copula_corr)
 def tran_md(df, md=None, append=True):
     r"""Model as transform
 
-    Use a model to transform data; useful when pre-processing data to evaluate a
-    model.
+    Use a model to transform data; useful when pre-processing data to evaluate a model.
 
     Args:
         df (DataFrame): Data to merge
@@ -399,16 +410,18 @@ def tran_md(df, md=None, append=True):
     Returns:
         DataFrame: Output of evaluated model
 
-    Examples:
-        >>> import grama as gr
-        >>> from grama.models import make_cantilever_beam
-        >>> md_beam = make_cantilever_beam()
-        >>> df_res = (
-        >>>     md_beam
-        >>>     >> gr.ev_monte_carlo(n=1e3, df_det="nom", skip=True, seed=101)
-        >>>     >> gr.tf_sp(n=100)
-        >>>     >> gr.tf_md(md=md_beam)
-        >>> )
+    Examples::
+
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+        ## Use support points to generate a smaller---but representative---sample
+        df_res = (
+            md_beam
+            >> gr.ev_sample(n=1e3, df_det="nom", skip=True, seed=101)
+            >> gr.tf_sp(n=100)
+            >> gr.tf_md(md=md_beam)
+        )
 
     """
     if md is None:

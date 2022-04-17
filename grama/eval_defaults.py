@@ -38,13 +38,13 @@ def eval_df(model, df=None, append=True, verbose=True):
     Returns:
         DataFrame: Results of model evaluation
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.models import make_test
-        >>> md = make_test()
-        >>> df = gr.df_make(x0=0, x1=1, x2=2)
-        >>> md >> gr.ev_df(df=df)
+        import grama as gr
+        from grama.models import make_test
+        md = make_test()
+        df = gr.df_make(x0=0, x1=1, x2=2)
+        md >> gr.ev_df(df=df)
 
     """
     if df is None:
@@ -80,24 +80,26 @@ ev_df = add_pipe(eval_df)
 def eval_nominal(model, df_det=None, append=True, skip=False):
     r"""Evaluate model at nominal values
 
-    Evaluates a given model at a model nominal conditions (median).
+    Evaluates a given model at a model nominal conditions (median) of random inputs. Optionally set nominal values for the deterministic inputs.
 
     Args:
         model (gr.Model): Model to evaluate
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels.
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom" for nominal deterministic levels.
         append (bool): Append results to nominal inputs?
         skip (bool): Skip evaluation of the functions?
 
     Returns:
         DataFrame: Results of nominal model evaluation or unevaluated design
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.models import make_test
-        >>> md = make_test()
-        >>> md >> gr.ev_nominal(df_det="nom")
+        import grama as gr
+        from grama.models import make_test
+        md = make_test()
+        ## Set manual levels for deterministic inputs; nominal levels for random inputs
+        md >> gr.ev_nominal(df_det=gr.df_make(x2=[0, 1, 2])
+        ## Use nominal deterministic levels
+        md >> gr.ev_nominal(df_det="nom")
 
     """
     ## Draw from underlying gaussian
@@ -141,14 +143,15 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
     @pre (not isinstance(h, collections.Sequence)) |
          (h.shape[0] == df_base.shape[1])
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.models import make_cantilever_beam
-        >>> md = make_cantilever_beam()
-        >>> df_nom = md >> gr.ev_nominal(df_det="nom")
-        >>> df_grad = md >> gr.ev_grad_fd(df_base=df_nom)
-        >>> df_grad >> gr.tf_gather("var", "val", gr.everything())
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        md = make_cantilever_beam()
+        # Select base point(s)
+        df_nom = md >> gr.ev_nominal(df_det="nom")
+        # Approximate the gradient
+        df_grad = md >> gr.ev_grad_fd(df_base=df_nom)
 
     """
     ## Check invariants
@@ -226,14 +229,9 @@ ev_grad_fd = add_pipe(eval_grad_fd)
 def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=False):
     r"""Evaluates a given model at conservative input quantiles
 
-    Uses model specifications to determine the "conservative" direction
-    for each input, and evaluates the model at the desired quantile.
-    Provided primarily for comparing UQ against pseudo-deterministic
-    design criteria.
+    Uses model specifications to determine the "conservative" direction for each input, and evaluates the model at the desired quantile. Provided primarily for comparing UQ against pseudo-deterministic design criteria (del Rosario et al.; 2021).
 
-    Note that if there is no conservative direction for the given input,
-    the given quantile will be ignored and the median will automatically
-    be selected.
+    Note that if there is no conservative direction for the given input, the given quantile will be ignored and the median will automatically be selected.
 
     Args:
         model (gr.Model): Model to evaluate
@@ -249,12 +247,16 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
     Returns:
         DataFrame: Conservative evaluation or unevaluated design
 
-    Examples:
+    References:
+        del Rosario, Zachary, Richard W. Fenrich, and Gianluca Iaccarino. "When Are Allowables Conservative?." AIAA Journal 59.5 (2021): 1760-1772.
 
-        >>> import grama as gr
-        >>> from grama.models import make_plate_buckle
-        >>> md = make_plate_buckle()
-        >>> md >> gr.ev_conservative(df_det="nom")
+    Examples::
+
+        import grama as gr
+        from grama.models import make_plate_buckle
+        md = make_plate_buckle()
+        # Evaluate at conservative input values
+        md >> gr.ev_conservative(df_det="nom")
 
     """
     ## Default behavior
@@ -312,60 +314,60 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
     Returns:
         DataFrame: Results of evaluation or unevaluated design
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.models import make_test
-        >>> DF = gr.Intention()
-        >>>
-        >>> # Simple random sample evaluation
-        >>> md = make_test()
-        >>> df = md >> gr.ev_sample(n=1e2, df_det="nom")
-        >>> df.describe()
-        >>>
-        >>> ## Use autoplot to visualize results
-        >>> (
-        >>>     md
-        >>>     >> gr.ev_sample(n=1e2, df_det="nom")
-        >>>     >> gr.pt_auto()
-        >>> )
-        >>>
-        >>> ## Cantilever beam examples
-        >>> from grama.models import make_cantilever_beam
-        >>> md_beam = make_cantilever_beam()
-        >>>
-        >>> ## Use iocorr to generate input/output correlation tile plot
-        >>> (
-        >>>     md_beam
-        >>>     >> gr.ev_sample(n=1e3, df_det="nom", skip=True)
-        >>>     # Generate input/output correlation summary
-        >>>     >> gr.tf_iocorr()
-        >>>     # Visualize
-        >>>     >> gr.pt_auto()
-        >>> )
-        >>>
-        >>> ## Use support points to reduce model runtime
-        >>> (
-        >>>     md_beam
-        >>>     # Generate large input sample but don't evaluate outputs
-        >>>     >> gr.ev_sample(n=1e5, df_det="nom", skip=True)
-        >>>     # Reduce to a smaller---but representative---sample
-        >>>     >> gr.tf_sp(n=50)
-        >>>     # Evaluate the outputs
-        >>>     >> gr.tf_md(md_beam)
-        >>> )
-        >>>
-        >>> ## Estimate probabilities
-        >>> (
-        >>>     md_beam
-        >>>     # Generate large
-        >>>     >> gr.ev_sample(n=1e5, df_det="nom")
-        >>>     # Estimate probabilities of failure
-        >>>     >> gr.tf_summarize(
-        >>>         pof_stress=gr.mean(DF.g_stress <= 0),
-        >>>         pof_disp=gr.mean(DF.g_disp <= 0),
-        >>>     )
-        >>> )
+        import grama as gr
+        from grama.models import make_test
+        DF = gr.Intention()
+
+        # Simple random sample evaluation
+        md = make_test()
+        df = md >> gr.ev_sample(n=1e2, df_det="nom")
+        df.describe()
+
+        ## Use autoplot to visualize results
+        (
+            md
+            >> gr.ev_sample(n=1e2, df_det="nom")
+            >> gr.pt_auto()
+        )
+
+        ## Cantilever beam examples
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+
+        ## Use iocorr to generate input/output correlation tile plot
+        (
+            md_beam
+            >> gr.ev_sample(n=1e3, df_det="nom", skip=True)
+            # Generate input/output correlation summary
+            >> gr.tf_iocorr()
+            # Visualize
+            >> gr.pt_auto()
+        )
+
+        ## Use support points to reduce model runtime
+        (
+            md_beam
+            # Generate large input sample but don't evaluate outputs
+            >> gr.ev_sample(n=1e5, df_det="nom", skip=True)
+            # Reduce to a smaller---but representative---sample
+            >> gr.tf_sp(n=50)
+            # Evaluate the outputs
+            >> gr.tf_md(md_beam)
+        )
+
+        ## Estimate probabilities
+        (
+            md_beam
+            # Generate large
+            >> gr.ev_sample(n=1e5, df_det="nom")
+            # Estimate probabilities of failure
+            >> gr.tf_summarize(
+                pof_stress=gr.mean(DF.g_stress <= 0),
+                pof_disp=gr.mean(DF.g_disp <= 0),
+            )
+        )
 
 
     """

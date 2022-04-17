@@ -55,16 +55,16 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
         I.M. Sobol', "Sensitivity Estimates for Nonlinear Mathematical Models"
         (1999) MMCE, Vol 1.
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.models import make_cantilever_beam
-        >>> md = make_cantilever_beam()
-        >>> df_first = md >> gr.ev_hybrid(df_det="nom", plan="first")
-        >>> df_first >> gr.tf_sobol()
-        >>>
-        >>> df_total = md >> gr.ev_hybrid(df_det="nom", plan="total")
-        >>> df_total >> gr.tf_sobol()
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        md = make_cantilever_beam()
+        df_first = md >> gr.ev_hybrid(df_det="nom", plan="first")
+        df_first >> gr.tf_sobol()
+
+        df_total = md >> gr.ev_hybrid(df_det="nom", plan="total")
+        df_total >> gr.tf_sobol()
 
     """
     ## Determine plan from dataframe metadata
@@ -179,11 +179,11 @@ def tran_pca(df, var=None, lamvar="lam", standardize=False):
     References:
         TODO
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.data import df_stang
-        >>> df_pca = df_stang >> gr.tf_pca()
+        import grama as gr
+        from grama.data import df_stang
+        df_pca = df_stang >> gr.tf_pca()
 
     """
     ## Handle variable selection
@@ -214,8 +214,9 @@ tf_pca = add_pipe(tran_pca)
 def tran_asub(df, prefix="D", outvar="out", lamvar="lam"):
     r"""Active subspace estimator
 
-    Compute principal directions and eigenvalues for all outputs based on output
-    of ev_grad_fd() to estimate the /active subspace/ (Constantine, 2015).
+    Compute principal directions and eigenvalues for all outputs based on output of ev_grad_fd() to estimate the /active subspace/ (Constantine, 2015).
+
+    See also ``gr.tran_polyridge()`` for a gradient-free approach to approximating the active subspace.
 
     Args:
         df (DataFrame): Gradient evaluations
@@ -229,14 +230,14 @@ def tran_asub(df, prefix="D", outvar="out", lamvar="lam"):
     References:
         Constantine, "Active Subspaces" (2015) SIAM
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.models import make_cantilever_beam
-        >>> md = make_cantilever_beam()
-        >>> df_base = md >> gr.ev_monte_carlo(n=1e2, df_det="nom", skip=True)
-        >>> df_grad = md >> gr.ev_grad_fd(df_base=df_base)
-        >>> df_as = df_grad >> gr.tf_asub()
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        md = make_cantilever_beam()
+        df_base = md >> gr.ev_sample(n=1e2, df_det="nom", skip=True)
+        df_grad = md >> gr.ev_grad_fd(df_base=df_base)
+        df_as = df_grad >> gr.tf_asub()
 
     """
     ## Setup
@@ -283,37 +284,47 @@ def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
     Returns:
         DataFrame: Results of inner products
 
-    Examples:
+    Examples::
 
-        >>> ## Setup
-        >>> from dfply import *
-        >>> import grama as gr
-        >>> from grama.models import make_cantilever_beam
-        >>> import seaborn as sns
-        >>> import matplotlib.pyplot as plt
-        >>> md = make_cantilever_beam()
-        >>> # Generate active subspace results
-        >>> df_base = md >> gr.ev_monte_carlo(n=1e2, df_det="nom")
-        >>> df_grad = md >> gr.ev_grad_fd(df_base=df_base)
-        >>> df_as = df_grad >> \
-        >>>     gr.tf_asub() >> \
-        >>>     group_by(X.out) >> \
-        >>>     mask(min_rank(-X.lam) == 1) >> \
-        >>>     ungroup()
-        >>> # Post-process
-        >>> df_reduce = gr.tran_inner(df_base, df_as, name="out")
-        >>> sns.scatterplot(
-        >>>     data=df_reduce,
-        >>>     x="dot_g_stress",
-        >>>     y="g_stress"
-        >>> )
-        >>> plt.show()
-        >>> sns.scatterplot(
-        >>>     data=df_reduce,
-        >>>     x="dot_g_disp",
-        >>>     y="g_disp"
-        >>> )
-        >>> plt.show()
+        ## Setup
+        import grama as gr
+        DF = gr.Intention()
+
+        ## PCA example
+        from grama.data import df_diamonds
+        # Compute PCA weights
+        df_weights = gr.tran_pca(
+            df_diamonds
+            >> gr.tf_sample(1000),
+            var=["x", "y", "z", "carat"],
+        )
+        # Visualize
+        (
+            df_diamonds
+            >> gr.tf_inner(df_weights=df_weights)
+            >> gr.ggplot(gr.aes("dot0", "dot1"))
+            + gr.geom_point()
+        )
+
+        ## Active subspace example
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+        # Approximate the active subspace
+        df_data = gr.ev_sample(md_beam, n=1e2, df_det="nom")
+        df_weights = gr.tran_polyridge(
+            df_data,
+            var=md_beam.var_rand, # Use meaningful predictors only
+            out="g_disp",         # Target g_disp for reduction
+            n_degree=2,
+            n_degree=1,
+        )
+        # Construct shadow plot; use tran_inner to calculate active variable
+        (
+            df_data
+            >> gr.tf_inner(df_weights=df_weights)
+            >> gr.ggplot(gr.aes("dot", "g_disp"))
+            + gr.geom_point()
+        )
 
     """
     ## Check invariants

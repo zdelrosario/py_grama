@@ -28,10 +28,9 @@ from toolz import curry
 @curry
 def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True, \
     mean_prefix="_mean", sd_prefix="_sd"):
-    """ Evaluate a Model using a predictive model
+    """Approximate the probability non-dominated (PND)
 
-    Evaluates a given model against a PND algorithm to determine
-    "optimal points".
+    Approximates the probability non-dominated (PND) for a set of training points given a fitted probabilistic model. Used to rank a set of candidates in the context of multiobjective optimization.
 
     Args:
         model (gr.model): predictive model to evaluate
@@ -49,39 +48,43 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
         DataFrame: Results of predictive model going through a PND algorithm.
         Conatians both values and their scores.
 
-    Example:
-    >>> import grama as gr
-    >>>
-    >>> md_true = gr.make_pareto_random()
-    >>>
-    >>> df_data = (
-    >>>     md_true
-    >>>     >> gr.ev_sample(n=2e3, seed=101, df_det="nom")
-    >>> )
-    >>>
-    >>> df_train = (
-    >>>     df_data
-    >>>     >> gr.tf_sample(n=10))
-    >>> )
-    >>>
-    >>> df_test = (
-    >>>     df_data
-    >>>     >> gr.anti_join(
-    >>>         df_train,
-    >>>         by = ["x1","x2"]
-    >>>     )
-    >>>     >> gr.tf_sample(n=200)
-    >>> )
-    >>>
-    >>> md_fit = (
-    >>>     df_train
-    >>>     >> gr.ft_gp(
-    >>>         var=["x1","x2"]
-    >>>         out=["y1","y2"]
-    >>>     )
-    >>> )
-    >>>
-    >>> df_pnd = (
+    References:
+        del Rosario, Zachary, et al. "Assessing the frontier: Active learning, model accuracy, and multi-objective candidate discovery and optimization." The Journal of Chemical Physics 153.2 (2020): 024112.
+
+    Examples::
+
+        import grama as gr
+
+        ## Define a ground-truth model
+        md_true = gr.make_pareto_random()
+        df_data = (
+            md_true
+            >> gr.ev_sample(n=2e3, seed=101, df_det="nom")
+        )
+        ## Generate test/train data
+        df_train = (
+            df_data
+            >> gr.tf_sample(n=10)
+        )
+
+        df_test = (
+            df_data
+            >> gr.anti_join(
+                df_train,
+                by = ["x1","x2"]
+            )
+            >> gr.tf_sample(n=200)
+        )
+        ## Fit a model to training data
+        md_fit = (
+            df_train
+            >> gr.ft_gp(
+                var=["x1","x2"]
+                out=["y1","y2"]
+            )
+        )
+        ## Rank training points by PND algorithm
+        df_pnd = (
             md_fit
             >> gr.ev_pnd(
                 df_train,
@@ -91,6 +94,7 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
             )
             >> gr.tf_arrange(gr.desc(DF.pr_scores))
         )
+
     """
     # # Check for correct types
     # if not isinstance(model, Model):

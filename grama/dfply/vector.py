@@ -65,7 +65,7 @@ def desc(series):
         inverted `pandas.Series`. The returned series will be numeric (integers),
             regardless of the type of the original series.
 
-    Example:
+    Examples::
 
         First group by cut, then find the first value of price when ordering by
         price ascending, and ordering by price descending using the `desc` function.
@@ -99,7 +99,8 @@ def coalesce(*series):
         *series: Series objects, typically represented in their symbolic form
             (like X.series).
 
-    Example:
+    Examples::
+
         df = pd.DataFrame({
             'a':[1,np.nan,np.nan,np.nan,np.nan],
             'b':[2,3,np.nan,np.nan,np.nan],
@@ -167,7 +168,8 @@ def case_when(*conditions):
             which the condition is met. The second value is a vector of values
             or single value specifying the outcome where that condition is met.
 
-    Example:
+    Example::
+
         df = pd.DataFrame({
             'num':np.arange(16)
         })
@@ -242,21 +244,22 @@ def if_else(condition, when_true, otherwise):
         otherwise: A vector the same length as the condition vector or a single
             value to apply when the condition is `False`.
 
-    Example:
-        >>> import grama as gr
-        >>> from grama.data import df_diamonds
-        >>> DF = gr.Intention()
-        >>> (
-        >>>     df_diamonds
-        >>>     >> gr.tf_mutate(
-        >>>         # Recode nonsensical x values
-        >>>         x=gr.if_else(
-        >>>             DF.x == 0
-        >>>             gr.NaN,
-        >>>             DF.x,
-        >>>         )
-        >>>     )
-        >>> )
+    Example::
+
+        import grama as gr
+        from grama.data import df_diamonds
+        DF = gr.Intention()
+        (
+            df_diamonds
+            >> gr.tf_mutate(
+                # Recode nonsensical x values
+                x=gr.if_else(
+                    DF.x == 0
+                    gr.NaN,
+                    DF.x,
+                )
+            )
+        )
     """
 
     if not isinstance(when_true, collections.abc.Iterable) or isinstance(when_true, str):

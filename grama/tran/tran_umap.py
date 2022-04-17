@@ -40,13 +40,23 @@ def tran_umap(
         metric (str or function): Metric used for distance computations. See url: https://umap-learn.readthedocs.io/en/latest/parameters.html#metric
 
     Notes:
-        - A wrapper for umap.UMAP
+        A wrapper for umap.UMAP
 
     References:
-        - McInnes, L, Healy, J, UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction, ArXiv e-prints 1802.03426, 2018
-        - Andy Coenen, Adam Pearce "Understanding UMAP" url: https://pair-code.github.io/understanding-umap/
+        McInnes, L, Healy, J, UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction, ArXiv e-prints 1802.03426, 2018
+        Andy Coenen, Adam Pearce "Understanding UMAP" url: https://pair-code.github.io/understanding-umap/
 
     Examples:
+
+        import grama as gr
+        from grama.data import df_diamonds
+        (
+            df_diamonds
+            >> gr.tf_sample(1000) # For speed
+            >> gr.tf_umap(var=["x", "y", "z", "carat"])
+            >> gr.ggplot(gr.aes("xi0", "xi1"))
+            + gr.geom_point()
+        )
 
     """
     ## Check invariants

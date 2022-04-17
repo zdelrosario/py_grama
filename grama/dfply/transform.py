@@ -25,7 +25,8 @@ def tran_mutate(df, **kwargs):
             the name of the argument (left of `=`) will be the new column name,
             the value of the argument (right of `=`) defines the new column's value
 
-    Example:
+    Examples::
+
         ## Setup
         import grama as gr
         DF = gr.Intention()
@@ -57,7 +58,8 @@ def tran_mutate_if(df, predicate, fun):
         predicate: a function applied to columns that returns a boolean value
         fun: a function that will be applied to columns where predicate returns True
 
-    Example:
+    Examples::
+
         diamonds >> mutate_if(lambda col: min(col) < 1 and mean(col) < 4, lambda row: 2 * row) >> head(3)
            carat      cut color clarity  depth  table  price     x     y     z
         0   0.46    Ideal     E     SI2   61.5   55.0    326  3.95  3.98  4.86

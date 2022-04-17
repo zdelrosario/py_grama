@@ -168,6 +168,11 @@ def as_str(x):
 @make_symbolic
 def as_factor(x, categories=None, ordered=True, dtype=None):
     r"""Cast to factor
+
+    Args:
+        x (pd.Series): Column to convert
+        categories (list): Categories (levels) of factor (Optional)
+        ordered (boolean): Order the factor?
     """
     return Categorical(x, categories=categories, ordered=ordered, dtype=dtype)
 
@@ -215,6 +220,7 @@ def pareto_min(*args):
 
     Returns:
         np.array of boolean: Indicates if observation is Pareto-efficient
+
     """
     # Check invariants
     lengths = map(len, args)
@@ -241,8 +247,7 @@ def stratum_min(*args, max_depth=10):
 
     Args:
         xi (iterable OR gr.Intention()): Feature to minimize; use -X to maximize
-        max_depth (int): Maximum depth for recursive computation; stratum numbers exceeding
-            this value will not be computed and will be flagged as NaN.
+        max_depth (int): Maximum depth for recursive computation; stratum numbers exceeding this value will not be computed and will be flagged as NaN.
 
     Returns:
         np.array of floats: Pareto stratum number
@@ -291,7 +296,8 @@ def fct_reorder(f, x, fun=median):
     Returns:
         Categorical: Iterable with levels sorted according to x
 
-    Examples:
+    Examples::
+
         import grama as gr
         from grama.data import df_diamonds
         DF = gr.Intention()
@@ -322,14 +328,15 @@ def fillna(*args, **kwargs):
 
     (See below for Pandas documentation)
 
-    Examples:
-        >>> import grama as gr
-        >>> X = gr.Intention()
-        >>> df = gr.df_make(x=[1, gr.NaN], y=[2, 3])
-        >>> df_filled = (
-        >>>     df
-        >>>     >> gr.tf_mutate(x=gr.fillna(X.x, 0))
-        >>> )
+    Examples::
+
+        import grama as gr
+        X = gr.Intention()
+        df = gr.df_make(x=[1, gr.NaN], y=[2, 3])
+        df_filled = (
+            df
+            >> gr.tf_mutate(x=gr.fillna(X.x, 0))
+        )
     """
     return Series.fillna(*args, **kwargs)
 
@@ -342,37 +349,46 @@ fillna.__doc__ = fillna.__doc__ + Series.fillna.__doc__
 def qqvals(x, dist=None, marg=None):
     r"""Generate theoretical quantiles
 
-    Generate theoretical quantiles for a Q-Q plot. Can provide either a
-    pre-defined Marginal object or the name of a distribution to fit.
+    Generate theoretical quantiles for a Q-Q plot. Can provide either a pre-defined Marginal object or the name of a distribution to fit.
 
     Arguments:
         x (array-like or gr.Intention()): Target observations
 
     Keyword Arguments:
+        dist (str or None): Name of scipy distribution to fit; see gr.valid_dist for list of valid distributions
         marg (gr.Marginal() or None): Pre-fitted marginal
-        dist (str or None): Name of scipy distribution to fit; see
-            gr.valid_dist for list of valid distributions
 
     Returns:
         Series: Theoretical quantiles, matched in order with target observations
 
     References:
-        Filliben, J. J., "The Probability Plot Correlation Coefficient Test
-        for Normality" (1975) Technometrics. DOI: 10.1080/00401706.1975.10489279
+        Filliben, J. J., "The Probability Plot Correlation Coefficient Test for Normality" (1975) Technometrics. DOI: 10.1080/00401706.1975.10489279
 
-    Examples:
-        >>> import grama as gr
-        >>> from grama.data import df_shewhart
-        >>> DF = gr.Intention()
-        >>>
-        >>> (
-        >>>     ## Make a Q-Q plot
-        >>>     df_shewhart
-        >>>     >> gr.tf_mutate(q=gr.qqvals(DF.tensile_strength, dist="norm"))
-        >>>     >> gr.ggplot(gr.aes("q", "tensile_strength"))
-        >>>     + gr.geom_abline(intercept=0, slope=1, linetype="dashed")
-        >>>     + gr.geom_point()
-        >>> )
+    Examples::
+
+        import grama as gr
+        from grama.data import df_shewhart
+        DF = gr.Intention()
+
+        ## Make a Q-Q plot
+        (
+            df_shewhart
+            >> gr.tf_mutate(q=gr.qqvals(DF.tensile_strength, dist="norm"))
+            >> gr.ggplot(gr.aes("q", "tensile_strength"))
+            + gr.geom_abline(intercept=0, slope=1, linetype="dashed")
+            + gr.geom_point()
+        )
+
+        ## Fit a marginal, use in Q-Q plot
+        mg_tys = gr.marg_fit("lognorm", df_shewhart.tensile_strength, floc=0)
+        # Plot to assess the fit
+        (
+            df_shewhart
+            >> gr.tf_mutate(q=gr.qqvals(DF.tensile_strength, marg=mg_tys))
+            >> gr.ggplot(gr.aes("q", "tensile_strength"))
+            + gr.geom_abline(intercept=0, slope=1, linetype="dashed")
+            + gr.geom_point()
+        )
 
     """
     # Check invariants
@@ -403,11 +419,10 @@ def qqvals(x, dist=None, marg=None):
 # Array constructors
 # -------------------------
 @make_symbolic
-def linspace(a, b, n, **kwargs):
+def linspace(a, b, n=100, **kwargs):
     r"""Linearly-spaced values
 
-    Create an array of linearly-spaced values. Accepts keyword arguments for
-    numpy.linspace.
+    Create an array of linearly-spaced values. Accepts keyword arguments for numpy.linspace.
 
     Arguments:
         a (numeric): Smallest value
@@ -418,26 +433,26 @@ def linspace(a, b, n, **kwargs):
         numpy array: Array of requested values
 
     Notes:
-        This is a symbolic alias for np.linspace(); you can use this in
-        pipe-enabled functions.
+        This is a symbolic alias for np.linspace(); you can use this in pipe-enabled functions.
 
-    Examples:
-        >>> import grama as gr
-        >>> from grama.data import df_stang
-        >>> DF = gr.Intention()
-        >>> (
-        >>>     df_stang
-        >>>     >> gr.tf_mutate(c=gr.linspace(0, 1, gr.n(DF.index)))
-        >>> )
+    Examples::
+
+        import grama as gr
+        from grama.data import df_stang
+        DF = gr.Intention()
+        (
+            df_stang
+            >> gr.tf_mutate(c=gr.linspace(0, 1, gr.n(DF.index)))
+        )
+
     """
     return nplinspace(a, b, num=n, **kwargs)
 
 @make_symbolic
-def logspace(a, b, n, **kwargs):
+def logspace(a, b, n=100, **kwargs):
     r"""Logarithmically-spaced values
 
-    Create an array of logarithmically-spaced values. Accepts keyword arguments for
-    numpy.logspace.
+    Create an array of logarithmically-spaced values. Accepts keyword arguments for numpy.logspace.
 
     Arguments:
         a (numeric): Smallest value
@@ -448,17 +463,18 @@ def logspace(a, b, n, **kwargs):
         numpy array: Array of requested values
 
     Notes:
-        This is a symbolic alias for np.logspace(); you can use this in
-        pipe-enabled functions.
+        This is a symbolic alias for np.logspace(); you can use this in pipe-enabled functions.
 
-    Examples:
-        >>> import grama as gr
-        >>> from grama.data import df_stang
-        >>> DF = gr.Intention()
-        >>> (
-        >>>     df_stang
-        >>>     >> gr.tf_mutate(c=gr.logspace(0, 1, gr.n(DF.index)))
-        >>> )
+    Examples::
+
+        import grama as gr
+        from grama.data import df_stang
+        DF = gr.Intention()
+        (
+            df_stang
+            >> gr.tf_mutate(c=gr.logspace(0, 1, gr.n(DF.index)))
+        )
+
     """
     return nplogspace(a, b, num=n, **kwargs)
 

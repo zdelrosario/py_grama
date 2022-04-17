@@ -88,7 +88,8 @@ def tran_rename(df, **kwargs):
             the name of the argument (left of `=`) will be the new column name,
             the value of the argument (right of `=`) is the old column name (as a string).
 
-    Examples:
+    Examples::
+
         ## Setup
         import grama as gr
         DF = gr.Intention()
@@ -138,7 +139,8 @@ def tran_gather(df, key, values, *args, **kwargs):
             column that will preserve information about the original rows
             (useful for being able to re-widen the data later).
 
-    Example:
+    Example ::
+
         diamonds >> gather('variable', 'value', ['price', 'depth','x','y','z']) >> head(5)
 
            carat      cut color clarity  table variable  value
@@ -221,7 +223,8 @@ def tran_spread(df, key, values, convert=False, fill=None):
             the spread columns to more appropriate data types.
 
 
-    Example:
+    Examples::
+
         widened = elongated >> spread(X.variable, X.value)
         widened >> head(5)
 
@@ -312,7 +315,8 @@ def tran_separate(
     Returns:
         pandas.DataFrame: Modified data
 
-    Examples:
+    Examples::
+
         import grama as gr
         DF = gr.Intention
 
@@ -479,7 +483,7 @@ def tran_explode(df, col, convert=False):
     Returns:
         DataFrame:
 
-    Example:
+    Example::
 
     """
 

@@ -45,11 +45,9 @@ def eval_form_pma(
 ):
     r"""Tail quantile via FORM PMA
 
-    Approximate the desired tail quantiles using the performance measure
-    approach (PMA) of the first-order reliability method (FORM) [1]. Select
-    limit states to minimize at desired quantile with `betas`. Provide
-    confidence levels `cons` and estimator covariance `df_corr` to compute with
-    margin in beta [2].
+    Approximate the desired tail quantiles using the performance measure approach (PMA) of the first-order reliability method (FORM) [1]. Select limit states to minimize at desired quantile with `betas`. Provide confidence levels `cons` and estimator covariance `df_corr` to compute with margin in beta [2].
+
+    Note that under the performance measure approach, the optimized limit state value `g` is sought to be non-negative $g \geq 0$. This is usually included as a constraint in optimization, which can be accomplished in by using ``gr.eval_form_pnd()` *within* a model definition---see the Examples below for more details.
 
     Args:
         model (gr.Model): Model to analyze
@@ -59,10 +57,8 @@ def eval_form_pma(
         cons (dict or None): Target confidence levels;
             key   = limit state name; must be in model.out
             value = confidence level, \in (0, 1)
-        df_corr (DataFrame or None): Sampling distribution covariance entries;
-            parameters with no information assumed to be known exactly.
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels.
+        df_corr (DataFrame or None): Sampling distribution covariance entries; parameters with no information assumed to be known exactly.
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom" for nominal deterministic levels.
         n_maxiter (int): Maximum iterations for each optimization run
         n_restart (int): Number of restarts (== number of optimization runs)
         append (bool): Append MPP results for random values?
@@ -72,12 +68,58 @@ def eval_form_pma(
         DataFrame: Results of MPP search
 
     Notes:
-        - Since FORM PMA relies on optimization over the limit state, it is
-          often beneficial to scale your limit state to keep values near unity.
+        Since FORM PMA relies on optimization over the limit state, it is often beneficial to scale your limit state to keep values near unity.
 
     References:
-        - [1] Tu, Choi, and Park, "A new study on reliability-based design optimization," Journal of Mechanical Design, 1999
-        - [2] del Rosario, Fenrich, and Iaccarino, "Fast precision margin with the first-order reliability method," AIAA Journal, 2019
+        Tu, Choi, and Park, "A new study on reliability-based design optimization," Journal of Mechanical Design, 1999
+        del Rosario, Fenrich, and Iaccarino, "Fast precision margin with the first-order reliability method," AIAA Journal, 2019
+
+    Examples::
+
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+        ## Evaluate the reliability of specified designs
+        (
+            md_beam
+            >> gr.ev_form_pma(
+                # Specify target reliability
+                betas=dict(g_stress=3, g_disp=3),
+                # Analyze three different thicknesses
+                df_det=gr.df_make(t=[2, 3, 4], w=3)
+            )
+        )
+
+        ## Build a nested model for optimization under uncertainty
+        md_opt = (
+            gr.Model("Beam Optimization")
+            >> gr.cp_vec_function(
+                fun=lambda df: gr.df_make(c_area=df.w * df.t),
+                var=["w", "t"],
+                out=["c_area"],
+                name="Area objective",
+            )
+            >> gr.cp_vec_function(
+                fun=lambda df: gr.eval_form_pma(
+                    md_beam,
+                    betas=dict(g_stress=3, g_disp=3),
+                    df_det=df,
+                    append=False,
+                )
+                var=["w", "t"],
+                out=["g_stress", "g_disp"],
+                name="Reliability constraints",
+            )
+            >> gr.cp_bounds(w=(2, 4), t=(2, 4))
+        )
+        # Run the optimization
+        (
+            md_opt
+            >> gr.ev_min(
+                out_min="c_area",
+                out_geq=["g_stress", "g_disp"],
+            )
+        )
 
     """
     ## Check invariants
@@ -213,23 +255,18 @@ def eval_form_ria(
 ):
     r"""Tail reliability via FORM RIA
 
-    Approximate the desired tail probability using the reliability index
-    approach (RIA) of the first-order reliability method (FORM) [1]. Select
-    limit states to analyze with list input `limits`. Provide confidence levels
-    `cons` and estimator covariance `df_corr` to compute with margin in beta
-    [2].
+    Approximate the desired tail probability using the reliability index approach (RIA) of the first-order reliability method (FORM) [1]. Select limit states to analyze with list input `limits`. Provide confidence levels `cons` and estimator covariance `df_corr` to compute with margin in beta [2].
+
+    Note that the reliability index approach (RIA) is generally less stable than the performance measure approach (PMA). Consider using ``gr.eval_form_pma()`` instead, particularly when using FORM to optimize a design.
 
     Args:
         model (gr.Model): Model to analyze
-        limits (list): Target limit states; must be in model.out; limit state
-            assumed to be critical at g == 0
+        limits (list): Target limit states; must be in model.out; limit state assumed to be critical at g == 0.
         cons (dict or None): Target confidence levels;
             key   = limit state name; must be in model.out
             value = confidence level, \in (0, 1)
-        df_corr (DataFrame or None): Sampling distribution covariance entries;
-            parameters with no information assumed to be known exactly.
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels.
+        df_corr (DataFrame or None): Sampling distribution covariance entries; parameters with no information assumed to be known exactly.
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom" for nominal deterministic levels.
         n_maxiter (int): Maximum iterations for each optimization run
         n_restart (int): Number of restarts (== number of optimization runs)
         append (bool): Append MPP results for random values?
@@ -239,12 +276,27 @@ def eval_form_ria(
         DataFrame: Results of MPP search
 
     Notes:
-        - Since FORM RIA relies on optimization over the limit state, it is
-          often beneficial to scale your limit state to keep values near unity.
+        Since FORM RIA relies on optimization over the limit state, it is often beneficial to scale your limit state to keep values near unity.
 
     References:
-        - [1] Tu, Choi, and Park, "A new study on reliability-based design optimization," Journal of Mechanical Design, 1999
-        - [2] del Rosario, Fenrich, and Iaccarino, "Fast precision margin with the first-order reliability method," AIAA Journal, 2019
+        [1] Tu, Choi, and Park, "A new study on reliability-based design optimization," Journal of Mechanical Design, 1999
+        [2] del Rosario, Fenrich, and Iaccarino, "Fast precision margin with the first-order reliability method," AIAA Journal, 2019
+
+    Examples::
+
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+        ## Evaluate the reliability of specified designs
+        (
+            md_beam
+            >> gr.ev_form_ria(
+                # Specify limit states to analyze
+                limits=("g_stress", "g_disp"),
+                # Analyze three different thicknesses
+                df_det=gr.df_make(t=[2, 3, 4], w=3)
+            )
+        )
 
     """
     ## Check invariants

@@ -58,16 +58,16 @@ def eval_sinews(
     Returns:
         DataFrame: Results of evaluation or unevaluated design
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> md = gr.make_cantilever_beam()
-        >>> # Skip evaluation, vis. design
-        >>> df_design = md >> gr.ev_sinews(df_det="nom", skip=True)
-        >>> df_design >> gr.pt_auto()
-        >>> # Vis results
-        >>> df_sinew = md >> gr.ev_sinews(df_det="nom")
-        >>> df_sinew >> gr.pt_auto()
+        import grama as gr
+        md = gr.make_cantilever_beam()
+        # Skip evaluation, used to visualize the design (input points)
+        df_design = md >> gr.ev_sinews(df_det="nom", skip=True)
+        df_design >> gr.pt_auto()
+        # Visualize the input-to-output relationships of the model
+        df_sinew = md >> gr.ev_sinews(df_det="nom")
+        df_sinew >> gr.pt_auto()
 
     """
     ## Override model if deterministic sweeps desired
@@ -208,18 +208,18 @@ def eval_hybrid(
         DataFrame: Results of evaluation or unevaluated design
 
     References:
-        I.M. Sobol', "Sensitivity Estimates for Nonlinear Mathematical Models"
-        (1999) MMCE, Vol 1.
+        I.M. Sobol', "Sensitivity Estimates for Nonlinear Mathematical Models" (1999) MMCE, Vol 1.
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> md = gr.make_cantilever_beam()
-        >>> df_first = md >> gr.ev_hybrid(df_det="nom", plan="first")
-        >>> df_first >> gr.tf_sobol()
-        >>>
-        >>> df_total = md >> gr.ev_hybrid(df_det="nom", plan="total")
-        >>> df_total >> gr.tf_sobol()
+        import grama as gr
+        md = gr.make_cantilever_beam()
+        ## Compute the first-order indices
+        df_first = md >> gr.ev_hybrid(df_det="nom", plan="first")
+        df_first >> gr.tf_sobol()
+        ## Compute the total-order indices
+        df_total = md >> gr.ev_hybrid(df_det="nom", plan="total")
+        df_total >> gr.tf_sobol()
 
     """
     ## Check invariants

@@ -150,24 +150,25 @@ def tran_sp(
     References:
         Mak and Joseph, "Support Points" (2018) *The Annals of Statistics*
 
-    Examples:
-        >>> import grama as gr
-        >>> # Compact an existing dataset
-        >>> from grama.data import df_diamonds
-        >>> df_sp = gr.tran_sp(df_diamonds, n=50, var=["price", "carat"])
-        >>>
-        >>> # Use support points to reduce model runtime
-        >>> from grama.models import make_cantilever_beam
-        >>> md_beam = make_cantilever_beam()
-        >>> (
-        >>>     md_beam
-        >>>     ## Generate input sample but don't evaluate outputs
-        >>>     >> gr.ev_sample(n=1e4, df_det="nom", skip=True)
-        >>>     ## Reduce to a smaller---but representative---sample
-        >>>     >> gr.tf_sp(n=50)
-        >>>     ## Evaluate the outputs
-        >>>     >> gr.tf_md(md_beam)
-        >>> )
+    Examples::
+
+        import grama as gr
+        # Compact an existing dataset
+        from grama.data import df_diamonds
+        df_sp = gr.tran_sp(df_diamonds, n=50, var=["price", "carat"])
+
+        # Use support points to reduce model runtime
+        from grama.models import make_cantilever_beam
+        md_beam = make_cantilever_beam()
+        (
+            md_beam
+            ## Generate input sample but don't evaluate outputs
+            >> gr.ev_sample(n=1e4, df_det="nom", skip=True)
+            ## Reduce to a smaller---but representative---sample
+            >> gr.tf_sp(n=50)
+            ## Evaluate the outputs
+            >> gr.tf_md(md_beam)
+        )
 
     """
     ## Setup

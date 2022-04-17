@@ -61,19 +61,20 @@ def eval_nls(
     Returns:
         DataFrame: Results of estimation
 
-    Examples:
-        >>> import grama as gr
-        >>> from grama.data import df_trajectory_full
-        >>> from grama.models import make_trajectory_linear
-        >>>
-        >>> md_trajectory = make_trajectory_linear()
-        >>>
-        >>> df_fit = (
-        >>>     md_trajectory
-        >>>     >> gr.ev_nls(df_data=df_trajectory_full)
-        >>> )
-        >>>
-        >>> print(df_fit)
+    Examples::
+
+        import grama as gr
+        from grama.data import df_trajectory_full
+        from grama.models import make_trajectory_linear
+
+        md_trajectory = make_trajectory_linear()
+
+        df_fit = (
+            md_trajectory
+            >> gr.ev_nls(df_data=df_trajectory_full)
+        )
+
+        print(df_fit)
 
     """
     ## Check `out` invariants
@@ -283,34 +284,38 @@ def eval_min(
     Returns:
         DataFrame: Results of optimization
 
-    Examples:
-        >>> import grama as gr
-        >>> md = (
-        >>>     gr.Model("Constrained Rosenbrock")
-        >>>     >> gr.cp_function(
-        >>>         fun=lambda x: (1 - x[0])**2 + 100*(x[1] - x[0]**2)**2,
-        >>>         var=["x", "y"],
-        >>>         out=["c"],
-        >>>     )
-        >>>     >> gr.cp_function(
-        >>>         fun=lambda x: (x[0] - 1)**3 - x[1] + 1,
-        >>>         var=["x", "y"],
-        >>>         out=["g1"],
-        >>>     )
-        >>>     >> gr.cp_function(
-        >>>         fun=lambda x: x[0] + x[1] - 2,
-        >>>         var=["x", "y"],
-        >>>         out=["g2"],
-        >>>     )
-        >>>     >> gr.cp_bounds(
-        >>>         x=(-1.5, +1.5),
-        >>>         y=(-0.5, +2.5),
-        >>>     )
-        >>> )
-        >>> md >> gr.ev_min(
-        >>>     out_min="c",
-        >>>     out_leq=["g1", "g2"]
-        >>> )
+    Examples::
+
+        import grama as gr
+        ## Define a model with objective and constraints
+        md = (
+            gr.Model("Constrained Rosenbrock")
+            >> gr.cp_function(
+                fun=lambda x: (1 - x[0])**2 + 100*(x[1] - x[0]**2)**2,
+                var=["x", "y"],
+                out=["c"],
+            )
+            >> gr.cp_function(
+                fun=lambda x: (x[0] - 1)**3 - x[1] + 1,
+                var=["x", "y"],
+                out=["g1"],
+            )
+            >> gr.cp_function(
+                fun=lambda x: x[0] + x[1] - 2,
+                var=["x", "y"],
+                out=["g2"],
+            )
+            >> gr.cp_bounds(
+                x=(-1.5, +1.5),
+                y=(-0.5, +2.5),
+            )
+        )
+
+        ## Run the optimizer
+        md >> gr.ev_min(
+            out_min="c",
+            out_leq=["g1", "g2"]
+        )
 
     """
     ## Check that model has only deterministic variables

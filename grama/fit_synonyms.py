@@ -49,21 +49,18 @@ def fit_nls(
         var_fix (list or None): Variables to fix to nominal levels. Note that
             variables with domain width zero will automatically be fixed.
         df_init (DataFrame): Initial guesses for parameters; overrides n_restart
-        n_restart (int): Number of restarts to try; the first try is at
-            the nominal conditions of the model. Returned model will use
-            the least-error parameter set among restarts tested.
+        n_restart (int): Number of restarts to try; the first try is at the nominal conditions of the model. Returned model will use the least-error parameter set among restarts tested.
         n_maxiter (int): Optimizer maximum iterations
         verbose (bool): Print best-fit parameters to console?
-        uq_method (str OR None): If string, select method to quantify parameter
-            uncertainties. If None, provide best-fit values only. Methods:
-            uq_method = "linpool": assume normal errors; linearly approximate
-                parameter effects; equally pool variance matrices for each output
+        uq_method (str OR None): If string, select method to quantify parameter uncertainties. If None, provide best-fit values only. Methods:
+            uq_method = "linpool": assume normal errors; linearly approximate parameter effects; equally pool variance matrices for each output
 
     Returns:
         gr.Model: Model for evaluation with best-fit variables frozen to
             optimized levels.
 
-    Examples:
+    Examples::
+
         import grama as gr
         from grama.data import df_trajectory_windowed
         from grama.models import make_trajectory_linear
