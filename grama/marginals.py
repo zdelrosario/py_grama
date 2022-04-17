@@ -449,13 +449,9 @@ def marg_mom(
 ):
     r"""Fit scipy.stats continuous distribution via moments
 
-    Fit a continuous distribution using the method of moments. Select a
-    distribution shape and provide numerical values for a convenient set of
-    common moments.
+    Fit a continuous distribution using the method of moments. Select a distribution shape and provide numerical values for a convenient set of common moments.
 
-    This routine uses a vector-output root finding routine to match the moments.
-    You may set an optional initial guess for the distribution parameters using
-    the dict_x0 argument.
+    This routine uses a vector-output root finding routine to match the moments. You may set an optional initial guess for the distribution parameters using the dict_x0 argument.
 
     Args:
         dist (str): Name of distribution to fit
@@ -480,22 +476,23 @@ def marg_mom(
     Returns:
         gr.MarginalNamed: Distribution
 
-    Examples:
-        >>> import grama as gr
-        >>> ## Fit a normal distribution
-        >>> mg_norm = gr.marg_mom("norm", mean=0, sd=1)
-        >>> ## Fit a (3-parameter) lognormal distribution
-        >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, skew=1)
-        >>> ## Fit a lognormal, controlling kurtosis instead
-        >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, kurt=1)
-        >>> ## Fit a 2-parameter lognormal; no skewness or kurtosis needed
-        >>> mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, floc=0)
-        >>>
-        >>> ## Not all moment combinations are feasible; this will fail
-        >>> gr.marg_mom("beta", mean=1, sd=1, skew=0, kurt=4)
-        >>> ## Skewness and kurtosis are related for the beta distribution;
-        >>> ## a different combination is feasible
-        >>> gr.marg_mom("beta", mean=1, sd=1, skew=0, kurt=2)
+    Examples::
+
+        import grama as gr
+        ## Fit a normal distribution
+        mg_norm = gr.marg_mom("norm", mean=0, sd=1)
+        ## Fit a (3-parameter) lognormal distribution
+        mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, skew=1)
+        ## Fit a lognormal, controlling kurtosis instead
+        mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, kurt=1)
+        ## Fit a 2-parameter lognormal; no skewness or kurtosis needed
+        mg_lognorm = gr.marg_mom("lognorm", mean=1, sd=1, floc=0)
+
+        ## Not all moment combinations are feasible; this will fail
+        gr.marg_mom("beta", mean=1, sd=1, skew=0, kurt=4)
+        ## Skewness and kurtosis are related for the beta distribution;
+        ## a different combination is feasible
+        gr.marg_mom("beta", mean=1, sd=1, skew=0, kurt=2)
 
     """
     ## Number of distribution parameters
@@ -629,8 +626,7 @@ def marg_mom(
 def marg_fit(dist, data, name=True, sign=None, **kwargs):
     r"""Fit scipy.stats continuous distirbution
 
-    Fits a scipy.stats continuous distribution. Intended to be used to define a
-    marginal distribution from data.
+    Fits a scipy.stats continuous distribution. Intended to be used to define a marginal distribution from data.
 
     Arguments:
         dist (str): Distribution to fit
@@ -651,48 +647,48 @@ def marg_fit(dist, data, name=True, sign=None, **kwargs):
     Returns:
         gr.MarginalNamed: Distribution
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.data import df_shewhart
-        >>> # Fit normal distribution
-        >>> mg_normal = gr.marg_named(
-        >>>     "norm",
-        >>>     df_shewhart.tensile_strength,
-        >>> )
-        >>> # Fit two-parameter Weibull distribution
-        >>> mg_weibull2 = gr.marg_named(
-        >>>     "weibull_min",
-        >>>     df_shewhart.tensile_strength,
-        >>>     floc=0,        # 2-parameter has frozen loc == 0
-        >>> )
-        >>> # Fit three-parameter Weibull distribution
-        >>> mg_weibull3 = gr.marg_named(
-        >>>     "weibull_min",
-        >>>     df_shewhart.tensile_strength,
-        >>>     loc=0,        # 3-parameter fit tends to be unstable;
-        >>>                   # an inital guess helps stabilize fit
-        >>> )
-        >>> # Inspect fits with QQ plot
-        >>> (
-        >>>     df_shewhart
-        >>>     >> gr.tf_mutate(
-        >>>         q_normal=gr.qqvals(DF.tensile_strength, marg=mg_normal),
-        >>>         q_weibull2=gr.qqvals(DF.tensile_strength, marg=mg_weibull2),
-        >>>     )
-        >>>     >> gr.tf_pivot_longer(
-        >>>         columns=[
-        >>>             "q_normal",
-        >>>             "q_weibull2",
-        >>>         ],
-        >>>         names_to=[".value", "Distribution"],
-        >>>         names_sep="_"
-        >>>     )
-        >>>
-        >>>     >> gr.ggplot(gr.aes("q", "tensile_strength"))
-        >>>     + gr.geom_abline(intercept=0, slope=1, linetype="dashed")
-        >>>     + gr.geom_point(gr.aes(color="Distribution"))
-        >>> )
+        import grama as gr
+        from grama.data import df_shewhart
+        # Fit normal distribution
+        mg_normal = gr.marg_named(
+            "norm",
+            df_shewhart.tensile_strength,
+        )
+        # Fit two-parameter Weibull distribution
+        mg_weibull2 = gr.marg_named(
+            "weibull_min",
+            df_shewhart.tensile_strength,
+            floc=0,        # 2-parameter has frozen loc == 0
+        )
+        # Fit three-parameter Weibull distribution
+        mg_weibull3 = gr.marg_named(
+            "weibull_min",
+            df_shewhart.tensile_strength,
+            loc=0,        # 3-parameter fit tends to be unstable;
+                          # an inital guess helps stabilize fit
+        )
+        # Inspect fits with QQ plot
+        (
+            df_shewhart
+            >> gr.tf_mutate(
+                q_normal=gr.qqvals(DF.tensile_strength, marg=mg_normal),
+                q_weibull2=gr.qqvals(DF.tensile_strength, marg=mg_weibull2),
+            )
+            >> gr.tf_pivot_longer(
+                columns=[
+                    "q_normal",
+                    "q_weibull2",
+                ],
+                names_to=[".value", "Distribution"],
+                names_sep="_"
+            )
+
+            >> gr.ggplot(gr.aes("q", "tensile_strength"))
+            + gr.geom_abline(intercept=0, slope=1, linetype="dashed")
+            + gr.geom_point(gr.aes(color="Distribution"))
+        )
 
     """
     ## Catch case where user provides entire DataFrame
@@ -728,16 +724,18 @@ def marg_gkde(data, sign=None):
     Returns:
         gr.MarginalGKDE: Marginal distribution
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.data import df_stang
-        >>> md = gr.Model("Marginal Example") >> \
-        >>>     gr.cp_marginals(
-        >>>         E=gr.marg_gkde(df_stang.E),
-        >>>         mu=gr.marg_gkde(df_stang.mu)
-        >>>     )
-        >>> md.printpretty()
+        import grama as gr
+        from grama.data import df_stang
+        md = (
+            gr.Model("Marginal Example")
+            >> gr.cp_marginals(
+                E=gr.marg_gkde(df_stang.E),
+                mu=gr.marg_gkde(df_stang.mu),
+            )
+        )
+        md
 
     """
     ## Catch case where user provides entire DataFrame
