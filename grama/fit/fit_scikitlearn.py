@@ -484,25 +484,26 @@ def fit_kmeans(df, var=None, colname="cluster_id", seed=None, **kwargs):
     References:
         Scikit-learn: Machine Learning in Python, Pedregosa et al. JMLR 12, pp. 2825-2830, 2011.
 
-    Examples:
-        >>> import grama as gr
-        >>> from grama.data import df_stang
-        >>> from grama.fit import ft_kmeans
-        >>> X = gr.Intention()
-        >>> md_cluster = (
-        >>>     df_stang
-        >>>     >> ft_kmeans(var=["E", "mu"], n_clusters=2)
-        >>> )
-        >>> (
-        >>>     md_cluster
-        >>>     >> gr.ev_df(df_stang)
-        >>>     >> gr.tf_group_by(X.cluster_id)
-        >>>     >> gr.tf_summarize(
-        >>>         thick_mean=gr.mean(X.thick),
-        >>>         thick_sd=gr.sd(X.thick),
-        >>>         n=gr.n(X.index),
-        >>>     )
-        >>> )
+    Examples::
+
+        import grama as gr
+        from grama.data import df_stang
+        from grama.fit import ft_kmeans
+        DF = gr.Intention()
+        md_cluster = (
+            df_stang
+            >> ft_kmeans(var=["E", "mu"], n_clusters=2)
+        )
+        (
+            md_cluster
+            >> gr.ev_df(df_stang)
+            >> gr.tf_group_by(DF.cluster_id)
+            >> gr.tf_summarize(
+                thick_mean=gr.mean(DF.thick),
+                thick_sd=gr.sd(DF.thick),
+                n=gr.n(),
+            )
+        )
 
     """
     ## Check invariants

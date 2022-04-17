@@ -48,13 +48,14 @@ def tran_feat_composition(
     References:
         Ward, L., Dunn, A., Faghaninia, A., Zimmermann, N. E. R., Bajaj, S., Wang, Q., Montoya, J. H., Chen, J., Bystrom, K., Dylla, M., Chard, K., Asta, M., Persson, K., Snyder, G. J., Foster, I., Jain, A., Matminer: An open source toolkit for materials data mining. Comput. Mater. Sci. 152, 60-69 (2018).
 
-    Examples:
-        >>> import grama as gr
-        >>> from grama.tran import tf_feat_composition
-        >>> (
-        >>>     gr.df_make(FORMULA=["C6H12O6"])
-        >>>     >> gr.tf_feat_composition()
-        >>> )
+    Examples::
+
+        import grama as gr
+        from grama.tran import tf_feat_composition
+        (
+            gr.df_make(FORMULA=["C6H12O6"])
+            >> gr.tf_feat_composition()
+        )
 
     """
     ## Check invariants
