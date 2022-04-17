@@ -19,19 +19,11 @@ def tran_reweight(
 ):
     r"""Reweight a sample using likelihood ratio
 
-    Reweight is a tool to facilitate "What If?" Monte Carlo simulation;
-    specifically, to make testing a models with the same function(s) but
-    different distributions more computationally efficient.
+    Reweight is a tool to facilitate "What If?" Monte Carlo simulation; specifically, to make testing a models with the same function(s) but different distributions more computationally efficient.
 
-    This tool automates calulation of the *likelihood ratio* between the
-    distributions of two given models. Using the resulting weights to scale
-    (elementwise multiply) output values and compute summaries is called
-    *importance sampling*, enabling "What If?" testing. Use of this tool enables
-    one to generate a single Monte Carlo sample, rather than multiple samples
-    for each "What If?" scenario (avoiding extraneous function evaluations).
+    This tool automates calulation of the *likelihood ratio* between the distributions of two given models. Using the resulting weights to scale (elementwise multiply) output values and compute summaries is called *importance sampling*, enabling "What If?" testing. Use of this tool enables one to generate a single Monte Carlo sample, rather than multiple samples for each "What If?" scenario (avoiding extraneous function evaluations).
 
-    Let `y` be a generic output of the scenario. The importance sampling
-    procedure is as follows:
+    Let `y` be a generic output of the scenario. The importance sampling procedure is as follows:
 
     1. Create a base scenario represented by `md_base`, and a desired number
        of alternative "What If?" scenarios represented my other models.
@@ -64,60 +56,59 @@ def tran_reweight(
     References:
         A.B. Owen, "Monte Carlo theory, methods and examples" (2013)
 
-    Examples:
+    Examples::
 
-        >>> import grama as gr
-        >>> from grama.models import make_cantilever_beam
-        >>> DF = gr.Intention()
-        >>>
-        >>> md_base = make_cantilever_beam()
-        >>> md_new = (
-        >>>     md_base
-        >>>     >> gr.cp_marginals(
-        >>>         H=dict(dist="norm", loc=500.0, scale=50.0),
-        >>>     )
-        >>> )
-        >>>
-        >>> ## Assess safety via simple Monte Carlo
-        >>> df_base = gr.eval_monte_carlo(md_base, df_det="nom", n=1e3)
-        >>> print(
-        >>>     df_base
-        >>>     >> gr.tf_summarize(
-        >>>         pof_stress=gr.mean(DF.g_stress <= 0),
-        >>>         pof_disp=gr.mean(DF.g_disp <= 0),
-        >>>     )
-        >>> )
-        >>>
-        >>> ## Re-use samples to test another scenario
-        >>> print(
-        >>>     df_base
-        >>>     >> gr.tf_reweight(md_base=md_base, md_new=md_new)
-        >>>     >> gr.tf_summarize(
-        >>>         pof_stress=gr.mean((DF.g_stress <= 0) * DF.weight),
-        >>>         pof_disp=gr.mean((DF.g_disp <= 0) * DF.weight),
-        >>>         n_eff=gr.neff_is(DF.weight),
-        >>>     )
-        >>> )
-        >>>
-        >>> ## It is unsafe to study new scenarios with wider uncertainty than the base
-        >>> ## scenario
-        >>> md_poor = (
-        >>>     md_base
-        >>>     >> gr.cp_marginals(
-        >>>         H=dict(dist="norm", loc=500.0, scale=400.0),
-        >>>     )
-        >>> )
-        >>> ## Note the tiny effective size in this case
-        >>> print(
-        >>>     md_base
-        >>>     >> gr.ev_monte_carlo(n=1e3, df_det="nom")
-        >>>     >> gr.tf_reweight(md_base=md_base, md_new=md_poor)
-        >>>     >> gr.tf_summarize(
-        >>>         pof_stress=gr.mean((DF.g_stress <= 0) * DF.weight),
-        >>>         pof_disp=gr.mean((DF.g_disp <= 0) * DF.weight),
-        >>>         n_eff=gr.neff_is(DF.weight),
-        >>>     )
-        >>> )
+        import grama as gr
+        from grama.models import make_cantilever_beam
+        DF = gr.Intention()
+
+        md_base = make_cantilever_beam()
+        md_new = (
+            md_base
+            >> gr.cp_marginals(
+                H=dict(dist="norm", loc=500.0, scale=50.0),
+            )
+        )
+
+        ## Assess safety via simple Monte Carlo
+        df_base = gr.eval_monte_carlo(md_base, df_det="nom", n=1e3)
+        print(
+            df_base
+            >> gr.tf_summarize(
+                pof_stress=gr.mean(DF.g_stress <= 0),
+                pof_disp=gr.mean(DF.g_disp <= 0),
+            )
+        )
+
+        ## Re-use samples to test another scenario
+        print(
+            df_base
+            >> gr.tf_reweight(md_base=md_base, md_new=md_new)
+            >> gr.tf_summarize(
+                pof_stress=gr.mean((DF.g_stress <= 0) * DF.weight),
+                pof_disp=gr.mean((DF.g_disp <= 0) * DF.weight),
+                n_eff=gr.neff_is(DF.weight),
+            )
+        )
+
+        ## It is unsafe to study new scenarios with wider uncertainty than the base scenario
+        md_poor = (
+            md_base
+            >> gr.cp_marginals(
+                H=dict(dist="norm", loc=500.0, scale=400.0),
+            )
+        )
+        ## Note the tiny effective sample size in this case
+        print(
+            md_base
+            >> gr.ev_monte_carlo(n=1e3, df_det="nom")
+            >> gr.tf_reweight(md_base=md_base, md_new=md_poor)
+            >> gr.tf_summarize(
+                pof_stress=gr.mean((DF.g_stress <= 0) * DF.weight),
+                pof_disp=gr.mean((DF.g_disp <= 0) * DF.weight),
+                n_eff=gr.neff_is(DF.weight),
+            )
+        )
 
     """
     ## Check invariants
