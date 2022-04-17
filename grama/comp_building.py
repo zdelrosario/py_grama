@@ -456,8 +456,7 @@ def comp_copula_independence(model):
 
     Composition. Add an independence copula to an existing model.
 
-    NOTE: Independence of random variables is a *very* strong assumption!
-    Recommend using comp_copula_gaussian instead.
+    NOTE: Independence of random variables is a *very* strong assumption! Recommend using comp_copula_gaussian instead.
 
     Args:
         model (gr.model): Model to modify
