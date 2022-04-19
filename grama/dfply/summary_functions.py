@@ -558,7 +558,7 @@ def pr(series):
 
 
 @make_symbolic
-def pr_lo(series, alpha=0.01):
+def pr_lo(series, alpha=0.005):
     r"""Estimate a confidence interval for a probability
 
     Estimate the lower side of a confidence interval for a probability from a random sample. Provided series must be boolean, with 1 corresponding to the event of interest.
@@ -566,6 +566,8 @@ def pr_lo(series, alpha=0.01):
     Uses Wilson interval method.
 
     Use logical statements together with column values to construct a boolean indicator for the event you're interested in. Remember that you can chain multiple statements with logical and `&` and or `|` operators. See the documentation for `gr.pr()` for more details and examples.
+
+    For a two-sided interval at a confidence level of ``C``, set ``alpha = 1 - C`` and use ``[gr.mean_lo(X, alpha=alpha/2), gr.mean_up(X, alpha=alpha/2)``. Note that the default ``alpha`` level for both helpers is calibrated for a two-sided interval with ``C = 0.99``.
 
     Args:
         series (pandas.Series): Column to summarize; must be boolean or 0/1.
@@ -601,7 +603,7 @@ def pr_lo(series, alpha=0.01):
 
 
 @make_symbolic
-def pr_up(series, alpha=0.01):
+def pr_up(series, alpha=0.005):
     r"""
 
     Estimate the upper side of a confidence interval for a probability from a random sample. Provided series must be boolean, with 1 corresponding to the event of interest.
@@ -609,6 +611,8 @@ def pr_up(series, alpha=0.01):
     Uses Wilson interval method.
 
     Use logical statements together with column values to construct a boolean indicator for the event you're interested in. Remember that you can chain multiple statements with logical and `&` and or `|` operators. See the documentation for `gr.pr()` for more details and examples.
+
+    For a two-sided interval at a confidence level of ``C``, set ``alpha = 1 - C`` and use ``[gr.mean_lo(X, alpha=alpha/2), gr.mean_up(X, alpha=alpha/2)``. Note that the default ``alpha`` level for both helpers is calibrated for a two-sided interval with ``C = 0.99``.
 
     Args:
         series (pandas.Series): Column to summarize; must be boolean or 0/1.
