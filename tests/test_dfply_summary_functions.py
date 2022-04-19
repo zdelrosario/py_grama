@@ -470,11 +470,11 @@ class TestCIHelpers(unittest.TestCase):
     def test_mean_ci(self):
         # Basic functionality
         y = pd.Series([-1, -1, 0, +1, +1]) # sd == 1
-        lo_true = 0 - (-norm.ppf(0.01)) * 1 / np.sqrt(5)
-        up_true = 0 + (-norm.ppf(0.01)) * 1 / np.sqrt(5)
+        lo_true = 0 - (-norm.ppf(0.005)) * 1 / np.sqrt(5)
+        up_true = 0 + (-norm.ppf(0.005)) * 1 / np.sqrt(5)
 
-        self.assertTrue((lo_true - gr.mean_lo(y, alpha=0.01)) < 1e-6)
-        self.assertTrue((up_true - gr.mean_up(y, alpha=0.01)) < 1e-6)
+        self.assertTrue((lo_true - gr.mean_lo(y, alpha=0.005)) < 1e-6)
+        self.assertTrue((up_true - gr.mean_up(y, alpha=0.005)) < 1e-6)
 
         # Grouped functionality
         df = (

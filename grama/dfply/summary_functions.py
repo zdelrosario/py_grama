@@ -67,7 +67,7 @@ def mean(series):
 
 # Mean CI helpers
 @make_symbolic
-def mean_lo(series, alpha=0.01):
+def mean_lo(series, alpha=0.005):
     """Return a confidence interval (lower bound) for the mean
 
     Uses a central limit approximation for a lower confidence bound of an estimated mean. That is:
@@ -82,10 +82,11 @@ def mean_lo(series, alpha=0.01):
         q(alpha) = alpha-level lower-quantile of standard normal
                  = (-norm.ppf(alpha))
 
+    For a two-sided interval at a confidence level of ``C``, set ``alpha = 1 - C`` and use ``[gr.mean_lo(X, alpha=alpha/2), gr.mean_up(X, alpha=alpha/2)``. Note that the default ``alpha`` level for both helpers is calibrated for a two-sided interval with ``C = 0.99``.
+
     Args:
         series (pandas.Series): column to summarize
-        alpha (float): alpha-level for calculation
-            Note that the confidence level C is given by C = 1 - alpha
+        alpha (float): alpha-level for calculation. Note that the confidence level C is given by ``C = 1 - alpha``.
 
     Returns:
         float: Lower confidence interval for the mean
@@ -98,7 +99,7 @@ def mean_lo(series, alpha=0.01):
 
 
 @make_symbolic
-def mean_up(series, alpha=0.01):
+def mean_up(series, alpha=0.005):
     """Return a confidence interval (upper bound) for the mean
 
     Uses a central limit approximation for a upper confidence bound of an estimated mean. That is:
@@ -113,10 +114,11 @@ def mean_up(series, alpha=0.01):
         q(alpha) = alpha-level lower-quantile of standard normal
                  = (-norm.ppf(alpha))
 
+    For a two-sided interval at a confidence level of ``C``, set ``alpha = 1 - C`` and use ``[gr.mean_lo(X, alpha=alpha/2), gr.mean_up(X, alpha=alpha/2)``. Note that the default ``alpha`` level for both helpers is calibrated for a two-sided interval with ``C = 0.99``.
+
     Args:
         series (pandas.Series): column to summarize
-        alpha (float): alpha-level for calculation
-            Note that the confidence level C is given by C = 1 - alpha
+        alpha (float): alpha-level for calculation. Note that the confidence level C is given by ``C = 1 - alpha``.
 
     Returns:
         float: Upper confidence interval for the mean
@@ -678,7 +680,7 @@ def corr(series1, series2, method="pearson", res="corr", nan_drop=False):
         raise ValueError("res {} not supported".format(res))
 
 
-# Prediction Interval
+# Distribution-free Prediction Intervals
 # --------------------------------------------------
 def pint_lo_index(n, m, j, alpha):
     r"""PI lower bound index
