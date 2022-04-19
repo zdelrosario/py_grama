@@ -528,3 +528,21 @@ class TestCIHelpers(unittest.TestCase):
         # Example 5.12, Hahn and Meeker
         idx = gr.pint_lo_index(100, 59, 30, 0.05)
         self.assertTrue(idx == 37)
+
+        ## Test functionality
+        df_res = (
+            data.df_shewhart
+            >> gr.tf_summarize(
+                pi_lo=gr.pint_lo(X.tensile_strength, alpha=0.10/2),
+                pi_up=gr.pint_up(X.tensile_strength, alpha=0.10/2),
+            )
+        )
+        # Raises assertion
+        with self.assertRaises(ValueError):
+            df_res = (
+                data.df_shewhart
+                >> gr.tf_summarize(
+                    pi_lo=gr.pint_lo(X.tensile_strength),
+                    pi_up=gr.pint_up(X.tensile_strength),
+                )
+            )
