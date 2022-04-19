@@ -6,6 +6,10 @@ __all__ = [
     "mean_up",
     "IQR",
     "quant",
+    "pint_lo",
+    "pint_lo_index",
+    "pint_up",
+    "pint_up_index",
     "pr",
     "pr_lo",
     "pr_up",
@@ -36,7 +40,7 @@ __all__ = [
 from .base import make_symbolic, Intention
 from .vector import order_series_by
 from numpy import array, sqrt, power, nan, isnan
-from scipy.stats import norm, pearsonr, spearmanr, kurtosis
+from scipy.stats import norm, pearsonr, spearmanr, kurtosis, nhypergeom
 from scipy.stats import skew as spskew
 
 
@@ -63,7 +67,7 @@ def mean(series):
 
 # Mean CI helpers
 @make_symbolic
-def mean_lo(series, alpha=0.01):
+def mean_lo(series, alpha=0.005):
     """Return a confidence interval (lower bound) for the mean
 
     Uses a central limit approximation for a lower confidence bound of an estimated mean. That is:
@@ -78,10 +82,11 @@ def mean_lo(series, alpha=0.01):
         q(alpha) = alpha-level lower-quantile of standard normal
                  = (-norm.ppf(alpha))
 
+    For a two-sided interval at a confidence level of ``C``, set ``alpha = 1 - C`` and use ``[gr.mean_lo(X, alpha=alpha/2), gr.mean_up(X, alpha=alpha/2)``. Note that the default ``alpha`` level for both helpers is calibrated for a two-sided interval with ``C = 0.99``.
+
     Args:
         series (pandas.Series): column to summarize
-        alpha (float): alpha-level for calculation
-            Note that the confidence level C is given by C = 1 - alpha
+        alpha (float): alpha-level for calculation. Note that the confidence level C is given by ``C = 1 - alpha``.
 
     Returns:
         float: Lower confidence interval for the mean
@@ -94,7 +99,7 @@ def mean_lo(series, alpha=0.01):
 
 
 @make_symbolic
-def mean_up(series, alpha=0.01):
+def mean_up(series, alpha=0.005):
     """Return a confidence interval (upper bound) for the mean
 
     Uses a central limit approximation for a upper confidence bound of an estimated mean. That is:
@@ -109,10 +114,11 @@ def mean_up(series, alpha=0.01):
         q(alpha) = alpha-level lower-quantile of standard normal
                  = (-norm.ppf(alpha))
 
+    For a two-sided interval at a confidence level of ``C``, set ``alpha = 1 - C`` and use ``[gr.mean_lo(X, alpha=alpha/2), gr.mean_up(X, alpha=alpha/2)``. Note that the default ``alpha`` level for both helpers is calibrated for a two-sided interval with ``C = 0.99``.
+
     Args:
         series (pandas.Series): column to summarize
-        alpha (float): alpha-level for calculation
-            Note that the confidence level C is given by C = 1 - alpha
+        alpha (float): alpha-level for calculation. Note that the confidence level C is given by ``C = 1 - alpha``.
 
     Returns:
         float: Upper confidence interval for the mean
@@ -673,6 +679,88 @@ def corr(series1, series2, method="pearson", res="corr", nan_drop=False):
     else:
         raise ValueError("res {} not supported".format(res))
 
+
+# Distribution-free Prediction Intervals
+# --------------------------------------------------
+def pint_lo_index(n, m, j, alpha):
+    r"""PI lower bound index
+
+    Compute the order statistic index for the lower bound of a distribution-free
+    prediction interval.
+
+    """
+    l = int(n - nhypergeom.ppf(1 - alpha, m + n, n, m - j  + 1))
+    if l <= 0:
+        raise ValueError(
+            "Insufficient series length for requested `alpha` level; " +
+            "obtain more observations or choose a larger value for `alpha`."
+        )
+    return l
+
+
+def pint_up_index(n, m, j, alpha):
+    r"""PI upper bound index
+
+    Compute the order statistic index for the upper bound of a distribution-free
+    prediction interval.
+
+    """
+    u = int(nhypergeom.ppf(1 - alpha, m + n, n, j) + 1)
+    if u >= n + 1:
+        raise ValueError(
+            "Insufficient series length for requested `alpha` level; " +
+            "obtain more observations or choose a larger value for `alpha`."
+        )
+    return u
+
+
+@make_symbolic
+def pint_lo(series, m=1, j=1, alpha=0.005):
+    r"""Lower prediction interval
+
+    Compute a one-sided lower prediction interval using a distribution-free approach.
+
+    For a two-sided interval at a confidence level of ``C``, set ``alpha = 1 - C`` and use ``[gr.pint_lo(X, alpha=alpha/2), gr.pint_up(X, alpha=alpha/2)``. Note that the default ``alpha`` level for both helpers is calibrated for a two-sided interval with ``C = 0.99``.
+
+    Args:
+        series (pd.Series): Dataset to analyze
+
+    Kwargs:
+        m (int): Number of observations in future dataset (Default m=1)
+        j (int): Order statistic to target; 1 <= j <= m (Default j=1)
+        alpha (float): alpha-level for calculation, in (0, 1). Note that the confidence level C is given by ``C = 1 - alpha``.
+
+    References:
+        Hahn, Gerald J., and William Q. Meeker. Statistical intervals: a guide for practitioners. Vol. 92. John Wiley & Sons, 2011.
+
+    """
+    n = len(series)
+    l = pint_lo_index(n, m, j, alpha)
+    return series.sort_values().iloc[l - 1] # for 0-based indexing
+
+@make_symbolic
+def pint_up(series, m=1, j=1, alpha=0.005):
+    r"""Upper prediction interval
+
+    Compute a one-sided upper prediction interval using a distribution-free approach.
+
+    For a two-sided interval at a confidence level of ``C``, set ``alpha = 1 - C`` and use ``[gr.pint_lo(X, alpha=alpha/2), gr.pint_up(X, alpha=alpha/2)``. Note that the default ``alpha`` level for both helpers is calibrated for a two-sided interval with ``C = 0.99``.
+
+    Args:
+        series (pd.Series): Dataset to analyze
+
+    Kwargs:
+        m (int): Number of observations in future dataset (Default m=1)
+        j (int): Order statistic to target; 1 <= j <= m (Default j=1)
+        alpha (float): alpha-level for calculation, in (0, 1). Note that the confidence level C is given by ``C = 1 - alpha``.
+
+    References:
+        Hahn, Gerald J., and William Q. Meeker. Statistical intervals: a guide for practitioners. Vol. 92. John Wiley & Sons, 2011.
+
+    """
+    n = len(series)
+    u = pint_up_index(n, m, j, alpha)
+    return series.sort_values().iloc[u - 1] # for 0-based indexing
 
 # ------------------------------------------------------------------------------
 # Effective Sample Size helpers

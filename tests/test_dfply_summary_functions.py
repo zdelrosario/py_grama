@@ -470,11 +470,11 @@ class TestCIHelpers(unittest.TestCase):
     def test_mean_ci(self):
         # Basic functionality
         y = pd.Series([-1, -1, 0, +1, +1]) # sd == 1
-        lo_true = 0 - (-norm.ppf(0.01)) * 1 / np.sqrt(5)
-        up_true = 0 + (-norm.ppf(0.01)) * 1 / np.sqrt(5)
+        lo_true = 0 - (-norm.ppf(0.005)) * 1 / np.sqrt(5)
+        up_true = 0 + (-norm.ppf(0.005)) * 1 / np.sqrt(5)
 
-        self.assertTrue((lo_true - gr.mean_lo(y, alpha=0.01)) < 1e-6)
-        self.assertTrue((up_true - gr.mean_up(y, alpha=0.01)) < 1e-6)
+        self.assertTrue((lo_true - gr.mean_lo(y, alpha=0.005)) < 1e-6)
+        self.assertTrue((up_true - gr.mean_up(y, alpha=0.005)) < 1e-6)
 
         # Grouped functionality
         df = (
@@ -518,3 +518,31 @@ class TestCIHelpers(unittest.TestCase):
         self.assertTrue(gr.pr(t) <= gr.pr_up(t))
         self.assertTrue(gr.pr_lo(f) <= gr.pr(f))
         self.assertTrue(gr.pr(f) <= gr.pr_up(f))
+
+
+    def test_prediction_intervals(self):
+        ## Correct indexes
+        # Example 5.11, Hahn and Meeker
+        idx = gr.pint_up_index(100, 59, 30, 0.05)
+        self.assertTrue(idx == 64)
+        # Example 5.12, Hahn and Meeker
+        idx = gr.pint_lo_index(100, 59, 30, 0.05)
+        self.assertTrue(idx == 37)
+
+        ## Test functionality
+        df_res = (
+            data.df_shewhart
+            >> gr.tf_summarize(
+                pi_lo=gr.pint_lo(X.tensile_strength, alpha=0.10/2),
+                pi_up=gr.pint_up(X.tensile_strength, alpha=0.10/2),
+            )
+        )
+        # Raises assertion
+        with self.assertRaises(ValueError):
+            df_res = (
+                data.df_shewhart
+                >> gr.tf_summarize(
+                    pi_lo=gr.pint_lo(X.tensile_strength),
+                    pi_up=gr.pint_up(X.tensile_strength),
+                )
+            )
