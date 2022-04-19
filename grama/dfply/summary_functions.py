@@ -735,7 +735,7 @@ def pint_lo(series, m=1, j=1, alpha=0.005):
 
     """
     n = len(series)
-    l = _pint_lo_index(n, m, j, alpha)
+    l = pint_lo_index(n, m, j, alpha)
     return series.sort_values().iloc[l - 1] # for 0-based indexing
 
 @make_symbolic
@@ -759,7 +759,7 @@ def pint_up(series, m=1, j=1, alpha=0.005):
 
     """
     n = len(series)
-    u = _pint_up_index(n, m, j, alpha)
+    u = pint_up_index(n, m, j, alpha)
     return series.sort_values().iloc[u - 1] # for 0-based indexing
 
 # ------------------------------------------------------------------------------
