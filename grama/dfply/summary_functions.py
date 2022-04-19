@@ -695,8 +695,7 @@ def pint_lo_index(n, m, j, alpha):
             "Insufficient series length for requested `alpha` level; " +
             "obtain more observations or choose a larger value for `alpha`."
         )
-    else:
-        return l
+    return l
 
 
 def pint_up_index(n, m, j, alpha):
@@ -712,8 +711,7 @@ def pint_up_index(n, m, j, alpha):
             "Insufficient series length for requested `alpha` level; " +
             "obtain more observations or choose a larger value for `alpha`."
         )
-    else:
-        return u
+    return u
 
 
 @make_symbolic
