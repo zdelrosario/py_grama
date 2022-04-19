@@ -518,3 +518,13 @@ class TestCIHelpers(unittest.TestCase):
         self.assertTrue(gr.pr(t) <= gr.pr_up(t))
         self.assertTrue(gr.pr_lo(f) <= gr.pr(f))
         self.assertTrue(gr.pr(f) <= gr.pr_up(f))
+
+
+    def test_prediction_intervals(self):
+        ## Correct indexes
+        # Example 5.11, Hahn and Meeker
+        idx = gr.pint_up_index(100, 59, 30, 0.05)
+        self.assertTrue(idx == 64)
+        # Example 5.12, Hahn and Meeker
+        idx = gr.pint_lo_index(100, 59, 30, 0.05)
+        self.assertTrue(idx == 37)
