@@ -3,6 +3,7 @@ __all__ = [
     "copy_meta",
     "custom_formatwarning",
     "lookup",
+    "hide_traceback",
     "param_dist",
     "pipe",
     "valid_dist",
@@ -11,6 +12,7 @@ __all__ = [
 ]
 
 import warnings
+import sys
 from functools import wraps
 from inspect import signature
 from numbers import Integral
@@ -416,3 +418,18 @@ def lookup(df, row_labels, col_labels):
         result = lib.maybe_convert_objects(result)
 
     return result
+
+
+# Suppress traceback
+def hide_traceback():
+    r"""Configure Jupyter to hide error traceback
+    """
+    ipython = get_ipython()
+
+    def _hide_traceback(exc_tuple=None, filename=None, tb_offset=None,
+                        exception_only=False, running_compiled_code=False):
+        etype, value, tb = sys.exc_info()
+        value.__cause__ = None  # suppress chained exceptions
+        return ipython._showtraceback(etype, value, ipython.InteractiveTB.get_exception_only(etype, value))
+
+    ipython.showtraceback = _hide_traceback
