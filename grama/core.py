@@ -825,6 +825,8 @@ class Model:
             domain = Domain()
         if density is None:
             density = Density()
+        if name is None:
+            name = "(no name)"
 
         self.name = name
         self.functions = functions
@@ -886,7 +888,7 @@ class Model:
         for fun in self.functions:
             rate = rate + fun.runtime
 
-        return rate * n
+        return float(rate * n)
 
     def runtime_message(self, df):
         """Runtime message
