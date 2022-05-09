@@ -123,7 +123,7 @@ class TestRandomSampling(unittest.TestCase):
     def setUp(self):
         self.md = (
             gr.Model()
-            >> gr.cp_function(fun=lambda x: x, var=1, out=1)
+            >> gr.cp_function(fun=lambda x: x, var=1, out=1, runtime=1)
             >> gr.cp_marginals(x0={"dist": "uniform", "loc": 0, "scale": 1})
             >> gr.cp_copula_independence()
         )
