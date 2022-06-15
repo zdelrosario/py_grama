@@ -337,6 +337,21 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
         from grama.models import make_cantilever_beam
         md_beam = make_cantilever_beam()
 
+        ## Use the draw index to facilitate plotting
+        # Try running this without the `group` aesthetic in `geom_line()`;
+        # without the group the plot will not have multiple lines.
+        (
+            md_beam
+            >> gr.ev_sample(
+                n=20,
+                df_det=gr.df_make(w=3, t=gr.linspace(2, 4, 100)),
+                index="idx",
+            )
+
+            >> gr.ggplot(gr.aes("t", "g_stress"))
+            + gr.geom_line(gr.aes(color="w", group="idx"))
+        )
+
         ## Use iocorr to generate input/output correlation tile plot
         (
             md_beam
