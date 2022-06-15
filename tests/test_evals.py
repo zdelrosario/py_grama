@@ -138,6 +138,16 @@ class TestRandomSampling(unittest.TestCase):
             >> gr.cp_copula_independence()
         )
 
+        self.md_mixed = (
+            gr.Model()
+            >> gr.cp_function(fun=lambda x: x[0] + x[1], var=2, out=1)
+            >> gr.cp_bounds(x0=(-1, +1))
+            >> gr.cp_marginals(
+                x1={"dist": "uniform", "loc": 0, "scale": 1},
+            )
+            >> gr.cp_copula_independence()
+        )
+
     def test_lhs(self):
         ## Accurate
         n = 2
@@ -179,6 +189,17 @@ class TestRandomSampling(unittest.TestCase):
         df_pass = gr.eval_sample(self.md, n=n, skip=True, df_det="nom", seed=101)
 
         self.assertTrue(gr.df_equal(df_pass[["x0"]], df_truth[["x0"]]))
+
+        ## Optional observation index
+        df_idx = gr.eval_sample(
+            self.md_mixed,
+            n=n,
+            df_det=gr.df_make(x0=[-1, 0, 1]),
+            seed=101,
+            index="idx",
+        )
+
+        self.assertTrue(len(set(df_idx.idx)) == n)
 
 
 ##################################################

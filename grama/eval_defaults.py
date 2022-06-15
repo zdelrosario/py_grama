@@ -295,7 +295,7 @@ ev_conservative = add_pipe(eval_conservative)
 ## Random sampling
 # --------------------------------------------------
 @curry
-def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
+def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, index=None):
     r"""Draw a random sample
 
     Evaluates a model with a random sample of the random model inputs. Generates outer product with deterministic samples.
@@ -310,6 +310,7 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
         seed (int): random seed to use
         append (bool): Append results to input values?
         skip (bool): Skip evaluation of the functions?
+        index (str or None): Name of draw index column; not added if None
 
     Returns:
         DataFrame: Results of evaluation or unevaluated design
@@ -335,6 +336,21 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
         ## Cantilever beam examples
         from grama.models import make_cantilever_beam
         md_beam = make_cantilever_beam()
+
+        ## Use the draw index to facilitate plotting
+        # Try running this without the `group` aesthetic in `geom_line()`;
+        # without the group the plot will not have multiple lines.
+        (
+            md_beam
+            >> gr.ev_sample(
+                n=20,
+                df_det=gr.df_make(w=3, t=gr.linspace(2, 4, 100)),
+                index="idx",
+            )
+
+            >> gr.ggplot(gr.aes("t", "g_stress"))
+            + gr.geom_line(gr.aes(color="w", group="idx"))
+        )
 
         ## Use iocorr to generate input/output correlation tile plot
         (
@@ -386,6 +402,8 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False):
 
     ## Draw samples
     df_rand = model.density.sample(n=n, seed=seed)
+    if not index is None:
+        df_rand[index] = df_rand.index
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
