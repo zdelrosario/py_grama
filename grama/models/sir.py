@@ -68,12 +68,7 @@ def sir_vtime(T, S0, I0, R0, beta, gamma, rtol=1e-4):
     )
 
     ## Interpolate to desired T points
-    T_sol = res.t
-    S_sol = res.y[0, :]
-    I_sol = res.y[1, :]
-    R_sol = res.y[2, :]
-
-    df_interp = gr.df_make(
+    df_res = gr.df_make(
         t=T,
         S=res.y[0, :],
         I=res.y[1, :],
@@ -85,7 +80,7 @@ def sir_vtime(T, S0, I0, R0, beta, gamma, rtol=1e-4):
         gamma=[gamma],
     )
 
-    return df_interp
+    return df_res
 
 @curry
 def fun_sir(df, rtol=1e-4):
