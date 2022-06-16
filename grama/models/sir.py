@@ -3,7 +3,6 @@ __all__ = ["make_sir"]
 import grama as gr
 
 from scipy.integrate import solve_ivp
-from scipy.interpolate import interp1d
 from scipy.special import lambertw
 from scipy import real
 from toolz import curry
@@ -65,6 +64,7 @@ def sir_vtime(T, S0, I0, R0, beta, gamma, rtol=1e-4):
         y0,
         args=(beta, gamma),
         rtol=rtol,
+        t_eval=T,
     )
 
     ## Interpolate to desired T points
@@ -75,9 +75,9 @@ def sir_vtime(T, S0, I0, R0, beta, gamma, rtol=1e-4):
 
     df_interp = gr.df_make(
         t=T,
-        S=interp1d(T_sol, S_sol, kind="cubic")(T),
-        I=interp1d(T_sol, I_sol, kind="cubic")(T),
-        R=interp1d(T_sol, R_sol, kind="cubic")(T),
+        S=res.y[0, :],
+        I=res.y[1, :],
+        R=res.y[2, :],
         S0=[S0],
         I0=[I0],
         R0=[R0],
