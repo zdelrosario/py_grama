@@ -6,6 +6,7 @@ from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 from scipy.special import lambertw
 from scipy import real
+from toolz import curry
 
 DF = gr.Intention()
 
@@ -86,7 +87,8 @@ def sir_vtime(T, S0, I0, R0, beta, gamma, rtol=1e-4):
 
     return df_interp
 
-def fun_sir(df):
+@curry
+def fun_sir(df, rtol=1e-4):
     r"""Fully-vectorized SIR solver
 
     SIR IVP solver, vectorized over parameter values **and** time. The routine identifies groups of parameter values and runs a vectorized IVP solver over all associated time points, and gathers all results into a single output DataFrame. Intended for use in a grama model.
@@ -137,6 +139,7 @@ def fun_sir(df):
                     df_param.R0[0],
                     df_param.beta[0],
                     df_param.gamma[0],
+                    rtol=rtol,
                 )
                 >> gr.tf_mutate(_idx=df_param._idx)
             )
@@ -152,13 +155,13 @@ def fun_sir(df):
     )
 
 ## Model builder
-def make_sir():
+def make_sir(rtol=1e-4):
     r"""Make an SIR model
 
     Instantiates a Susceptible, Infected, Removed (SIR) model for disease transmission.
 
     Args:
-        (None)
+        rtol (float): Relative tolerance for IVP solver
 
     Returns:
         grama Model: SIR model
@@ -182,7 +185,7 @@ def make_sir():
             name="Population setup",
         )
         >> gr.cp_vec_function(
-            fun=fun_sir,
+            fun=fun_sir(rtol=rtol),
             var=["t", "S0", "I0", "R0", "beta", "gamma"],
             out=["S", "I", "R"],
             name="ODE solver & interpolation",
