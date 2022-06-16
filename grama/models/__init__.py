@@ -9,3 +9,4 @@ from .pareto_random import *
 from .plane_laminate import *
 from .plate_buckling import *
 from .poly import *
+from .sir import *
