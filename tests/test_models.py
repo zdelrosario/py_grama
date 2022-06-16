@@ -38,3 +38,58 @@ class TestModels(unittest.TestCase):
         df_prlc_rand = md_prlc_rand >> gr.ev_nominal(df_det="nom")
         df_test = md_test >> gr.ev_nominal(df_det="nom")
         df_traj = md_trajectory_linear >> gr.ev_nominal(df_det="nom")
+
+    def test_sir(self):
+        from numpy import real
+        from scipy.special import lambertw
+        ## Verification test
+        # Test parameters
+        I0 = 1
+        S0 = 99
+        R0 = 0
+        beta = 0.5
+        gamma = 0.2
+
+        # Asymptotic solution parameters
+        N = I0 + S0 + R0
+        R_0 = beta / gamma
+        s_0 = S0 / N
+        r_0 = R0 / N
+
+        # Asymptotic solution
+        S_inf = real(-(1/R_0) * lambertw(-s_0 * R_0 * np.exp(-R_0 * (1 - r_0))) * N)
+
+        ## Base tolerance
+        md_sir = models.make_sir()
+        df_inf = gr.eval_df(
+            md_sir,
+            gr.df_make(
+                t=1e6, # Approximation of t -> +\infty
+                I0=I0,
+                N=N,
+                beta=beta,
+                gamma=gamma,
+            )
+        )
+        S_inf_comp = df_inf.S.values[-1]
+
+        # Check relative tolerance
+        self.assertTrue(abs(S_inf - S_inf_comp) / S_inf < 1e-3)
+        self.assertTrue(abs(S_inf - S_inf_comp) / S_inf > 1e-5)
+
+        ## Refined tolerance
+        md_sir = models.make_sir(rtol=1e-6)
+        df_inf = gr.eval_df(
+            md_sir,
+            gr.df_make(
+                t=1e6, # Approximation of t -> +\infty
+                I0=I0,
+                N=N,
+                beta=beta,
+                gamma=gamma,
+            )
+        )
+        S_inf_comp = df_inf.S.values[-1]
+
+        # Check relative tolerance
+        self.assertTrue(abs(S_inf - S_inf_comp) / S_inf < 1e-5)
