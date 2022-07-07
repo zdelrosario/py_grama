@@ -187,14 +187,11 @@ def make_sir(rtol=1e-4):
         )
         >> gr.cp_bounds(
             N=(100, 100), # Fixed population size
+            I0=(1, 10),
+            beta=(0.1, 0.5),
+            gamma=(0.1, 0.5),
             t=(0, 100),
         )
-        >> gr.cp_marginals(
-            I0=gr.marg_mom("uniform", mean=3, sd=1),
-            beta=gr.marg_mom("uniform", mean=0.5, sd=0.1),
-            gamma=gr.marg_mom("uniform", mean=0.1, sd=0.02),
-        )
-        >> gr.cp_copula_independence()
     )
 
     return md_sir
