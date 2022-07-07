@@ -256,3 +256,77 @@ class TestFits(unittest.TestCase):
             md=md_base, method="SLSQP", tol=1e-3
         )
         df_tmp = md_fit >> gr.ev_nominal(df_det="nom")
+
+        ## Select output for fitting
+        # -------------------------
+        # Split model has inconsistent "true" parameter value
+        md_split = (
+            gr.Model("Split")
+            >> gr.cp_vec_function(
+                fun=lambda df: gr.df_make(
+                    f=1 * df.c * df.x,
+                    g=2 * df.c * df.x,
+                ),
+                var=["c", "x"],
+                out=["f", "g"],
+            )
+            >> gr.cp_bounds(
+                x=(-1, +1),
+                c=(-1, +1),
+            )
+        )
+
+        df_split = (
+            gr.df_make(x=gr.linspace(-1, +1, 100))
+            >> gr.tf_mutate(f=X.x, g=X.x)
+        )
+
+        # Fitting both outputs: cannot achieve mse ~= 0
+        df_both = (
+            df_split
+            >> gr.ft_nls(md_split, out=["f", "g"])
+            >> gr.ev_df(
+                df_split
+                >> gr.tf_rename(f_t=X.f, g_t=X.g)
+            )
+            >> gr.tf_summarize(
+                mse_f=gr.mse(X.f, X.f_t),
+                mse_g=gr.mse(X.g, X.g_t),
+            )
+        )
+        self.assertTrue(df_both.mse_f[0] > 0)
+        self.assertTrue(df_both.mse_g[0] > 0)
+
+
+        # Fitting "f" only
+        df_f = (
+            df_split
+            >> gr.ft_nls(md_split, out=["f"])
+            >> gr.ev_df(
+                df_split
+                >> gr.tf_rename(f_t=X.f, g_t=X.g)
+            )
+            >> gr.tf_summarize(
+                mse_f=gr.mse(X.f, X.f_t),
+                mse_g=gr.mse(X.g, X.g_t),
+            )
+        )
+        self.assertTrue(df_f.mse_f[0] < 1e-16)
+        self.assertTrue(df_f.mse_g[0] > 0)
+
+
+        # Fitting "g" only
+        df_g = (
+            df_split
+            >> gr.ft_nls(md_split, out=["g"])
+            >> gr.ev_df(
+                df_split
+                >> gr.tf_rename(f_t=X.f, g_t=X.g)
+            )
+            >> gr.tf_summarize(
+                mse_f=gr.mse(X.f, X.f_t),
+                mse_g=gr.mse(X.g, X.g_t),
+            )
+        )
+        self.assertTrue(df_g.mse_f[0] > 0)
+        self.assertTrue(df_g.mse_g[0] < 1e-16)
