@@ -116,6 +116,7 @@ def fit_nls(
     ## Run eval_nls to fit model parameter values
     df_fit = eval_nls(
         md,
+        out=out,
         df_data=df_data,
         var_fix=var_fix,
         df_init=df_init,
