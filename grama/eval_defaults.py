@@ -47,25 +47,74 @@ def invariants_eval_model(model):
     ## Value checking
     if len(model.functions) == 0:
         raise ValueError("Given model has no functions")
-    return
+    return   
 
-def invariants_eval_df(df):
-    r"""
-    Takes model input and df input as either df or [list of dfs]
+    return None
+def invariants_eval_df(df, model, valid_strings):
+    r"""Takes model input and df input as either df or [list of dfs]
     
     # Could also add an option to ignore certain tests with a lis input
     [[list of exclusions for #1][list of exclusions for #2]]
+    Args:
+        df (DataFrame or list(DataFrame)): DataFrame(s) to test
+        model (gr.Model): SHOULD FILTER THIS TO JUST BE WHAT IS NEEDED
+        valid_strings (None or list(str)): Valid string inputs (such as "nom")
+            to ignore when type testing
+    
+    Examples:
+        invariants_eval_df([df_det, df_var], model, ["nom", "nom"])
 
 
-    # (if type(df):
-        df = [df]
-    for each df
-        df invariants"""
-    if 
-    if not isinstance(df, DataFrame):
+    ## Notes:
+        valid_strings = {'df1': ["nom"], 'df2': ["nom", "det"], 'c': [4]}
+
+    """
+
+    # define function to perform tests
+    def df_test(df, model, ignore):
+        r"""Tests one df for invariants
         
-    if df is None:
-        raise TypeError("No input df given")
+        Args:
+            df (DataFrame): DataFrame to test
+            model (gr.Model): SHOULD FILTER THIS TO JUST BE WHAT IS NEEDED
+            ignore (None or list(str))"""
+
+        # check if there are str inputs as valid options
+        str_inputs = not isinstance(ignore, None)
+        if not isinstance(df, DataFrame):  
+            if df is None:
+                raise TypeError("No input df given")
+            # ADD FUNCTIONALITY FOR: "df_det must be DataFrame or 'nom'"
+            # check if str argument (for applicable functions)
+            elif  and isinstance(df, str):
+                if df in ignore:
+                    # valid str input
+                    return
+
+                    ## Notes:
+                    # argument is a valid string option
+                    # IF VALIDITY IS TESTED HERE IT DOES NOT NEED TO BE
+                    # RETESTED IN VAR_OUTER -> THERE IT CAN JUST BE TRANSFORMED
+                    # TEST: if df == "nom" (this works regardless of if df
+                    # is type DataFrame or str)
+                else:
+                    # not a valid str input
+                    raise ValueError()
+            else:
+                if isinstance (ignore, str): 
+                    raise TypeError("Type DataFrame was expected, a " + str(type(df)) +
+                    " was passed.")
+                # general type error
+        else:
+
+
+        return
+
+    if not isinstance(df, list):
+        one_test(ARGS)
+    else:
+        for DF in df:
+            one_test
     return
 
 
