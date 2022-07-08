@@ -122,6 +122,10 @@ def eval_form_pma(
         )
 
     """
+    ## INVARIANT NOTES
+    # Should preform a test to see df_corr is none (valid input). if df_corr
+    # not none: invariant_test(model, [df_det, df_corr]); else invariant_test(model_df)
+
     ## Check invariants
     if betas is None:
         raise ValueError(
