@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 import itertools
-from grama import add_pipe, tran_outer, custom_formatwarning
+from grama import add_pipe, tran_outer, custom_formatwarning, Model
 from numbers import Integral
 from numpy import ones, eye, tile, atleast_2d
 from numpy.random import seed as set_seed
@@ -21,6 +21,43 @@ from toolz import curry
 from warnings import formatwarning, catch_warnings, simplefilter
 
 formatwarning = custom_formatwarning
+
+def invariants_eval_df(df):
+    r"""
+    Takes model input and df input as either df or [list of dfs]
+    
+    # Could also add an option to ignore certain tests with a lis input
+    [[list of exclusions for #1][list of exclusions for #2]]
+    
+
+
+
+    # (if type(df):
+        df = [df]
+    for each df
+        df invariants"""
+    return
+
+def invariants_eval_model(model):
+    r"""Helper function to group common model argument invariant checks for eval functions.
+
+    Throws errors for invalid Model inputs.
+
+    Args:
+        model (gr.Model): Model to check
+
+    """
+    ## Type Checking
+    # None check
+    if 
+
+    # Tuple check
+
+    # Other type
+    
+    ## Value checking
+    # Function existence check
+    return
 
 ## Default evaluation function
 # --------------------------------------------------
