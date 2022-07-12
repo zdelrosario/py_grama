@@ -49,35 +49,31 @@ def invariants_eval_model(model):
         raise ValueError("Given model has no functions")
     return   
 
-    return None
-def invariants_eval_df(df, model, valid_strings):
+def invariants_eval_df(df, model, valid_strings = None):
     r"""Takes model input and df input as either df or [list of dfs]
     
     # Could also add an option to ignore certain tests with a lis input
     [[list of exclusions for #1][list of exclusions for #2]]
     Args:
         df (DataFrame or list(DataFrame)): DataFrame(s) to test
-        model (gr.Model): SHOULD FILTER THIS TO JUST BE WHAT IS NEEDED
-        valid_strings (None or list(str)): Valid string inputs (such as "nom")
-            to ignore when type testing
+        model (gr.Model): SHOULD FILTER THIS TO JUST BE WHAT IS NEEDED EVENT
+        valid_strings (None, list(str), list(list(str))): Valid string inputs 
+            (such as "nom") to ignore when type testing
     
     Examples:
-        invariants_eval_df([df_det, df_var], model, ["nom", "nom"])
-
-
-    ## Notes:
-        valid_strings = {'df1': ["nom"], 'df2': ["nom", "det"], 'c': [4]}
+        invariants_eval_df([df_det, df_var], model, [["nom"], ["nom", "det"]])
 
     """
 
     # define function to perform tests
-    def df_test(df, model, ignore):
+    def df_test(df, model, valid_strings):
         r"""Tests one df for invariants
         
         Args:
             df (DataFrame): DataFrame to test
             model (gr.Model): SHOULD FILTER THIS TO JUST BE WHAT IS NEEDED
-            ignore (None or list(str))"""
+            valid_strings (None or list(str)): Valid string inputs (such as "nom")
+                to ignore when type testing """
 
         # check if there are str inputs as valid options
         str_inputs = not isinstance(ignore, None)
