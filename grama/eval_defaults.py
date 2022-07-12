@@ -31,9 +31,7 @@ def invariants_eval_model(model):
         model (gr.Model): Model to check
 
     """
-    ## Type Checking
-    # type check for gr.Model, isinstance used as it is faster and more
-    # thorough than type()
+    ## Type Checking  
     if not isinstance(model, Model):
         if model is None:
             raise TypeError("No input model given")
@@ -55,57 +53,84 @@ def invariants_eval_df(df, model, valid_strings = None):
     # Could also add an option to ignore certain tests with a lis input
     [[list of exclusions for #1][list of exclusions for #2]]
     Args:
-        df (DataFrame or list(DataFrame)): DataFrame(s) to test
+        df (DataFrame): DataFrame to test
         model (gr.Model): SHOULD FILTER THIS TO JUST BE WHAT IS NEEDED EVENT
-        valid_strings (None, list(str), list(list(str))): Valid string inputs 
+        valid_strings (None, list(str)): Valid string inputs 
             (such as "nom") to ignore when type testing
     
     Examples:
-        invariants_eval_df([df_det, df_var], model, [["nom"], ["nom", "det"]])
+        invariants_eval_df(df_det, model, ["nom", "det"])
 
     """
 
     # define function to perform tests
-    def df_test(df, model, valid_strings):
-        r"""Tests one df for invariants
+    def df_type_check(df, valid_strings):
+        r"""Tests one DataFrame for valid type for eval function.
+        
+        Args:
+            df (DataFrame): DataFrame to test
+            valid_strings (None or list(str)): Valid string inputs (such as "nom")
+                to ignore when type testing """
+        if isinstance(df, DataFrame):
+            # Valid
+            return
+        strings_accepted = isinstance(valid_strings, list)
+        if df is None:
+            if strings_accepted:
+                raise TypeError("No input df given. Must be DataFrame or " + 
+                    valid_strings + ".")
+            else:
+                raise TypeError("No input df given")
+                # ADD FUNCTIONALITY FOR: "df_det must be DataFrame or 'nom'"
+                # check if str argument (for applicable functions)
+        elif isinstance(df, str):
+            if strings_accepted:
+                raise TypeError("Type DataFrame was expected, a " + str(type(df)) +
+                " was passed.")
+                # To do: remove df_det shortcut string invalid
+                raise ValueError("df_det must be DataFrame or 'nom'")
+            else: # strings not accepted
+                raise TypeError("Type DataFrame was expected" + \
+                    "<class 'str'> was passed.")
+            if df in ignore:
+                # valid str input
+                return
+
+                ## Notes:
+                # argument is a valid string option
+                # IF VALIDITY IS TESTED HERE IT DOES NOT NEED TO BE
+                # RETESTED IN VAR_OUTER -> THERE IT CAN JUST BE TRANSFORMED
+                # TEST: if df == "nom" (this works regardless of if df
+                # is type DataFra me or str)
+            else:
+                # not a valid str input
+                raise ValueError()
+        elif not isinstance(df, DataFrame):  
+        else:
+            if isinstance (ignore, str): 
+                raise TypeError("Type DataFrame was expected, a " + str(type(df)) +
+                " was passed.")
+            # general type error
+        else:
+
+
+        return
+
+        
+    def df_value_checking(df, model, valid_strings):
+        r"""Tests one df for valid values.
         
         Args:
             df (DataFrame): DataFrame to test
             model (gr.Model): SHOULD FILTER THIS TO JUST BE WHAT IS NEEDED
             valid_strings (None or list(str)): Valid string inputs (such as "nom")
                 to ignore when type testing """
-
-        # check if there are str inputs as valid options
-        str_inputs = not isinstance(ignore, None)
-        if not isinstance(df, DataFrame):  
-            if df is None:
-                raise TypeError("No input df given")
-            # ADD FUNCTIONALITY FOR: "df_det must be DataFrame or 'nom'"
-            # check if str argument (for applicable functions)
-            elif  and isinstance(df, str):
-                if df in ignore:
-                    # valid str input
-                    return
-
-                    ## Notes:
-                    # argument is a valid string option
-                    # IF VALIDITY IS TESTED HERE IT DOES NOT NEED TO BE
-                    # RETESTED IN VAR_OUTER -> THERE IT CAN JUST BE TRANSFORMED
-                    # TEST: if df == "nom" (this works regardless of if df
-                    # is type DataFrame or str)
-                else:
-                    # not a valid str input
-                    raise ValueError()
-            else:
-                if isinstance (ignore, str): 
-                    raise TypeError("Type DataFrame was expected, a " + str(type(df)) +
-                    " was passed.")
-                # general type error
-        else:
-
-
-        return
-
+        ## To Do:
+        ### This should do the comparison checking of df is subset of model thing
+        #### Maybe the 2nd input should be model.THING TO CHECK and if it is none,
+        #### perform no test.
+        raise NotImplementedError("Value checking not implemented")
+        
     if not isinstance(df, list):
         one_test(ARGS)
     else:
