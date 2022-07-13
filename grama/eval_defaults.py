@@ -44,7 +44,7 @@ def invariants_eval_model(md):
 
     ## Value checking
     if len(md.functions) == 0:
-        raise ValueError("Given model has no functions")
+        raise ValueError("Given model has no functions.")
     return   
 
 def invariants_eval_df(df, arg_name, model, valid_strings = None):
