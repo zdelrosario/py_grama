@@ -47,7 +47,7 @@ def invariants_eval_model(md):
         raise ValueError("Given model has no functions.")
     return   
 
-def invariants_eval_df(df, arg_name, model = None, valid_str = None):
+def invariants_eval_df(df, arg_name="df", model=None, valid_str=None):
     r"""Takes model input and df input as either df or [list of dfs]
     
     # Could also add an option to ignore certain tests with a lis input
@@ -63,6 +63,17 @@ def invariants_eval_df(df, arg_name, model = None, valid_str = None):
         invariants_eval_df(df_det, model, ["nom", "det"])
 
     """
+    def aps(string):
+        r"""Helper function for valid_args_msg() to put apostrophes around a
+        string.
+
+        Args:
+            string (str): string to surround
+            
+        Returns:
+            String: Input string surrounded as 'input'"""
+        
+        return "'" + string + "'"
     def valid_args_msg(df_arg, acc_str, valid_str):
         r"""Generates string explaining valid inputs for use in DataFrame
         TypeErrors and ValueErrors
@@ -74,21 +85,22 @@ def invariants_eval_df(df, arg_name, model = None, valid_str = None):
         
         Returns:
             String"""
-        msg = df_arg + " must be type DataFrame" # general msg for valid args
+        print(valid_str)
+        msg = df_arg + " must be DataFrame" # general msg for valid args
         if acc_str: 
             # add on string options to msg
             if len(valid_str) == 1:
-                string_args = " or " + valid_str[0]
+                string_args = " or " + aps(valid_str[0])
             else:
                 string_args = ", "  # comma after "must be DataFrame"
                 for arg in valid_str:
                     if arg == valid_str[-1]:
                         # last value -> add or
                         print("last value")
-                        string_args += "or '" + arg + "'"
+                        string_args += "or " + aps(arg)
                     else:
                         # not last value -> add comma
-                        string_args += "'" + arg + "', "  # add comma                        
+                        string_args += aps(arg) + ", "  # add comma                        
             msg += string_args + "."
         else: 
             # no valid string inputs, end message
@@ -145,7 +157,7 @@ def eval_df(model, df=None, append=True, verbose=True):
 
     """
     invariants_eval_model(model)
-    invariants_eval_df(df, "df")
+    invariants_eval_df(df)
     
     out_intersect = set(df.columns).intersection(model.out)
     if (len(out_intersect) > 0) and verbose:
@@ -198,6 +210,9 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
         md >> gr.ev_nominal(df_det="nom")
 
     """
+    invariants_eval_model(model)
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"])
+
     ## Draw from underlying gaussian
     quantiles = ones((1, model.n_var_rand)) * 0.5  # Median
 
