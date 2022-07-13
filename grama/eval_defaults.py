@@ -47,21 +47,6 @@ def invariants_eval_model(md):
         raise ValueError("Given model has no functions")
     return   
 
-# def valid_string_inputs(valid_strings):
-#     r"""Function to turn valid string input into useful string for error
-#     message. For example:
-#         valid_string_inputs(["nom"]) -> 'nom'
-#         valid_string_inputs(["nom", "det"]) -> 'nom' or 'det'
-
-#     Alternatively, this could be a function to write the last half of the
-#     error messages. For example:
-#         func(strings_accepted = True, valid_strings = ["nom"], arg_name="df_det") ->
-#             "df_det must be DataFrame or 'nom'"
-#         func(strings_accepted = False, valid_strings = None, arg_name="df") ->
-#             "df must be DataFrame."
-#     """
-#     return NotImplementedError
-
 def invariants_eval_df(df, arg_name, model, valid_strings = None):
     r"""Takes model input and df input as either df or [list of dfs]
     
