@@ -22,28 +22,28 @@ from warnings import formatwarning, catch_warnings, simplefilter
 
 formatwarning = custom_formatwarning
 
-def invariants_eval_model(model):
+def invariants_eval_model(md):
     r"""Helper function to group common model argument invariant checks for eval functions.
 
     Throws errors for invalid Model inputs.
 
     Args:
-        model (gr.Model): Model to check
+        md (gr.Model): Model to check
 
     """
     ## Type Checking  
-    if not isinstance(model, Model):
-        if model is None:
+    if not isinstance(md, Model):
+        if md is None:
             raise TypeError("No input model given")
-        elif isinstance(model, tuple):
+        elif isinstance(md, tuple):
             raise TypeError("Given model argument is type tuple. Have you " + \
             "declared your model with an extra comma after the closing `)`?")
         else:
-            raise TypeError("Type gr.Model was expected, a " + str(type(model)) + \
+            raise TypeError("Type gr.Model was expected, a " + str(type(md)) + \
             " was passed.")
 
     ## Value checking
-    if len(model.functions) == 0:
+    if len(md.functions) == 0:
         raise ValueError("Given model has no functions")
     return   
 
@@ -62,7 +62,7 @@ def invariants_eval_model(model):
 #     """
 #     return NotImplementedError
 
-def invariants_eval_df(df, arg_name = "df_arg [UPDATE]", model, valid_strings = None):
+def invariants_eval_df(df, arg_name, model, valid_strings = None):
     r"""Takes model input and df input as either df or [list of dfs]
     
     # Could also add an option to ignore certain tests with a lis input
@@ -78,6 +78,7 @@ def invariants_eval_df(df, arg_name = "df_arg [UPDATE]", model, valid_strings = 
         invariants_eval_df(df_det, model, ["nom", "det"])
 
     """
+    arg_name = "df_arg [UPDATE]"
     def valid_inputs_msg(df_arg, strings_accepted, valid_strings):
         r"""Generates string explaining valid inputs for use in DataFrame
         TypeErrors and ValueErrors
