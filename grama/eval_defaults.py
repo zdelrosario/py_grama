@@ -95,24 +95,21 @@ def invariants_eval_df(df, arg_name = "df_arg [UPDATE]", model, valid_strings = 
             if len(valid_strings) == 1:
                 string_args = " or " + valid_strings[0]
             else:
-                print("hi")
                 string_args = ", "  # comma after "must be DataFrame"
                 for arg in valid_strings:
-                    print(arg)
                     if arg == valid_strings[-1]:
                         # last value -> add or
                         print("last value")
                         string_args += "or '" + arg + "'"
                     else:
                         # not last value -> add comma
-                        string_args += "'" + arg + "', "  # add comma
-                        
+                        string_args += "'" + arg + "', "  # add comma                        
             msg += string_args + "."
         else: 
             # no valid string inputs, end message
             msg += "."
         return msg 
-        
+
     ## Type Checking & String Input
     strings_accepted = isinstance(valid_strings, list)
     if isinstance(df, DataFrame):
