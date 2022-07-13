@@ -226,7 +226,7 @@ class TestEvalDf(unittest.TestCase):
     def test_catch_no_df(self):
         """Checks that eval_df() raises when no input df is given.
         """
-        self.assertRaises(ValueError, gr.eval_df, self.model)
+        self.assertRaises(TypeError, gr.eval_df, self.model)
 
 
 # --------------------------------------------------
