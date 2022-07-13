@@ -63,19 +63,19 @@ def invariants_eval_df(df, arg_name, model = None, valid_str = None):
         invariants_eval_df(df_det, model, ["nom", "det"])
 
     """
-    def valid_inputs_msg(df_arg, accept_str, valid_str):
+    def valid_args_msg(df_arg, acc_str, valid_str):
         r"""Generates string explaining valid inputs for use in DataFrame
         TypeErrors and ValueErrors
 
         Args:
             df_arg (str): Name of df argument
-            accept_str (bool): Indicates whether strings are accepted or not
+            acc_str (bool): Indicates whether strings are accepted or not
             valid_str (None, list(str)): Valid string inputs
         
         Returns:
             String"""
-        msg = df_arg + " must be DataFrame" # general msg for valid args
-        if accept_str: 
+        msg = df_arg + " must be type DataFrame" # general msg for valid args
+        if acc_str: 
             # add on string options to msg
             if len(valid_str) == 1:
                 string_args = " or " + valid_str[0]
@@ -96,23 +96,20 @@ def invariants_eval_df(df, arg_name, model = None, valid_str = None):
         return msg 
 
     ## Type Checking & String Input
-    accept_str = isinstance(valid_str, list)
+    acc_str = isinstance(valid_str, list)
     if isinstance(df, DataFrame):
         pass # input valid type
     elif df is None:
         raise TypeError("No " + arg_name + " argument given. " + 
-            valid_inputs_msg(arg_name, accept_str, valid_str))
-    elif isinstance(df, str):
-        if accept_str:
-            if df not in valid_str:
-                raise ValueError(df_arg + " shortcut string invalid." +
-                    arg_name + " must be DataFrame or " + valid_str + ".")
-        else:
-            raise TypeError("Type DataFrame was expected" + 
-                "<class 'str'> was passed.")
+            valid_args_msg(arg_name, acc_str, valid_str))
+    elif isinstance(df, str) and acc_str:
+        # case check for invalid str input
+        if df not in valid_str:
+            raise ValueError(arg_name + " shortcut string invalid. " +
+                valid_args_msg(arg_name, acc_str, valid_str))
     else:
-        raise TypeError(valid_inputs_msg(arg_name, accept_str, valid_str) +
-            " Given " + arg_name + " argument is type " + str(type(df)) +
+        raise TypeError(valid_args_msg(arg_name, acc_str, valid_str) +
+            " Given argument is type " + str(type(df)) +
                 ". ")
     
     ## Value checking
