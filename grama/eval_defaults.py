@@ -47,7 +47,22 @@ def invariants_eval_model(model):
         raise ValueError("Given model has no functions")
     return   
 
-def invariants_eval_df(df, model, valid_strings = None, arg_name = "df_arg [UPDATE]"):
+# def valid_string_inputs(valid_strings):
+#     r"""Function to turn valid string input into useful string for error
+#     message. For example:
+#         valid_string_inputs(["nom"]) -> 'nom'
+#         valid_string_inputs(["nom", "det"]) -> 'nom' or 'det'
+
+#     Alternatively, this could be a function to write the last half of the
+#     error messages. For example:
+#         func(strings_accepted = True, valid_strings = ["nom"], arg_name="df_det") ->
+#             "df_det must be DataFrame or 'nom'"
+#         func(strings_accepted = False, valid_strings = None, arg_name="df") ->
+#             "df must be DataFrame."
+#     """
+#     return NotImplementedError
+
+def invariants_eval_df(df, arg_name = "df_arg [UPDATE]", model, valid_strings = None):
     r"""Takes model input and df input as either df or [list of dfs]
     
     # Could also add an option to ignore certain tests with a lis input
@@ -63,20 +78,41 @@ def invariants_eval_df(df, model, valid_strings = None, arg_name = "df_arg [UPDA
         invariants_eval_df(df_det, model, ["nom", "det"])
 
     """
-    def valid_string_inputs(valid_strings):
-        r"""Function to turn valid string input into useful string for error
-        message. For example:
-            valid_string_inputs(["nom"]) -> 'nom'
-            valid_string_inputs(["nom", "det"]) -> 'nom' or 'det'
+    def valid_inputs_msg(df_arg, strings_accepted, valid_strings):
+        r"""Generates string explaining valid inputs for use in DataFrame
+        TypeErrors and ValueErrors
 
-        Alternatively, this could be a function to write the last half of the
-        error messages. For example:
-            func(strings_accepted = True, valid_strings = ["nom"], arg_name="df_det") ->
-                "df_det must be DataFrame or 'nom'"
-            func(strings_accepted = False, valid_strings = None, arg_name="df") ->
-                "df must be DataFrame."
-        """
-        return NotImplementedError
+        Args:
+            df_arg (str): Name of df argument
+            strings_accepted (bool): Indicates whether strings are accepted or not
+            valid_strings (None, list(str)): Valid string inputs
+        
+        Returns:
+            String"""
+        msg = df_arg + " must be DataFrame" # general msg for valid args
+        if strings_accepted: 
+            # add on string options to msg
+            if len(valid_strings) == 1:
+                string_args = " or " + valid_strings[0]
+            else:
+                print("hi")
+                string_args = ", "  # comma after "must be DataFrame"
+                for arg in valid_strings:
+                    print(arg)
+                    if arg == valid_strings[-1]:
+                        # last value -> add or
+                        print("last value")
+                        string_args += "or '" + arg + "'"
+                    else:
+                        # not last value -> add comma
+                        string_args += "'" + arg + "', "  # add comma
+                        
+            msg += string_args + "."
+        else: 
+            # no valid string inputs, end message
+            msg += "."
+        return msg 
+        
     ## Type Checking & String Input
     strings_accepted = isinstance(valid_strings, list)
     if isinstance(df, DataFrame):
