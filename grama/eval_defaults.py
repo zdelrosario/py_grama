@@ -47,43 +47,42 @@ def invariants_eval_model(md):
         raise ValueError("Given model has no functions.")
     return   
 
-def invariants_eval_df(df, arg_name, model, valid_strings = None):
+def invariants_eval_df(df, arg_name, model = None, valid_str = None):
     r"""Takes model input and df input as either df or [list of dfs]
     
     # Could also add an option to ignore certain tests with a lis input
     [[list of exclusions for #1][list of exclusions for #2]]
     Args:
         df (DataFrame): DataFrame to test
-        model (gr.Model): SHOULD FILTER THIS TO JUST BE WHAT IS NEEDED EVENT
-        valid_strings (None, list(str)): Valid string inputs 
+        arg_name (str): Name of df argument
+        model (None, gr.Model): SHOULD FILTER THIS TO JUST BE WHAT IS NEEDED EVENT
+        valid_str (None, list(str)): Valid string inputs 
             (such as "nom") to ignore when type testing
-        arg_name (str): Name of df argument ## TO DO
     
     Examples:
         invariants_eval_df(df_det, model, ["nom", "det"])
 
     """
-    arg_name = "df_arg [UPDATE]"
-    def valid_inputs_msg(df_arg, strings_accepted, valid_strings):
+    def valid_inputs_msg(df_arg, accept_str, valid_str):
         r"""Generates string explaining valid inputs for use in DataFrame
         TypeErrors and ValueErrors
 
         Args:
             df_arg (str): Name of df argument
-            strings_accepted (bool): Indicates whether strings are accepted or not
-            valid_strings (None, list(str)): Valid string inputs
+            accept_str (bool): Indicates whether strings are accepted or not
+            valid_str (None, list(str)): Valid string inputs
         
         Returns:
             String"""
         msg = df_arg + " must be DataFrame" # general msg for valid args
-        if strings_accepted: 
+        if accept_str: 
             # add on string options to msg
-            if len(valid_strings) == 1:
-                string_args = " or " + valid_strings[0]
+            if len(valid_str) == 1:
+                string_args = " or " + valid_str[0]
             else:
                 string_args = ", "  # comma after "must be DataFrame"
-                for arg in valid_strings:
-                    if arg == valid_strings[-1]:
+                for arg in valid_str:
+                    if arg == valid_str[-1]:
                         # last value -> add or
                         print("last value")
                         string_args += "or '" + arg + "'"
@@ -97,31 +96,24 @@ def invariants_eval_df(df, arg_name, model, valid_strings = None):
         return msg 
 
     ## Type Checking & String Input
-    strings_accepted = isinstance(valid_strings, list)
+    accept_str = isinstance(valid_str, list)
     if isinstance(df, DataFrame):
-        pass # input valid
+        pass # input valid type
     elif df is None:
-        if strings_accepted:
-            raise TypeError("No input df given." + arg_name +
-                " must be DataFrame or " + valid_strings + ".")
-        else:
-            raise TypeError("No input df given" + arg_name +
-                " must be DataFrame.")
+        raise TypeError("No " + arg_name + " argument given. " + 
+            valid_inputs_msg(arg_name, accept_str, valid_str))
     elif isinstance(df, str):
-        if strings_accepted:
-            if df not in valid_strings:
+        if accept_str:
+            if df not in valid_str:
                 raise ValueError(df_arg + " shortcut string invalid." +
-                    arg_name + " must be DataFrame or " + valid_strings + ".")
+                    arg_name + " must be DataFrame or " + valid_str + ".")
         else:
             raise TypeError("Type DataFrame was expected" + 
                 "<class 'str'> was passed.")
     else:
-        if strings_accepted:
-            raise TypeError("Invalid df input type, a " + str(type(df)) +
-                " was passed."+ arg_name + " must be DataFrame or " + valid_strings + ".")
-        else:
-            raise TypeError("Type DataFrame was expected, a " + str(type(df)) +
-                " was passed.")
+        raise TypeError(valid_inputs_msg(arg_name, accept_str, valid_str) +
+            " Given " + arg_name + " argument is type " + str(type(df)) +
+                ". ")
     
     ## Value checking
     #### TO DO
@@ -156,7 +148,7 @@ def eval_df(model, df=None, append=True, verbose=True):
 
     """
     invariants_eval_model(model)
-    invariants_eval_df(df, model)
+    invariants_eval_df(df, "df")
     
     out_intersect = set(df.columns).intersection(model.out)
     if (len(out_intersect) > 0) and verbose:
