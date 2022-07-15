@@ -22,13 +22,15 @@ from warnings import formatwarning, catch_warnings, simplefilter
 
 formatwarning = custom_formatwarning
 
-def invariants_eval_model(md):
+def invariants_eval_model(md, skip=False):
     r"""Helper function to group common model argument invariant checks for eval functions.
 
     Throws errors for invalid Model inputs.
 
     Args:
         md (gr.Model): Model to check
+        skip (bool): if function is skipping evaluation of function. If True,
+            skips model.functions test 
 
     """
     ## Type Checking  
@@ -43,7 +45,7 @@ def invariants_eval_model(md):
             " was passed.")
 
     ## Value checking
-    if len(md.functions) == 0:
+    if not skip and len(md.functions) == 0:
         raise ValueError("Given model has no functions.")
     return   
 
@@ -210,7 +212,9 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
         md >> gr.ev_nominal(df_det="nom")
 
     """
-    invariants_eval_model(model)
+    ## INVARIANT NOTES
+    print("checking invariants for eval_nominal")
+    invariants_eval_model(model, skip)
     invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"])
 
     ## Draw from underlying gaussian
