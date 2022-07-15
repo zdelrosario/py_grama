@@ -87,7 +87,6 @@ def invariants_eval_df(df, arg_name="df", model=None, valid_str=None):
         
         Returns:
             String"""
-        print(valid_str)
         msg = df_arg + " must be DataFrame" # general msg for valid args
         if acc_str: 
             # add on string options to msg
