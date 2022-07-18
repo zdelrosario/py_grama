@@ -51,6 +51,11 @@ class TestDefaults(unittest.TestCase):
 
         ## Accurate
         self.assertTrue(gr.df_equal(self.df_2d_nominal, df_res))
+        ## INVARIANT NOTES
+        # # test for error with no DataFrame arg
+        # # seems to work
+        # with self.assertRaises(ValueError):
+        #     gr.eval_nominal(self.model_2d)
 
         ## Pass-through
         self.assertTrue(
