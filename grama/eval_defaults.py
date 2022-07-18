@@ -116,8 +116,6 @@ def invariants_eval_df(df, arg_name="df", model=None, valid_str=None, acc_none=F
             if not acc_none:
                 # allow "None" df if skip is None.
                 raise TypeError("No " + arg_name + " argument given. " + 
-        raise TypeError("No " + arg_name + " argument given. " + 
-                raise TypeError("No " + arg_name + " argument given. " + 
                     valid_args_msg(arg_name, acc_str, valid_str))
         elif isinstance(df, str) and acc_str:
             # case check for invalid str input
