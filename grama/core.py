@@ -966,15 +966,12 @@ class Model:
         if self.n_var_det == 0:
             return df_rand
 
-        ## Error-throwing default value
-        if df_det is None:
-            raise ValueError("df_det must be DataFrame or 'nom'")
         ## String shortcut
-        elif isinstance(df_det, str):
-            if df_det == "nom":
-                df_det = self.det_nom()
-            else:
-                raise ValueError("df_det shortcut string invalid")
+            ## INVARIANT NOTES
+            # - Should have already tested for valid entry by now
+            # - Integrate subset testing
+        elif isinstance(df_det, str) and df_det == "nom":
+            df_det = self.det_nom()
         ## DataFrame
         else:
             ## Check invariant; model inputs must be subset of df columns
