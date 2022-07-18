@@ -193,7 +193,8 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
 
     Args:
         model (gr.Model): Model to evaluate
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom" for nominal deterministic levels.
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom" for 
+            nominal deterministic levels. (None) accepted if model.n_var_det == 0. 
         append (bool): Append results to nominal inputs?
         skip (bool): Skip evaluation of the functions?
 
