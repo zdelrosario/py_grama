@@ -49,7 +49,7 @@ def invariants_eval_model(md, skip=False):
         raise ValueError("Given model has no functions.")
     return   
 
-def invariants_eval_df(df, arg_name="df", model=None, valid_str=None):
+def invariants_eval_df(df, arg_name="df", model=None, valid_str=None, acc_none=False):
     r"""Takes model input and df input as either df or [list of dfs]
     
     # Could also add an option to ignore certain tests with a lis input
@@ -60,6 +60,7 @@ def invariants_eval_df(df, arg_name="df", model=None, valid_str=None):
         model (None, gr.Model): SHOULD FILTER THIS TO JUST BE WHAT IS NEEDED EVENT
         valid_str (None, list(str)): Valid string inputs 
             (such as "nom") to ignore when type testing
+        acc_none (bool): if function allows `None` as a valid df input
     
     Examples:
         invariants_eval_df(df_det, model, ["nom", "det"])
@@ -110,21 +111,24 @@ def invariants_eval_df(df, arg_name="df", model=None, valid_str=None):
 
     ## Type Checking & String Input
     acc_str = isinstance(valid_str, list)
-    if isinstance(df, DataFrame):
-        pass # input valid type
-    elif df is None:
+    if not isinstance(df, DataFrame):
+        if df is None:
+            if not acc_none:
+                # allow "None" df if skip is None.
+                raise TypeError("No " + arg_name + " argument given. " + 
         raise TypeError("No " + arg_name + " argument given. " + 
-            valid_args_msg(arg_name, acc_str, valid_str))
-    elif isinstance(df, str) and acc_str:
-        # case check for invalid str input
-        if df not in valid_str:
-            raise ValueError(arg_name + " shortcut string invalid. " +
-                valid_args_msg(arg_name, acc_str, valid_str))
-    else:
-        raise TypeError(valid_args_msg(arg_name, acc_str, valid_str) +
-            " Given argument is type " + str(type(df)) +
-                ". ")
-    
+                raise TypeError("No " + arg_name + " argument given. " + 
+                    valid_args_msg(arg_name, acc_str, valid_str))
+        elif isinstance(df, str) and acc_str:
+            # case check for invalid str input
+            if df not in valid_str:
+                raise ValueError(arg_name + " shortcut string invalid. " +
+                    valid_args_msg(arg_name, acc_str, valid_str))
+        else:
+            raise TypeError(valid_args_msg(arg_name, acc_str, valid_str) +
+                " Given argument is type " + str(type(df)) +
+                    ". ")
+        
     ## Value checking
     #### TO DO
 
@@ -157,6 +161,7 @@ def eval_df(model, df=None, append=True, verbose=True):
         md >> gr.ev_df(df=df)
 
     """
+    ## Perform common invariant tests
     invariants_eval_model(model)
     invariants_eval_df(df)
     
@@ -212,10 +217,10 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
         md >> gr.ev_nominal(df_det="nom")
 
     """
-    ## INVARIANT NOTES
-    print("checking invariants for eval_nominal")
+    ## Perform common invariant tests
     invariants_eval_model(model, skip)
-    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"])
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"], 
+        acc_none=(model.n_var_det==0))
 
     ## Draw from underlying gaussian
     quantiles = ones((1, model.n_var_rand)) * 0.5  # Median
@@ -225,8 +230,10 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
     df_rand = model.density.pr2sample(df_pr)
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)
+    print(df_samp)
 
     if skip:
+        print("skip return")
         return df_samp
     return eval_df(model, df=df_samp, append=append)
 
