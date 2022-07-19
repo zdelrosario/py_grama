@@ -49,21 +49,22 @@ def invariants_eval_model(md, skip=False):
         raise ValueError("Given model has no functions.")
     return   
 
-def invariants_eval_df(df, arg_name="df", model=None, valid_str=None, acc_none=False):
-    r"""Takes model input and df input as either df or [list of dfs]
-    
-    # Could also add an option to ignore certain tests with a lis input
-    [[list of exclusions for #1][list of exclusions for #2]]
+def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
+    r"""Helper function to group common DataFrame argument invariant checks for eval functions.
+
+    Throws errors for invalid DataFrame inputs. 
+
     Args:
         df (DataFrame): DataFrame to test
         arg_name (str): Name of df argument
-        model (None, gr.Model): SHOULD FILTER THIS TO JUST BE WHAT IS NEEDED EVENT
-        valid_str (None, list(str)): Valid string inputs 
-            (such as "nom") to ignore when type testing
-        acc_none (bool): if function allows `None` as a valid df input
+        valid_str (list(str) or None): Valid string inputs, if any, to 
+            allow when testing
+        acc_none (bool): allow `None` as a valid df input
     
     Examples:
-        invariants_eval_df(df_det, model, ["nom", "det"])
+        invariants_eval_df(df)
+        invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom", "det"])
+        invariants_eval_df(df_test, arg_name="df_test", acc_none=())
 
     """
     def aps(string):
@@ -75,8 +76,8 @@ def invariants_eval_df(df, arg_name="df", model=None, valid_str=None, acc_none=F
             
         Returns:
             String: Input string surrounded as 'input'"""
-        
         return "'" + string + "'"
+
     def valid_args_msg(df_arg, acc_str, valid_str):
         r"""Generates string explaining valid inputs for use in DataFrame
         TypeErrors and ValueErrors
@@ -98,7 +99,6 @@ def invariants_eval_df(df, arg_name="df", model=None, valid_str=None, acc_none=F
                 for arg in valid_str:
                     if arg == valid_str[-1]:
                         # last value -> add or
-                        print("last value")
                         string_args += "or " + aps(arg)
                     else:
                         # not last value -> add comma
