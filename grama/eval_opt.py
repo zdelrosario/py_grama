@@ -81,8 +81,8 @@ def eval_nls(
     """
     ## Common invariant checks
     invariants_eval_model(model)
-    invariants_eval_df(df_data)
-    invariants_eval_df(df_init, acc_none=True)
+    invariants_eval_df(df_data, arg_name="df_data")
+    invariants_eval_df(df_init, arg_name="df_init", acc_none=True)
 
     ## Check `out` invariants
     if out is None:
