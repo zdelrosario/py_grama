@@ -227,6 +227,8 @@ def eval_hybrid(
 
     """
     ## Check invariants
+    invariants_eval_model(model, skip)
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"])
     if not isinstance(model.density.copula, CopulaIndependence):
         raise ValueError(
             "model must have CopulaIndependence structure;\n"
