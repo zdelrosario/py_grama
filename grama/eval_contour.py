@@ -4,6 +4,7 @@ __all__ = [
 ]
 
 from grama import eval_df, add_pipe, tf_outer
+from grama.eval_defaults import invariants_eval_model, invariants_eval_df
 from numpy import array, linspace, isfinite, reshape, full
 from pandas import concat, DataFrame
 from toolz import curry
@@ -255,6 +256,8 @@ def eval_contour(
 
     """
     ## Check invariants
+    invariants_eval_model(model)
+    invariants_eval_df(df)
     # Argument given
     if var is None:
         raise ValueError("No `var` given")
