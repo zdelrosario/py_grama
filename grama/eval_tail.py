@@ -6,6 +6,7 @@ __all__ = [
 ]
 
 from grama import add_pipe, pipe, custom_formatwarning
+from grama.eval_defaults import invariants_eval_model, invariants_eval_df
 from .eval_defaults import eval_df
 from numpy import array, argmin, ones, eye, zeros, sqrt, NaN, max
 from numpy.linalg import norm as length
@@ -122,11 +123,10 @@ def eval_form_pma(
         )
 
     """
-    ## INVARIANT NOTES
-    # Should preform a test to see df_corr is none (valid input). if df_corr
-    # not none: invariant_test(model, [df_det, df_corr]); else invariant_test(model_df)
-
     ## Check invariants
+    invariants_eval_model(model)
+    invariants_eval_df(df_corr, arg_name="df_corr", acc_none=True)
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"])
     if betas is None:
         raise ValueError(
             "Must provide `betas` keyword argument to define reliability targets"
