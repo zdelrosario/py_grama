@@ -113,8 +113,9 @@ def invariants_eval_df(df, arg_name="df", model=None, valid_str=None, acc_none=F
     acc_str = isinstance(valid_str, list)
     if not isinstance(df, DataFrame):
         if df is None:
+            print(acc_none)
             if not acc_none:
-                # allow "None" df if skip is None.
+                # allow "None" df if None accepted
                 raise TypeError("No " + arg_name + " argument given. " + 
                     valid_args_msg(arg_name, acc_str, valid_str))
         elif isinstance(df, str) and acc_str:
