@@ -515,6 +515,9 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
 
     """
     ## Check invariants
+    invariants_eval_model(model, skip)
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
+        acc_none=(model.n_var_det==0))
     if n is None:
         raise ValueError("Must provide a valid n value.")
 
