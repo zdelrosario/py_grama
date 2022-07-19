@@ -362,7 +362,8 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
             of values for each random variable, or None for default 0.01.
             values in [0, 0.5]
         df_det (DataFrame): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels.
+            for nominal deterministic levels. (None) accepted if 
+            model.n_var_det == 0. 
         append (bool): Append results to conservative inputs?
         skip (bool): Skip evaluation of the functions?
 
@@ -381,6 +382,11 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
         md >> gr.ev_conservative(df_det="nom")
 
     """
+    ## Check invariants
+    invariants_eval_model(model, skip)
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
+        acc_none=(model.n_var_det==0))
+
     ## Default behavior
     if quantiles is None:
         print("eval_conservative() using quantile default 0.01;")
@@ -406,7 +412,6 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
     df_rand = model.density.pr2sample(df_pr)
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)
-
     if skip:
         return df_samp
     return eval_df(model, df=df_samp, append=append)
