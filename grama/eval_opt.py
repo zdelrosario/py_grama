@@ -8,6 +8,7 @@ __all__ = [
 from grama import add_pipe, pipe, custom_formatwarning, df_make, \
     eval_df, eval_nominal, eval_sample, comp_marginals, \
     comp_copula_independence, tran_outer
+from grama.eval_defaults import invariants_eval_model, invariants_eval_df
 from numpy import Inf, isfinite
 from numpy.random import seed as setseed
 from pandas import DataFrame, concat
@@ -49,7 +50,8 @@ def eval_nls(
             Assumed to be model.out if left as None.
         var_fix (list or None): Variables to fix to nominal levels. Note that
             variables with domain width zero will automatically be fixed.
-        df_init (DataFrame): Initial guesses for parameters; overrides n_restart
+        df_init (DataFrame or None): Initial guesses for parameters; overrides 
+        n_restart
         append (bool): Append metadata? (Initial guess, MSE, optimizer status)
         tol (float): Optimizer convergence tolerance
         n_maxiter (int): Optimizer maximum iterations
@@ -77,6 +79,11 @@ def eval_nls(
         print(df_fit)
 
     """
+    ## Common invariant checks
+    invariants_eval_model(model)
+    invariants_eval_df(df_data)
+    invariants_eval_df(df_init, acc_none=True)
+
     ## Check `out` invariants
     if out is None:
         out = model.out
