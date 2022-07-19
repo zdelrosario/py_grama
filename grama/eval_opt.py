@@ -325,6 +325,10 @@ def eval_min(
         )
 
     """
+    ## Common invariant checks
+    invariants_eval_model(model)
+    invariants_eval_df(df_start, acc_none=True)
+
     ## Check that model has only deterministic variables
     if model.n_var_rand > 0:
         raise ValueError("model must have no random variables")
