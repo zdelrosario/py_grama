@@ -433,7 +433,8 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
         model (gr.Model): Model to evaluate
         n (numeric): number of observations to draw
         df_det (DataFrame): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels.
+            for nominal deterministic levels. (None) accepted if 
+            model.n_var_det == 0. 
         seed (int): random seed to use
         append (bool): Append results to input values?
         skip (bool): Skip evaluation of the functions?
