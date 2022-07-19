@@ -275,6 +275,8 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
 
     """
     ## Check invariants
+    invariants_eval_model(model, skip)
+    invariants_eval_df(df_base, arg_name="df_base")
     if not set(model.var).issubset(set(df_base.columns)):
         raise ValueError("model.var must be subset of df_base.columns")
     if var is None:
