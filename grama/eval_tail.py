@@ -304,6 +304,9 @@ def eval_form_ria(
 
     """
     ## Check invariants
+    invariants_eval_model(model)
+    invariants_eval_df(df_corr, arg_name="df_corr", acc_none=True)
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"])
     if limits is None:
         raise ValueError(
             "Must provide `limits` keyword argument to define reliability targets"
