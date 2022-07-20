@@ -113,7 +113,6 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
     acc_str = isinstance(valid_str, list)
     if not isinstance(df, DataFrame):
         if df is None:
-            print(acc_none)
             if not acc_none:
                 # allow "None" df if None accepted
                 raise TypeError("No " + arg_name + " argument given. " + 
@@ -229,10 +228,8 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
     df_rand = model.density.pr2sample(df_pr)
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)
-    print(df_samp)
 
     if skip:
-        print("skip return")
         return df_samp
     return eval_df(model, df=df_samp, append=append)
 
