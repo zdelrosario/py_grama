@@ -216,12 +216,16 @@ class TestEvalDf(unittest.TestCase):
 
     def setUp(self):
         self.model = models.make_test()
+        
 
-    def test_catch_no_df(self):
-        """Checks that eval_df() raises when no input df is given.
+    def test_catch_wrong_type(self):
+        """Checks that eval_df() raises when wrong input df is given.
+
+        checks: None, tuple, str, list
         """
-        self.assertRaises(TypeError, gr.eval_df, self.model)
-
+        tests = [None, (1,2), 2, "a", [1, 8]]
+        for wrong_type in tests:
+            self.assertRaises(TypeError, gr.eval_df, self.model, wrong_type)
 
 # --------------------------------------------------
 class TestDomain(unittest.TestCase):
