@@ -38,10 +38,10 @@ def invariants_eval_model(md, skip=False):
         if md is None:
             raise TypeError("No input model given")
         elif isinstance(md, tuple):
-            raise TypeError("Given model argument is type tuple. Have you " + \
+            raise TypeError("Given model argument is type tuple. Have you " +
             "declared your model with an extra comma after the closing `)`?")
         else:
-            raise TypeError("Type gr.Model was expected, a " + str(type(md)) + \
+            raise TypeError("Type gr.Model was expected, a " + str(type(md)) +
             " was passed.")
 
     ## Value checking
