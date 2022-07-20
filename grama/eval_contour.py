@@ -195,7 +195,9 @@ def eval_contour(
         model (gr.Model): Model to evaluate.
         var (list of str): Model inputs to target; must provide exactly two inputs, and both must have finite domain width.
         out (list of str): Model output(s) for contour generation.
-        df (DataFrame): Levels for model variables not included in var (auxiliary inputs).
+        df (DataFrame): Levels for model variables not included in var 
+            (auxiliary inputs); (None) accepted if len(var_diff) == 0 and 
+            creates singleton level.
         levels (dict): Specific output levels for contour generation; overrides n_levels.
         n_side (int): Side resolution for grid; n_side**2 total evaluations.
         n_levels (int): Number of contour levels.
@@ -257,7 +259,7 @@ def eval_contour(
     """
     ## Check invariants
     invariants_eval_model(model)
-    invariants_eval_df(df)
+    invariants_eval_df(df, acc_none=True)
     # Argument given
     if var is None:
         raise ValueError("No `var` given")
