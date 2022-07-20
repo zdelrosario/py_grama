@@ -102,9 +102,6 @@ class TestModel(unittest.TestCase):
 
         ## Test assertions
         with self.assertRaises(ValueError):
-            self.model_3d.var_outer(self.df_2d, df_det="foo")
-
-        with self.assertRaises(ValueError):
             self.model_3d.var_outer(self.df_2d, df_det=self.df_2d)
 
     def test_drop_out(self):
