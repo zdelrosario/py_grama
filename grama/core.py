@@ -966,10 +966,6 @@ class Model:
         if self.n_var_det == 0:
             return df_rand
 
-        ## String shortcut
-            ## INVARIANT NOTES
-            # - Should have already tested for valid entry by now
-            # - Integrate subset testing
         elif isinstance(df_det, str) and df_det == "nom":
             df_det = self.det_nom()
         ## DataFrame

@@ -115,9 +115,6 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
     if len(model.out)/2 < 2:
         raise ValueError('Given Model needs multiple outputs')
 
-    # if len(model.functions) == 0: ## IMPLEMENTED 
-    #     raise ValueError("Given model has no functions")
-
     if not set(model.var).issubset(set(df_train.columns)):
         raise ValueError("model.var must be subset of df_train.columns")
 
