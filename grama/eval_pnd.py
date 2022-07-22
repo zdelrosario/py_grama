@@ -97,15 +97,6 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
         )
 
     """
-    # # Check for correct types
-    # if not isinstance(model, Model):
-    #     raise TypeError('model must be a Model')
-
-    # if not isinstance(df_train, DataFrame):
-    #     raise TypeError('df_train must be a DataFrame')
-    #
-    # if not isinstance(df_test, DataFrame):
-    #     raise TypeError('df_test must be a DataFrame')
     invariants_eval_model(model)
     invariants_eval_df(df_train, arg_name="df_train")
     invariants_eval_df(df_test, arg_name="df_test")
