@@ -56,8 +56,6 @@ class TestEvalInvariants(unittest.TestCase):
         if acc_none == "var_det":
             # `None` check when model.n_var_det > 0 
             self.assertRaises(TypeError, func, self.md_var_det, **{df_arg:None})            
-        self.assertRaises(TypeError, func, self.md_var_det, **{df_arg:None})
-            self.assertRaises(TypeError, func, self.md_var_det, **{df_arg:None})            
         if acc_none is None:
             # none not accepted under any condition, test when md.var_det==0
             self.assertRaises(TypeError, func, self.md, **{df_arg:None})
@@ -287,7 +285,14 @@ class TestRandom(unittest.TestCase):
             >> gr.cp_copula_independence()
         )
 
+        ## Invariant test class
+        self.inv_test = TestEvalInvariants()
+
     def test_sample(self):
+        # invariant checks
+        self.inv_test.md_df_args(gr.eval_sample, df_arg="df_det", shortcut=True,
+                                    acc_none="var_det")
+
         # No `n` provided
         with self.assertRaises(ValueError):
             gr.eval_sample(self.md, df_det="nom")
@@ -308,6 +313,8 @@ class TestRandom(unittest.TestCase):
         self.assertTrue(set(df_noappend.columns) == set(self.md.out))
 
     def test_lhs(self):
+        # no inv test implemented, no need to test
+
         df_seeded = gr.eval_lhs(self.md, n=10, df_det="nom", seed=101)
         df_piped = self.md >> gr.ev_lhs(df_det="nom", n=10, seed=101)
         self.assertTrue(df_seeded.equals(df_piped))
@@ -319,6 +326,9 @@ class TestRandom(unittest.TestCase):
         self.assertTrue(set(df_noappend.columns) == set(self.md.out))
 
     def test_sinews(self):
+        # invariant checks
+        self.inv_test.md_df_args(gr.eval_sinews, df_arg="df_det", shortcut=True)
+
         df_min = gr.eval_sinews(self.md, df_det="nom")
         self.assertTrue(
             set(df_min.columns)
@@ -336,6 +346,9 @@ class TestRandom(unittest.TestCase):
         df_mixed = gr.eval_sinews(self.md_mixed, df_det="swp")
 
     def test_hybrid(self):
+        # invariant checks
+        self.inv_test.md_df_args(gr.eval_hybrid, df_arg="df_det", shortcut=True)
+    
         df_min = gr.eval_hybrid(self.md, df_det="nom")
         self.assertTrue(
             set(df_min.columns) == set(self.md.var + self.md.out + ["hybrid_var"])
@@ -363,6 +376,9 @@ class TestRandom(unittest.TestCase):
 
 ##################################################
 class TestOpt(unittest.TestCase):
+    def setUp(self):
+        ## Invariant test class
+        self.inv_test = TestEvalInvariants()
     def test_nls(self):
         ## Setup
         md_feat = (
@@ -429,7 +445,12 @@ class TestOpt(unittest.TestCase):
         with self.assertRaises(ValueError):
             gr.eval_nls(md_feat, df_data=df_data, df_init=gr.df_make(foo=0.5))
 
+        ## ADD INVARIANTS
+
     def test_opt(self):
+        # invariant checks
+        self.inv_test.md_df_args(gr.eval_min, df_arg="df_start", acc_none="always")
+
         md_bowl = (
             gr.Model("Constrained bowl")
             >> gr.cp_function(
