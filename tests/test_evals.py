@@ -8,7 +8,57 @@ from context import grama as gr
 from context import models
 from pyDOE import lhs
 
+
+#   def test(self, func, df_arg="df", shorcut=False)
+
+# md_var_det = md >> gr.cp_bounds(x1=(0, 1))
+# def
 ##################################################
+class TestEvalInvariants(unittest.TestCase):
+    def __init__(self):
+        self.md = (
+            gr.Model()
+            >> gr.cp_function(fun=lambda x: x, var=1, out=1, runtime=1)
+        )
+        self.md_var_det = self.md >> gr.cp_bounds(x1=(0, 1))
+        self.df = pd.DataFrame(
+            data={"x": [0.0], "y": [0.5]}
+        )
+    
+    def md_df_args(self, func, df_arg = "df", shortcut=False, acc_none=False):
+        """Helper function for testing for TypeErrors and ValueErrors for invalid
+        model and DataFrame arguments (eval_* functions).
+
+        Args:
+            func (func): eval function to test
+            df_arg (str): name of DataFrame argument
+            shortcut (bool): if func has valid str shortcut for df arg
+            acc_none (bool): if func accepts None for df when model.n_var_det == 0
+        """
+        # Declare tests
+        type_tests = [(1,2), 2, [1, 8]]
+        if shortcut:
+            # wrong str shortcut test
+            self.assertRaises(ValueError, func, self.md, **{df_arg:"a"})
+            
+        else:
+            # include str type test in type tests
+            type_tests.append("nom")  
+
+        ## Wrong type
+        for wrong in type_tests:
+            self.assertRaises(TypeError, func, self.md, **{df_arg:wrong})
+            self.assertRaises(TypeError, func, wrong, **{df_arg:self.df})
+        
+        # `None` check when model.var_det
+        self.assertRaises(TypeError, func, self.md_var_det, **{df_arg:None})
+        if acc_none is False:
+            # none not accepted under any condition, test when md.var_det==0
+            self.assertRaises(TypeError, func, self.md, **{df_arg:None})
+
+        ## No model.functions 
+        self.assertRaises(ValueError, func, gr.Model(), **{df_arg:self.df})
+
 class TestDefaults(unittest.TestCase):
     def setUp(self):
         # 2D identity model with permuted df inputs
@@ -31,7 +81,8 @@ class TestDefaults(unittest.TestCase):
             ),
         )
 
-        self.model_var_det = self.model_2d >> gr.cp_bounds(x1=(0, 1))
+        ## Invariant test class
+        self.inv_test = TestEvalInvariants()
 
         ## Correct results
         self.df_2d_nominal = pd.DataFrame(
@@ -44,42 +95,6 @@ class TestDefaults(unittest.TestCase):
             data={"x": [0.0], "y": [0.1], "f": [0.0], "g": [0.1]}
         )
 
-    ## Test default evaluations
-
-    def catch_wrong_type(self, func, df_arg = "df", shortcut=False, acc_none=False):
-        """Helper function for testing for TypeErrors and ValueErrors for invalid
-        model and DataFrame arguments (eval_* functions).
-
-        Args:
-            func (func): eval function to test
-            df_arg (str): name of DataFrame argument
-            shortcut (bool): if func has valid str shortcut for df arg
-            acc_none (bool): if func accepts None for df when model.n_var_det == 0
-        """
-        # Declare tests
-        type_tests = [(1,2), 2, [1, 8]]
-        if shortcut:
-            # wrong str shortcut test
-            self.assertRaises(ValueError, func, self.model_2d, **{df_arg:"a"})
-            
-        else:
-            # include str type test in type tests
-            type_tests.append("nom")  
-
-        ## Wrong type
-        for wrong in type_tests:
-            self.assertRaises(TypeError, func, self.model_2d, **{df_arg:wrong})
-            self.assertRaises(TypeError, func, wrong, **{df_arg:self.df_2d_nominal})
-        
-        # `None`` check when no model.var_det
-            self.assertRaises(TypeError, func, self.model_var_det, **{df_arg:None})
-        if acc_none is False:
-            # none not accepted under any condition, test when md.var_det==0
-            self.assertRaises(TypeError, func, self.model_2d, **{df_arg:None})
-
-        ## No model.functions 
-        self.assertRaises(ValueError, func, gr.Model(), **{df_arg:self.df_2d_nominal})
-
     def test_nominal(self):
         """Checks the nominal evaluation is accurate
         """
@@ -89,7 +104,7 @@ class TestDefaults(unittest.TestCase):
         self.assertTrue(gr.df_equal(self.df_2d_nominal, df_res))
 
         ## Invariant checks
-        self.catch_wrong_type(gr.eval_nominal, df_arg="df_det", shortcut=True, acc_none=True)
+        self.inv_test.md_df_args(gr.eval_nominal, df_arg="df_det", shortcut=True, acc_none=True)
 
         ## Pass-through
         self.assertTrue(
@@ -110,7 +125,7 @@ class TestDefaults(unittest.TestCase):
         self.assertTrue(np.allclose(df_grad[self.df_2d_grad.columns], self.df_2d_grad))
 
         ## Invariant checks
-        self.catch_wrong_type(gr.eval_grad_fd, df_arg="df_base")
+        self.inv_test.md_df_args(gr.eval_grad_fd, df_arg="df_base")
 
         ## Subset
         df_grad_sub = gr.eval_grad_fd(
@@ -142,7 +157,7 @@ class TestDefaults(unittest.TestCase):
         self.assertTrue(gr.df_equal(self.df_2d_qe, df_res, close=True))
 
         ## Invariant checks
-        self.catch_wrong_type(gr.eval_conservative, df_arg="df_det", 
+        self.inv_test.md_df_args(gr.eval_conservative, df_arg="df_det", 
                                 shortcut=True, acc_none=True)
 
         ## Repeat scalar value
