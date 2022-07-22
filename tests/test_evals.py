@@ -25,7 +25,7 @@ class TestEvalInvariants(unittest.TestCase):
             data={"x": [0.0], "y": [0.5]}
         )
     
-    def md_df_args(self, func, df_arg = "df", shortcut=False, acc_none=False):
+    def md_df_args(self, func, df_arg = "df", shortcut=False, acc_none=None):
         """Helper function for testing for TypeErrors and ValueErrors for invalid
         model and DataFrame arguments (eval_* functions).
 
@@ -33,7 +33,9 @@ class TestEvalInvariants(unittest.TestCase):
             func (func): eval function to test
             df_arg (str): name of DataFrame argument
             shortcut (bool): if func has valid str shortcut for df arg
-            acc_none (bool): if func accepts None for df when model.n_var_det == 0
+            acc_none (str or None): if func accepts None for df; 
+                "var_det": accepts None when model.n_var_det == 0; 
+                "always": always accepts None as input
         """
         # Declare tests
         type_tests = [(1,2), 2, [1, 8]]
@@ -50,9 +52,13 @@ class TestEvalInvariants(unittest.TestCase):
             self.assertRaises(TypeError, func, self.md, **{df_arg:wrong})
             self.assertRaises(TypeError, func, wrong, **{df_arg:self.df})
         
-        # `None` check when model.var_det
+        ## None checks
+        if acc_none == "var_det":
+            # `None` check when model.n_var_det > 0 
+            self.assertRaises(TypeError, func, self.md_var_det, **{df_arg:None})            
         self.assertRaises(TypeError, func, self.md_var_det, **{df_arg:None})
-        if acc_none is False:
+            self.assertRaises(TypeError, func, self.md_var_det, **{df_arg:None})            
+        if acc_none is None:
             # none not accepted under any condition, test when md.var_det==0
             self.assertRaises(TypeError, func, self.md, **{df_arg:None})
 
@@ -104,7 +110,7 @@ class TestDefaults(unittest.TestCase):
         self.assertTrue(gr.df_equal(self.df_2d_nominal, df_res))
 
         ## Invariant checks
-        self.inv_test.md_df_args(gr.eval_nominal, df_arg="df_det", shortcut=True, acc_none=True)
+        self.inv_test.md_df_args(gr.eval_nominal, df_arg="df_det", shortcut=True, acc_none="var_det")
 
         ## Pass-through
         self.assertTrue(
@@ -158,7 +164,7 @@ class TestDefaults(unittest.TestCase):
 
         ## Invariant checks
         self.inv_test.md_df_args(gr.eval_conservative, df_arg="df_det", 
-                                shortcut=True, acc_none=True)
+                                shortcut=True, acc_none="var_det")
 
         ## Repeat scalar value
         self.assertTrue(
