@@ -220,6 +220,8 @@ class TestRandomSampling(unittest.TestCase):
 
         self.assertTrue(gr.df_equal(df_res, df_truth))
 
+        ## Invariants not implemented -> no tests here
+
         ## Rounding
         df_round = gr.eval_lhs(self.md_2d, n=n + 0.1, df_det="nom", seed=101)
 
