@@ -196,8 +196,10 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
 
     Args:
         model (gr.Model): Model to evaluate
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom" for 
-            nominal deterministic levels. (None) accepted if model.n_var_det == 0. 
+        df_det (DataFrame or None): Deterministic levels for evaluation; use 
+            "nom" for nominal deterministic levels. If provided model has no 
+            deterministic variables (model.n_var_det == 0), then df_det may 
+            equal None.
         append (bool): Append results to nominal inputs?
         skip (bool): Skip evaluation of the functions?
 
@@ -359,9 +361,10 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
             evaluation; can be single value for all inputs, array
             of values for each random variable, or None for default 0.01.
             values in [0, 0.5]
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels. (None) accepted if 
-            model.n_var_det == 0. 
+        df_det (DataFrame or None): Deterministic levels for evaluation; use "nom"
+            for nominal deterministic levels. If provided model has no 
+            deterministic variables (model.n_var_det == 0), then df_det may 
+            equal None.
         append (bool): Append results to conservative inputs?
         skip (bool): Skip evaluation of the functions?
 
@@ -430,9 +433,10 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
     Args:
         model (gr.Model): Model to evaluate
         n (numeric): number of observations to draw
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels. (None) accepted if 
-            model.n_var_det == 0. 
+        df_det (DataFrame or None): Deterministic levels for evaluation; use "nom"
+            for nominal deterministic levels. If provided model has no 
+            deterministic variables (model.n_var_det == 0), then df_det may 
+            equal None.
         seed (int): random seed to use
         append (bool): Append results to input values?
         skip (bool): Skip evaluation of the functions?
