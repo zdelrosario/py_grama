@@ -24,22 +24,23 @@ class TestEvalInvariants(unittest.TestCase):
         # declare tests
         self.type_tests = [(1,2), 2, [1, 8]]
     
-    def md_arg(self, func, df_arg = "df"):
+    def md_arg(self, func, df_arg = "df", **kwargs):
         """Helper function for TypeErrors and ValueErrors for invalid
         Model arguments (eval_* functions).
         
         Args:
             func (func): eval function to test
-            df_arg (str): name of DataFrame argument"""
+            df_arg (str): name of DataFrame argument
+            **kwargs: kwargs to pass"""
 
         ## Type test
         for wrong in self.type_tests:
-            self.assertRaises(TypeError, func, wrong, **{df_arg:self.df})
+            self.assertRaises(TypeError, func, wrong, **{df_arg:self.df}, **kwargs)
 
         ## No model.functions 
-        self.assertRaises(ValueError, func, gr.Model(), **{df_arg:self.df})
+        self.assertRaises(ValueError, func, gr.Model(), **{df_arg:self.df}, **kwargs)
 
-    def df_arg(self, func, df_arg = "df", shortcut=False, acc_none="Never"):
+    def df_arg(self, func, df_arg = "df", shortcut=False, acc_none="Never", **kwargs):
         """Helper function for testing for TypeErrors and ValueErrors for invalid
         DataFrame arguments (eval_* functions).
 
@@ -53,26 +54,27 @@ class TestEvalInvariants(unittest.TestCase):
         """
         ## General type tests
         for wrong in self.type_tests:
-            self.assertRaises(TypeError, func, self.md, **{df_arg:wrong})
+            self.assertRaises(TypeError, func, self.md, **{df_arg:wrong}, **kwargs)
 
         ## Str type test
         if shortcut:
             # wrong str shortcut test
-            self.assertRaises(ValueError, func, self.md, **{df_arg:"a"})
+            self.assertRaises(ValueError, func, self.md, **{df_arg:"a"}, **kwargs)
         else:
             # test any str for typeerror
-            self.assertRaises(TypeError, func, self.md, **{df_arg:"nom"})
+            self.assertRaises(TypeError, func, self.md, **{df_arg:"nom"}, **kwargs)
         
         ## None checks
         if acc_none == "var_det" or acc_none == "never":
             # `None` check when model.n_var_det > 0 
-            self.assertRaises(TypeError, func, self.md_var_det, **{df_arg:None})            
+            self.assertRaises(TypeError, func, self.md_var_det, **{df_arg:None}, **kwargs)            
         if acc_none == "never": 
             # none not accepted under any condition, test when md.var_det==0
-            self.assertRaises(TypeError, func, self.md, **{df_arg:None})
+            self.assertRaises(TypeError, func, self.md, **{df_arg:None}, **kwargs)
 
     def df_arg_2(self, func, df_args, 
-                    shortcut=[False, False], acc_none=["Never", "Never"]):
+                    shortcut=[False, False], acc_none=["Never", "Never"],
+                    **kwargs):
         """Helper function for testing for TypeErrors and ValueErrors for
         DataFrame arguments in eval_* functions with two df inputs.
         
@@ -89,48 +91,58 @@ class TestEvalInvariants(unittest.TestCase):
         ## General type tests for both dfs
         for wrong in self.type_tests:
             self.assertRaises(TypeError, func, self.md, 
-                                **{df_args[0]:wrong}, **{df_args[1]:self.df})
+                                **{df_args[0]:wrong}, **{df_args[1]:self.df},
+                                **kwargs)
             self.assertRaises(TypeError, func, self.md, 
-                                **{df_args[0]:self.df}, **{df_args[1]:wrong})
+                                **{df_args[0]:self.df}, **{df_args[1]:wrong,
+                                **kwargs})
 
         ## Str type test
         # df_args[0]
         if shortcut[0]:
             # wrong str shortcut test
             self.assertRaises(ValueError, func, self.md, 
-                                **{df_args[0]:"a"}, **{df_args[1]:self.df})
+                                **{df_args[0]:"a"}, **{df_args[1]:self.df},
+                                **kwargs)
         else:
             # test any str for typeerror
             self.assertRaises(TypeError, func, self.md, 
-                                **{df_args[0]:"nom"}, **{df_args[1]:self.df})
+                                **{df_args[0]:"nom"}, **{df_args[1]:self.df},
+                                **kwargs)
         # df_args[1]
         if shortcut[1]:
             # wrong str shortcut test
             self.assertRaises(ValueError, func, self.md, 
-                                **{df_args[0]:self.df}, **{df_args[1]:"a"})
+                                **{df_args[0]:self.df}, **{df_args[1]:"a"},
+                                **kwargs)
         else:
             # test any str for typeerror
             self.assertRaises(TypeError, func, self.md, 
-                                **{df_args[0]:self.df}, **{df_args[1]:"nom"})
+                                **{df_args[0]:self.df}, **{df_args[1]:"nom"},
+                                **kwargs)
 
         ## None checks
         if acc_none[0] == "var_det" or acc_none[0] is None:
             # `None` check when model.n_var_det > 0 
             self.assertRaises(TypeError, func, self.md_var_det, 
-                                **{df_args[0]:None}, **{df_args[1]:self.df})            
+                                **{df_args[0]:None}, **{df_args[1]:self.df},
+                                **kwargs)            
         if acc_none[0] is None:
             # none not accepted under any condition, test when md.var_det==0
             self.assertRaises(TypeError, func, self.md, 
-                                **{df_args[0]:None}, **{df_args[1]:self.df}) 
+                                **{df_args[0]:None}, **{df_args[1]:self.df},
+                                **kwargs) 
         # df_arg_2
         if acc_none[1] == "var_det" or acc_none[1] is None:
             # `None` check when model.n_var_det > 0 
             self.assertRaises(TypeError, func, self.md_var_det, 
-                                **{df_args[0]:self.df}, **{df_args[1]:None})            
+                                **{df_args[0]:self.df}, **{df_args[1]:None},
+                                **kwargs)            
         if acc_none[1] is None:
             # none not accepted under any condition, test when md.var_det==0
             self.assertRaises(TypeError, func, self.md, 
-                                **{df_args[0]:self.df}, **{df_args[1]:None}) 
+                                **{df_args[0]:self.df}, **{df_args[1]:None},
+                                **kwargs) 
 
 ##################################################
 class TestDefaults(unittest.TestCase):

@@ -19,8 +19,17 @@ class TestEvalPND(unittest.TestCase):
         """ Test basic evaluation of pnd function
         """
         # Invariant checks
-        self.inv_test.md_arg(gr.eval_pnd, df_arg="df_train")
-        self.inv_test.df_arg_2(gr.eval_pnd, df_args=["df_train", "df_test"])
+        self.inv_test.md_arg(
+            gr.eval_pnd, 
+            df_arg="df_train",
+            df_test = self.inv_test.df,
+            signs = {"y1":1, "y2":1},
+            seed = 101)
+        self.inv_test.df_arg_2(
+            gr.eval_pnd, 
+            df_args=["df_train", "df_test"],
+            signs = {"y1":1, "y2":1},
+            seed = 101)
 
         # Model to make Dataset
         md_true = make_pareto_random()
@@ -378,3 +387,7 @@ class TestUtilities(unittest.TestCase):
         pr_lo = pr_scores[0] - 2.58 * np.sqrt(var_values[0] / n) # 99% CI
         pr_hi = pr_scores[0] + 2.58 * np.sqrt(var_values[0] / n)
         self.assertTrue((pr_lo <= 0.75) and (0.75 <= pr_hi))
+
+## Run tests
+if __name__ == "__main__":
+    unittest.main()
