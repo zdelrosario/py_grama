@@ -8,11 +8,6 @@ from context import grama as gr
 from context import models
 from pyDOE import lhs
 
-
-#   def test(self, func, df_arg="df", shorcut=False)
-
-# md_var_det = md >> gr.cp_bounds(x1=(0, 1))
-# def
 ##################################################
 class TestEvalInvariants(unittest.TestCase):
     """Helper class for testing invariant errors for eval_* functions"""
@@ -137,11 +132,7 @@ class TestEvalInvariants(unittest.TestCase):
             self.assertRaises(TypeError, func, self.md, 
                                 **{df_args[0]:self.df}, **{df_args[1]:None}) 
 
-        
-
-
-
-
+##################################################
 class TestDefaults(unittest.TestCase):
     def setUp(self):
         # 2D identity model with permuted df inputs
