@@ -2,6 +2,7 @@ import unittest
 
 from context import grama as gr
 from context import data
+from test_evals import TestEvalInvariants
 import numpy as np
 from numpy import array, pi
 from grama.models import make_pareto_random
@@ -10,9 +11,17 @@ from grama.fit import ft_gp
 class TestEvalPND(unittest.TestCase):
     """Test implementation of eval_pnd
     """
+    def setUp(self):
+        ## Invariant test class
+        self.inv_test = TestEvalInvariants()
+
     def test_eval_pnd(self):
         """ Test basic evaluation of pnd function
         """
+        # Invariant checks
+        self.inv_test.md_arg(gr.eval_pnd, df_arg="df_train")
+        self.inv_test.df_arg_2(gr.eval_pnd, df_args=["df_train", "df_test"])
+
         # Model to make Dataset
         md_true = make_pareto_random()
         # Create dataframe
