@@ -7,6 +7,7 @@ __all__ = [
 
 from grama import add_pipe, CopulaIndependence, custom_formatwarning
 from grama import comp_marginals, eval_df
+from grama.eval_defaults import invariants_eval_model, invariants_eval_df
 from numbers import Integral
 from numpy import tile, linspace, zeros, isfinite
 from numpy.linalg import cholesky, inv
@@ -70,6 +71,9 @@ def eval_sinews(
         df_sinew >> gr.pt_auto()
 
     """
+    ## Common invariant checks
+    invariants_eval_model(model, skip)
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom", "swp"])
     ## Override model if deterministic sweeps desired
     if df_det == "swp":
         ## Collect sweep-able deterministic variables
@@ -223,6 +227,8 @@ def eval_hybrid(
 
     """
     ## Check invariants
+    invariants_eval_model(model, skip)
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"])
     if not isinstance(model.density.copula, CopulaIndependence):
         raise ValueError(
             "model must have CopulaIndependence structure;\n"
