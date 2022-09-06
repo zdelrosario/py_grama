@@ -6,6 +6,7 @@ from .test import *
 from .trajectory_linear_drag import *
 from .linear_normal import *
 from .pareto_random import *
+from .pipe_flow import *
 from .plane_laminate import *
 from .plate_buckling import *
 from .poly import *
