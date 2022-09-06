@@ -102,12 +102,6 @@ class TestModel(unittest.TestCase):
 
         ## Test assertions
         with self.assertRaises(ValueError):
-            self.model_3d.var_outer(self.df_2d)
-
-        with self.assertRaises(ValueError):
-            self.model_3d.var_outer(self.df_2d, df_det="foo")
-
-        with self.assertRaises(ValueError):
             self.model_3d.var_outer(self.df_2d, df_det=self.df_2d)
 
     def test_drop_out(self):
@@ -222,11 +216,22 @@ class TestEvalDf(unittest.TestCase):
 
     def setUp(self):
         self.model = models.make_test()
+        self.df = gr.df_make(x=1)
+        
 
-    def test_catch_no_df(self):
-        """Checks that eval_df() raises when no input df is given.
+    def test_catch_wrong_type(self):
+        """Checks that eval_df() raises when wrong input md or df arg is given.
+
+        checks: None, tuple, str, list
         """
-        self.assertRaises(ValueError, gr.eval_df, self.model)
+        tests = [None, (1,2), 2, "a", [1, 8]]
+        # wrong df arg
+        for wrong_type in tests:
+            self.assertRaises(TypeError, gr.eval_df, self.model, wrong_type)
+
+        # wrong md arg
+        for wrong_type in tests:
+            self.assertRaises(TypeError, gr.eval_df, wrong_type, self.df)
 
 
 # --------------------------------------------------

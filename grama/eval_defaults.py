@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 import itertools
-from grama import add_pipe, tran_outer, custom_formatwarning
+from grama import add_pipe, tran_outer, custom_formatwarning, Model
 from numbers import Integral
 from numpy import ones, eye, tile, atleast_2d
 from numpy.random import seed as set_seed
@@ -21,6 +21,118 @@ from toolz import curry
 from warnings import formatwarning, catch_warnings, simplefilter
 
 formatwarning = custom_formatwarning
+
+def invariants_eval_model(md, skip=False):
+    r"""Helper function to group common model argument invariant checks for eval functions.
+
+    Throws errors for invalid Model inputs.
+
+    Args:
+        md (gr.Model): Model to check
+        skip (bool): if function is skipping evaluation of function. If True,
+            skips model.functions test 
+
+    """
+    ## Type Checking  
+    if not isinstance(md, Model):
+        if md is None:
+            raise TypeError("No input model given")
+        elif isinstance(md, tuple):
+            raise TypeError("Given model argument is type tuple. Have you " +
+            "declared your model with an extra comma after the closing `)`?")
+        else:
+            raise TypeError("Type gr.Model was expected, a " + str(type(md)) +
+            " was passed.")
+
+    ## Value checking
+    if not skip and len(md.functions) == 0:
+        raise ValueError("Given model has no functions.")
+    return   
+
+def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
+    r"""Helper function to group common DataFrame argument invariant checks for eval functions.
+
+    Throws errors for invalid DataFrame inputs. 
+
+    Args:
+        df (DataFrame): DataFrame to test
+        arg_name (str): Name of df argument
+        valid_str (list(str) or None): Valid string inputs, if any, to 
+            allow when testing
+        acc_none (bool): allow `None` as a valid df input
+    
+    Examples:
+        invariants_eval_df(df)
+        invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom", "det"])
+        invariants_eval_df(df_test, arg_name="df_test", acc_none=())
+
+    """
+    def aps(string):
+        r"""Helper function for valid_args_msg() to put apostrophes around a
+        string.
+
+        Args:
+            string (str): string to surround
+            
+        Returns:
+            String: Input string surrounded as 'input'"""
+        return "'" + string + "'"
+
+    def valid_args_msg(df_arg, acc_str, valid_str):
+        r"""Generates string explaining valid inputs for use in DataFrame
+        TypeErrors and ValueErrors
+
+        Args:
+            df_arg (str): Name of df argument
+            acc_str (bool): Indicates whether strings are accepted or not
+            valid_str (None, list(str)): Valid string inputs
+        
+        Returns:
+            String"""
+        msg = df_arg + " must be DataFrame" # general msg for valid args
+        if acc_str: 
+            # add on string options to msg
+            if len(valid_str) == 1:
+                string_args = " or " + aps(valid_str[0])
+            else:
+                string_args = ", "  # comma after "must be DataFrame"
+                for arg in valid_str:
+                    if arg == valid_str[-1]:
+                        # last value -> add or
+                        string_args += "or " + aps(arg)
+                    else:
+                        # not last value -> add comma
+                        string_args += aps(arg) + ", "  # add comma                        
+            msg += string_args + "."
+        else: 
+            # no valid string inputs, end message
+            msg += "."
+        return msg 
+
+    ## Type Checking & String Input
+    acc_str = isinstance(valid_str, list)
+    if not isinstance(df, DataFrame):
+        if df is None:
+            if not acc_none:
+                # allow "None" df if None accepted
+                raise TypeError("No " + arg_name + " argument given. " + 
+                    valid_args_msg(arg_name, acc_str, valid_str))
+        elif isinstance(df, str) and acc_str:
+            # case check for invalid str input
+            if df not in valid_str:
+                raise ValueError(arg_name + " shortcut string invalid. " +
+                    valid_args_msg(arg_name, acc_str, valid_str))
+        else:
+            raise TypeError(valid_args_msg(arg_name, acc_str, valid_str) +
+                " Given argument is type " + str(type(df)) +
+                    ". ")
+        
+    ## Value checking
+    #### TO DO
+
+    return
+            
+
 
 ## Default evaluation function
 # --------------------------------------------------
@@ -47,10 +159,10 @@ def eval_df(model, df=None, append=True, verbose=True):
         md >> gr.ev_df(df=df)
 
     """
-    if df is None:
-        raise ValueError("No input df given")
-    if len(model.functions) == 0:
-        raise ValueError("Given model has no functions")
+    ## Perform common invariant tests
+    invariants_eval_model(model)
+    invariants_eval_df(df)
+    
     out_intersect = set(df.columns).intersection(model.out)
     if (len(out_intersect) > 0) and verbose:
         print(
@@ -84,7 +196,10 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
 
     Args:
         model (gr.Model): Model to evaluate
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom" for nominal deterministic levels.
+        df_det (DataFrame or None): Deterministic levels for evaluation; use 
+            "nom" for nominal deterministic levels. If provided model has no 
+            deterministic variables (model.n_var_det == 0), then df_det may 
+            equal None.
         append (bool): Append results to nominal inputs?
         skip (bool): Skip evaluation of the functions?
 
@@ -102,6 +217,11 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
         md >> gr.ev_nominal(df_det="nom")
 
     """
+    ## Perform common invariant tests
+    invariants_eval_model(model, skip)
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"], 
+        acc_none=(model.n_var_det==0))
+
     ## Draw from underlying gaussian
     quantiles = ones((1, model.n_var_rand)) * 0.5  # Median
 
@@ -155,6 +275,8 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
 
     """
     ## Check invariants
+    invariants_eval_model(model, skip)
+    invariants_eval_df(df_base, arg_name="df_base")
     if not set(model.var).issubset(set(df_base.columns)):
         raise ValueError("model.var must be subset of df_base.columns")
     if var is None:
@@ -239,8 +361,10 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
             evaluation; can be single value for all inputs, array
             of values for each random variable, or None for default 0.01.
             values in [0, 0.5]
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels.
+        df_det (DataFrame or None): Deterministic levels for evaluation; use "nom"
+            for nominal deterministic levels. If provided model has no 
+            deterministic variables (model.n_var_det == 0), then df_det may 
+            equal None.
         append (bool): Append results to conservative inputs?
         skip (bool): Skip evaluation of the functions?
 
@@ -259,6 +383,11 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
         md >> gr.ev_conservative(df_det="nom")
 
     """
+    ## Check invariants
+    invariants_eval_model(model, skip)
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
+        acc_none=(model.n_var_det==0))
+
     ## Default behavior
     if quantiles is None:
         print("eval_conservative() using quantile default 0.01;")
@@ -284,7 +413,6 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
     df_rand = model.density.pr2sample(df_pr)
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)
-
     if skip:
         return df_samp
     return eval_df(model, df=df_samp, append=append)
@@ -305,8 +433,10 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
     Args:
         model (gr.Model): Model to evaluate
         n (numeric): number of observations to draw
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels.
+        df_det (DataFrame or None): Deterministic levels for evaluation; use "nom"
+            for nominal deterministic levels. If provided model has no 
+            deterministic variables (model.n_var_det == 0), then df_det may 
+            equal None.
         seed (int): random seed to use
         append (bool): Append results to input values?
         skip (bool): Skip evaluation of the functions?
@@ -388,6 +518,9 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
 
     """
     ## Check invariants
+    invariants_eval_model(model, skip)
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
+        acc_none=(model.n_var_det==0))
     if n is None:
         raise ValueError("Must provide a valid n value.")
 
