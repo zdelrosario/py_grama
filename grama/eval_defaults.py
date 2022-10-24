@@ -340,7 +340,13 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
 
         results.append(df_grad)
 
-    return concat(results).reset_index(drop=True)
+    # Consolidate results
+    df_res = concat(results).reset_index(drop=True)
+
+    if append:
+        return concat((df_base, df_res), axis=1)
+    else:
+        return df_res
 
 
 ev_grad_fd = add_pipe(eval_grad_fd)
