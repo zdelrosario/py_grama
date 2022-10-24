@@ -16,7 +16,7 @@ __all__ = [
 import itertools
 from grama import add_pipe, tran_outer, custom_formatwarning, Model
 from numbers import Integral
-from numpy import dot, ones, eye, tile, atleast_2d
+from numpy import diag, dot, ones, eye, tile, atleast_2d, triu_indices
 from numpy.random import seed as set_seed
 from pandas import DataFrame, concat
 from toolz import curry
@@ -246,13 +246,32 @@ def eval_linup(model, df_base=None, append=True, decomp=False):
             var = dot(grad, dot(cov, grad))
 
             # Store values
-            df_tmp = df_grad.iloc[[i]][model.var]
+            df_tmp = df_grad.iloc[[i]][model.var].reset_index(drop=True)
             df_tmp["out"] = out
             df_tmp["var"] = var
+            # Decompose variance due to each input
+            if decomp:
+                grad_mat = diag(grad)
+                sens_mat = dot(grad_mat, dot(cov, grad_mat)) / var
+                U, V = triu_indices(sens_mat.shape[0])
+                sens_values = [
+                    sens_mat[U[j], V[j]] for j in range(len(U))
+                ]
+                sens_var = [
+                    model.var_rand[U[j]] + "*" + model.var_rand[V[j]]
+                    for j in range(len(U))
+                ]
+
+                df_sens = DataFrame({
+                    "var_frac": sens_values,
+                    "var_rand": sens_var
+                })
+                df_tmp = tran_outer(df_tmp, df_sens)
+
             df_res = concat(
                 (df_res,df_tmp),
                 axis=0,
-            )
+            ).reset_index(drop=True)
 
     return df_res
 
