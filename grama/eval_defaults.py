@@ -1,6 +1,8 @@
 __all__ = [
     "eval_df",
     "ev_df",
+    "eval_linup",
+    "ev_linup",
     "eval_nominal",
     "ev_nominal",
     "eval_grad_fd",
@@ -14,7 +16,7 @@ __all__ = [
 import itertools
 from grama import add_pipe, tran_outer, custom_formatwarning, Model
 from numbers import Integral
-from numpy import ones, eye, tile, atleast_2d
+from numpy import dot, ones, eye, tile, atleast_2d
 from numpy.random import seed as set_seed
 from pandas import DataFrame, concat
 from toolz import curry
@@ -185,6 +187,77 @@ def eval_df(model, df=None, append=True, verbose=True):
 
 
 ev_df = add_pipe(eval_df)
+
+## Linear Uncertainty Propagation
+# --------------------------------------------------
+@curry
+def eval_linup(model, df_base=None, append=True, decomp=False):
+    r"""Linear uncertainty propagation
+
+    Approximates the variance of output models using a linearization of functions---linear uncertainty propagation. Optionally decomposes the output variance according to additive factors from each input.
+
+    Args:
+        model (gr.Model): Model to evaluate
+        df_base (DataFrame or None): Base levels for evaluation; use
+            "nom" for nominal levels.
+        append (bool): Append results to nominal inputs?
+        decomp (bool): Decompose the variances according to each input?
+
+    Returns:
+        DataFrame: Output variances at each deterministic level
+
+    Examples::
+
+        import grama as gr
+        from grama.models import make_test
+        md = make_test()
+        ## Set manual levels for deterministic inputs; nominal levels for random inputs
+        md >> gr.ev_linup(df_det=gr.df_make(x2=[0, 1, 2])
+        ## Use nominal deterministic levels
+        md >> gr.ev_linup(df_base="nom")
+
+    """
+    ## Perform common invariant tests
+    invariants_eval_model(model, False)
+    invariants_eval_df(df_base, arg_name="df_base", valid_str=["nom"])
+
+    if df_base is "nom":
+        df_base = eval_nominal(model, df_det="nom")
+
+    ## Approximate the covariance matrix
+    df_sample = eval_sample(model, n=1e3, df_det=df_base[model.var_det], skip=True)
+    cov = df_sample[model.var_rand].cov()
+
+    ## Approximate the gradient
+    df_grad = eval_grad_fd(model, df_base=df_base, var="rand", append=True)
+
+    ## Iterate over all outputs and gradient points
+    df_res = DataFrame({})
+    for out in model.out:
+        for i in range(df_grad.shape[0]):
+            # Build gradient column names
+            var_names = map(
+                lambda s: "D" + out + "_D" + s,
+                model.var_rand
+            )
+            # Extract gradient values
+            grad = df_grad.iloc[i][var_names].values.flatten()
+            # Approximate variance
+            var = dot(grad, dot(cov, grad))
+
+            # Store values
+            df_tmp = df_grad.iloc[[i]][model.var]
+            df_tmp["out"] = out
+            df_tmp["var"] = var
+            df_res = concat(
+                (df_res,df_tmp),
+                axis=0,
+            )
+
+    return df_res
+
+ev_linup = add_pipe(eval_linup)
+
 
 ## Nominal evaluation
 # --------------------------------------------------
