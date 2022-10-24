@@ -16,7 +16,7 @@ __all__ = [
 import itertools
 from grama import add_pipe, tran_outer, custom_formatwarning, Model
 from numbers import Integral
-from numpy import diag, dot, ones, eye, tile, atleast_2d, triu_indices
+from numpy import diag, dot, ones, eye, tile, atleast_2d, triu_indices, round
 from numpy.random import seed as set_seed
 from pandas import DataFrame, concat
 from toolz import curry
@@ -255,7 +255,7 @@ def eval_linup(model, df_base=None, append=True, decomp=False):
                 sens_mat = dot(grad_mat, dot(cov, grad_mat)) / var
                 U, V = triu_indices(sens_mat.shape[0])
                 sens_values = [
-                    sens_mat[U[j], V[j]] for j in range(len(U))
+                    round(sens_mat[U[j], V[j]], decimals=2) for j in range(len(U))
                 ]
                 sens_var = [
                     model.var_rand[U[j]] + "*" + model.var_rand[V[j]]
