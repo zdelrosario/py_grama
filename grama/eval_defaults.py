@@ -191,7 +191,7 @@ ev_df = add_pipe(eval_df)
 ## Linear Uncertainty Propagation
 # --------------------------------------------------
 @curry
-def eval_linup(model, df_base=None, append=True, decomp=False):
+def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2):
     r"""Linear uncertainty propagation
 
     Approximates the variance of output models using a linearization of functions---linear uncertainty propagation. Optionally decomposes the output variance according to additive factors from each input.
@@ -201,7 +201,8 @@ def eval_linup(model, df_base=None, append=True, decomp=False):
         df_base (DataFrame or None): Base levels for evaluation; use
             "nom" for nominal levels.
         append (bool): Append results to nominal inputs?
-        decomp (bool): Decompose the variances according to each input?
+        decomp (bool): Decompose the fractional variances according to each input?
+        decimals (int): Decimals to report for fractional variances
 
     Returns:
         DataFrame: Output variances at each deterministic level
@@ -255,7 +256,11 @@ def eval_linup(model, df_base=None, append=True, decomp=False):
                 sens_mat = dot(grad_mat, dot(cov, grad_mat)) / var
                 U, V = triu_indices(sens_mat.shape[0])
                 sens_values = [
-                    round(sens_mat[U[j], V[j]], decimals=2) for j in range(len(U))
+                    round(
+                        sens_mat[U[j], V[j]] * (1 + (U[j] != V[j])), # Double off-diag
+                        decimals=decimals
+                    )
+                    for j in range(len(U))
                 ]
                 sens_var = [
                     model.var_rand[U[j]] + "*" + model.var_rand[V[j]]
@@ -288,9 +293,9 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
 
     Args:
         model (gr.Model): Model to evaluate
-        df_det (DataFrame or None): Deterministic levels for evaluation; use 
-            "nom" for nominal deterministic levels. If provided model has no 
-            deterministic variables (model.n_var_det == 0), then df_det may 
+        df_det (DataFrame or None): Deterministic levels for evaluation; use
+            "nom" for nominal deterministic levels. If provided model has no
+            deterministic variables (model.n_var_det == 0), then df_det may
             equal None.
         append (bool): Append results to nominal inputs?
         skip (bool): Skip evaluation of the functions?
