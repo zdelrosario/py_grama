@@ -224,6 +224,8 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2):
 
     if df_base is "nom":
         df_base = eval_nominal(model, df_det="nom")
+    else:
+        df_base = eval_df(model, df=df_base)
 
     ## Approximate the covariance matrix
     df_sample = eval_sample(model, n=1e3, df_det=df_base[model.var_det], skip=True)
@@ -247,9 +249,10 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2):
             var = dot(grad, dot(cov, grad))
 
             # Store values
-            df_tmp = df_grad.iloc[[i]][model.var].reset_index(drop=True)
+            df_tmp = df_base.iloc[[i]][model.var + model.out].reset_index(drop=True)
             df_tmp["out"] = out
             df_tmp["var"] = var
+
             # Decompose variance due to each input
             if decomp:
                 grad_mat = diag(grad)
@@ -293,9 +296,9 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
 
     Args:
         model (gr.Model): Model to evaluate
-        df_det (DataFrame or None): Deterministic levels for evaluation; use
-            "nom" for nominal deterministic levels. If provided model has no
-            deterministic variables (model.n_var_det == 0), then df_det may
+        df_det (DataFrame or None): Deterministic levels for evaluation; use 
+            "nom" for nominal deterministic levels. If provided model has no 
+            deterministic variables (model.n_var_det == 0), then df_det may 
             equal None.
         append (bool): Append results to nominal inputs?
         skip (bool): Skip evaluation of the functions?
