@@ -108,12 +108,11 @@ def fit_nls(
         var_fix = set()
     else:
         var_fix = set(var_fix)
-    var_fix = list(var_fix)
-
     for var in md.var_det:
         wid = md.domain.get_width(var)
         if wid == 0:
             var_fix.add(var)
+    var_fix = list(var_fix)
 
     ## Run eval_nls to fit model parameter values
     df_fit = eval_nls(
