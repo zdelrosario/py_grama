@@ -32,10 +32,10 @@ def invariants_eval_model(md, skip=False):
     Args:
         md (gr.Model): Model to check
         skip (bool): if function is skipping evaluation of function. If True,
-            skips model.functions test 
+            skips model.functions test
 
     """
-    ## Type Checking  
+    ## Type Checking
     if not isinstance(md, Model):
         if md is None:
             raise TypeError("No input model given")
@@ -49,20 +49,20 @@ def invariants_eval_model(md, skip=False):
     ## Value checking
     if not skip and len(md.functions) == 0:
         raise ValueError("Given model has no functions.")
-    return   
+    return
 
 def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
     r"""Helper function to group common DataFrame argument invariant checks for eval functions.
 
-    Throws errors for invalid DataFrame inputs. 
+    Throws errors for invalid DataFrame inputs.
 
     Args:
         df (DataFrame): DataFrame to test
         arg_name (str): Name of df argument
-        valid_str (list(str) or None): Valid string inputs, if any, to 
+        valid_str (list(str) or None): Valid string inputs, if any, to
             allow when testing
         acc_none (bool): allow `None` as a valid df input
-    
+
     Examples:
         invariants_eval_df(df)
         invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom", "det"])
@@ -75,7 +75,7 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
 
         Args:
             string (str): string to surround
-            
+
         Returns:
             String: Input string surrounded as 'input'"""
         return "'" + string + "'"
@@ -88,11 +88,11 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
             df_arg (str): Name of df argument
             acc_str (bool): Indicates whether strings are accepted or not
             valid_str (None, list(str)): Valid string inputs
-        
+
         Returns:
             String"""
         msg = df_arg + " must be DataFrame" # general msg for valid args
-        if acc_str: 
+        if acc_str:
             # add on string options to msg
             if len(valid_str) == 1:
                 string_args = " or " + aps(valid_str[0])
@@ -104,12 +104,12 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
                         string_args += "or " + aps(arg)
                     else:
                         # not last value -> add comma
-                        string_args += aps(arg) + ", "  # add comma                        
+                        string_args += aps(arg) + ", "  # add comma
             msg += string_args + "."
-        else: 
+        else:
             # no valid string inputs, end message
             msg += "."
-        return msg 
+        return msg
 
     ## Type Checking & String Input
     acc_str = isinstance(valid_str, list)
@@ -117,7 +117,7 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
         if df is None:
             if not acc_none:
                 # allow "None" df if None accepted
-                raise TypeError("No " + arg_name + " argument given. " + 
+                raise TypeError("No " + arg_name + " argument given. " +
                     valid_args_msg(arg_name, acc_str, valid_str))
         elif isinstance(df, str) and acc_str:
             # case check for invalid str input
@@ -128,12 +128,12 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
             raise TypeError(valid_args_msg(arg_name, acc_str, valid_str) +
                 " Given argument is type " + str(type(df)) +
                     ". ")
-        
+
     ## Value checking
     #### TO DO
 
     return
-            
+
 
 
 ## Default evaluation function
@@ -164,7 +164,7 @@ def eval_df(model, df=None, append=True, verbose=True):
     ## Perform common invariant tests
     invariants_eval_model(model)
     invariants_eval_df(df)
-    
+
     out_intersect = set(df.columns).intersection(model.out)
     if (len(out_intersect) > 0) and verbose:
         print(
@@ -191,7 +191,7 @@ ev_df = add_pipe(eval_df)
 ## Linear Uncertainty Propagation
 # --------------------------------------------------
 @curry
-def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2):
+def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4, seed=None):
     r"""Linear uncertainty propagation
 
     Approximates the variance of output models using a linearization of functions---linear uncertainty propagation. Optionally decomposes the output variance according to additive factors from each input.
@@ -203,6 +203,9 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2):
         append (bool): Append results to nominal inputs?
         decomp (bool): Decompose the fractional variances according to each input?
         decimals (int): Decimals to report for fractional variances
+
+        n (float): Monte Carlo sample size, for estimating covariance matrix
+        seed (int or None): Monte Carlo seed
 
     Returns:
         DataFrame: Output variances at each deterministic level
@@ -228,7 +231,7 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2):
         df_base = eval_df(model, df=df_base)
 
     ## Approximate the covariance matrix
-    df_sample = eval_sample(model, n=1e3, df_det=df_base[model.var_det], skip=True)
+    df_sample = eval_sample(model, n=n, seed=seed, df_det=df_base[model.var_det], skip=True)
     cov = df_sample[model.var_rand].cov()
 
     ## Approximate the gradient
@@ -296,9 +299,9 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
 
     Args:
         model (gr.Model): Model to evaluate
-        df_det (DataFrame or None): Deterministic levels for evaluation; use 
-            "nom" for nominal deterministic levels. If provided model has no 
-            deterministic variables (model.n_var_det == 0), then df_det may 
+        df_det (DataFrame or None): Deterministic levels for evaluation; use
+            "nom" for nominal deterministic levels. If provided model has no
+            deterministic variables (model.n_var_det == 0), then df_det may
             equal None.
         append (bool): Append results to nominal inputs?
         skip (bool): Skip evaluation of the functions?
@@ -319,7 +322,7 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
     """
     ## Perform common invariant tests
     invariants_eval_model(model, skip)
-    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"], 
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
         acc_none=(model.n_var_det==0))
 
     ## Draw from underlying gaussian
@@ -468,8 +471,8 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
             of values for each random variable, or None for default 0.01.
             values in [0, 0.5]
         df_det (DataFrame or None): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels. If provided model has no 
-            deterministic variables (model.n_var_det == 0), then df_det may 
+            for nominal deterministic levels. If provided model has no
+            deterministic variables (model.n_var_det == 0), then df_det may
             equal None.
         append (bool): Append results to conservative inputs?
         skip (bool): Skip evaluation of the functions?
@@ -540,8 +543,8 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
         model (gr.Model): Model to evaluate
         n (numeric): number of observations to draw
         df_det (DataFrame or None): Deterministic levels for evaluation; use "nom"
-            for nominal deterministic levels. If provided model has no 
-            deterministic variables (model.n_var_det == 0), then df_det may 
+            for nominal deterministic levels. If provided model has no
+            deterministic variables (model.n_var_det == 0), then df_det may
             equal None.
         seed (int): random seed to use
         append (bool): Append results to input values?
