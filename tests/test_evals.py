@@ -8,6 +8,8 @@ from context import grama as gr
 from context import models
 from pyDOE import lhs
 
+DF = gr.Intention()
+
 ##################################################
 class TestEvalInvariants(unittest.TestCase):
     """Helper class for testing invariant errors for eval_* functions"""
@@ -200,6 +202,89 @@ class TestDefaults(unittest.TestCase):
                 gr.eval_nominal(self.model_2d, skip=True),
             )
         )
+
+    def test_linup(self):
+        """Checks linear uncertainty propagation tool
+        """
+        # Setup
+        model_3d = (
+            gr.Model()
+            >> gr.cp_vec_function(
+                fun=lambda df: gr.df_make(
+                    y0=df.x0 + df.x1 + df.x2,
+                    y1=df.x0 * gr.exp(df.x1 + df.x2),
+                ),
+                var=3,
+                out=2
+            )
+            >> gr.cp_bounds(x0=(-1, +1))
+            >> gr.cp_marginals(
+                x1=gr.marg_mom("norm", mean=0, sd=1),
+                x2=gr.marg_mom("uniform", mean=0, sd=1),
+            )
+            >> gr.cp_copula_gaussian(df_corr=gr.df_make(var1=["x1"], var2=["x2"], corr=[0.5]))
+        )
+
+        model_50 = (
+            gr.Model()
+            >> gr.cp_vec_function(
+                fun=lambda df: gr.df_make(
+                    y0=df.x0 + df.x1 + df.x2,
+                ),
+                var=3,
+                out=1,
+            )
+            >> gr.cp_bounds(x0=(-1, +1))
+            >> gr.cp_marginals(
+                x1=gr.marg_mom("norm", mean=0, sd=1),
+                x2=gr.marg_mom("norm", mean=0, sd=1),
+            )
+            >> gr.cp_copula_gaussian(df_corr=gr.df_make(var1=["x1"], var2=["x2"], corr=[0.5]))
+        )
+        model_75 = (
+            gr.Model()
+            >> gr.cp_vec_function(
+                fun=lambda df: gr.df_make(
+                    y0=df.x0 + df.x1 + df.x2,
+                ),
+                var=3,
+                out=1,
+            )
+            >> gr.cp_bounds(x0=(-1, +1))
+            >> gr.cp_marginals(
+                x1=gr.marg_mom("norm", mean=0, sd=1),
+                x2=gr.marg_mom("norm", mean=0, sd=1),
+            )
+            >> gr.cp_copula_gaussian(df_corr=gr.df_make(var1=["x1"], var2=["x2"], corr=[0.75]))
+        )
+
+        ## Test for accuracy
+        df_res_50 = gr.eval_linup(model_50, df_base="nom", n=1e5, seed=101)
+        self.assertTrue(abs(df_res_50["var"].values[0] - 3) / 3 <= 0.05)
+        df_res_75 = gr.eval_linup(model_75, df_base="nom", n=1e5, seed=101)
+        self.assertTrue(abs(df_res_75["var"].values[0] - 3.5) / 3.5 <= 0.05)
+
+        ## Test for evaluation at base values
+        df_base = gr.df_make(x0=0, x1=-1, x2=1)
+        df_3d_base = gr.eval_linup(model_3d, df_base=df_base)
+        self.assertTrue(gr.df_equal(
+            pd.concat((df_base, df_base), axis=0).reset_index(drop=True),
+            df_3d_base[df_base.columns],
+        ))
+
+        ## Test for outer product of base and outputs
+        df_3d_outer = gr.eval_linup(model_3d, df_base=gr.df_make(x0=0, x1=0, x2=[0, 1]))
+        self.assertTrue(df_3d_outer.shape[0] == 2 * 2)
+
+        ## Test that sensitivity contributions sum to 1
+        df_3d_nom = gr.eval_linup(model_3d, df_base=gr.df_make(x0=1, x1=0, x2=0), decomp=True)
+        df_sum = (
+            df_3d_nom
+            >> gr.tf_group_by("out")
+            >> gr.tf_summarize(s=gr.sum(DF.var_frac))
+        )
+        self.assertTrue(all(np.abs(df_sum.s - 1) <= 0.01))
+
 
     def test_grad_fd(self):
         """Checks the FD code
