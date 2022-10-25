@@ -112,6 +112,7 @@ def fit_nls(
         wid = md.domain.get_width(var)
         if wid == 0:
             var_fix.add(var)
+    var_fix = list(var_fix)
 
     ## Run eval_nls to fit model parameter values
     df_fit = eval_nls(
@@ -206,7 +207,7 @@ def fit_nls(
                 Model(name)
                 >> cp_function(
                     lambda x: df_nom[var_fix].values,
-                    var=set(var_remain).difference(var_fix),
+                    var=list(set(var_remain).difference(var_fix)),
                     out=var_fix,
                     name="Fix variable levels",
                 )
