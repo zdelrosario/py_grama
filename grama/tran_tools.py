@@ -85,13 +85,13 @@ def tran_kfolds(
 
         import grama as gr
         from grama.data import df_stang
-        from grama.fit import ft_rf
         df_kfolds = (
             df_stang
             >> gr.tf_kfolds(
                 k=5,
-                ft=ft_rf(out=["thick"], var=["E", "mu"]),
+                ft=gr.ft_rf(out=["thick"], var=["E", "mu"]),
             )
+        )
 
     """
     ## Check invariants
