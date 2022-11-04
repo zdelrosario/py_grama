@@ -283,6 +283,7 @@ ev_form_pma = add_pipe(eval_form_pma)
 def eval_form_ria(
     model,
     limits=None,
+    format="betas",
     cons=None,
     df_corr=None,
     df_det=None,
@@ -301,6 +302,8 @@ def eval_form_ria(
     Args:
         model (gr.Model): Model to analyze
         limits (list): Target limit states; must be in model.out; limit state assumed to be critical at g == 0.
+        format (str): One of ("betas", "rels", "pofs"). Format for computed reliability information
+
         cons (dict or None): Target confidence levels;
             key   = limit state name; must be in model.out
             value = confidence level, \in (0, 1)
@@ -451,11 +454,25 @@ def eval_form_ria(
             df_inner["beta_" + key] = [fun_star]
             df_return = concat((df_return, df_inner), axis=0, sort=False)
 
+    ## Collapse beta values w/o MPP results
+    beta_names = ["beta_" + s for s in limits]
     if not append:
         df_return = (
             df_return.groupby(model.var_det) \
-                     .agg({"beta_" + s: max for s in limits}).reset_index()
+                     .agg({n: max for n in beta_names}).reset_index()
         )
+
+    ## Convert betas if other format requested
+    if format == "rels":
+        df_return = df_return.apply(lambda col: norm.cdf(col) if col.name in beta_names else col) \
+                             .rename(columns={"beta_" + s: "rel_" + s for s in limits})
+
+    elif format == "pofs":
+        df_return = df_return.apply(lambda col: 1 - norm.cdf(col) if col.name in beta_names else col) \
+                             .rename(columns={"beta_" + s: "pof_" + s for s in limits})
+
+    elif not (format == "betas"):
+        print("    format = '{}' unrecognized; returning reliability indices".format(format))
 
     return df_return
 

@@ -72,6 +72,30 @@ class TestFORM(unittest.TestCase):
         )
         self.assertTrue(df_beam.shape[0] == 1)
 
+        ## Test other outputs
+        limits = ["g_stress", "g_disp"]
+        beta_names = ["beta_g_stress", "beta_g_disp"]
+        # Return reliabilities
+        df_rels = self.md_beam >> gr.ev_form_ria(
+            df_det="nom", limits=limits, append=False, format="rels",
+        )
+        self.assertTrue(gr.df_equal(
+            df_beam.apply(lambda col: norm.cdf(col) if col.name in beta_names else col) \
+                   .rename(columns={"beta_" + s: "rel_" + s for s in limits}),
+            df_rels,
+            close=True,
+        ))
+        # Return POFs
+        df_pofs = self.md_beam >> gr.ev_form_ria(
+            df_det="nom", limits=limits, append=False, format="pofs",
+        )
+        self.assertTrue(gr.df_equal(
+            df_beam.apply(lambda col: 1-norm.cdf(col) if col.name in beta_names else col) \
+                   .rename(columns={"beta_" + s: "pof_" + s for s in limits}),
+            df_pofs,
+            close=True,
+        ))
+
     def test_pma(self):
         ## Test accuracy
         df_res = self.md >> gr.ev_form_pma(df_det="nom", betas=dict(g=self.beta_true))
