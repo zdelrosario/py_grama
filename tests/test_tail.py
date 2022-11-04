@@ -88,3 +88,15 @@ class TestFORM(unittest.TestCase):
             df_det="nom", betas={"g_stress": 3, "g_disp": 3}, append=False,
         )
         self.assertTrue(df_beam.shape[0] == 1)
+
+        ## Specify reliabilities
+        df_rels = self.md_beam >> gr.ev_form_pma(
+            df_det="nom", rels={"g_stress": norm.cdf(3), "g_disp": norm.cdf(3)}, append=False,
+        )
+        self.assertTrue(gr.df_equal(df_beam, df_rels, close=True))
+
+        ## Specify POFs
+        df_pofs = self.md_beam >> gr.ev_form_pma(
+            df_det="nom", pofs={"g_stress": 1 - norm.cdf(3), "g_disp": 1 - norm.cdf(3)}, append=False,
+        )
+        self.assertTrue(gr.df_equal(df_beam, df_pofs, close=True))

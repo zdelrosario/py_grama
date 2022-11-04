@@ -12,6 +12,7 @@ from numpy import array, argmin, ones, eye, zeros, sqrt, NaN, max
 from numpy.linalg import norm as length
 from numpy.random import multivariate_normal
 from pandas import DataFrame, concat
+from scipy.stats import norm
 from scipy.optimize import minimize
 from toolz import curry
 
@@ -35,6 +36,8 @@ def make_T(model, df_corr):
 def eval_form_pma(
     model,
     betas=None,
+    rels=None,
+    pofs=None,
     cons=None,
     df_corr=None,
     df_det=None,
@@ -46,20 +49,29 @@ def eval_form_pma(
 ):
     r"""Tail quantile via FORM PMA
 
-    Approximate the desired tail quantiles using the performance measure approach (PMA) of the first-order reliability method (FORM) [1]. Select limit states to minimize at desired quantile with `betas`. Provide confidence levels `cons` and estimator covariance `df_corr` to compute with margin in beta [2].
+    Approximate the desired tail quantiles using the performance measure approach (PMA) of the first-order reliability method (FORM) [1]. Select limit states to minimize at desired quantile with one of: `betas` (reliability indices), `rels` (reliability values), or `pofs` (probabilities of failure). Provide confidence levels `cons` and estimator covariance `df_corr` to compute with margin in beta [2].
 
     Note that under the performance measure approach, the optimized limit state value `g` is sought to be non-negative $g \geq 0$. This is usually included as a constraint in optimization, which can be accomplished in by using ``gr.eval_form_pnd()` *within* a model definition---see the Examples below for more details.
 
     Args:
         model (gr.Model): Model to analyze
+        df_det (DataFrame): Deterministic levels for evaluation; use "nom" for nominal deterministic levels.
+
         betas (dict): Target reliability indices;
             key   = limit state name; must be in model.out
             value = reliability index; beta = Phi^{-1}(reliability)
+        rels (dict): Target reliability values;
+            key   = limit state name; must be in model.out
+            value = reliability
+        pofs (dict): Target probabilities of failure (POFs);
+            key   = limit state name; must be in model.out
+            value = probability of failure; pof = 1 - reliability
+
         cons (dict or None): Target confidence levels;
             key   = limit state name; must be in model.out
             value = confidence level, \in (0, 1)
         df_corr (DataFrame or None): Sampling distribution covariance entries; parameters with no information assumed to be known exactly.
-        df_det (DataFrame): Deterministic levels for evaluation; use "nom" for nominal deterministic levels.
+
         n_maxiter (int): Maximum iterations for each optimization run
         n_restart (int): Number of restarts (== number of optimization runs)
         append (bool): Append MPP results for random values?
@@ -86,6 +98,17 @@ def eval_form_pma(
             >> gr.ev_form_pma(
                 # Specify target reliability
                 betas=dict(g_stress=3, g_disp=3),
+                # Analyze three different thicknesses
+                df_det=gr.df_make(t=[2, 3, 4], w=3)
+            )
+        )
+
+        ## Specify reliability in POF form
+        (
+            md_beam
+            >> gr.ev_form_pma(
+                # Specify target reliability
+                pofs=dict(g_stress=1e-3, g_disp=1e-3),
                 # Analyze three different thicknesses
                 df_det=gr.df_make(t=[2, 3, 4], w=3)
             )
@@ -127,10 +150,22 @@ def eval_form_pma(
     invariants_eval_model(model)
     invariants_eval_df(df_corr, arg_name="df_corr", acc_none=True)
     invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"])
-    if betas is None:
+    # Check that reliability targets given by one argument only
+    if all((betas is None, rels is None, pofs is None)):
         raise ValueError(
-            "Must provide `betas` keyword argument to define reliability targets"
+            "Must provide reliability targets as keyword argument `betas`, `rels`, OR `pofs`"
         )
+    if sum((betas is not None, rels is not None, pofs is not None)) > 1:
+        raise ValueError(
+            "Must provide *only* one of `betas`, `rels`, OR `pofs`"
+        )
+    # Convert reliability targets to `betas`
+    if rels is not None:
+        betas = {k: norm.ppf(v) for (k, v) in rels.items()}
+    if pofs is not None:
+        betas = {k: norm.ppf(1 - v) for (k, v) in pofs.items()}
+
+    # Check `betas` invariants
     if not set(betas.keys()).issubset(set(model.out)):
         raise ValueError("betas.keys() must be subset of model.out")
     if not cons is None:
