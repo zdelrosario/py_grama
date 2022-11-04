@@ -31,6 +31,8 @@ __all__ = [
     "n_distinct",
     "neff_is",
 
+    "mad",
+    "mead",
     "mse",
     "rmse",
     "ndme",
@@ -391,6 +393,42 @@ def sum(series):
     """
 
     return series.sum()
+
+
+@make_symbolic
+def mad(series_pred, series_meas):
+    """Compute MAD
+
+    Returns the mean absolute deviation (MAD) between predicted and measured
+    values.
+
+    Args:
+        series_pred (pandas.Series): column of predicted values
+        series_meas (pandas.Series): column of measured values
+
+    Returns:
+        float: Mean absolute deviation (MAD)
+    """
+
+    return (series_pred - series_meas).abs().mean()
+
+
+@make_symbolic
+def mead(series_pred, series_meas):
+    """Compute median absolute deviation
+
+    Returns the median absolute deviation (MEAD) between predicted and measured
+    values.
+
+    Args:
+        series_pred (pandas.Series): column of predicted values
+        series_meas (pandas.Series): column of measured values
+
+    Returns:
+        float: Median absolute deviation (MEAD)
+    """
+
+    return (series_pred - series_meas).abs().median()
 
 
 @make_symbolic
