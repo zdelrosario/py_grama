@@ -32,6 +32,10 @@ class TestSupportPoints(unittest.TestCase):
         self.assertTrue(set(df_sp.columns) == {"x", "y", "z"})
 
         ## Subsetting target variables
-        df_xy = gr.tran_sp(self.df, n=10, var=["x", "y"],)
+        df_xy = gr.tran_sp(self.df, n=10, var=["x", "y"])
         # Subset correctly
         self.assertTrue(set(df_xy.columns) == {"x", "y"})
+
+        ## Warning raised on lack of convergence
+        with self.assertWarns(RuntimeWarning):
+            gr.tran_sp(self.df, n=10, var=["x", "y"], n_maxiter=1)
