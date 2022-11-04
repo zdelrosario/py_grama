@@ -295,7 +295,7 @@ def eval_form_ria(
 ):
     r"""Tail reliability via FORM RIA
 
-    Approximate the desired tail probability using the reliability index approach (RIA) of the first-order reliability method (FORM) [1]. Select limit states to analyze with list input `limits`. Provide confidence levels `cons` and estimator covariance `df_corr` to compute with margin in beta [2].
+    Approximate the desired tail probability using the reliability index approach (RIA) of the first-order reliability method (FORM) [1]. Select limit states to analyze with list input `limits`. Choose output type using `format` argument (`betas` for reliability indices, `rels` for realibility values, `pofs` for probabilify of failure values). Provide confidence levels `cons` and estimator covariance `df_corr` to compute with margin in beta [2].
 
     Note that the reliability index approach (RIA) is generally less stable than the performance measure approach (PMA). Consider using ``gr.eval_form_pma()`` instead, particularly when using FORM to optimize a design.
 
