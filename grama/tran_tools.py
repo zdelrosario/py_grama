@@ -11,7 +11,7 @@ __all__ = [
     "tf_md",
 ]
 
-from grama import add_pipe, pipe, copy_meta, Intention, mse, rsq
+from grama import add_pipe, pipe, copy_meta, Intention, mse, rsq, mead
 from grama import (
     tf_bind_cols,
     tf_filter,
@@ -101,8 +101,8 @@ def tran_kfolds(
         print("... tran_kfolds is using default k=5")
         k = 5
     if summaries is None:
-        print("... tran_kfolds is using default summaries mse and rsq")
-        summaries = dict(mse=mse, rsq=rsq)
+        print("... tran_kfolds is using default summaries mse, mead, and rsq")
+        summaries = dict(mse=mse, mead=mead, rsq=rsq)
 
     n = df.shape[0]
     ## Handle custom folds
