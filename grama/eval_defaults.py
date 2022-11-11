@@ -532,10 +532,10 @@ ev_conservative = add_pipe(eval_conservative)
 ## Random sampling
 # --------------------------------------------------
 @curry
-def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, index=None):
+def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, comm=True, ind_comm=None):
     r"""Draw a random sample
 
-    Evaluates a model with a random sample of the random model inputs. Generates outer product with deterministic samples.
+    Evaluates a model with a random sample of the random model inputs. Generates outer product with deterministic levels (common random numbers) OR generates a sample fully-independent of deterministic levels (non-common random numbers).
 
     For more expensive models, it can be helpful to tune n to achieve a reasonable runtime. An even more effective approach is to use skip evaluation along with tran_sp() to evaluate a small, representative sample. (See examples below.)
 
@@ -549,7 +549,8 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
         seed (int): random seed to use
         append (bool): Append results to input values?
         skip (bool): Skip evaluation of the functions?
-        index (str or None): Name of draw index column; not added if None
+        comm (bool): Use common random numbers (CRN) across deterministic levels? CRN will tend to aid in the comparison of statistics across deterministic levels and enhance the convergence of stochastic optimization.
+        ind_comm (str or None): Name of realization index column; not added if None
 
     Returns:
         DataFrame: Results of evaluation or unevaluated design
@@ -576,7 +577,7 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
         from grama.models import make_cantilever_beam
         md_beam = make_cantilever_beam()
 
-        ## Use the draw index to facilitate plotting
+        ## Use the realization index to facilitate plotting
         # Try running this without the `group` aesthetic in `geom_line()`;
         # without the group the plot will not have multiple lines.
         (
@@ -584,7 +585,7 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
             >> gr.ev_sample(
                 n=20,
                 df_det=gr.df_make(w=3, t=gr.linspace(2, 4, 100)),
-                index="idx",
+                ind_comm="idx",
             )
 
             >> gr.ggplot(gr.aes("t", "g_stress"))
@@ -642,12 +643,23 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
         print("eval_sample() is rounding n...")
         n = int(n)
 
-    ## Draw samples
-    df_rand = model.density.sample(n=n, seed=seed)
-    if not index is None:
-        df_rand[index] = df_rand.index
-    ## Construct outer-product DOE
-    df_samp = model.var_outer(df_rand, df_det=df_det)
+    ## Draw realizations
+    # Common random numbers
+    if comm:
+        df_rand = model.density.sample(n=n, seed=seed)
+        if not ind_comm is None:
+            df_rand[ind_comm] = df_rand.index
+        df_samp = model.var_outer(df_rand, df_det=df_det)
+    # Non-common random numbers
+    else:
+        df_rand = model.density.sample(n=n * df_det.shape[0], seed=seed)
+        if not ind_comm is None:
+            df_rand[ind_comm] = df_rand.index
+        df_samp = concat(
+            (df_rand, concat([df_det[model.var_det]]*n, axis=0).reset_index(drop=True)),
+            axis=1,
+        ).reset_index(drop=True)
+
 
     if skip:
         ## Evaluation estimate
