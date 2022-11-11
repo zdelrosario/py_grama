@@ -434,10 +434,29 @@ class TestRandomSampling(unittest.TestCase):
             n=n,
             df_det=gr.df_make(x0=[-1, 0, 1]),
             seed=101,
-            index="idx",
+            ind_comm="idx",
         )
 
         self.assertTrue(len(set(df_idx.idx)) == n)
+
+        ## Common random numbers
+        df_crn = gr.eval_sample(
+            self.md_mixed,
+            n=3,
+            df_det=gr.df_make(x0=[0, 1]),
+            seed=101,
+        )
+        self.assertTrue(len(set(df_crn.x1)) == 3)
+
+        ## Non-common random numbers
+        df_ncrn = gr.eval_sample(
+            self.md_mixed,
+            n=3,
+            df_det=gr.df_make(x0=[0, 1]),
+            seed=101,
+            comm=False,
+        )
+        self.assertTrue(len(set(df_ncrn.x1)) == 6)
 
 
 ##################################################
