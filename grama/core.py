@@ -908,7 +908,13 @@ class Model:
 
         if runtime < RUNTIME_LOWER:
             return None
-        return "Estimated runtime: {0:3.4f} sec".format(runtime)
+
+        if runtime >= 3600:
+            return "Estimated runtime: {0:3.4f} hr".format(runtime / 3600)
+        elif runtime >= 60:
+            return "Estimated runtime: {0:3.4f} min".format(runtime / 60)
+        else:
+            return "Estimated runtime: {0:3.4f} sec".format(runtime)
 
     def det_nom(self):
         """Return nominal conditions for deterministic variables
