@@ -1,4 +1,6 @@
 __all__ = [
+    "comp_freeze",
+    "cp_freeze",
     "comp_function",
     "cp_function",
     "comp_vec_function",
@@ -81,6 +83,61 @@ def _comp_function_data(model, fun, var, out, name, runtime):
     return fun, var, out, name, runtime
 
 
+# Freeze inputs
+# -------------------------
+@curry
+def comp_freeze(model, **var):
+    r"""Freeze inputs to a model
+
+    Composition. Remove inputs from a model by "freezing" them to fixed values.
+
+    Args:
+        model (gr.Model): Model to compose
+        var (dict): Dictionary of inputs to freeze (keys) to specific values (value)
+            Provide each key/value pair as a keyword argument
+
+    Returns:
+        gr.Model: New model with frozen inputs
+
+    Examples::
+        import grama as gr
+
+    """
+    ## Check invariants
+    # All variables are provided
+    var_miss = set(set(var.keys())).difference(model.var)
+    if len(var_miss) != 0:
+        raise ValueError(
+            "All inputs listed in `var` argument must be present in model.var.\n" +
+            "Missing inputs {}".format(var_miss)
+        )
+
+    if any(map(lambda x: hasattr(x, "__iter__"), var.values())):
+        raise ValueError(
+            "Iterable input value detected. All values provided must be scalars."
+        )
+
+    ## Create "freezer function"
+    var_diff = list(set(set(model.var)).difference(var.keys()))
+    f = FunctionVectorized(
+        lambda df: df.assign(**var),
+        var_diff,
+        list(var.keys()),
+        "(Freeze inputs: {})".format(list(var.keys())),
+        0
+    )
+
+    ## Add to model
+    model_new = model.copy()
+    model_new.functions.insert(0, f)
+    model_new.update()
+
+    return model_new
+
+
+cp_freeze = add_pipe(comp_freeze)
+
+
 # Add a lambda function
 # -------------------------
 @curry
@@ -90,14 +147,14 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
     Composition. Add a (non-vectorized) function to an existing model. See ``gr.comp_vec_function()`` to add a function that is vectorized over DataFrames.
 
     Args:
-        model (gr.model): Model to compose
+        model (gr.Model): Model to compose
         fun (function): Function taking R^d -> R^r
         var (list(string)): List of variable names or number of inputs
         out (list(string)): List of output names or number of outputs
         runtime (numeric): Estimated single-eval runtime (in seconds)
 
     Returns:
-        gr.model: New model with added function
+        gr.Model: New model with added function
 
     @pre (len(var) == d) | (var == d)
     @pre (len(out) == r) | (var == r)
