@@ -26,6 +26,46 @@ class TestMBI(unittest.TestCase):
 
         self.assertTrue(isinstance(self.md.density, gr.Density))
 
+    def test_freeze(self):
+        md_base = (
+            gr.Model()
+            >> gr.cp_vec_function(
+                fun = lambda df: gr.df_make(
+                    f=df.x + df.y
+                ),
+                var=["x", "y"],
+                out=["f"],
+            )
+            >> gr.cp_marginals(
+                x=gr.marg_mom("norm", mean=0, sd=1),
+                y=gr.marg_mom("norm", mean=0, sd=1),
+            )
+            >> gr.cp_copula_gaussian(
+                df_corr=gr.df_make(var1="x", var2="y", corr=0.5)
+            )
+        )
+
+        md_frz = (
+            md_base
+            >> gr.cp_freeze(x=0)
+        )
+
+        # Correct variable list
+        self.assertTrue(md_frz.var == ["y"])
+
+        # Correct evaluation
+        df_res = gr.eval_df(md_frz, gr.df_make(y=[0, 1]))
+        self.assertTrue(all(df_res["x"] == 0))
+
+        # Freezing non-existent variables raises error
+        with self.assertRaises(ValueError):
+            gr.comp_freeze(md_base, z=0)
+
+        # Freezing with multiple-values raises error
+        with self.assertRaises(ValueError):
+            gr.comp_freeze(md_base, x=[0, 1])
+
+
     def test_comp_function(self):
         """Test comp_function()"""
 
