@@ -81,6 +81,14 @@ class TestModel(unittest.TestCase):
         msg = self.model_slow.runtime_message(pd.DataFrame({"x0": [0]}))
         self.assertTrue(isinstance(msg, str))
 
+        ## Units switch to minutes
+        msg = self.model_slow.runtime_message(pd.DataFrame({"x0": [0] * 60}))
+        self.assertTrue(gr.str_detect(msg, "min"))
+
+        ## Units switch to hours
+        msg = self.model_slow.runtime_message(pd.DataFrame({"x0": [0] * 3600}))
+        self.assertTrue(gr.str_detect(msg, "hr"))
+
     ## Basic functionality with default arguments
 
     def test_catch_input_mismatch(self):
@@ -217,7 +225,7 @@ class TestEvalDf(unittest.TestCase):
     def setUp(self):
         self.model = models.make_test()
         self.df = gr.df_make(x=1)
-        
+
 
     def test_catch_wrong_type(self):
         """Checks that eval_df() raises when wrong input md or df arg is given.
