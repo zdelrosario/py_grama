@@ -86,13 +86,14 @@ def _comp_function_data(model, fun, var, out, name, runtime):
 # Freeze inputs
 # -------------------------
 @curry
-def comp_freeze(model, **var):
+def comp_freeze(model, df=None, **var):
     r"""Freeze inputs to a model
 
     Composition. Remove inputs from a model by "freezing" them to fixed values.
 
     Args:
         model (gr.Model): Model to compose
+        df (pd.DataFrame): DataFrame of values for freeze
         var (dict): Dictionary of inputs to freeze (keys) to specific values (value)
             Provide each key/value pair as a keyword argument
 
@@ -104,6 +105,14 @@ def comp_freeze(model, **var):
 
     """
     ## Check invariants
+    # Process DataFrame if provided
+    if not df is None:
+        if df.shape[0] > 1:
+            raise ValueError(
+                "Provided DataFrame must have only one row."
+            )
+        var = dict(zip(df.columns, df.values.flatten()))
+
     # All variables are provided
     var_miss = set(set(var.keys())).difference(model.var)
     if len(var_miss) != 0:
@@ -129,7 +138,12 @@ def comp_freeze(model, **var):
 
     ## Add to model
     model_new = model.copy()
+    # Remove bounds, if they exist
+    for k in var.keys():
+        model_new.domain.bounds.pop(k, None)
+    # Add new functions
     model_new.functions.insert(0, f)
+    # Update before return
     model_new.update()
 
     return model_new

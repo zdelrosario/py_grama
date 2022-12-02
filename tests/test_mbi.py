@@ -31,11 +31,12 @@ class TestMBI(unittest.TestCase):
             gr.Model()
             >> gr.cp_vec_function(
                 fun = lambda df: gr.df_make(
-                    f=df.x + df.y
+                    f=df.x + df.y + df.z
                 ),
-                var=["x", "y"],
+                var=["x", "y", "z"],
                 out=["f"],
             )
+            >> gr.cp_bounds(z=(-1, +1))
             >> gr.cp_marginals(
                 x=gr.marg_mom("norm", mean=0, sd=1),
                 y=gr.marg_mom("norm", mean=0, sd=1),
@@ -51,20 +52,27 @@ class TestMBI(unittest.TestCase):
         )
 
         # Correct variable list
-        self.assertTrue(md_frz.var == ["y"])
+        self.assertTrue(set(md_frz.var) == {"y", "z"})
 
         # Correct evaluation
-        df_res = gr.eval_df(md_frz, gr.df_make(y=[0, 1]))
+        df_res = gr.eval_df(md_frz, gr.df_make(y=[0, 1], z=0))
         self.assertTrue(all(df_res["x"] == 0))
 
         # Freezing non-existent variables raises error
         with self.assertRaises(ValueError):
-            gr.comp_freeze(md_base, z=0)
+            gr.comp_freeze(md_base, foo=0)
 
         # Freezing with multiple-values raises error
         with self.assertRaises(ValueError):
             gr.comp_freeze(md_base, x=[0, 1])
 
+        # Dataframe input
+        md_frz_df = (
+            md_base
+            >> gr.cp_freeze(df=gr.df_make(x=0, z=0))
+        )
+        self.assertTrue(set(md_frz_df.var) == {"y"})
+        df_res = gr.eval_sample(md_frz_df, n=10, df_det="nom")
 
     def test_comp_function(self):
         """Test comp_function()"""
