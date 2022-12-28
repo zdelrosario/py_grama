@@ -384,20 +384,20 @@ class TestDR(unittest.TestCase):
 
 
 # --------------------------------------------------
-class TestFeaturize(unittest.TestCase):
-    def setUp(self):
-        pass
+# class TestFeaturize(unittest.TestCase):
+#     def setUp(self):
+#         pass
 
-    def test_tran_poly(self):
-        df = gr.df_make(x=[0.0, 1.0, 0.0], y=[0.0, 0.0, 1.0], z=[1.0, 2.0, 3.0],)
-        df_true = df.copy()
-        df_true["1"] = [1.0, 1.0, 1.0]
-        df_true["x^2"] = [0.0, 1.0, 0.0]
-        df_true["x y"] = [0.0, 0.0, 0.0]
-        df_true["y^2"] = [0.0, 0.0, 1.0]
+#     def test_tran_poly(self):
+#         df = gr.df_make(x=[0.0, 1.0, 0.0], y=[0.0, 0.0, 1.0], z=[1.0, 2.0, 3.0],)
+#         df_true = df.copy()
+#         df_true["1"] = [1.0, 1.0, 1.0]
+#         df_true["x^2"] = [0.0, 1.0, 0.0]
+#         df_true["x y"] = [0.0, 0.0, 0.0]
+#         df_true["y^2"] = [0.0, 0.0, 1.0]
 
-        df_res = gr.tran_poly(df, var=["x", "y"], degree=2, keep=True)
-        self.assertTrue(gr.df_equal(df_true, df_res[df_true.columns]))
+#         df_res = gr.tran_poly(df, var=["x", "y"], degree=2, keep=True)
+#         self.assertTrue(gr.df_equal(df_true, df_res[df_true.columns]))
 
 
 # --------------------------------------------------
