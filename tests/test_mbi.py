@@ -58,6 +58,9 @@ class TestMBI(unittest.TestCase):
         df_res = gr.eval_df(md_frz, gr.df_make(y=[0, 1], z=0))
         self.assertTrue(all(df_res["x"] == 0))
 
+        # Can still sample
+        df_samp = gr.eval_sample(md_frz, df_det="nom", n=10)
+
         # Freezing non-existent variables raises error
         with self.assertRaises(ValueError):
             gr.comp_freeze(md_base, foo=0)

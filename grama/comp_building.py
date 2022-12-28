@@ -141,6 +141,16 @@ def comp_freeze(model, df=None, **var):
     # Remove bounds, if they exist
     for k in var.keys():
         model_new.domain.bounds.pop(k, None)
+    # Remove marginals, if they exist
+    for k in var.keys():
+        model_new.density.marginals.pop(k, None)
+    # Reset copula
+    model_new.density = Density(
+        marginals=model_new.density.marginals,
+        copula=CopulaIndependence(model_new.var_rand),
+    )
+    print("... comp_freeze() is resetting copula to independence copula")
+
     # Add new functions
     model_new.functions.insert(0, f)
     # Update before return
