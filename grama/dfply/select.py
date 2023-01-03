@@ -286,5 +286,14 @@ def is_numeric(series):
     Args:
         bool: Boolean corresponding to the datatype of the given column
 
+    Examples::
+        import grama as gr
+        from grama.data import df_diamonds
+
+        (
+            df_diamonds
+            gr.tf_select_if(gr.is_numeric)
+        )
+
     """
     return is_numeric_dtype(series)
