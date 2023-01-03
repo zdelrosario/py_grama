@@ -295,6 +295,16 @@ class TestSelect(unittest.TestCase):
                 >> gr.tf_select_if(lambda col: any(col.str.contains(".")))
             )
         )
+        # test 6: is_numeric helper
+        self.assertEqual(
+            {"carat", "depth", "table", "price", "x", "y", "z"},
+            set(
+                (
+                    data.df_diamonds
+                    >> gr.tf_select_if(gr.is_numeric)
+                ).columns
+            )
+        )
 
     def test_drop_if(self):
         # test 1: returns a dataframe where any column does not have a mean greater than 3

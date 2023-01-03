@@ -7,6 +7,7 @@ __all__ = [
     "tf_drop",
     "tran_drop_if",
     "tf_drop_if",
+    "is_numeric",
     "starts_with",
     "ends_with",
     "contains",
@@ -22,11 +23,12 @@ __all__ = [
 
 import re
 from .base import Intention, dfdelegate, symbolic_evaluation, \
-    group_delegation, flatten
+    group_delegation, flatten, make_symbolic
 from .. import add_pipe
 from numpy import zeros, where, ones
 from numpy import max as npmax
 from pandas import Index, Series
+from pandas.api.types import is_numeric_dtype
 
 
 # ------------------------------------------------------------------------------
@@ -273,3 +275,25 @@ def columns_to(columns, end_col, inclusive=False):
     if isinstance(end_col, str):
         end_col = columns.index(end_col)
     return columns[: end_col + int(inclusive)]
+
+
+@make_symbolic
+def is_numeric(series):
+    """Determine if column is numeric
+
+    Returns True if the provided column is numeric, False otherwise. Intended for calls to select_if() or mutate_if().
+
+    Args:
+        bool: Boolean corresponding to the datatype of the given column
+
+    Examples::
+        import grama as gr
+        from grama.data import df_diamonds
+
+        (
+            df_diamonds
+            gr.tf_select_if(gr.is_numeric)
+        )
+
+    """
+    return is_numeric_dtype(series)
