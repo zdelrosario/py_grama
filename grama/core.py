@@ -894,7 +894,7 @@ class Model:
         """Runtime message
 
         Estimate total runtime based on proposed DataFrame, prepare a message
-        for console print. Print no message if runtime is negligible.
+        for console print.
 
         Args:
             self (gr.Model):
@@ -906,10 +906,9 @@ class Model:
         """
         runtime = self.runtime(df.shape[0])
 
-        if runtime < RUNTIME_LOWER:
-            return None
-
-        if runtime >= 3600:
+        if runtime is None:
+            return "Runtime estimate unavailable; model has no timing data."
+        elif runtime >= 3600:
             return "Estimated runtime: {0:3.4f} hr".format(runtime / 3600)
         elif runtime >= 60:
             return "Estimated runtime: {0:3.4f} min".format(runtime / 60)
