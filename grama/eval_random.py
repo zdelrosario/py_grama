@@ -144,15 +144,8 @@ def eval_sinews(
 
     if skip:
         ## Evaluation estimate
-        runtime_est = model.runtime(df_samp.shape[0])
-        if runtime_est > 0:
-            print(
-                "Estimated runtime for design with model ({0:1}):\n  {1:4.3} sec".format(
-                    model.name, runtime_est
-                )
-            )
-        else:
-            print("Design runtime estimates unavailable; model has no timing data.")
+        runtime_msg = model.runtime_message(df_samp)
+        print(runtime_msg)
 
         ## For autoplot
         with catch_warnings():
@@ -277,6 +270,11 @@ def eval_hybrid(
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
     if skip:
+        ## Evaluation estimate
+        runtime_msg = model.runtime_message(df_samp)
+        print(runtime_msg)
+
+        # Generate design
         with catch_warnings():
             simplefilter("ignore")
             df_samp._meta = dict(
