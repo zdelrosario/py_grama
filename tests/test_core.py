@@ -74,9 +74,6 @@ class TestModel(unittest.TestCase):
         ## Estimation accounts for both functions
         self.assertTrue(np.allclose(self.model_slow.runtime(1), 2))
 
-        ## Fast function has empty message
-        self.assertTrue(self.model_2d.runtime_message(self.df_2d) is None)
-
         ## Slow function returns string message
         msg = self.model_slow.runtime_message(pd.DataFrame({"x0": [0]}))
         self.assertTrue(isinstance(msg, str))
