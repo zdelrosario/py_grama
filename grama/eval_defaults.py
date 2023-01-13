@@ -335,6 +335,10 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
     df_samp = model.var_outer(df_rand, df_det=df_det)
 
     if skip:
+        ## Evaluation estimate
+        runtime_msg = model.runtime_message(df_samp)
+        print(runtime_msg)
+
         return df_samp
     return eval_df(model, df=df_samp, append=append)
 
@@ -523,6 +527,10 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
     ## Construct outer-product DOE
     df_samp = model.var_outer(df_rand, df_det=df_det)
     if skip:
+        ## Evaluation estimate
+        runtime_msg = model.runtime_message(df_samp)
+        print(runtime_msg)
+
         return df_samp
     return eval_df(model, df=df_samp, append=append)
 
@@ -663,15 +671,8 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
 
     if skip:
         ## Evaluation estimate
-        runtime_est = model.runtime(df_samp.shape[0])
-        if runtime_est > 0:
-            print(
-                "Estimated runtime for design with model ({0:1}):\n  {1:4.3} sec".format(
-                    model.name, runtime_est
-                )
-            )
-        else:
-            print("Design runtime estimates unavailable; model has no timing data.")
+        runtime_msg = model.runtime_message(df_samp)
+        print(runtime_msg)
 
         ## Attach metadata
         with catch_warnings():
