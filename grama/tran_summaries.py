@@ -152,6 +152,14 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
     ## Fill NaN's
     df_res.fillna(value=0, inplace=True)
 
+    ## Append metadata for autoplot dispatch
+    with catch_warnings():
+        simplefilter("ignore")
+        df_res._plot_info = {
+            "type": "sobol_outputs",
+            "idx": typename,
+        }
+
     return df_res
 
 
