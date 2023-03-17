@@ -19,6 +19,7 @@ __all__ = [
 from grama import add_pipe, pipe, tf_pivot_longer, tf_outer, tf_select, tf_rename, tf_filter, tf_mutate
 from grama import case_when
 from grama import Intention
+from .string_helpers import str_replace
 from pandas import melt
 
 from plotnine import aes, annotate, ggplot, facet_grid, facet_wrap, labs, guides
@@ -176,28 +177,37 @@ def plot_sobol_outputs(df, idx=None, color="full"):
         df
         >> tf_pivot_longer(
             columns=df.drop(idx, axis=1).columns,
-            names_to="var",
+            names_to="out",
             values_to="S"
         )
     )
+    df_data[idx] = str_replace(df_data[idx], "^S_", "")
 
     if color == "full":
         return (
             df_data
-            >> ggplot(aes("var", idx))
+            >> ggplot(aes(idx, "out"))
             + geom_tile(aes(fill="S"))
             + scale_fill_gradient(name="Sobol' Index", breaks=(0, 0.5, 1), limits=(0, 1))
             + theme_minimal()
             + theme(axis_text_x=element_text(angle=270))
+            + labs(
+                x="var",
+                y="out",
+            )
         )
     elif color == "bw":
         return (
             df_data
-            >> ggplot(aes("var", idx))
+            >> ggplot(aes(idx, "out"))
             + geom_tile(aes(fill="S"))
             + scale_fill_gradient(name="Sobol' Index", low="white", high="black", breaks=(0, 0.5, 1), limits=(0, 1))
             + theme_minimal()
             + theme(axis_text_x=element_text(angle=270))
+            + labs(
+                x="var",
+                y="out",
+            )
         )
     else:
         raise ValueError("Color mode {} not recognized.".format(color))
