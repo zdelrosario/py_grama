@@ -45,7 +45,7 @@ def _sci_format(v):
 ##################################################
 ## eval_contour
 @curry
-def plot_contour(df, var=None, out="out", level="level", aux=False):
+def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"):
     r"""Plot 2d contours
 
     Plot contours. Usually called as a dispatch from plot_auto().
@@ -55,6 +55,7 @@ def plot_contour(df, var=None, out="out", level="level", aux=False):
         out (str): Name of output identifier column
         level (str): Name of level identifier column
         aux (bool): Auxillary variables present?
+        color (str): Color mode; options: "full", "bw"
 
     Returns:
         ggplot: Contour image
@@ -107,7 +108,7 @@ pt_contour = add_pipe(plot_contour)
 ## tran_iocorr
 # --------------------------------------------------
 @curry
-def plot_corrtile(df, var=None, out=None, corr=None):
+def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
     r"""
     """
     return (
@@ -123,7 +124,7 @@ pt_corrtile = add_pipe(plot_corrtile)
 ## Sample
 # --------------------------------------------------
 @curry
-def plot_scattermat(df, var=None):
+def plot_scattermat(df, var=None, color="full"):
     r"""Create a scatterplot matrix
 
     Create a scatterplot matrix. Often used to visualize a design (set of inputs
@@ -133,6 +134,7 @@ def plot_scattermat(df, var=None):
 
     Args:
         var (list of strings): Variables to plot
+        color (str): Color mode; options: "full", "bw"
 
     Returns:
         ggplot: Scatterplot matrix
@@ -246,7 +248,7 @@ pt_scattermat = add_pipe(plot_scattermat)
 
 
 @curry
-def plot_hists(df, out=None, **kwargs):
+def plot_hists(df, out=None, color="full", **kwargs):
     r"""Construct histograms
 
     Create a set of histograms. Often used to visualize the results of random
@@ -256,6 +258,7 @@ def plot_hists(df, out=None, **kwargs):
 
     Args:
         out (list of strings): Variables to plot
+        color (str): Color mode; options: "full", "bw"
 
     Returns:
         Seaborn histogram plot
@@ -305,7 +308,7 @@ pt_hists = add_pipe(plot_hists)
 ## Sinew plots
 # --------------------------------------------------
 @curry
-def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
+def plot_sinew_inputs(df, var=None, color="full", sweep_ind="sweep_ind"):
     r"""Inspect a sinew design
 
     Create a scatterplot matrix with hues. Often used to visualize a sinew
@@ -317,6 +320,7 @@ def plot_sinew_inputs(df, var=None, sweep_ind="sweep_ind"):
         df (Pandas DataFrame): Input design data
         var (list of strings): Variables to plot
         sweep_ind (string): Sweep index column in df
+        color (str): Color mode; options: "full", "bw"
 
     Returns:
         Seaborn scatterplot matrix
@@ -418,7 +422,7 @@ pt_sinew_inputs = add_pipe(plot_sinew_inputs)
 
 @curry
 def plot_sinew_outputs(
-    df, var=None, out=None, sweep_ind="sweep_ind", sweep_var="sweep_var"
+    df, var=None, out=None, sweep_ind="sweep_ind", sweep_var="sweep_var", color="full",
 ):
     r"""Construct sinew plot
 
@@ -433,9 +437,10 @@ def plot_sinew_outputs(
         out (list of strings): Outputs to plot
         sweep_ind (string): Sweep index column in df
         sweep_var (string): Swept variable column in df
+        color (str): Color mode; options: "full", "bw"
 
     Returns:
-        Seaborn relational lineplot
+        Relational lineplot
 
     Examples::
 
@@ -521,13 +526,14 @@ plot_list = {
 
 
 @curry
-def plot_auto(df):
+def plot_auto(df, color="full"):
     r"""Automagic plotting
 
     Convenience tool for various grama outputs. Prints delegated plotting function, which can be called manually with different arguments for more tailored plotting.
 
     Args:
         df (DataFrame): Data output from appropriate grama routine. See gr.plot_list.keys() for list of supported methods.
+        color (str): Color mode; options: "full", "bw"
 
     Returns:
         Plot results
@@ -550,7 +556,7 @@ def plot_auto(df):
 
     print("Calling {0:}....".format(plot_fcn.__name__))
 
-    return plot_fcn(df, **plt_kwargs)
+    return plot_fcn(df, color=color, **plt_kwargs)
 
 
 pt_auto = add_pipe(plot_auto)
