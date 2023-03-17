@@ -225,7 +225,7 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4
     invariants_eval_model(model, False)
     invariants_eval_df(df_base, arg_name="df_base", valid_str=["nom"])
 
-    if df_base is "nom":
+    if df_base == "nom":
         df_base = eval_nominal(model, df_det="nom")
     else:
         df_base = eval_df(model, df=df_base)
