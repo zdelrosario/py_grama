@@ -16,15 +16,16 @@ __all__ = [
     "plot_list",
 ]
 
-from grama import add_pipe, pipe, tf_pivot_longer, tf_outer, tf_select, tf_rename, tf_filter
+from grama import add_pipe, pipe, tf_pivot_longer, tf_outer, tf_select, tf_rename, tf_filter, tf_mutate
+from grama import case_when
 from grama import Intention
 from pandas import melt
 
 from plotnine import aes, annotate, ggplot, facet_grid, facet_wrap, labs, guides
 from plotnine import theme, theme_void, theme_minimal
 from plotnine import element_text, element_rect
-from plotnine import scale_x_continuous, scale_y_continuous, scale_fill_gradient2
-from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_tile
+from plotnine import scale_x_continuous, scale_y_continuous, scale_fill_gradient2, scale_fill_gradientn
+from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_tile, geom_label
 from plotnine import geom_segment, geom_blank
 from matplotlib import gridspec
 
@@ -87,20 +88,38 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
             "or try creating a manual plot."
         )
 
-    return (
-        df
-        >> ggplot()
-        + geom_segment(
-            aes(
-                var[0],
-                var[1],
-                xend=var[0]+"_end",
-                yend=var[1]+"_end",
-                linetype=out,
-                color=level,
+    if color == "full":
+        return (
+            df
+            >> ggplot()
+            + geom_segment(
+                aes(
+                    var[0],
+                    var[1],
+                    xend=var[0]+"_end",
+                    yend=var[1]+"_end",
+                    linetype=out,
+                    color=level,
+                )
             )
         )
-    )
+    elif color == "bw":
+        return (
+            df
+            >> ggplot()
+            + geom_segment(
+                aes(
+                    var[0],
+                    var[1],
+                    xend=var[0]+"_end",
+                    yend=var[1]+"_end",
+                    linetype=out,
+                    group=level,
+                )
+            )
+        )
+    else:
+        raise ValueError("Color mode {} not recognized.".format(color))
 
 
 pt_contour = add_pipe(plot_contour)
@@ -111,13 +130,37 @@ pt_contour = add_pipe(plot_contour)
 def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
     r"""
     """
-    return (
-        df
-        >> ggplot(aes(var, out))
-        + geom_tile(aes(fill=corr))
-        + scale_fill_gradient2(name="Corr", midpoint=0)
-        + theme(axis_text_x=element_text(angle=270))
-    )
+    if color == "full":
+        return (
+            df
+            >> ggplot(aes(var, out))
+            + geom_tile(aes(fill=corr))
+            + scale_fill_gradient2(name="Corr", midpoint=0)
+            + theme(axis_text_x=element_text(angle=270))
+        )
+    elif color == "bw":
+        DF = Intention()
+        return (
+            df
+            >> tf_mutate(
+                sign=case_when(
+                    [DF[corr] > 0, "+"],
+                    [DF[corr] < 0, "-"],
+                    [True, None],
+                )
+            )
+            >> ggplot(aes(var, out))
+            + geom_tile(aes(fill=corr))
+            + geom_label(aes(label="sign"), size=12, label_size=0, fill="white")
+            + scale_fill_gradientn(
+                name="Corr",
+                colors=("black", "white", "black"),
+                values=(0, 0.5, 1),
+            )
+            + theme(axis_text_x=element_text(angle=270))
+        )
+    else:
+        raise ValueError("Color mode {} not recognized.".format(color))
 
 pt_corrtile = add_pipe(plot_corrtile)
 
@@ -134,7 +177,7 @@ def plot_scattermat(df, var=None, color="full"):
 
     Args:
         var (list of strings): Variables to plot
-        color (str): Color mode; options: "full", "bw"
+        color (str): Color mode; value ignored as default vis is black & white
 
     Returns:
         ggplot: Scatterplot matrix
@@ -258,7 +301,7 @@ def plot_hists(df, out=None, color="full", **kwargs):
 
     Args:
         out (list of strings): Variables to plot
-        color (str): Color mode; options: "full", "bw"
+        color (str): Color mode; value ignored as default vis is black & white
 
     Returns:
         Seaborn histogram plot
@@ -346,6 +389,8 @@ def plot_sinew_inputs(df, var=None, color="full", sweep_ind="sweep_ind"):
     """
     if var is None:
         raise ValueError("Must provide input columns list as keyword var")
+    if not (color in ("full", "bw")):
+        raise ValueError("Color mode {} not recognized.".format(color))
 
     ## Define helpers
     labels_blank = lambda v: [""] * len(v)
@@ -385,29 +430,49 @@ def plot_sinew_inputs(df, var=None, color="full", sweep_ind="sweep_ind"):
                         label=v1,
                     )
                     + theme_void()
-                    + guides(color=None)
+                    + guides(color=None, linetype=None)
                 )
 
             ## Scatterplot
             else:
-                p = (
-                    df
-                    >> ggplot(aes(v2, v1, color="factor("+sweep_ind+")"))
-                    + geom_point(size=0.1)
-                    + scale_x_continuous(
-                        breaks=breaks_min,
-                        labels=labels_x,
+                if color == "full":
+                    p = (
+                        df
+                        >> ggplot(aes(v2, v1, color="factor("+sweep_ind+")"))
+                        + geom_point(size=0.1)
+                        + scale_x_continuous(
+                            breaks=breaks_min,
+                            labels=labels_x,
+                        )
+                        + scale_y_continuous(
+                            breaks=breaks_min,
+                            labels=labels_y,
+                        )
+                        + guides(color=None)
+                        + theme_minimal()
+                        + theme(
+                            axis_title=element_text(va="top", size=12),
+                        )
                     )
-                    + scale_y_continuous(
-                        breaks=breaks_min,
-                        labels=labels_y,
+                elif color == "bw":
+                    p = (
+                        df
+                        >> ggplot(aes(v2, v1))
+                        + geom_point(size=0.1)
+                        + scale_x_continuous(
+                            breaks=breaks_min,
+                            labels=labels_x,
+                        )
+                        + scale_y_continuous(
+                            breaks=breaks_min,
+                            labels=labels_y,
+                        )
+                        + guides(color=None)
+                        + theme_minimal()
+                        + theme(
+                            axis_title=element_text(va="top", size=12),
+                        )
                     )
-                    + guides(color=None)
-                    + theme_minimal()
-                    + theme(
-                        axis_title=element_text(va="top", size=12),
-                    )
-                )
 
             _ = p._draw_using_figure(fig, [ax])
 
@@ -479,36 +544,70 @@ def plot_sinew_outputs(
     df_plot = df_plot[df_plot[sweep_var] == df_plot["_var"]]
 
     breaks_min = lambda lims: (lims[0], 0.5 * (lims[0] + lims[1]), lims[1])
-    return (
-        df_plot
-        >> ggplot(aes(
-            "_x",
-            "_y",
-            color="factor(" + sweep_ind + ")",
-            group="factor(" + sweep_ind + ")",
-        ))
-        + geom_line()
-        + facet_grid("_out~_var", scales="free")
+    if color == "full":
+        return (
+            df_plot
+            >> ggplot(aes(
+                "_x",
+                "_y",
+                color="factor(" + sweep_ind + ")",
+                group="factor(" + sweep_ind + ")",
+            ))
+            + geom_line()
+            + facet_grid("_out~_var", scales="free")
 
-        + scale_x_continuous(
-            breaks=breaks_min,
-            labels=_sci_format,
+            + scale_x_continuous(
+                breaks=breaks_min,
+                labels=_sci_format,
+            )
+            + scale_y_continuous(
+                breaks=breaks_min,
+                labels=_sci_format,
+            )
+            + guides(color=None)
+            + theme_minimal()
+            + theme(
+                strip_text_y=element_text(angle=0),
+                panel_border=element_rect(color="black", size=0.5),
+            )
+            + labs(
+                x="Input Value",
+                y="Output Value",
+            )
         )
-        + scale_y_continuous(
-            breaks=breaks_min,
-            labels=_sci_format,
+    elif color == "bw":
+        return (
+            df_plot
+            >> ggplot(aes(
+                "_x",
+                "_y",
+                linetype="factor(" + sweep_ind + ")",
+                group="factor(" + sweep_ind + ")",
+            ))
+            + geom_line()
+            + facet_grid("_out~_var", scales="free")
+
+            + scale_x_continuous(
+                breaks=breaks_min,
+                labels=_sci_format,
+            )
+            + scale_y_continuous(
+                breaks=breaks_min,
+                labels=_sci_format,
+            )
+            + guides(linetype=None)
+            + theme_minimal()
+            + theme(
+                strip_text_y=element_text(angle=0),
+                panel_border=element_rect(color="black", size=0.5),
+            )
+            + labs(
+                x="Input Value",
+                y="Output Value",
+            )
         )
-        + guides(color=None)
-        + theme_minimal()
-        + theme(
-            strip_text_y=element_text(angle=0),
-            panel_border=element_rect(color="black", size=0.5),
-        )
-        + labs(
-            x="Input Value",
-            y="Output Value",
-        )
-    )
+    else:
+        raise ValueError("Color mode {} not recognized.".format(color))
 
 
 pt_sinew_outputs = add_pipe(plot_sinew_outputs)
