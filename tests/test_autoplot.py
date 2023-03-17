@@ -50,12 +50,27 @@ class TestAutoplot(unittest.TestCase):
             df=gr.df_make(x2=[0, 1]),
         )
 
+        self.df_sobol = (
+            self.md_rand
+            >> gr.ev_hybrid(df_det="nom")
+            >> gr.tf_sobol()
+        )
+
     def test_autoplot(self):
+        # Full color
         gr.plot_auto(self.df_mc)
         gr.plot_auto(self.df_mc_skip)
         gr.plot_auto(self.df_sinew)
         gr.plot_auto(self.df_sinew_skip)
         gr.plot_auto(self.df_contour)
+        gr.plot_auto(self.df_sobol)
+        # Black & White
+        gr.plot_auto(self.df_mc, color="bw")
+        gr.plot_auto(self.df_mc_skip, color="bw")
+        gr.plot_auto(self.df_sinew, color="bw")
+        gr.plot_auto(self.df_sinew_skip, color="bw")
+        gr.plot_auto(self.df_contour, color="bw")
+        gr.plot_auto(self.df_sobol, color="bw")
 
         ## iocorr fits into pipeline
         gr.plot_auto(

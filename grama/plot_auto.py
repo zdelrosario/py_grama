@@ -19,13 +19,14 @@ __all__ = [
 from grama import add_pipe, pipe, tf_pivot_longer, tf_outer, tf_select, tf_rename, tf_filter, tf_mutate
 from grama import case_when
 from grama import Intention
+from .string_helpers import str_replace
 from pandas import melt
 
 from plotnine import aes, annotate, ggplot, facet_grid, facet_wrap, labs, guides
 from plotnine import theme, theme_void, theme_minimal
 from plotnine import element_text, element_rect
-from plotnine import scale_x_continuous, scale_y_continuous, scale_fill_gradient2, scale_fill_gradientn
-from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_tile, geom_label
+from plotnine import scale_x_continuous, scale_y_continuous, scale_fill_gradient, scale_fill_gradient2, scale_fill_gradientn
+from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_tile, geom_text
 from plotnine import geom_segment, geom_blank
 from matplotlib import gridspec
 
@@ -136,6 +137,7 @@ def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
             >> ggplot(aes(var, out))
             + geom_tile(aes(fill=corr))
             + scale_fill_gradient2(name="Corr", midpoint=0)
+            + theme_minimal()
             + theme(axis_text_x=element_text(angle=270))
         )
     elif color == "bw":
@@ -151,13 +153,61 @@ def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
             )
             >> ggplot(aes(var, out))
             + geom_tile(aes(fill=corr))
-            + geom_label(aes(label="sign"), size=12, label_size=0, fill="white")
+            + geom_text(aes(label="sign"), size=12, color="white")
             + scale_fill_gradientn(
                 name="Corr",
                 colors=("black", "white", "black"),
                 values=(0, 0.5, 1),
             )
+            + theme_minimal()
             + theme(axis_text_x=element_text(angle=270))
+        )
+    else:
+        raise ValueError("Color mode {} not recognized.".format(color))
+
+pt_corrtile = add_pipe(plot_corrtile)
+
+## tran_sobol
+# --------------------------------------------------
+@curry
+def plot_sobol_outputs(df, idx=None, color="full"):
+    r"""
+    """
+    df_data = (
+        df
+        >> tf_pivot_longer(
+            columns=df.drop(idx, axis=1).columns,
+            names_to="out",
+            values_to="S"
+        )
+    )
+    df_data[idx] = str_replace(df_data[idx], "^S_", "")
+
+    if color == "full":
+        return (
+            df_data
+            >> ggplot(aes(idx, "out"))
+            + geom_tile(aes(fill="S"))
+            + scale_fill_gradient(name="Sobol' Index", breaks=(0, 0.5, 1), limits=(0, 1))
+            + theme_minimal()
+            + theme(axis_text_x=element_text(angle=270))
+            + labs(
+                x="var",
+                y="out",
+            )
+        )
+    elif color == "bw":
+        return (
+            df_data
+            >> ggplot(aes(idx, "out"))
+            + geom_tile(aes(fill="S"))
+            + scale_fill_gradient(name="Sobol' Index", low="white", high="black", breaks=(0, 0.5, 1), limits=(0, 1))
+            + theme_minimal()
+            + theme(axis_text_x=element_text(angle=270))
+            + labs(
+                x="var",
+                y="out",
+            )
         )
     else:
         raise ValueError("Color mode {} not recognized.".format(color))
@@ -621,6 +671,7 @@ plot_list = {
     "sample_inputs": plot_scattermat,
     "sample_outputs": plot_hists,
     "iocorr": plot_corrtile,
+    "sobol_outputs": plot_sobol_outputs,
 }
 
 
