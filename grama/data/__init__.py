@@ -56,7 +56,7 @@ Datasets:
 
         specimen: Specimen identifier
 
-        tensile_strength: Specimen tensile strength (psi)
+        tensile_strength: Specimen tensile strength (psi). The original reference does not specify if this is the yield or ultimate strength.
 
         hardness: Specimen hardness (Rockwell's "E")
 
