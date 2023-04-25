@@ -32,7 +32,7 @@ setup(
     install_requires=[
         "matplotlib",
         "numpy>=1.15",
-        "pandas",
+        "pandas<=1.5.3",
         "plotnine>=0.8.0",
         "scipy",
         "toolz",
