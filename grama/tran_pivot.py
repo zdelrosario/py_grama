@@ -527,9 +527,9 @@ def split_cleanup(
 
     # if any values are None make them NaN
     for i,v in enumerate(names_to):
-        for j, w in enumerate(longer[names_to[i]]):
+        for j, w in enumerate(longer[names_to[i]].values):
             if w is None:
-                longer[names_to[i]][j] = NaN
+                longer[names_to[i]].values[j] = NaN
 
     # reorder values column to the end
     longer = longer[[c for c in longer if c not in values_to] + [values_to]]
@@ -566,8 +566,8 @@ def index_to_cleanup(df, longer, data_index):
     for index in data_index:
         length = len(df[index])
         for i, v in enumerate(longer[index]):
-            if isnull(longer[index][i]):
-                longer[index][i] = longer[index][i%length]
+            if isnull(longer[index].values[i]):
+                longer[index].values[i] = longer[index].values[i%length]
 
     return longer
 
