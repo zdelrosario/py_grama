@@ -76,3 +76,10 @@ class TestSPC(unittest.TestCase):
             >> gr.tf_mutate(idx=gr.as_factor(DF.index // 10))
             >> gr.pt_xbs(group="idx", var="tensile_strength")
         )
+
+        ## Black & White color functionality
+        (
+            data.df_shewhart
+            >> gr.tf_mutate(idx=DF.index // 10)
+            >> gr.pt_xbs(group="idx", var="tensile_strength", color="bw")
+        )

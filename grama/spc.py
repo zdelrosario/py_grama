@@ -13,7 +13,7 @@ from grama import tf_group_by, tf_summarize, tf_mutate, tf_ungroup, tf_filter
 from grama import tf_pivot_longer, tf_left_join
 from grama import mean, sd, lead, lag, consec, case_when
 from grama import n as nfcn
-from plotnine import ggplot, aes, geom_line, geom_hline, geom_point, facet_grid, theme, guides
+from plotnine import ggplot, aes, geom_line, geom_hline, geom_point, facet_grid, theme, theme_minimal, guides
 from plotnine import scale_linetype_manual, scale_shape_manual, scale_color_manual
 from plotnine import labs, labeller
 from numpy import sqrt
@@ -88,7 +88,7 @@ def B4(n):
 
 ## Control Chart constructors
 # --------------------------------------------------
-def plot_xbs(df, group, var, n_side=9, n_delta=6):
+def plot_xbs(df, group, var, n_side=9, n_delta=6, color="full"):
     r"""Construct Xbar and S chart
 
     Construct an Xbar and S chart to assess the state of statistical control of
@@ -102,6 +102,7 @@ def plot_xbs(df, group, var, n_side=9, n_delta=6):
     Keyword args:
         n_side (int): Number of consecutive runs above/below centerline to flag
         n_delta (int): Number of consecutive runs increasing/decreasing to flag
+        color (str): Color mode; "full" for full color, "bw" for greyscale
 
     Returns:
         plotnine object: Xbar and S chart
@@ -212,49 +213,102 @@ def plot_xbs(df, group, var, n_side=9, n_delta=6):
     )
 
     ## Visualize
-    return (
-        df_batched_long
-        >> ggplot(aes(x=group))
-        + geom_hline(
-            data=df_stats_long,
-            mapping=aes(yintercept="_value", linetype="_stat"),
-        )
-        + geom_line(aes(y="_value", group="_var"), size=0.2)
-        + geom_point(
-            aes(y="_value", color="sign", shape="glyph"),
-            size=3,
-        )
+    if color == "full":
+        return (
+            df_batched_long
+            >> ggplot(aes(x=group))
+            + geom_hline(
+                data=df_stats_long,
+                mapping=aes(yintercept="_value", linetype="_stat"),
+            )
+            + geom_line(aes(y="_value", group="_var"), size=0.2)
+            + geom_point(
+                aes(y="_value", color="sign", shape="glyph"),
+                size=3,
+            )
 
-        + scale_color_manual(
-            values={"-2": "blue", "-1": "darkturquoise", "0": "black", "+1": "salmon", "+2": "red"},
+            + scale_color_manual(
+                values={"-2": "blue", "-1": "darkturquoise", "0": "black", "+1": "salmon", "+2": "red"},
+            )
+            + scale_shape_manual(
+                name="Patterns",
+                values={
+                    "Below Limit": "X",
+                    "Above Limit": "X",
+                    "Low Run": "s",
+                    "High Run": "s",
+                    "Increasing Run": "^",
+                    "Decreasing Run": "v",
+                    "None": "."
+                },
+            )
+            + scale_linetype_manual(
+                name="Guideline",
+                values=dict(LCL="dashed", UCL="dashed", center="solid"),
+            )
+            + theme_minimal()
+            + guides(color=None)
+            + facet_grid(
+                "_var~.",
+                scales="free_y",
+                labeller=labeller(dict(X="Mean", S="Variability")),
+            )
+            + labs(
+                x="Group variable ({})".format(group),
+                y="Value ({})".format(var),
+            )
         )
-        + scale_shape_manual(
-            name="Patterns",
-            values={
-                "Below Limit": "s",
-                "Above Limit": "s",
-                "Low Run": "X",
-                "High Run": "X",
-                "Increasing Run": "^",
-                "Decreasing Run": "v",
-                "None": "."
-            },
+    elif color == "bw":
+        return (
+            df_batched_long
+            >> ggplot(aes(x=group))
+            + geom_hline(
+                data=df_stats_long,
+                mapping=aes(yintercept="_value", linetype="_stat"),
+            )
+            + geom_line(aes(y="_value", group="_var"), size=0.2)
+            + geom_point(
+                aes(y="_value", color="sign", shape="glyph"),
+                size=3,
+            )
+
+            + scale_color_manual(
+                values={
+                    "-2": "grey",
+                    "-1": "grey",
+                    "0": "black",
+                    "+1": "grey",
+                    "+2": "grey"
+                },
+            )
+            + scale_shape_manual(
+                name="Patterns",
+                values={
+                    "Below Limit": "X",
+                    "Above Limit": "X",
+                    "Low Run": "s",
+                    "High Run": "s",
+                    "Increasing Run": "^",
+                    "Decreasing Run": "v",
+                    "None": "."
+                },
+            )
+            + scale_linetype_manual(
+                name="Guideline",
+                values=dict(LCL="dashed", UCL="dashed", center="solid"),
+            )
+            + theme_minimal()
+            + guides(color=None)
+            + facet_grid(
+                "_var~.",
+                scales="free_y",
+                labeller=labeller(dict(X="Mean", S="Variability")),
+            )
+            + labs(
+                x="Group variable ({})".format(group),
+                y="Value ({})".format(var),
+            )
         )
-        + scale_linetype_manual(
-            name="Guideline",
-            values=dict(LCL="dashed", UCL="dashed", center="solid"),
-        )
-        + guides(color=None)
-        + facet_grid(
-            "_var~.",
-            scales="free_y",
-            labeller=labeller(dict(X="Mean", S="Variability")),
-        )
-        + labs(
-            x="Group variable ({})".format(group),
-            y="Value ({})".format(var),
-        )
-    )
 
 
 pt_xbs = add_pipe(plot_xbs)
