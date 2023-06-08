@@ -18,7 +18,10 @@ class TestFits(unittest.TestCase):
         ## Smooth model
         self.md_smooth = (
             gr.Model()
-            >> gr.cp_function(fun=lambda x: [x, x + 1], var=["x"], out=["y", "z"])
+            # >> gr.cp_function(fun=lambda x: [x, x + 1], var=["x"], out=["y", "z"])
+            >> gr.cp_vec_function(
+                fun=lambda df: gr.df_make(y=df.x, z=df.x + 1), var=["x"], out=["y", "z"]
+            )
             >> gr.cp_marginals(x={"dist": "uniform", "loc": 0, "scale": 2})
             >> gr.cp_copula_independence()
         )
@@ -28,7 +31,10 @@ class TestFits(unittest.TestCase):
         ## Tree model
         self.md_tree = (
             gr.Model()
-            >> gr.cp_function(fun=lambda x: [0, x < 5], var=["x"], out=["y", "z"])
+            # >> gr.cp_function(fun=lambda x: [0, x < 5], var=["x"], out=["y", "z"])
+            >> gr.cp_vec_function(
+                fun=lambda df: gr.df_make(y=df.x, z=df.x + 1), var=["x"], out=["y", "z"]
+            )
             >> gr.cp_marginals(x={"dist": "uniform", "loc": 0, "scale": 2})
             >> gr.cp_copula_independence()
         )
