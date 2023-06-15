@@ -5,8 +5,7 @@ from grama import cp_bounds, cp_function, cp_copula_independence, cp_marginals, 
 from numpy import sin, pi
 
 
-def fun(x):
-    a, b, x1, x2, x3 = x
+def fun(a, b, x1, x2, x3):
     return sin(x1) + a * sin(x2)**2 + b * x3**4 * sin(x1)
 
 def make_ishigami():

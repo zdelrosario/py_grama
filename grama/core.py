@@ -34,6 +34,11 @@ from scipy.stats import norm, gaussian_kde
 from toolz import curry
 
 
+
+#######
+from collections import Iterable
+
+
 ## Package settings
 RUNTIME_LOWER = 1  # Cutoff threshold for runtime messages
 
@@ -106,8 +111,9 @@ class Function:
         ## Set up output
         n_rows = df.shape[0]
         results = zeros((n_rows, len(self.out)))
+
         for ind in range(n_rows):
-            results[ind] = self.func(df.loc[ind, self.var])
+            results[ind] = self.func(*df.loc[ind, self.var])
 
         ## Package output as DataFrame
         return DataFrame(data=results, columns=self.out)

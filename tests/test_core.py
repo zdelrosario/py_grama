@@ -34,7 +34,7 @@ class TestModel(unittest.TestCase):
         self.model_2d = gr.Model(
             functions=[
                 gr.Function(
-                    lambda x: [x[0], x[1]], ["x0", "x1"], ["y0", "y1"], "test", 0
+                    lambda x0, x1: [x0, x1], ["x0", "x1"], ["y0", "y1"], "test", 0
                 ),
             ],
             domain=domain_2d,
@@ -49,7 +49,7 @@ class TestModel(unittest.TestCase):
         self.model_3d = gr.Model(
             functions=[
                 gr.Function(
-                    lambda x: x[0] + x[1] + x[2], ["x", "y", "z"], ["f"], "test", 0
+                    lambda x, y, z: x + y + z, ["x", "y", "z"], ["f"], "test", 0
                 )
             ],
             density=gr.Density(marginals=marginals),
@@ -111,7 +111,7 @@ class TestModel(unittest.TestCase):
 
     def test_drop_out(self):
         """Checks that output column names are properly dropped"""
-        md = gr.Model() >> gr.cp_function(lambda x: x[0] + 1, var=1, out=1)
+        md = gr.Model() >> gr.cp_function(lambda x0: x0 + 1, var=1, out=1)
         df_in = gr.df_make(x0=[0, 1, 2], y0=[0, 1, 2])
         df_true = gr.df_make(x0=[0, 1, 2], y0=[1, 2, 3])
 
@@ -194,7 +194,7 @@ class TestModel(unittest.TestCase):
         md = (
             gr.Model("model")
             >> gr.cp_function(lambda x: x, var=1, out=1)
-            >> gr.cp_function(lambda x: x[0] + x[1], var=["x0", "y0"], out=1)
+            >> gr.cp_function(lambda x0, y0: x0 + y0, var=["x0", "y0"], out=1)
         )
 
         G_true = nx.DiGraph()

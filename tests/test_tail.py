@@ -18,7 +18,7 @@ class TestFORM(unittest.TestCase):
         self.md = (
             gr.Model()
             >> gr.cp_function(
-                fun=lambda x: self.beta_true * 2 - x[0] - np.sqrt(3) * x[1],
+                fun=lambda x0, x1: self.beta_true * 2 - x0 - np.sqrt(3) * x1,
                 var=2,
                 out=["g"],
             )

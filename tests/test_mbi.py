@@ -128,13 +128,13 @@ class TestMBI(unittest.TestCase):
         with self.assertRaises(ValueError):
             # Cycle by input
             self.md >> gr.cp_function(
-                fun=lambda x: x[0], var=["y0"], out=1
-            ) >> gr.cp_function(fun=lambda x: x[0], var=1, out=["y0"])
+                fun=lambda x0: x0, var=["y0"], out=1
+            ) >> gr.cp_function(fun=lambda x0: x0, var=1, out=["y0"])
         with self.assertRaises(ValueError):
             # Non-unique output
             self.md >> gr.cp_function(
-                fun=lambda x: x[0], var=1, out=["y0"]
-            ) >> gr.cp_function(fun=lambda x: x[0], var=1, out=["y0"])
+                fun=lambda x0: x0, var=1, out=["y0"]
+            ) >> gr.cp_function(fun=lambda x0: x0, var=1, out=["y0"])
 
         ## Check vectorized builder
         md_vec = gr.comp_vec_function(
@@ -148,7 +148,7 @@ class TestMBI(unittest.TestCase):
         """Test model composition"""
         md_inner = (
             gr.Model("inner")
-            >> gr.cp_function(fun=lambda x: x[0] + x[1], var=2, out=1)
+            >> gr.cp_function(fun=lambda x0, x1: x0 + x1, var=2, out=1)
             >> gr.cp_marginals(x0=dict(dist="norm", loc=0, scale=1))
             >> gr.cp_copula_independence()
         )
