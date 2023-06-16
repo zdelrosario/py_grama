@@ -33,7 +33,9 @@ class FunctionRFR(Function):
 
         self.return_std = return_std
         if return_std:
-            self.out = list(map(lambda s: s + "_mean", out)) + list(map(lambda s: s + "_sd", out))
+            self.out = list(map(lambda s: s + "_mean", out)) + list(
+                map(lambda s: s + "_sd", out)
+            )
         else:
             self.out = list(map(lambda s: s + "_mean", out))
 
@@ -72,6 +74,8 @@ def fit_lolo(
     **kwargs
 ):
     r"""Fit a random forest
+
+    DEPRECATED DO NOT USE
 
     Fit a random forest to given data. Specify inputs and outputs, or inherit
     from an existing model.
@@ -153,9 +157,9 @@ def fit_lolo(
     except NameError as e:
         error_string = str(e)
         raise NameError(
-            error_string +
-            "\n\nThis function requires the `lolopy` package. " +
-            "Try running the following to install the package:\n"
+            error_string
+            + "\n\nThis function requires the `lolopy` package. "
+            + "Try running the following to install the package:\n"
             "    pip install lolopy"
         )
 
