@@ -413,7 +413,7 @@ class make_composite_plate_tension(Model):
             name=name,
             functions=[
                 Function(
-                    lambda X: uniaxial_stress_limit(X),
+                    lambda *X: uniaxial_stress_limit(X),
                     make_names(Theta_nom),
                     list(itertools.chain.from_iterable([
                         ["g_11_tension_{}".format(i),
