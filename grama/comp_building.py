@@ -17,6 +17,7 @@ __all__ = [
     "cp_copula_gaussian",
     "comp_marginals",
     "cp_marginals",
+    "getvars",
 ]
 
 from grama import add_pipe, CopulaGaussian, CopulaIndependence, Density, \
@@ -82,6 +83,36 @@ def _comp_function_data(model, fun, var, out, name, runtime):
 
     return fun, var, out, name, runtime
 
+
+# Extract function's variable names
+# -------------------------
+def getvars(f):
+    r"""Get a function's variable names
+
+    Convenience function for extracting a function's variable names. Intended for use with gr.cp_function().
+
+    Args:
+        f (function): Function whose variable names are desired
+
+    Returns:
+        tuple: Variable names
+
+    Examples::
+        import grama as gr
+
+        def fun(x, y, z):
+            return x + y + z
+
+        md = (
+            gr.Model("Test model")
+            >> gr.cp_function(
+                fun=fun,
+                var=gr.getvars(fun),
+                out=["w"],
+            )
+        )
+    """
+    return f.__code__.co_varnames
 
 # Freeze inputs
 # -------------------------
