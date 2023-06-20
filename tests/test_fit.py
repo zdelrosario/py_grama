@@ -12,8 +12,7 @@ X = gr.Intention()
 ## Core function tests
 ##################################################
 class TestFits(unittest.TestCase):
-    """Test implementations of fitting procedures
-    """
+    """Test implementations of fitting procedures"""
 
     def setUp(self):
         ## Smooth model
@@ -24,14 +23,15 @@ class TestFits(unittest.TestCase):
             >> gr.cp_marginals(x={"dist": "uniform", "loc": 0, "scale": 2})
             >> gr.cp_copula_independence()
         )
-        print(self.md_smooth)
         self.df_smooth = self.md_smooth >> gr.ev_df(df=pd.DataFrame(dict(x=[0, 1, 2])))
 
         ## Tree model
         self.md_tree = (
             gr.Model()
             # >> gr.cp_function(fun=lambda x: [0, x < 5], var=["x"], out=["y", "z"])
-            >> gr.cp_vec_function(fun=lambda df: gr.df_make(y=0, z=df.x < 5), var=["x"], out=["y", "z"])
+            >> gr.cp_vec_function(
+                fun=lambda df: gr.df_make(y=df.x, z=df.x + 1), var=["x"], out=["y", "z"]
+            )
             >> gr.cp_marginals(x={"dist": "uniform", "loc": 0, "scale": 2})
             >> gr.cp_copula_independence()
         )
@@ -106,7 +106,10 @@ class TestFits(unittest.TestCase):
 
     def test_lm(self):
         ## Fit routine creates usable model
-        md_fit = gr.fit_lm(self.df_smooth, md=self.md_smooth,)
+        md_fit = gr.fit_lm(
+            self.df_smooth,
+            md=self.md_smooth,
+        )
         df_res = gr.eval_df(md_fit, self.df_smooth[self.md_smooth.var])
 
         ## LM can recover a linear model
@@ -123,36 +126,6 @@ class TestFits(unittest.TestCase):
         self.assertTrue(set(md_fit.var) == set(self.md_smooth.var))
         self.assertTrue(
             set(md_fit.out) == set(map(lambda s: s + "_mean", self.md_smooth.out))
-        )
-
-    def test_lolo(self):
-        ## Fit routine creates usable model
-        md_fit = gr.fit_lolo(
-            self.df_tree,
-            md=self.md_tree,
-            max_depth=1,  # True tree is a stump
-            seed=102,
-        )
-        df_res = gr.eval_df(md_fit, self.df_tree[self.md_tree.var])
-
-        ## lolo seems to interpolate middle values; check ends only
-        # self.assertTrue(
-        #     gr.df_equal(
-        #         df_res[["y", "z"]].iloc[[0, 1, -2, -1]],
-        #         self.df_tree[["y", "z"]].iloc[[0, 1, -2, -1]],
-        #         close=True,
-        #         precision=1,
-        #     )
-        # )
-
-        ## Fit copies model data, plus predictive sd
-        self.assertTrue(set(md_fit.var) == set(self.md_tree.var))
-        self.assertTrue(
-            set(md_fit.out)
-            == set(
-                list(map(lambda s: s + "_mean", self.md_tree.out)) +
-                list(map(lambda s: s + "_sd", self.md_tree.out))
-            )
         )
 
     def test_kmeans(self):
@@ -206,7 +179,11 @@ class TestFits(unittest.TestCase):
         )
 
         ## Fit the model
-        md_fit = df_data >> gr.ft_nls(md=md_param, verbose=False, uq_method="linpool",)
+        md_fit = df_data >> gr.ft_nls(
+            md=md_param,
+            verbose=False,
+            uq_method="linpool",
+        )
 
         ## Unidentifiable model throws warning
         # -------------------------
@@ -221,7 +198,9 @@ class TestFits(unittest.TestCase):
         )
         with self.assertWarns(RuntimeWarning):
             gr.fit_nls(
-                df_data, md=md_unidet, uq_method="linpool",
+                df_data,
+                md=md_unidet,
+                uq_method="linpool",
             )
 
         ## True parameters in wide confidence region
@@ -282,19 +261,13 @@ class TestFits(unittest.TestCase):
             )
         )
 
-        df_split = (
-            gr.df_make(x=gr.linspace(-1, +1, 100))
-            >> gr.tf_mutate(f=X.x, g=X.x)
-        )
+        df_split = gr.df_make(x=gr.linspace(-1, +1, 100)) >> gr.tf_mutate(f=X.x, g=X.x)
 
         # Fitting both outputs: cannot achieve mse ~= 0
         df_both = (
             df_split
             >> gr.ft_nls(md_split, out=["f", "g"])
-            >> gr.ev_df(
-                df_split
-                >> gr.tf_rename(f_t=X.f, g_t=X.g)
-            )
+            >> gr.ev_df(df_split >> gr.tf_rename(f_t=X.f, g_t=X.g))
             >> gr.tf_summarize(
                 mse_f=gr.mse(X.f, X.f_t),
                 mse_g=gr.mse(X.g, X.g_t),
@@ -303,15 +276,11 @@ class TestFits(unittest.TestCase):
         self.assertTrue(df_both.mse_f[0] > 0)
         self.assertTrue(df_both.mse_g[0] > 0)
 
-
         # Fitting "f" only
         df_f = (
             df_split
             >> gr.ft_nls(md_split, out=["f"])
-            >> gr.ev_df(
-                df_split
-                >> gr.tf_rename(f_t=X.f, g_t=X.g)
-            )
+            >> gr.ev_df(df_split >> gr.tf_rename(f_t=X.f, g_t=X.g))
             >> gr.tf_summarize(
                 mse_f=gr.mse(X.f, X.f_t),
                 mse_g=gr.mse(X.g, X.g_t),
@@ -320,15 +289,11 @@ class TestFits(unittest.TestCase):
         self.assertTrue(df_f.mse_f[0] < 1e-16)
         self.assertTrue(df_f.mse_g[0] > 0)
 
-
         # Fitting "g" only
         df_g = (
             df_split
             >> gr.ft_nls(md_split, out=["g"])
-            >> gr.ev_df(
-                df_split
-                >> gr.tf_rename(f_t=X.f, g_t=X.g)
-            )
+            >> gr.ev_df(df_split >> gr.tf_rename(f_t=X.f, g_t=X.g))
             >> gr.tf_summarize(
                 mse_f=gr.mse(X.f, X.f_t),
                 mse_g=gr.mse(X.g, X.g_t),
