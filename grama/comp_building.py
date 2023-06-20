@@ -172,7 +172,7 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
 
     Args:
         model (gr.Model): Model to compose
-        fun (function): Function taking R^d -> R^r
+        fun (function): Function taking at least one real input and returns at least one real output (fun: R^d -> R^r). Each input to `fun` must be a scalar (See examples below).
         var (list(string)): List of variable names or number of inputs
         out (list(string)): List of output names or number of outputs
         runtime (numeric): Estimated single-eval runtime (in seconds)
@@ -194,6 +194,26 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
                 var=["x"],
                 out=["y"],
                 name="identity"
+            )
+        )
+
+        ## Providing a function with multiple inputs
+        md2 = (
+            gr.Model("test 2")
+            >> gr.cp_function(
+                fun=lambda x, y: x + y,
+                var=["x", "y"],
+                out=["f"],
+            )
+        )
+
+        ## Providing a function with multiple inputs and multiple outputs
+        md3 = (
+            gr.Model("test 3")
+            >> gr.cp_function(
+                fun=lambda x, y: [x + y, x - y],
+                var=["x", "y"],
+                out=["f", "g"],
             )
         )
 
