@@ -23,7 +23,6 @@ class TestFits(unittest.TestCase):
             >> gr.cp_marginals(x={"dist": "uniform", "loc": 0, "scale": 2})
             >> gr.cp_copula_independence()
         )
-        print(self.md_smooth)
         self.df_smooth = self.md_smooth >> gr.ev_df(df=pd.DataFrame(dict(x=[0, 1, 2])))
 
         ## Tree model
