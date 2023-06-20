@@ -34,11 +34,6 @@ from scipy.stats import norm, gaussian_kde
 from toolz import curry
 
 
-
-#######
-from collections import Iterable
-
-
 ## Package settings
 RUNTIME_LOWER = 1  # Cutoff threshold for runtime messages
 
