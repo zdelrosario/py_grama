@@ -684,6 +684,7 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
 
         return df_samp
 
+
     df_res = eval_df(model, df=df_samp, append=append)
     ## Attach metadata
     with catch_warnings():

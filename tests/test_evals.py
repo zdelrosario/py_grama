@@ -161,7 +161,7 @@ class TestDefaults(unittest.TestCase):
 
         self.model_2d = gr.Model(
             functions=[
-                gr.Function(lambda x: [x[0], x[1]], ["x", "y"], ["f", "g"], "test", 0)
+                gr.Function(lambda x, y: [x, y], ["x", "y"], ["f", "g"], "test", 0)
             ],
             domain=domain_2d,
             density=gr.Density(
@@ -310,7 +310,7 @@ class TestDefaults(unittest.TestCase):
         ## Flags
         md_test = (
             gr.Model()
-            >> gr.cp_function(fun=lambda x: x[0] + x[1] ** 2, var=2, out=1)
+            >> gr.cp_function(fun=lambda x0, x1: x0 + x1 ** 2, var=2, out=1)
             >> gr.cp_marginals(x0={"dist": "norm", "loc": 0, "scale": 1})
         )
         df_base = pd.DataFrame(dict(x0=[0, 1], x1=[0, 1]))
@@ -368,7 +368,7 @@ class TestRandomSampling(unittest.TestCase):
 
         self.md_2d = (
             gr.Model()
-            >> gr.cp_function(fun=lambda x: x[0], var=2, out=1)
+            >> gr.cp_function(fun=lambda x0, x1: x0, var=2, out=1)
             >> gr.cp_marginals(
                 x0={"dist": "uniform", "loc": 0, "scale": 1},
                 x1={"dist": "uniform", "loc": 0, "scale": 1},
@@ -378,7 +378,7 @@ class TestRandomSampling(unittest.TestCase):
 
         self.md_mixed = (
             gr.Model()
-            >> gr.cp_function(fun=lambda x: x[0] + x[1], var=2, out=1)
+            >> gr.cp_function(fun=lambda x0, x1: x0 + x1, var=2, out=1)
             >> gr.cp_bounds(x0=(-1, +1))
             >> gr.cp_marginals(
                 x1={"dist": "uniform", "loc": 0, "scale": 1},
@@ -466,7 +466,7 @@ class TestRandom(unittest.TestCase):
 
         self.md_mixed = (
             gr.Model()
-            >> gr.cp_function(fun=lambda x: x[0], var=3, out=1)
+            >> gr.cp_function(fun=lambda x0, x1, x2: x0, var=3, out=1)
             >> gr.cp_bounds(x2=(0, 1))
             >> gr.cp_marginals(
                 x0={"dist": "uniform", "loc": 0, "scale": 1},
@@ -582,14 +582,14 @@ class TestOpt(unittest.TestCase):
         ## Setup
         md_feat = (
             gr.Model()
-            >> gr.cp_function(fun=lambda x: x[0] * x[1] + x[2], var=3, out=1,)
+            >> gr.cp_function(fun=lambda x0, x1, x2: x0 * x1 + x2, var=3, out=1,)
             >> gr.cp_bounds(x0=[-1, +1], x2=[0, 0])
             >> gr.cp_marginals(x1=dict(dist="norm", loc=0, scale=1))
         )
 
         md_const = (
             gr.Model()
-            >> gr.cp_function(fun=lambda x: x[0], var=1, out=1)
+            >> gr.cp_function(fun=lambda x0: x0, var=1, out=1)
             >> gr.cp_bounds(x0=(-1, +1))
         )
 
@@ -653,13 +653,13 @@ class TestOpt(unittest.TestCase):
         md_bowl = (
             gr.Model("Constrained bowl")
             >> gr.cp_function(
-                fun=lambda x: x[0] ** 2 + x[1] ** 2, var=["x", "y"], out=["f"],
+                fun=lambda x, y: x ** 2 + y ** 2, var=["x", "y"], out=["f"],
             )
             >> gr.cp_function(
-                fun=lambda x: (x[0] + x[1] + 1), var=["x", "y"], out=["g1"],
+                fun=lambda x, y: (x + y + 1), var=["x", "y"], out=["g1"],
             )
             >> gr.cp_function(
-                fun=lambda x: -(-x[0] + x[1] - np.sqrt(2 / 10)),
+                fun=lambda x, y: -(-x + y - np.sqrt(2 / 10)),
                 var=["x", "y"],
                 out=["g2"],
             )

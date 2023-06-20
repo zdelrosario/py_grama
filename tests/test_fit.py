@@ -18,14 +18,11 @@ class TestFits(unittest.TestCase):
         ## Smooth model
         self.md_smooth = (
             gr.Model()
-            # >> gr.cp_function(fun=lambda x: [x, x + 1], var=["x"], out=["y", "z"])
-            >> gr.cp_vec_function(
-                fun=lambda df: gr.df_make(y=df.x, z=df.x + 1), var=["x"], out=["y", "z"]
-            )
+            >> gr.cp_function(fun=lambda x: [x, x + 1], var=["x"], out=["y", "z"])
+            # >> gr.cp_vec_function(fun=lambda df: gr.df_make(y=df.x, z=df.x + 1), var=["x"], out=["y", "z"])
             >> gr.cp_marginals(x={"dist": "uniform", "loc": 0, "scale": 2})
             >> gr.cp_copula_independence()
         )
-
         self.df_smooth = self.md_smooth >> gr.ev_df(df=pd.DataFrame(dict(x=[0, 1, 2])))
 
         ## Tree model
@@ -159,7 +156,7 @@ class TestFits(unittest.TestCase):
         md_true = (
             gr.Model()
             >> gr.cp_function(
-                fun=lambda x: a_true * np.exp(x[0] * c_true) + x[1],
+                fun=lambda x, epsilon: a_true * np.exp(x * c_true) + epsilon,
                 var=["x", "epsilon"],
                 out=["y"],
             )
@@ -174,7 +171,9 @@ class TestFits(unittest.TestCase):
         md_param = (
             gr.Model()
             >> gr.cp_function(
-                fun=lambda x: x[2] * np.exp(x[0] * x[1]), var=["x", "c", "a"], out=["y"]
+                fun=lambda x, c, a: a * np.exp(x * c), 
+                var=["x", "c", "a"], 
+                out=["y"]
             )
             >> gr.cp_bounds(c=[0, 4], a=[0.1, 2.0])
         )
@@ -191,7 +190,7 @@ class TestFits(unittest.TestCase):
         md_unidet = (
             gr.Model()
             >> gr.cp_function(
-                fun=lambda x: x[2] / x[3] * np.exp(x[0] * x[1]),
+                fun=lambda x, c, a, z: a / z * np.exp(x * c),
                 var=["x", "c", "a", "z"],
                 out=["y"],
             )
@@ -222,7 +221,9 @@ class TestFits(unittest.TestCase):
         md_fixed = (
             gr.Model()
             >> gr.cp_function(
-                fun=lambda x: x[2] * np.exp(x[0] * x[1]), var=["x", "c", "a"], out=["y"]
+                fun=lambda x, c, a: a * np.exp(x * c),
+                var=["x", "c", "a"],
+                out=["y"]
             )
             >> gr.cp_bounds(c=[0, 4], a=[1, 1])
         )

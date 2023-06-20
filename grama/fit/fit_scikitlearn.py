@@ -121,6 +121,7 @@ class FunctionRegressor(Function):
 
     def eval(self, df):
         ## Check invariant; model inputs must be subset of df columns
+
         if not set(self.var).issubset(set(df.columns)):
             raise ValueError(
                 "Model function `{}` var not a subset of given columns".format(

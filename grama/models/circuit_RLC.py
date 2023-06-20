@@ -21,7 +21,7 @@ def make_prlc():
             var=["L", "C"],
             out=["omega0"],
         )
-        >> cp_function(
+        >> cp_vec_function(
             fun=lambda df: df_make(Q=df.omega0 * df.R * df.C),
             name="parallel RLC",
             var=["omega0", "R", "C"],

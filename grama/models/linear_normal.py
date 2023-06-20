@@ -3,9 +3,7 @@ __all__ = ["make_linear_normal"]
 from grama import cp_copula_independence, cp_function, cp_marginals, Model
 
 
-def limit_state(x):
-    x1, x2 = x
-
+def limit_state(x1, x2):
     return 1 - x1 - x2
 
 def make_linear_normal():

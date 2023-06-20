@@ -9,8 +9,7 @@ from pandas import DataFrame
 df_test_input = DataFrame(data={"x0": [0], "x1": [0], "x2": [0]})
 
 ## Define a test model
-def fun(x):
-    x1, x2, x3 = x
+def fun(x1, x2, x3):
     return x1 + x2 + x3
 
 def make_test():
