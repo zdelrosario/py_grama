@@ -20,9 +20,19 @@ __all__ = [
     "getvars",
 ]
 
-from grama import add_pipe, CopulaGaussian, CopulaIndependence, Density, \
-    Function, FunctionModel, FunctionVectorized, Marginal, MarginalNamed, \
-    pipe, tran_copula_corr
+from grama import (
+    add_pipe,
+    CopulaGaussian,
+    CopulaIndependence,
+    Density,
+    Function,
+    FunctionModel,
+    FunctionVectorized,
+    Marginal,
+    MarginalNamed,
+    pipe,
+    tran_copula_corr,
+)
 from .eval_defaults import eval_sample
 from collections import ChainMap
 from pandas import concat, DataFrame
@@ -32,8 +42,7 @@ from toolz import curry
 ## Model Building Interface (MBI) tools
 ##################################################
 def _comp_function_data(model, fun, var, out, name, runtime):
-    r"""Internal function builder
-    """
+    r"""Internal function builder"""
     model_new = model.copy()
 
     # Check invariants
@@ -114,6 +123,7 @@ def getvars(f):
     """
     return f.__code__.co_varnames
 
+
 # Freeze inputs
 # -------------------------
 @curry
@@ -139,17 +149,15 @@ def comp_freeze(model, df=None, **var):
     # Process DataFrame if provided
     if not df is None:
         if df.shape[0] > 1:
-            raise ValueError(
-                "Provided DataFrame must have only one row."
-            )
+            raise ValueError("Provided DataFrame must have only one row.")
         var = dict(zip(df.columns, df.values.flatten()))
 
     # All variables are provided
     var_miss = set(set(var.keys())).difference(model.var)
     if len(var_miss) != 0:
         raise ValueError(
-            "All inputs listed in `var` argument must be present in model.var.\n" +
-            "Missing inputs {}".format(var_miss)
+            "All inputs listed in `var` argument must be present in model.var.\n"
+            + "Missing inputs {}".format(var_miss)
         )
 
     if any(map(lambda x: hasattr(x, "__iter__"), var.values())):
@@ -164,7 +172,7 @@ def comp_freeze(model, df=None, **var):
         var_diff,
         list(var.keys()),
         "(Freeze inputs: {})".format(list(var.keys())),
-        0
+        0,
     )
 
     ## Add to model
@@ -566,8 +574,13 @@ def comp_marginals(model, **kwargs):
             except KeyError:
                 sign = 0
 
+            try:
+                source = value_copy.pop("source")
+            except KeyError:
+                source = "real"
+
             new_model.density.marginals[key] = MarginalNamed(
-                sign=sign, d_name=dist, d_param=value_copy
+                sign=sign, d_name=dist, d_param=value_copy, source=source
             )
 
         ## Handle Marginal input
@@ -667,7 +680,10 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
         new_model = model.copy()
         new_model.density = Density(
             marginals=model.density.marginals,
-            copula=CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
+            copula=CopulaGaussian(
+                list(model.density.marginals.keys()),
+                df_corr,
+            ),
         )
         new_model.update()
 
@@ -679,7 +695,10 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
 
         new_model.density = Density(
             marginals=model.density.marginals,
-            copula=CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
+            copula=CopulaGaussian(
+                list(model.density.marginals.keys()),
+                df_corr,
+            ),
         )
         new_model.update()
 

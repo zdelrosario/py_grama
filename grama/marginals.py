@@ -19,20 +19,103 @@ from numpy import max as npmax
 from numpy.random import uniform as runif
 from pandas import DataFrame
 from scipy.optimize import root_scalar, root
-from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
-    bradford, burr, burr12, cauchy, chi, chi2, cosine, crystalball, dgamma, \
-    dweibull, erlang, expon, exponnorm, exponweib, exponpow, f, fatiguelife, \
-    fisk, foldcauchy, foldnorm, gaussian_kde, genlogistic, gennorm, genpareto, \
-    genexpon, genextreme, gausshyper, gamma, gengamma, genhalflogistic, \
-    gilbrat, gompertz, gumbel_r, gumbel_l, halfcauchy, halflogistic, \
-    halfnorm, halfgennorm, hypsecant, invgamma, invgauss, invweibull, \
-    johnsonsb, johnsonsu, kappa4, kappa3, ksone, kstwobign, laplace, levy, \
-    levy_l, levy_stable, logistic, loggamma, loglaplace, lognorm, lomax, \
-    maxwell, mielke, moyal, nakagami, ncx2, ncf, nct, norm, norminvgauss, \
-    pareto, pearson3, powerlaw, powerlognorm, powernorm, rdist, rayleigh, \
-    rice, recipinvgauss, skewnorm, t, trapz, triang, truncexpon, truncnorm, \
-    tukeylambda, uniform, vonmises, vonmises_line, wald, weibull_min, \
-    weibull_max, wrapcauchy
+from scipy.stats import (
+    alpha,
+    anglit,
+    arcsine,
+    argus,
+    beta,
+    betaprime,
+    bradford,
+    burr,
+    burr12,
+    cauchy,
+    chi,
+    chi2,
+    cosine,
+    crystalball,
+    dgamma,
+    dweibull,
+    erlang,
+    expon,
+    exponnorm,
+    exponweib,
+    exponpow,
+    f,
+    fatiguelife,
+    fisk,
+    foldcauchy,
+    foldnorm,
+    gaussian_kde,
+    genlogistic,
+    gennorm,
+    genpareto,
+    genexpon,
+    genextreme,
+    gausshyper,
+    gamma,
+    gengamma,
+    genhalflogistic,
+    gilbrat,
+    gompertz,
+    gumbel_r,
+    gumbel_l,
+    halfcauchy,
+    halflogistic,
+    halfnorm,
+    halfgennorm,
+    hypsecant,
+    invgamma,
+    invgauss,
+    invweibull,
+    johnsonsb,
+    johnsonsu,
+    kappa4,
+    kappa3,
+    ksone,
+    kstwobign,
+    laplace,
+    levy,
+    levy_l,
+    levy_stable,
+    logistic,
+    loggamma,
+    loglaplace,
+    lognorm,
+    lomax,
+    maxwell,
+    mielke,
+    moyal,
+    nakagami,
+    ncx2,
+    ncf,
+    nct,
+    norm,
+    norminvgauss,
+    pareto,
+    pearson3,
+    powerlaw,
+    powerlognorm,
+    powernorm,
+    rdist,
+    rayleigh,
+    rice,
+    recipinvgauss,
+    skewnorm,
+    t,
+    trapz,
+    triang,
+    truncexpon,
+    truncnorm,
+    tukeylambda,
+    uniform,
+    vonmises,
+    vonmises_line,
+    wald,
+    weibull_min,
+    weibull_max,
+    wrapcauchy,
+)
 
 
 ## Scipy metadata
@@ -243,11 +326,11 @@ param_dist = {
 ##################################################
 # Marginal parent class
 class Marginal(ABC):
-    """Parent class for marginal distributions
-    """
+    """Parent class for marginal distributions"""
 
-    def __init__(self, sign=0):
+    def __init__(self, source="real", sign=0):
         self.sign = sign
+        self.source = source
 
     @abstractmethod
     def copy(self):
@@ -296,13 +379,15 @@ class MarginalNamed(Marginal):
 
     def __init__(self, d_name=None, d_param=None, **kw):
         super().__init__(**kw)
-
         self.d_name = d_name
         self.d_param = d_param
 
     def copy(self):
         new_marginal = MarginalNamed(
-            sign=self.sign, d_name=self.d_name, d_param=copy.deepcopy(self.d_param)
+            sign=self.sign,
+            source=self.source,
+            d_name=self.d_name,
+            d_param=copy.deepcopy(self.d_param),
         )
 
         return new_marginal
@@ -331,11 +416,12 @@ class MarginalNamed(Marginal):
     def summary(self, dig=2):
         stats = valid_dist[self.d_name](**self.d_param).stats("mvsk")
         param = {
+            "source": self.source,
             "mean": "{0:4.3e}".format(stats[0].round(dig)),
             "s.d.": "{0:4.3e}".format(sqrt(stats[1]).round(dig)),
             "COV": round(sqrt(stats[1]) / stats[0], dig),
             "skew.": stats[2].round(dig),
-            "kurt.": stats[3].round(dig) + 3, # full kurtosis
+            "kurt.": stats[3].round(dig) + 3,  # full kurtosis
         }
         return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, param)
 
@@ -352,7 +438,10 @@ class MarginalGKDE(Marginal):
         self._set_bracket()
 
     def copy(self):
-        new_marginal = MarginalGKDE(kde=copy.deepcopy(self.kde), atol=self.atol,)
+        new_marginal = MarginalGKDE(
+            kde=copy.deepcopy(self.kde),
+            atol=self.atol,
+        )
 
         return new_marginal
 
@@ -432,20 +521,22 @@ class MarginalGKDE(Marginal):
             self.bracket[0], self.bracket[1], self.atol
         )
 
+
 ## Marginal functions
 ##################################################
 def marg_mom(
-        dist,
-        mean=None,
-        sd=None,
-        cov=None,
-        var=None,
-        skew=None,
-        kurt=None,
-        kurt_excess=None,
-        floc=None,
-        sign=0,
-        dict_x0=None,
+    dist,
+    mean=None,
+    sd=None,
+    cov=None,
+    var=None,
+    skew=None,
+    kurt=None,
+    kurt_excess=None,
+    floc=None,
+    sign=0,
+    dict_x0=None,
+    source="real",
 ):
     r"""Fit scipy.stats continuous distribution via moments
 
@@ -508,35 +599,29 @@ def marg_mom(
     if mean is None:
         raise ValueError("Must provide `mean` argument.")
     if (sd is None) and (var is None) and (cov is None):
-        raise ValueError(
-            "One of `sd`, `cov`, or `var` must be provided."
-        )
+        raise ValueError("One of `sd`, `cov`, or `var` must be provided.")
     if sum([(not sd is None), (not var is None), (not cov is None)]) > 1:
-        raise ValueError(
-            "Only one of `sd`, `cov`, and `var` may be provided."
-        )
+        raise ValueError("Only one of `sd`, `cov`, and `var` may be provided.")
     if (not kurt is None) and (not kurt_excess is None):
-        raise ValueError(
-            "Only one of `kurt` and `kurt_excess` may be provided."
-        )
+        raise ValueError("Only one of `kurt` and `kurt_excess` may be provided.")
 
     ## Process arguments
     # Transform to "standard" moments
-    if (not sd is None):
+    if not sd is None:
         var = sd**2
-    if (not cov is None):
-        var = (mean * cov)**2
-    if (not kurt is None):
+    if not cov is None:
+        var = (mean * cov) ** 2
+    if not kurt is None:
         kurt_excess = kurt - 3
 
     # Build up target moments
     s = "mv"
     m_target = array([mean, var])
 
-    if (not skew is None):
+    if not skew is None:
         s = s + "s"
         m_target = concatenate((m_target, array([skew])))
-    if (not kurt is None):
+    if not kurt is None:
         s = s + "k"
         m_target = concatenate((m_target, array([kurt_excess])))
     n_provided = len(s)
@@ -561,15 +646,17 @@ def marg_mom(
         key_wk = {key for key in param_dist[dist] if key != "loc"}
 
     if floc is None:
+
         def _obj(v):
             kw = dict(zip(key_wk, v))
             return array(valid_dist[dist](**kw).stats(s)) - m_target
+
     else:
+
         def _obj(v):
             kw = dict(zip(key_wk, v))
             kw["loc"] = floc
             return array(valid_dist[dist](**kw).stats(s)) - m_target
-
 
     ## Generate initial guess
     if dict_x0 is None:
@@ -598,8 +685,8 @@ def marg_mom(
                 df=10,
                 c=10,
                 beta=1,
-                #K=None,
-                #chi=None,
+                # K=None,
+                # chi=None,
             )
 
     # Repackage for optimizer
@@ -612,15 +699,16 @@ def marg_mom(
     if res.success is False:
         raise RuntimeError(
             "Moment matching failed; initial guess may be poor, or requested "
-            "moments may be infeasible. Try setting `dict_x0`. " +
-            "Printing optimization results for debugging:\n\n{}".format(res)
+            "moments may be infeasible. Try setting `dict_x0`. "
+            + "Printing optimization results for debugging:\n\n{}".format(res)
         )
 
     ## Repackage and return
     param = dict(zip(key_wk, res.x))
     if floc is not None:
         param["loc"] = floc
-    return MarginalNamed(sign=sign, d_name=dist, d_param=param)
+    return MarginalNamed(sign=sign, d_name=dist, d_param=param, source=source)
+
 
 ## Fit a named scipy.stats distribution
 def marg_fit(dist, data, name=True, sign=None, **kwargs):
