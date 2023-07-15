@@ -4,7 +4,7 @@ setup(
     name="py_grama",
     author="Zachary del Rosario",
     author_email="zdelrosario@outlook.com",
-    version="0.3.5",
+    version="0.3.6",
     packages=[
         "grama",
         "grama.data",
@@ -32,6 +32,7 @@ setup(
     install_requires=[
         "matplotlib",
         "numpy>=1.15",
+        "scipy>=1.10",
         "pandas<=1.5.3",
         "plotnine>=0.8.0",
         "scipy",
