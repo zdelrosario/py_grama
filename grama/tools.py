@@ -30,7 +30,7 @@ from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
     dweibull, erlang, expon, exponnorm, exponweib, exponpow, f, fatiguelife, \
     fisk, foldcauchy, foldnorm, gaussian_kde, genlogistic, gennorm, genpareto, \
     genexpon, genextreme, gausshyper, gamma, gengamma, genhalflogistic, \
-    gilbrat, gompertz, gumbel_r, gumbel_l, halfcauchy, halflogistic, \
+    gibrat, gompertz, gumbel_r, gumbel_l, halfcauchy, halflogistic, \
     halfnorm, halfgennorm, hypsecant, invgamma, invgauss, invweibull, \
     johnsonsb, johnsonsu, kappa4, kappa3, ksone, kstwobign, laplace, levy, \
     levy_l, levy_stable, logistic, loggamma, loglaplace, lognorm, lomax, \
@@ -82,7 +82,7 @@ valid_dist = {
     "gengamma": gengamma,
     "genhalflogistic": genhalflogistic,
     # "geninvgauss": geninvgauss,
-    "gilbrat": gilbrat,
+    "gibrat": gibrat,
     "gompertz": gompertz,
     "gumbel_r": gumbel_r,
     "gumbel_l": gumbel_l,
@@ -183,7 +183,7 @@ param_dist = {
     "gengamma": ["a", "c", "loc", "scale"],
     "genhalflogistic": ["c", "loc", "scale"],
     "geninvgauss": ["p", "b", "loc", "scale"],
-    "gilbrat": ["loc", "scale"],
+    "gibrat": ["loc", "scale"],
     "gompertz": ["c", "loc", "scale"],
     "gumbel_r": ["loc", "scale"],
     "gumbel_l": ["loc", "scale"],
