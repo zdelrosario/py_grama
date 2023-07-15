@@ -4,7 +4,7 @@ setup(
     name="py_grama",
     author="Zachary del Rosario",
     author_email="zdelrosario@outlook.com",
-    version="0.3.4",
+    version="0.3.5",
     packages=[
         "grama",
         "grama.data",
@@ -39,14 +39,12 @@ setup(
         "networkx",
     ],
     extras_require={
-        "lolo": ["lolopy"],
         "matminer": ["pymatgen==2021.2.8.1", "matminer"],
         "sklearn": ["scikit-learn"],
         "statsmodels": ["statsmodels"],
         "pyDOE": ["pyDOE"],
         "umap": ["umap-learn"],
         "dev": [
-            "lolopy",
             "pymatgen==2021.2.8.1",
             "matminer",
             "scikit-learn",
