@@ -330,6 +330,10 @@ class Marginal(ABC):
 
     def __init__(self, source="real", sign=0):
         self.sign = sign
+        if source not in ["real", "error"]:
+            raise ValueError(
+                "Your source of variability must be either 'real' or 'error'!"
+            )
         self.source = source
 
     @abstractmethod
