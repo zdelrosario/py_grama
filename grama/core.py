@@ -350,6 +350,10 @@ class CopulaIndependence(Copula):
 
         """
         self.var_rand = var_rand
+        if source not in ["real", "error"]:
+            raise ValueError(
+                "Your source of variability must be either 'real' or 'error'!"
+            )
         self.source = source
 
     def copy(self):
@@ -773,11 +777,23 @@ class Density:
 
         """
         # new: generate copula sample separately for real and err and then combine at the end
-        if not (self.copula_real is None):
-            df_real = self.copula_real.sample(n=n, seed=seed)
-            if not (self.copula_err is None):
-                df_err = self.copula_err.sample(n=n, seed=seed)
-        else:
+        # Check that sources of variability for copulas match marginals
+        copula_sources = []
+        if self.copula_real is not None:
+            copula_sources.append("real")
+        if self.copula_err is not None:
+            copula_sources.append("error")
+
+        marginal_sources = []
+        for key in self.marginals.keys():
+            marginal_sources.append(self.marginals[key].source)
+        marginal_sources = set(marginal_sources)
+
+        if sorted(copula_sources) != sorted(marginal_sources):
+            raise Exception(
+                "Sources of variability within copulas do not match sources within marginal values."
+            )
+        if self.copula_real is None and self.copula_err is None:
             raise ValueError(
                 "\n"
                 + "Present model copula must be defined for sampling.\n"
@@ -786,6 +802,9 @@ class Density:
                 + "Variable Modeling for more information.\n"
                 + "https://py-grama.readthedocs.io/en/latest/source/rv_modeling.html"
             )
+
+        df_real = self.copula_real.sample(n=n, seed=seed)
+        df_err = self.copula_err.sample(n=n, seed=seed)
 
         df_pr = tran_outer(df_real, df_err)
 
