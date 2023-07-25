@@ -621,7 +621,6 @@ class Density:
 
         """
         self.marginals = marginals
-        # new: copular_err, copula_real
         self.copula_err = copula_err
         self.copula_real = copula_real
 
@@ -651,6 +650,31 @@ class Density:
         )
 
         return new_density
+
+    def check_valid_sources(self):
+        """
+        Checks that types of copula within the density match the sources of the marginals.
+        """
+        copula_sources = []
+        if self.copula_real is not None:
+            copula_sources.append("real")
+        if self.copula_err is not None:
+            copula_sources.append("error")
+
+        marginal_sources = []
+        for var in self.marginals.keys():
+            marginal_sources.append(self.marginals[var].source)
+        marginal_sources = set(marginal_sources)
+
+        # check if one of the variables isn't covered by a copula
+        # check copula_r and copula_e don't have overlapping variables
+        # check copulas combined random vars match list of all random variables
+
+        if sorted(copula_sources) != sorted(marginal_sources):
+            # check if marginals has a source that copula doesn't and tell the user what theyre missing
+            raise ValueError(
+                "Sources of variability within copulas do not match sources within marginal values."
+            )
 
     def d(self, df):
         r"""Evaluate PDF
@@ -762,7 +786,7 @@ class Density:
 
         return DataFrame(data=prval, columns=var_comp)
 
-    def sample(self, n=1, seed=None):
+    def sample(self, n_r=None, n_e=None, seed=None, source_type="real"):
         """Draw samples from joint density
 
         Draw samples according to joint density using marginal and copula
@@ -776,23 +800,7 @@ class Density:
             DataFrame: Joint density samples
 
         """
-        # new: generate copula sample separately for real and err and then combine at the end
-        # Check that sources of variability for copulas match marginals
-        copula_sources = []
-        if self.copula_real is not None:
-            copula_sources.append("real")
-        if self.copula_err is not None:
-            copula_sources.append("error")
-
-        marginal_sources = []
-        for key in self.marginals.keys():
-            marginal_sources.append(self.marginals[key].source)
-        marginal_sources = set(marginal_sources)
-
-        if sorted(copula_sources) != sorted(marginal_sources):
-            raise Exception(
-                "Sources of variability within copulas do not match sources within marginal values."
-            )
+        self.check_valid_sources()
         if self.copula_real is None and self.copula_err is None:
             raise ValueError(
                 "\n"
@@ -803,10 +811,19 @@ class Density:
                 + "https://py-grama.readthedocs.io/en/latest/source/rv_modeling.html"
             )
 
-        df_real = self.copula_real.sample(n=n, seed=seed)
-        df_err = self.copula_err.sample(n=n, seed=seed)
-
-        df_pr = tran_outer(df_real, df_err)
+        # check for different source cases
+        if source_type == "real":
+            df_pr = self.copula_real.sample(n=n_r, seed=seed)
+        elif source_type == "error":
+            df_pr = self.copula_err.sample(n=n_e, seed=seed)
+        elif source_type == "mixed":
+            df_real = self.copula_real.sample(n=n_r, seed=seed)
+            df_err = self.copula_err.sample(n=n_e, seed=seed)
+            df_pr = tran_outer(df_real, df_err)
+        else:
+            raise ValueError(
+                "Invalid source_type argument. Source type may only be 'real', 'error', or 'mixed'."
+            )
 
         return self.pr2sample(df_pr)
 
