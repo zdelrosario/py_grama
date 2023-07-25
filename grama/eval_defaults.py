@@ -540,7 +540,7 @@ ev_conservative = add_pipe(eval_conservative)
 ## Random sampling
 # --------------------------------------------------
 @curry
-def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, comm=True, ind_comm=None):
+def eval_sample(model, n=None, n_r=None, n_e=None, df_det=None, seed=None, append=True, skip=False, comm=True, ind_comm=None):
     r"""Draw a random sample
 
     Evaluates a model with a random sample of the random model inputs. Generates outer product with deterministic levels (common random numbers) OR generates a sample fully-independent of deterministic levels (non-common random numbers).
@@ -639,7 +639,7 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
     invariants_eval_model(model, skip)
     invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
         acc_none=(model.n_var_det==0))
-    if n is None:
+    if n is None and n_r is None and n_e is None:
         raise ValueError("Must provide a valid n value.")
 
     ## Set seed only if given
@@ -647,26 +647,116 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
         set_seed(seed)
 
     ## Ensure sample count is int
-    if not isinstance(n, Integral):
-        print("eval_sample() is rounding n...")
-        n = int(n)
+    # if not isinstance(n, Integral):
+    #     print("eval_sample() is rounding n...")
+    #     n = int(n)
 
-    ## Draw realizations
-    # Common random numbers
-    if comm:
-        df_rand = model.density.sample(n=n, seed=seed)
-        if not ind_comm is None:
-            df_rand[ind_comm] = df_rand.index
-        df_samp = model.var_outer(df_rand, df_det=df_det)
-    # Non-common random numbers
+    ## Check for mixed variability sources
+    if 'real' in model.source_list and 'error' in model.source_list:
+        if n_r is None or n_e is None:
+            raise ValueError("Must provide both a valid n_r value and n_e value.")
+        
+        source_type = "mixed"
+        ## Draw realizations
+        # Common random numbers
+        if comm:
+            df_rand_data = model.density.sample(n_r=n_r, n_e=n_e, seed=seed, source_type=source_type)
+
+            df_r_ind = DataFrame({"ind_r": [*range(0, n_r, 1)]})
+            df_e_ind = DataFrame({"ind_e": [*range(0, n_e, 1)]})
+            df_rand_ind = model.var_outer(df_r_ind, df_e_ind)
+
+            df_rand = concat([df_rand_ind, df_rand_data], axis=1)
+
+            df_samp = model.var_outer(df_rand, df_det=df_det)
+        # Non-common random numbers
+        else:
+            df_rand = model.density.sample(n=n * df_det.shape[0], seed=seed)
+            if not ind_comm is None:
+                df_rand[ind_comm] = df_rand.index
+            df_samp = concat(
+                (df_rand, concat([df_det[model.var_det]]*n, axis=0).reset_index(drop=True)),
+                axis=1,
+            ).reset_index(drop=True)
+    elif 'error' in model.source_list:
+        if n_e is None:
+            if n is not None:
+                n_e = n
+            else:
+                raise ValueError("Must provide a valid n_e value.")
+        
+        source_type="error"
+        ## Draw realizations
+        # Common random numbers
+        if comm:
+            df_rand_data = model.density.sample(n_e=n_e, seed=seed, source_type=source_type)
+            df_rand_ind = DataFrame(
+                {"ind_e": [*range(0, n_e, 1)]}
+            )
+            df_rand = concat([df_rand_ind, df_rand_data], axis=1)
+
+            df_samp = model.var_outer(df_rand, df_det=df_det)
+        # Non-common random numbers
+        else:
+            df_rand = model.density.sample(n_e=n_e * df_det.shape[0], seed=seed, source_type=source_type)
+            if not ind_comm is None:
+                df_rand[ind_comm] = df_rand.index
+            df_samp = concat(
+                (df_rand, concat([df_det[model.var_det]]*n_e, axis=0).reset_index(drop=True)),
+                axis=1,
+            ).reset_index(drop=True)
     else:
-        df_rand = model.density.sample(n=n * df_det.shape[0], seed=seed)
-        if not ind_comm is None:
-            df_rand[ind_comm] = df_rand.index
-        df_samp = concat(
-            (df_rand, concat([df_det[model.var_det]]*n, axis=0).reset_index(drop=True)),
-            axis=1,
-        ).reset_index(drop=True)
+        if n_r is None:
+            if n is not None:
+                n_r = n
+            else:
+                raise ValueError("Must provide a valid n_r value.")
+        
+        source_type="real"
+        ## Draw realizations
+        # Common random numbers
+        if comm:
+            df_rand_data = model.density.sample(n_r=n_r, seed=seed, source_type=source_type)
+            df_rand_ind = DataFrame(
+                {"ind_r": [*range(0, n_r, 1)]}
+            )
+            df_rand = concat([df_rand_ind, df_rand_data], axis=1)
+
+            df_samp = model.var_outer(df_rand, df_det=df_det)
+        # Non-common random numbers
+        else:
+            df_rand = model.density.sample(n_r=n_r * df_det.shape[0], seed=seed, source_type=source_type)
+            if not ind_comm is None:
+                df_rand[ind_comm] = df_rand.index
+            df_samp = concat(
+                (df_rand, concat([df_det[model.var_det]]*n_r, axis=0).reset_index(drop=True)),
+                axis=1,
+            ).reset_index(drop=True)
+
+
+        # ## Draw realizations
+        # # Common random numbers
+        # if comm:
+        #     df_rand = model.density.sample(n=n, seed=seed)
+        #     df_e = DataFrame(
+        #         {"ind_e": [*range(0, n_e, 1)]}
+        #     )
+
+        #     df_r = DataFrame(
+        #         {"ind_r": [*range(0, n_r, 1)]}
+        #     )
+        #     if not ind_comm is None:
+        #         df_rand[ind_comm] = df_rand.index
+        #     df_samp = model.var_outer(df_rand, df_det=df_det)
+        # # Non-common random numbers
+        # else:
+        #     df_rand = model.density.sample(n=n * df_det.shape[0], seed=seed)
+        #     if not ind_comm is None:
+        #         df_rand[ind_comm] = df_rand.index
+        #     df_samp = concat(
+        #         (df_rand, concat([df_det[model.var_det]]*n, axis=0).reset_index(drop=True)),
+        #         axis=1,
+        #     ).reset_index(drop=True)
 
 
     if skip:

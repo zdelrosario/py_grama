@@ -25,7 +25,7 @@ from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, \
 from numpy import min as npmin
 from numpy import max as npmax
 from numpy.linalg import cholesky, det, inv
-from numpy.random import random, multivariate_normal
+from numpy.random import random, multivariate_normal, rand
 from numpy.random import seed as set_seed
 from pandas import DataFrame, concat
 from scipy.linalg import det, LinAlgError, solve
@@ -355,7 +355,7 @@ class CopulaIndependence(Copula):
 
         return cop
 
-    def sample(self, n=1, seed=None):
+    def sample(self, n=1, seed=None, var_name=None):
         """Draw samples from copula
 
         Args:
@@ -369,7 +369,10 @@ class CopulaIndependence(Copula):
         if seed is not None:
             set_seed(seed)
 
-        return DataFrame(data=random((n, len(self.var_rand))), columns=self.var_rand)
+        if var_name is not None:
+            return DataFrame(data=random((n)), columns=var_name)
+        else:
+            return DataFrame(data=random((n, len(self.var_rand))), columns=self.var_rand)
 
     def d(self, u):
         """Density function
@@ -740,7 +743,7 @@ class Density:
 
         return DataFrame(data=prval, columns=var_comp)
 
-    def sample(self, n=1, seed=None):
+    def sample(self, n=None, seed=None, var_name=None):
         """Draw samples from joint density
 
         Draw samples according to joint density using marginal and copula
@@ -864,6 +867,19 @@ class Model:
             self.var_rand = []
         self.var_det = list(set(self.var).difference(self.var_rand))
 
+
+
+        self.source_list = []
+        self.var_rand_real = []
+        self.var_rand_err = []
+        for key_ind in range (0, len(self.var_rand)):
+            var_key = list(self.var_rand)[key_ind]
+            self.source_list.append(self.density.marginals[var_key].source)
+            if self.density.marginals[var_key].source == 'real':
+                self.var_rand_real.append(var_key)
+            else:
+                self.var_rand_err.append(var_key)
+
         ## TODO parameters
 
         ## Convenience constants
@@ -941,12 +957,12 @@ class Model:
 
         """
         ## Check invariant; model inputs must be subset of df columns
-        var_diff = set(self.var).difference(set(df.columns))
-        if len(var_diff) != 0:
-            raise ValueError(
-                "Model inputs not a subset of given columns;\n"
-                + "missing var = {}".format(var_diff)
-            )
+        # var_diff = set(self.var).difference(set(df.columns))
+        # if len(var_diff) != 0:
+        #     raise ValueError(
+        #         "Model inputs not a subset of given columns;\n"
+        #         + "missing var = {}".format(var_diff)
+        #     )
 
         df_tmp = df.copy().drop(self.out, axis=1, errors="ignore")
         ## Evaluate each function
