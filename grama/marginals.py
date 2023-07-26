@@ -246,8 +246,9 @@ class Marginal(ABC):
     """Parent class for marginal distributions
     """
 
-    def __init__(self, sign=0):
+    def __init__(self, sign=0, source="real"):
         self.sign = sign
+        self.source = source
 
     @abstractmethod
     def copy(self):
@@ -302,7 +303,10 @@ class MarginalNamed(Marginal):
 
     def copy(self):
         new_marginal = MarginalNamed(
-            sign=self.sign, d_name=self.d_name, d_param=copy.deepcopy(self.d_param)
+            sign=self.sign, 
+            source=self.source,
+            d_name=self.d_name, 
+            d_param=copy.deepcopy(self.d_param)
         )
 
         return new_marginal
@@ -331,6 +335,7 @@ class MarginalNamed(Marginal):
     def summary(self, dig=2):
         stats = valid_dist[self.d_name](**self.d_param).stats("mvsk")
         param = {
+            "source": self.source,
             "mean": "{0:4.3e}".format(stats[0].round(dig)),
             "s.d.": "{0:4.3e}".format(sqrt(stats[1]).round(dig)),
             "COV": round(sqrt(stats[1]) / stats[0], dig),
@@ -446,6 +451,7 @@ def marg_mom(
         floc=None,
         sign=0,
         dict_x0=None,
+        source="real"
 ):
     r"""Fit scipy.stats continuous distribution via moments
 
@@ -620,7 +626,7 @@ def marg_mom(
     param = dict(zip(key_wk, res.x))
     if floc is not None:
         param["loc"] = floc
-    return MarginalNamed(sign=sign, d_name=dist, d_param=param)
+    return MarginalNamed(sign=sign, source=source, d_name=dist, d_param=param)
 
 ## Fit a named scipy.stats distribution
 def marg_fit(dist, data, name=True, sign=None, **kwargs):

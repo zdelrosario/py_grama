@@ -535,8 +535,13 @@ def comp_marginals(model, **kwargs):
             except KeyError:
                 sign = 0
 
+            try:
+                source = value_copy.pop("source")
+            except KeyError:
+                source = "real"
+
             new_model.density.marginals[key] = MarginalNamed(
-                sign=sign, d_name=dist, d_param=value_copy
+                sign=sign, source=source, d_name=dist, d_param=value_copy
             )
 
         ## Handle Marginal input
