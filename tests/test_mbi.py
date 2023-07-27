@@ -26,6 +26,13 @@ class TestMBI(unittest.TestCase):
 
         self.assertTrue(isinstance(self.md.density, gr.Density))
 
+    def test_getvars(self):
+        # Define test function
+        def fun(x, y, z):
+            return x + y + z
+        # Check that getvars function works correctly
+        self.assertTrue(gr.getvars(fun), ("x", "y", "z"))
+
     def test_freeze(self):
         md_base = (
             gr.Model()

@@ -20,8 +20,21 @@ from grama import pipe, valid_dist, param_dist
 from .tools import tran_outer
 from abc import ABC, abstractmethod
 from itertools import chain
-from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, \
-    dot, diag, isfinite, prod, exp
+from numpy import (
+    ones,
+    zeros,
+    triu_indices,
+    eye,
+    array,
+    Inf,
+    NaN,
+    sqrt,
+    dot,
+    diag,
+    isfinite,
+    prod,
+    exp,
+)
 from numpy import min as npmin
 from numpy import max as npmax
 from numpy.linalg import cholesky, det, inv
@@ -114,8 +127,7 @@ class Function:
         return DataFrame(data=results, columns=self.out)
 
     def summary(self):
-        """Returns a summary string
-        """
+        """Returns a summary string"""
         return "{0:}: {1:} -> {2:}".format(self.name, self.var, self.out)
 
 
@@ -144,8 +156,7 @@ class FunctionVectorized(Function):
 
 
 class FunctionModel(Function):
-    """gr.Model as gr.Function
-    """
+    """gr.Model as gr.Function"""
 
     def __init__(self, md, ev=None, var=None, out=None):
         """Model-Function constructor
@@ -278,15 +289,16 @@ class Domain:
     def bound_summary(self, var):
         if var in self.bounds.keys():
             return "{0:}: [{1:}, {2:}]".format(
-                var, self.bounds[var][0], self.bounds[var][1],
+                var,
+                self.bounds[var][0],
+                self.bounds[var][1],
             )
         return "{0:}: (unbounded)".format(var)
 
 
 ## Copula base class
 class Copula(ABC):
-    """Parent class for copulas
-    """
+    """Parent class for copulas"""
 
     @abstractmethod
     def __init__(self):
@@ -298,32 +310,27 @@ class Copula(ABC):
 
     @abstractmethod
     def sample(self, n=1):
-        r"""Draw a sample of a given size
-        """
+        r"""Draw a sample of a given size"""
         raise NotImplementedError
 
     @abstractmethod
     def d(self, u):
-        r"""Copula density
-        """
+        r"""Copula density"""
         raise NotImplementedError
 
     @abstractmethod
     def u2z(self, u):
-        r"""Transform from [0, 1]^d to sample space
-        """
+        r"""Transform from [0, 1]^d to sample space"""
         raise NotImplementedError
 
     @abstractmethod
     def z2u(self, z):
-        r"""Transform from sample space to [0, 1]^d
-        """
+        r"""Transform from sample space to [0, 1]^d"""
         raise NotImplementedError
 
     @abstractmethod
     def dudz(self, z):
-        r"""Jacobian of copula transform
-        """
+        r"""Jacobian of copula transform"""
         raise NotImplementedError
 
     @abstractmethod
@@ -332,7 +339,7 @@ class Copula(ABC):
 
 
 class CopulaIndependence(Copula):
-    def __init__(self, var_rand):
+    def __init__(self, var_rand, source="real"):
         """Constructor
 
         Args:
@@ -343,6 +350,11 @@ class CopulaIndependence(Copula):
 
         """
         self.var_rand = var_rand
+        if source not in ["real", "error"]:
+            raise ValueError(
+                "Your source of variability must be either 'real' or 'error'!"
+            )
+        self.source = source
 
     def copy(self):
         """Copy
@@ -351,7 +363,7 @@ class CopulaIndependence(Copula):
             gr.CopulaIndependence: Copy of present copula
 
         """
-        cop = CopulaIndependence(var_rand=self.var_rand)
+        cop = CopulaIndependence(var_rand=self.var_rand, source=self.source)
 
         return cop
 
@@ -423,7 +435,7 @@ class CopulaIndependence(Copula):
         return diag(norm.pdf(z))
 
     def summary(self):
-        return "Independence copula"
+        return f"Independence copula (source: {self.source})"
 
 
 class CopulaGaussian(Copula):
@@ -467,7 +479,7 @@ class CopulaGaussian(Copula):
         except LinAlgError:
             warnings.warn(
                 "Correlation structure is not positive-definite; copula transforms not available",
-                RuntimeWarning
+                RuntimeWarning,
             )
             Sigma_h = None
             Sigma_i = None
@@ -536,9 +548,9 @@ class CopulaGaussian(Copula):
 
         for i in range(n_obs):
             v = norm.ppf(u[i, :])
-            l_values[i] = exp(
-                -0.5*dot(v, dot( self.Sigma_i - eye(n_dim), v))
-            ) / sqrt(self.det)
+            l_values[i] = exp(-0.5 * dot(v, dot(self.Sigma_i - eye(n_dim), v))) / sqrt(
+                self.det
+            )
 
         return l_values
 
@@ -597,7 +609,7 @@ class Density:
 
     """
 
-    def __init__(self, marginals=None, copula=None):
+    def __init__(self, marginals=None, copula_real=None, copula_err=None):
         """Constructor
 
         Construct a grama density. Generally not called directly; preferred
@@ -612,7 +624,8 @@ class Density:
 
         """
         self.marginals = marginals
-        self.copula = copula
+        self.copula_err = copula_err
+        self.copula_real = copula_real
 
     def copy(self):
         try:
@@ -624,13 +637,47 @@ class Density:
             new_marginals = {}
 
         try:
-            new_copula = self.copula.copy()
+            new_copula_err = self.copula_err.copy()
         except AttributeError:
-            new_copula = None
+            new_copula_err = None
 
-        new_density = Density(marginals=new_marginals, copula=new_copula)
+        try:
+            new_copula_real = self.copula_real.copy()
+        except AttributeError:
+            new_copula_real = None
+
+        new_density = Density(
+            marginals=new_marginals,
+            copula_err=new_copula_err,
+            copula_real=new_copula_real,
+        )
 
         return new_density
+
+    def check_valid_sources(self):
+        """
+        Checks that types of copula within the density match the sources of the marginals.
+        """
+        copula_sources = []
+        if self.copula_real is not None:
+            copula_sources.append("real")
+        if self.copula_err is not None:
+            copula_sources.append("error")
+
+        marginal_sources = []
+        for var in self.marginals.keys():
+            marginal_sources.append(self.marginals[var].source)
+        marginal_sources = set(marginal_sources)
+
+        # check if one of the variables isn't covered by a copula
+        # check copula_r and copula_e don't have overlapping variables
+        # check copulas combined random vars match list of all random variables
+
+        if sorted(copula_sources) != sorted(marginal_sources):
+            # check if marginals has a source that copula doesn't and tell the user what theyre missing
+            raise ValueError(
+                "Sources of variability within copulas do not match sources within marginal values."
+            )
 
     def d(self, df):
         r"""Evaluate PDF
@@ -653,7 +700,6 @@ class Density:
         l_marginals = prod(L_marginals, axis=1)
 
         return l_copula * l_marginals
-
 
     def pr2sample(self, df_prval):
         """Convert CDF probabilities to samples
@@ -743,7 +789,7 @@ class Density:
 
         return DataFrame(data=prval, columns=var_comp)
 
-    def sample(self, n=None, seed=None, var_name=None):
+    def sample(self, n_r=None, n_e=None, seed=None, source_type="real"):
         """Draw samples from joint density
 
         Draw samples according to joint density using marginal and copula
@@ -757,9 +803,8 @@ class Density:
             DataFrame: Joint density samples
 
         """
-        if not (self.copula is None):
-            df_pr = self.copula.sample(n=n, seed=seed)
-        else:
+        self.check_valid_sources()
+        if self.copula_real is None and self.copula_err is None:
             raise ValueError(
                 "\n"
                 + "Present model copula must be defined for sampling.\n"
@@ -768,24 +813,43 @@ class Density:
                 + "Variable Modeling for more information.\n"
                 + "https://py-grama.readthedocs.io/en/latest/source/rv_modeling.html"
             )
+
+        # check for different source cases
+        if source_type == "real":
+            df_pr = self.copula_real.sample(n=n_r, seed=seed)
+        elif source_type == "error":
+            df_pr = self.copula_err.sample(n=n_e, seed=seed)
+        elif source_type == "mixed":
+            df_real = self.copula_real.sample(n=n_r, seed=seed)
+            df_err = self.copula_err.sample(n=n_e, seed=seed)
+            df_pr = tran_outer(df_real, df_err)
+        else:
+            raise ValueError(
+                "Invalid source_type argument. Source type may only be 'real', 'error', or 'mixed'."
+            )
+
         return self.pr2sample(df_pr)
 
     def summary_marginal(self, var):
         return "{0:}: {1:}".format(var, self.marginals[var].summary())
 
     def summary_copula(self):
-        if not (self.copula is None):
-            return self.copula.summary()
+        if not (self.copula_real is None):
+            # NEW: uhh fix later to have better formatting and check if both exist first
+            return f"{self.copula_real.summary()}\n{self.copula_err.summary()}"
         return None
 
 
 # Model parent class
 class Model:
-    """Parent class for grama models.
-    """
+    """Parent class for grama models."""
 
     def __init__(
-        self, name=None, functions=None, domain=None, density=None,
+        self,
+        name=None,
+        functions=None,
+        domain=None,
+        density=None,
     ):
         r"""Constructor
 
@@ -1123,8 +1187,7 @@ class Model:
         return DataFrame(data=data, columns=self.var_rand)
 
     def name_corr(self):
-        """Name the correlation elements
-        """
+        """Name the correlation elements"""
         raise NotImplementedError
         ## Build matrix of names
         corr_mat = []
@@ -1146,8 +1209,7 @@ class Model:
     ## Infrastructure
     # -------------------------
     def copy(self):
-        """Make a copy of this model
-        """
+        """Make a copy of this model"""
         new_model = Model(
             name=self.name,
             functions=copy.deepcopy(self.functions),
@@ -1166,19 +1228,23 @@ class Model:
             "",
             "  inputs:",
             "    var_det:",
-            "".join([
-                "      {}\n".format(self.domain.bound_summary(var_det))
-                for var_det in self.var_det
-            ]),
+            "".join(
+                [
+                    "      {}\n".format(self.domain.bound_summary(var_det))
+                    for var_det in self.var_det
+                ]
+            ),
             "    var_rand:",
         ]
 
         try:
             l = l + [
-                "".join([
-                    "      {}\n".format(self.density.summary_marginal(var_rand))
-                    for var_rand in self.density.marginals.keys()
-                ]),
+                "".join(
+                    [
+                        "      {}\n".format(self.density.summary_marginal(var_rand))
+                        for var_rand in self.density.marginals.keys()
+                    ]
+                ),
             ]
         except AttributeError:
             l = l + ["\n"]
@@ -1187,10 +1253,9 @@ class Model:
             "    copula:",
             "      {}\n".format(self.density.summary_copula()),
             "  functions:",
-            "".join([
-                "      {}\n".format(function.summary())
-                for function in self.functions
-            ])
+            "".join(
+                ["      {}\n".format(function.summary()) for function in self.functions]
+            ),
         ]
 
         return "\n".join(l)
@@ -1202,13 +1267,11 @@ class Model:
         return self.string_rep()
 
     def printpretty(self):
-        """Formatted print of model attributes
-        """
+        """Formatted print of model attributes"""
         print(self.string_rep())
 
     def make_dag(self, expand=set()):
-        """Generate a DAG for the model
-        """
+        """Generate a DAG for the model"""
         G = nx.DiGraph()
 
         ## Inputs-to-Functions
@@ -1291,8 +1354,7 @@ class Model:
         return G
 
     def show_dag(self, expand=set()):
-        """Generate and show a DAG for the model
-        """
+        """Generate and show a DAG for the model"""
         from matplotlib.pyplot import show as pltshow
 
         G = self.make_dag(expand=expand)
@@ -1301,7 +1363,16 @@ class Model:
             warnings.simplefilter("ignore")
             ## Plotting
             edge_labels = dict(
-                [((u, v,), d["label"]) for u, v, d in G.edges(data=True)]
+                [
+                    (
+                        (
+                            u,
+                            v,
+                        ),
+                        d["label"],
+                    )
+                    for u, v, d in G.edges(data=True)
+                ]
             )
             n = G.size()
 
