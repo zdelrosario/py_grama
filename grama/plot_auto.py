@@ -15,22 +15,47 @@ __all__ = [
     "pt_auto",
     "plot_list",
     "set_uqtheme",
+    "theme_uqbook",
 ]
 
-from grama import add_pipe, pipe, tf_pivot_longer, tf_outer, tf_select, tf_rename, tf_filter, tf_mutate
-from grama import case_when
-from grama import Intention
+from grama import (
+    add_pipe,
+    pipe,
+    case_when,
+    Intention,
+    tf_pivot_longer,
+    tf_outer,
+    tf_select,
+    tf_rename,
+    tf_filter,
+    tf_mutate,
+)
 from .string_helpers import str_replace
-from pandas import melt
 
 from plotnine import aes, annotate, ggplot, facet_grid, facet_wrap, labs, guides
 from plotnine import theme, theme_void, theme_minimal
-from plotnine import element_text, element_rect
-from plotnine import scale_x_continuous, scale_y_continuous, scale_fill_gradient, scale_fill_gradient2, scale_fill_gradientn
-from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_tile, geom_text
-from plotnine import geom_segment, geom_blank
+from plotnine import element_blank, element_line, element_text, element_rect
 from plotnine import geoms
+from plotnine import (
+    scale_x_continuous,
+    scale_y_continuous,
+    scale_fill_gradient,
+    scale_fill_gradient2,
+    scale_fill_gradientn,
+)
+from plotnine import (
+    geom_blank,
+    geom_point,
+    geom_density,
+    geom_histogram,
+    geom_line,
+    geom_tile,
+    geom_text,
+    geom_segment,
+)
+
 from matplotlib import gridspec
+from pandas import melt
 
 from toolz import curry
 
@@ -730,3 +755,19 @@ def set_uqtheme():
 
     geoms.geom_histogram.DEFAULT_AES['fill'] = grey50
     geoms.geom_histogram.DEFAULT_AES['color'] = black
+
+class theme_uqbook(theme_minimal):
+    """The theme_uqbook() class
+
+    Args:
+        **kwargs: Other theming options
+    """
+
+    def __init__(self, **kwargs):
+        # Override the defaults
+        kwargs.setdefault("axis_text_x", element_text(size=12))
+        kwargs.setdefault("axis_text_y", element_text(size=12))
+        kwargs.setdefault("axis_title_x", element_text(size=14))
+        kwargs.setdefault("axis_title_y", element_text(size=14))
+
+        theme_minimal.__init__(self, **kwargs)
