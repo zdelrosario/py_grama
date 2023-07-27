@@ -756,18 +756,13 @@ def set_uqtheme():
     geoms.geom_histogram.DEFAULT_AES['fill'] = grey50
     geoms.geom_histogram.DEFAULT_AES['color'] = black
 
-class theme_uqbook(theme_minimal):
-    """The theme_uqbook() class
-
-    Args:
-        **kwargs: Other theming options
-    """
-
-    def __init__(self, **kwargs):
-        # Override the defaults
-        kwargs.setdefault("axis_text_x", element_text(size=12))
-        kwargs.setdefault("axis_text_y", element_text(size=12))
-        kwargs.setdefault("axis_title_x", element_text(size=14))
-        kwargs.setdefault("axis_title_y", element_text(size=14))
-
-        theme_minimal.__init__(self, **kwargs)
+def theme_uqbook():
+    return (
+        theme_minimal()
+        + theme(
+            axis_text_x=element_text(size=12),
+            axis_text_y=element_text(size=12),
+            axis_title_x=element_text(size=14),
+            axis_title_y=element_text(size=14),
+        )
+    )
