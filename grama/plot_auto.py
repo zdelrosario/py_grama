@@ -14,6 +14,7 @@ __all__ = [
     "plot_auto",
     "pt_auto",
     "plot_list",
+    "set_uqtheme",
 ]
 
 from grama import add_pipe, pipe, tf_pivot_longer, tf_outer, tf_select, tf_rename, tf_filter, tf_mutate
@@ -28,9 +29,18 @@ from plotnine import element_text, element_rect
 from plotnine import scale_x_continuous, scale_y_continuous, scale_fill_gradient, scale_fill_gradient2, scale_fill_gradientn
 from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_tile, geom_text
 from plotnine import geom_segment, geom_blank
+from plotnine import geoms
 from matplotlib import gridspec
 
 from toolz import curry
+
+## Set color codes
+##################################################
+white = "#ffffff"
+grey20 = "#2e2e2e"
+grey50 = "#7d7d7d"
+grey80 = "#cccccc"
+black = "#000000"
 
 ## Helper functions
 ##################################################
@@ -710,3 +720,13 @@ def plot_auto(df, color="full"):
 
 
 pt_auto = add_pipe(plot_auto)
+
+
+## UQBook theme
+## ##################################################
+def set_uqtheme():
+    """Override default geometry colors
+    """
+
+    geoms.geom_histogram.DEFAULT_AES['fill'] = grey50
+    geoms.geom_histogram.DEFAULT_AES['color'] = black
