@@ -117,7 +117,6 @@ from scipy.stats import (
     wrapcauchy,
 )
 
-
 ## Scipy metadata
 valid_dist = {
     "alpha": alpha,
@@ -158,7 +157,7 @@ valid_dist = {
     "gengamma": gengamma,
     "genhalflogistic": genhalflogistic,
     # "geninvgauss": geninvgauss,
-    "gilbrat": gilbrat,
+    "gibrat": gibrat,
     "gompertz": gompertz,
     "gumbel_r": gumbel_r,
     "gumbel_l": gumbel_l,
@@ -259,7 +258,7 @@ param_dist = {
     "gengamma": ["a", "c", "loc", "scale"],
     "genhalflogistic": ["c", "loc", "scale"],
     "geninvgauss": ["p", "b", "loc", "scale"],
-    "gilbrat": ["loc", "scale"],
+    "gibrat": ["loc", "scale"],
     "gompertz": ["c", "loc", "scale"],
     "gumbel_r": ["loc", "scale"],
     "gumbel_l": ["loc", "scale"],

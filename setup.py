@@ -4,7 +4,7 @@ setup(
     name="py_grama",
     author="Zachary del Rosario",
     author_email="zdelrosario@outlook.com",
-    version="0.3.4",
+    version="0.3.6",
     packages=[
         "grama",
         "grama.data",
@@ -32,6 +32,7 @@ setup(
     install_requires=[
         "matplotlib",
         "numpy>=1.15",
+        "scipy>=1.10",
         "pandas<=1.5.3",
         "plotnine>=0.8.0",
         "scipy",
@@ -39,14 +40,12 @@ setup(
         "networkx",
     ],
     extras_require={
-        "lolo": ["lolopy"],
         "matminer": ["pymatgen==2021.2.8.1", "matminer"],
         "sklearn": ["scikit-learn"],
         "statsmodels": ["statsmodels"],
         "pyDOE": ["pyDOE"],
         "umap": ["umap-learn"],
         "dev": [
-            "lolopy",
             "pymatgen==2021.2.8.1",
             "matminer",
             "scikit-learn",
