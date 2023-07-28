@@ -656,22 +656,41 @@ class Density:
         Checks that types of copula within the density match the sources of the marginals.
         """
         copula_sources = []
+        copula_vars = []
         if self.copula_real is not None:
             copula_sources.append("real")
+            copula_vars = copula_vars + self.copula_real.var_rand
         if self.copula_err is not None:
             copula_sources.append("error")
+            copula_vars = copula_vars + self.copula_err.var_rand
 
         marginal_sources = []
         for var in self.marginals.keys():
             marginal_sources.append(self.marginals[var].source)
+            if self.copula_err is not None and self.copula_real is not None:
+                if var in self.copula_real.var_rand and var in self.copula_err.var_rand:
+                    raise ValueError(
+                        f"Random variable {var} belongs to mulitple copulas."
+                    )
+            if var not in copula_vars:
+                raise ValueError(
+                    f"Random variable {var} does not belong to any copula."
+                )
+            if self.marginals[var].source not in copula_sources:
+                raise ValueError(
+                    f"Copula with a source type of '{self.marginals[var].source}' does not exist."
+                )
+
+        for source in copula_sources:
+            if source not in marginal_sources:
+                raise ValueError(
+                    f"Copula of source type {source} has no matching variables."
+                )
+
+        # old checking method below
         marginal_sources = set(marginal_sources)
 
-        # check if one of the variables isn't covered by a copula
-        # check copula_r and copula_e don't have overlapping variables
-        # check copulas combined random vars match list of all random variables
-
         if sorted(copula_sources) != sorted(marginal_sources):
-            # check if marginals has a source that copula doesn't and tell the user what theyre missing
             raise ValueError(
                 "Sources of variability within copulas do not match sources within marginal values."
             )
@@ -927,6 +946,17 @@ class Model:
         except AttributeError:
             self.var_rand = []
         self.var_det = list(set(self.var).difference(self.var_rand))
+
+        self.source_list = []
+        self.var_rand_real = []
+        self.var_rand_err = []
+        for key_ind in range(0, len(self.var_rand)):
+            var_key = list(self.var_rand)[key_ind]
+            self.source_list.append(self.density.marginals[var_key].source)
+            if self.density.marginals[var_key].source == "real":
+                self.var_rand_real.append(var_key)
+            else:
+                self.var_rand_err.append(var_key)
 
         ## TODO parameters
 

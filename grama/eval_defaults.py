@@ -24,6 +24,7 @@ from warnings import formatwarning, catch_warnings, simplefilter
 
 formatwarning = custom_formatwarning
 
+
 def invariants_eval_model(md, skip=False):
     r"""Helper function to group common model argument invariant checks for eval functions.
 
@@ -40,16 +41,20 @@ def invariants_eval_model(md, skip=False):
         if md is None:
             raise TypeError("No input model given")
         elif isinstance(md, tuple):
-            raise TypeError("Given model argument is type tuple. Have you " +
-            "declared your model with an extra comma after the closing `)`?")
+            raise TypeError(
+                "Given model argument is type tuple. Have you "
+                + "declared your model with an extra comma after the closing `)`?"
+            )
         else:
-            raise TypeError("Type gr.Model was expected, a " + str(type(md)) +
-            " was passed.")
+            raise TypeError(
+                "Type gr.Model was expected, a " + str(type(md)) + " was passed."
+            )
 
     ## Value checking
     if not skip and len(md.functions) == 0:
         raise ValueError("Given model has no functions.")
     return
+
 
 def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
     r"""Helper function to group common DataFrame argument invariant checks for eval functions.
@@ -69,6 +74,7 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
         invariants_eval_df(df_test, arg_name="df_test", acc_none=())
 
     """
+
     def aps(string):
         r"""Helper function for valid_args_msg() to put apostrophes around a
         string.
@@ -91,7 +97,7 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
 
         Returns:
             String"""
-        msg = df_arg + " must be DataFrame" # general msg for valid args
+        msg = df_arg + " must be DataFrame"  # general msg for valid args
         if acc_str:
             # add on string options to msg
             if len(valid_str) == 1:
@@ -117,23 +123,32 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
         if df is None:
             if not acc_none:
                 # allow "None" df if None accepted
-                raise TypeError("No " + arg_name + " argument given. " +
-                    valid_args_msg(arg_name, acc_str, valid_str))
+                raise TypeError(
+                    "No "
+                    + arg_name
+                    + " argument given. "
+                    + valid_args_msg(arg_name, acc_str, valid_str)
+                )
         elif isinstance(df, str) and acc_str:
             # case check for invalid str input
             if df not in valid_str:
-                raise ValueError(arg_name + " shortcut string invalid. " +
-                    valid_args_msg(arg_name, acc_str, valid_str))
+                raise ValueError(
+                    arg_name
+                    + " shortcut string invalid. "
+                    + valid_args_msg(arg_name, acc_str, valid_str)
+                )
         else:
-            raise TypeError(valid_args_msg(arg_name, acc_str, valid_str) +
-                " Given argument is type " + str(type(df)) +
-                    ". ")
+            raise TypeError(
+                valid_args_msg(arg_name, acc_str, valid_str)
+                + " Given argument is type "
+                + str(type(df))
+                + ". "
+            )
 
     ## Value checking
     #### TO DO
 
     return
-
 
 
 ## Default evaluation function
@@ -191,7 +206,9 @@ ev_df = add_pipe(eval_df)
 ## Linear Uncertainty Propagation
 # --------------------------------------------------
 @curry
-def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4, seed=None):
+def eval_linup(
+    model, df_base=None, append=True, decomp=False, decimals=2, n=1e4, seed=None
+):
     r"""Linear uncertainty propagation
 
     Approximates the variance of output models using a linearization of functions---linear uncertainty propagation. Optionally decomposes the output variance according to additive factors from each input.
@@ -231,7 +248,9 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4
         df_base = eval_df(model, df=df_base)
 
     ## Approximate the covariance matrix
-    df_sample = eval_sample(model, n=n, seed=seed, df_det=df_base[model.var_det], skip=True)
+    df_sample = eval_sample(
+        model, n=n, seed=seed, df_det=df_base[model.var_det], skip=True
+    )
     cov = df_sample[model.var_rand].cov()
 
     ## Approximate the gradient
@@ -242,10 +261,7 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4
     for out in model.out:
         for i in range(df_grad.shape[0]):
             # Build gradient column names
-            var_names = map(
-                lambda s: "D" + out + "_D" + s,
-                model.var_rand
-            )
+            var_names = map(lambda s: "D" + out + "_D" + s, model.var_rand)
             # Extract gradient values
             grad = df_grad.iloc[i][var_names].values.flatten()
             # Approximate variance
@@ -263,8 +279,8 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4
                 U, V = triu_indices(sens_mat.shape[0])
                 sens_values = [
                     round(
-                        sens_mat[U[j], V[j]] * (1 + (U[j] != V[j])), # Double off-diag
-                        decimals=decimals
+                        sens_mat[U[j], V[j]] * (1 + (U[j] != V[j])),  # Double off-diag
+                        decimals=decimals,
                     )
                     for j in range(len(U))
                 ]
@@ -273,18 +289,16 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4
                     for j in range(len(U))
                 ]
 
-                df_sens = DataFrame({
-                    "var_frac": sens_values,
-                    "var_rand": sens_var
-                })
+                df_sens = DataFrame({"var_frac": sens_values, "var_rand": sens_var})
                 df_tmp = tran_outer(df_tmp, df_sens)
 
             df_res = concat(
-                (df_res,df_tmp),
+                (df_res, df_tmp),
                 axis=0,
             ).reset_index(drop=True)
 
     return df_res
+
 
 ev_linup = add_pipe(eval_linup)
 
@@ -322,8 +336,9 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
     """
     ## Perform common invariant tests
     invariants_eval_model(model, skip)
-    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
-        acc_none=(model.n_var_det==0))
+    invariants_eval_df(
+        df_det, arg_name="df_det", valid_str=["nom"], acc_none=(model.n_var_det == 0)
+    )
 
     ## Draw from underlying gaussian
     quantiles = ones((1, model.n_var_rand)) * 0.5  # Median
@@ -498,8 +513,9 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
     """
     ## Check invariants
     invariants_eval_model(model, skip)
-    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
-        acc_none=(model.n_var_det==0))
+    invariants_eval_df(
+        df_det, arg_name="df_det", valid_str=["nom"], acc_none=(model.n_var_det == 0)
+    )
 
     ## Default behavior
     if quantiles is None:
@@ -540,7 +556,18 @@ ev_conservative = add_pipe(eval_conservative)
 ## Random sampling
 # --------------------------------------------------
 @curry
-def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, comm=True, ind_comm=None):
+def eval_sample(
+    model,
+    n=None,
+    n_r=None,
+    n_e=None,
+    df_det=None,
+    seed=None,
+    append=True,
+    skip=False,
+    comm=True,
+    ind_comm=None,
+):
     r"""Draw a random sample
 
     Evaluates a model with a random sample of the random model inputs. Generates outer product with deterministic levels (common random numbers) OR generates a sample fully-independent of deterministic levels (non-common random numbers).
@@ -637,9 +664,10 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
     """
     ## Check invariants
     invariants_eval_model(model, skip)
-    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
-        acc_none=(model.n_var_det==0))
-    if n is None:
+    invariants_eval_df(
+        df_det, arg_name="df_det", valid_str=["nom"], acc_none=(model.n_var_det == 0)
+    )
+    if n is None and n_r is None and n_e is None:
         raise ValueError("Must provide a valid n value.")
 
     ## Set seed only if given
@@ -647,27 +675,134 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
         set_seed(seed)
 
     ## Ensure sample count is int
-    if not isinstance(n, Integral):
-        print("eval_sample() is rounding n...")
-        n = int(n)
+    # if not isinstance(n, Integral):
+    #     print("eval_sample() is rounding n...")
+    #     n = int(n)
 
-    ## Draw realizations
-    # Common random numbers
-    if comm:
-        df_rand = model.density.sample(n=n, seed=seed)
-        if not ind_comm is None:
-            df_rand[ind_comm] = df_rand.index
-        df_samp = model.var_outer(df_rand, df_det=df_det)
-    # Non-common random numbers
+    ## Check for mixed variability sources
+    if "real" in model.source_list and "error" in model.source_list:
+        if n_r is None or n_e is None:
+            raise ValueError("Must provide both a valid n_r value and n_e value.")
+
+        source_type = "mixed"
+        ## Draw realizations
+        # Common random numbers
+        if comm:
+            df_rand_data = model.density.sample(
+                n_r=n_r, n_e=n_e, seed=seed, source_type=source_type
+            )
+
+            df_r_ind = DataFrame({"ind_r": [*range(0, n_r, 1)]})
+            df_e_ind = DataFrame({"ind_e": [*range(0, n_e, 1)]})
+            df_rand_ind = tran_outer(df_r_ind, df_e_ind)
+
+            df_rand = concat([df_rand_ind, df_rand_data], axis=1)
+
+            df_samp = model.var_outer(df_rand, df_det=df_det)
+        # Non-common random numbers
+        else:
+            df_rand = model.density.sample(n=n * df_det.shape[0], seed=seed)
+            if not ind_comm is None:
+                df_rand[ind_comm] = df_rand.index
+            df_samp = concat(
+                (
+                    df_rand,
+                    concat([df_det[model.var_det]] * n, axis=0).reset_index(drop=True),
+                ),
+                axis=1,
+            ).reset_index(drop=True)
+    elif "error" in model.source_list:
+        if n_e is None:
+            if n is not None:
+                n_e = n
+            else:
+                raise ValueError("Must provide a valid n_e value.")
+
+        source_type = "error"
+        ## Draw realizations
+        # Common random numbers
+        if comm:
+            df_rand_data = model.density.sample(
+                n_e=n_e, seed=seed, source_type=source_type
+            )
+            df_rand_ind = DataFrame({"ind_e": [*range(0, n_e, 1)]})
+            df_rand = concat([df_rand_ind, df_rand_data], axis=1)
+
+            df_samp = model.var_outer(df_rand, df_det=df_det)
+        # Non-common random numbers
+        else:
+            df_rand = model.density.sample(
+                n_e=n_e * df_det.shape[0], seed=seed, source_type=source_type
+            )
+            if not ind_comm is None:
+                df_rand[ind_comm] = df_rand.index
+            df_samp = concat(
+                (
+                    df_rand,
+                    concat([df_det[model.var_det]] * n_e, axis=0).reset_index(
+                        drop=True
+                    ),
+                ),
+                axis=1,
+            ).reset_index(drop=True)
     else:
-        df_rand = model.density.sample(n=n * df_det.shape[0], seed=seed)
-        if not ind_comm is None:
-            df_rand[ind_comm] = df_rand.index
-        df_samp = concat(
-            (df_rand, concat([df_det[model.var_det]]*n, axis=0).reset_index(drop=True)),
-            axis=1,
-        ).reset_index(drop=True)
+        if n_r is None:
+            if n is not None:
+                n_r = n
+            else:
+                raise ValueError("Must provide a valid n_r value.")
 
+        source_type = "real"
+        ## Draw realizations
+        # Common random numbers
+        if comm:
+            df_rand_data = model.density.sample(
+                n_r=n_r, seed=seed, source_type=source_type
+            )
+            df_rand_ind = DataFrame({"ind_r": [*range(0, n_r, 1)]})
+            df_rand = concat([df_rand_ind, df_rand_data], axis=1)
+
+            df_samp = model.var_outer(df_rand, df_det=df_det)
+        # Non-common random numbers
+        else:
+            df_rand = model.density.sample(
+                n_r=n_r * df_det.shape[0], seed=seed, source_type=source_type
+            )
+            if not ind_comm is None:
+                df_rand[ind_comm] = df_rand.index
+            df_samp = concat(
+                (
+                    df_rand,
+                    concat([df_det[model.var_det]] * n_r, axis=0).reset_index(
+                        drop=True
+                    ),
+                ),
+                axis=1,
+            ).reset_index(drop=True)
+
+        # ## Draw realizations
+        # # Common random numbers
+        # if comm:
+        #     df_rand = model.density.sample(n=n, seed=seed)
+        #     df_e = DataFrame(
+        #         {"ind_e": [*range(0, n_e, 1)]}
+        #     )
+
+        #     df_r = DataFrame(
+        #         {"ind_r": [*range(0, n_r, 1)]}
+        #     )
+        #     if not ind_comm is None:
+        #         df_rand[ind_comm] = df_rand.index
+        #     df_samp = model.var_outer(df_rand, df_det=df_det)
+        # # Non-common random numbers
+        # else:
+        #     df_rand = model.density.sample(n=n * df_det.shape[0], seed=seed)
+        #     if not ind_comm is None:
+        #         df_rand[ind_comm] = df_rand.index
+        #     df_samp = concat(
+        #         (df_rand, concat([df_det[model.var_det]]*n, axis=0).reset_index(drop=True)),
+        #         axis=1,
+        #     ).reset_index(drop=True)
 
     if skip:
         ## Evaluation estimate
@@ -683,7 +818,6 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
             }
 
         return df_samp
-
 
     df_res = eval_df(model, df=df_samp, append=append)
     ## Attach metadata
