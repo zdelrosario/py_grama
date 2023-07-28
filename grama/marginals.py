@@ -19,6 +19,7 @@ from numpy import max as npmax
 from numpy.random import uniform as runif
 from pandas import DataFrame
 from scipy.optimize import root_scalar, root
+<<<<<<< HEAD
 from scipy.stats import (
     alpha,
     anglit,
@@ -116,6 +117,22 @@ from scipy.stats import (
     weibull_max,
     wrapcauchy,
 )
+=======
+from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
+    bradford, burr, burr12, cauchy, chi, chi2, cosine, crystalball, dgamma, \
+    dweibull, erlang, expon, exponnorm, exponweib, exponpow, f, fatiguelife, \
+    fisk, foldcauchy, foldnorm, gaussian_kde, genlogistic, gennorm, genpareto, \
+    genexpon, genextreme, gausshyper, gamma, gengamma, genhalflogistic, \
+    gibrat, gompertz, gumbel_r, gumbel_l, halfcauchy, halflogistic, \
+    halfnorm, halfgennorm, hypsecant, invgamma, invgauss, invweibull, \
+    johnsonsb, johnsonsu, kappa4, kappa3, ksone, kstwobign, laplace, levy, \
+    levy_l, levy_stable, logistic, loggamma, loglaplace, lognorm, lomax, \
+    maxwell, mielke, moyal, nakagami, ncx2, ncf, nct, norm, norminvgauss, \
+    pareto, pearson3, powerlaw, powerlognorm, powernorm, rdist, rayleigh, \
+    rice, recipinvgauss, skewnorm, t, trapz, triang, truncexpon, truncnorm, \
+    tukeylambda, uniform, vonmises, vonmises_line, wald, weibull_min, \
+    weibull_max, wrapcauchy
+>>>>>>> ea5fefee8c50a887569bc9c458ce4af6e375c8bd
 
 
 ## Scipy metadata
@@ -158,7 +175,7 @@ valid_dist = {
     "gengamma": gengamma,
     "genhalflogistic": genhalflogistic,
     # "geninvgauss": geninvgauss,
-    "gilbrat": gilbrat,
+    "gibrat": gibrat,
     "gompertz": gompertz,
     "gumbel_r": gumbel_r,
     "gumbel_l": gumbel_l,
@@ -259,7 +276,7 @@ param_dist = {
     "gengamma": ["a", "c", "loc", "scale"],
     "genhalflogistic": ["c", "loc", "scale"],
     "geninvgauss": ["p", "b", "loc", "scale"],
-    "gilbrat": ["loc", "scale"],
+    "gibrat": ["loc", "scale"],
     "gompertz": ["c", "loc", "scale"],
     "gumbel_r": ["loc", "scale"],
     "gumbel_l": ["loc", "scale"],
