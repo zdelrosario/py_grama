@@ -836,7 +836,8 @@ class Density:
     def summary_copula(self):
         if not (self.copula_real is None):
             # NEW: uhh fix later to have better formatting and check if both exist first
-            return f"{self.copula_real.summary()}\n{self.copula_err.summary()}"
+            # return f"{self.copula_real.summary()}\n{self.copula_err.summary()}"
+            print("Test temp")
         return None
 
 
@@ -930,8 +931,6 @@ class Model:
         except AttributeError:
             self.var_rand = []
         self.var_det = list(set(self.var).difference(self.var_rand))
-
-
 
         self.source_list = []
         self.var_rand_real = []

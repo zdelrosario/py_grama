@@ -653,7 +653,29 @@ def eval_sample(model, n=None, n_r=None, n_e=None, df_det=None, seed=None, appen
 
     ## Check for mixed variability sources
     if 'real' in model.source_list and 'error' in model.source_list:
-        if n_r is None or n_e is None:
+        if n is not None:
+            source_type = "mixed_standard"
+            if comm:
+                df_rand_data = model.density.sample(n_r=n_r, n_e=n_e, seed=seed, source_type=source_type)
+
+                df_r_ind = DataFrame({"ind_r": [*range(0, n_r, 1)]})
+                df_e_ind = DataFrame({"ind_e": [*range(0, n_e, 1)]})
+                df_rand_ind = tran_outer(df_r_ind, df_e_ind)
+
+                df_rand = concat([df_rand_ind, df_rand_data], axis=1)
+
+                df_samp = model.var_outer(df_rand, df_det=df_det)
+        # Non-common random numbers
+        else:
+            df_rand = model.density.sample(n_r=n_r*df_det.shape[0], seed=seed)
+            if not ind_comm is None:
+                df_rand[ind_comm] = df_rand.index
+            df_samp = concat(
+                (df_rand, concat([df_det[model.var_det]]*n_r, axis=0).reset_index(drop=True)),
+                axis=1,
+            ).reset_index(drop=True)
+
+        elif n_r is None or n_e is None:
             raise ValueError("Must provide both a valid n_r value and n_e value.")
         
         source_type = "mixed"
@@ -664,18 +686,18 @@ def eval_sample(model, n=None, n_r=None, n_e=None, df_det=None, seed=None, appen
 
             df_r_ind = DataFrame({"ind_r": [*range(0, n_r, 1)]})
             df_e_ind = DataFrame({"ind_e": [*range(0, n_e, 1)]})
-            df_rand_ind = model.var_outer(df_r_ind, df_e_ind)
+            df_rand_ind = tran_outer(df_r_ind, df_e_ind)
 
             df_rand = concat([df_rand_ind, df_rand_data], axis=1)
 
             df_samp = model.var_outer(df_rand, df_det=df_det)
         # Non-common random numbers
         else:
-            df_rand = model.density.sample(n=n * df_det.shape[0], seed=seed)
+            df_rand = model.density.sample(n_r=n_r*df_det.shape[0], seed=seed)
             if not ind_comm is None:
                 df_rand[ind_comm] = df_rand.index
             df_samp = concat(
-                (df_rand, concat([df_det[model.var_det]]*n, axis=0).reset_index(drop=True)),
+                (df_rand, concat([df_det[model.var_det]]*n_r, axis=0).reset_index(drop=True)),
                 axis=1,
             ).reset_index(drop=True)
     elif 'error' in model.source_list:
