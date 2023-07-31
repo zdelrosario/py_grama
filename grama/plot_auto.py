@@ -764,5 +764,7 @@ def theme_uqbook():
             axis_text_y=element_text(size=12),
             axis_title_x=element_text(size=14),
             axis_title_y=element_text(size=14),
+            legend_title=element_text(size=12),
+            legend_text=element_text(size=10),
         )
     )
