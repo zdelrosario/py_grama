@@ -424,6 +424,7 @@ def plot_hists(df, out=None, color="full", **kwargs):
         + geom_histogram(bins=30)
         + facet_wrap("var", scales="free")
         + theme_minimal()
+        + theme(panel_spacing=0.40)
         + labs(
             x="Output Value",
             y="Count",
