@@ -384,7 +384,9 @@ class CopulaIndependence(Copula):
         if var_name is not None:
             return DataFrame(data=random((n)), columns=var_name)
         else:
-            return DataFrame(data=random((n, len(self.var_rand))), columns=self.var_rand)
+            return DataFrame(
+                data=random((n, len(self.var_rand))), columns=self.var_rand
+            )
 
     def d(self, u):
         """Density function
@@ -832,11 +834,7 @@ class Density:
 
         return DataFrame(data=prval, columns=var_comp)
 
-<<<<<<< HEAD
     def sample(self, n_r=None, n_e=None, seed=None, source_type="real"):
-=======
-    def sample(self, n=None, seed=None, var_name=None):
->>>>>>> e0efe0b2ba84dba8aba3ba5062494d0803e34e56
         """Draw samples from joint density
 
         Draw samples according to joint density using marginal and copula
@@ -980,7 +978,6 @@ class Model:
             self.var_rand = []
         self.var_det = list(set(self.var).difference(self.var_rand))
 
-<<<<<<< HEAD
         self.source_list = []
         self.var_rand_real = []
         self.var_rand_err = []
@@ -988,17 +985,6 @@ class Model:
             var_key = list(self.var_rand)[key_ind]
             self.source_list.append(self.density.marginals[var_key].source)
             if self.density.marginals[var_key].source == "real":
-=======
-
-
-        self.source_list = []
-        self.var_rand_real = []
-        self.var_rand_err = []
-        for key_ind in range (0, len(self.var_rand)):
-            var_key = list(self.var_rand)[key_ind]
-            self.source_list.append(self.density.marginals[var_key].source)
-            if self.density.marginals[var_key].source == 'real':
->>>>>>> e0efe0b2ba84dba8aba3ba5062494d0803e34e56
                 self.var_rand_real.append(var_key)
             else:
                 self.var_rand_err.append(var_key)
