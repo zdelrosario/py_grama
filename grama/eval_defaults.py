@@ -556,6 +556,7 @@ ev_conservative = add_pipe(eval_conservative)
 ## Random sampling
 # --------------------------------------------------
 @curry
+<<<<<<< HEAD
 def eval_sample(
     model,
     n=None,
@@ -568,6 +569,9 @@ def eval_sample(
     comm=True,
     ind_comm=None,
 ):
+=======
+def eval_sample(model, n=None, n_r=None, n_e=None, df_det=None, seed=None, append=True, skip=False, comm=True, ind_comm=None):
+>>>>>>> e0efe0b2ba84dba8aba3ba5062494d0803e34e56
     r"""Draw a random sample
 
     Evaluates a model with a random sample of the random model inputs. Generates outer product with deterministic levels (common random numbers) OR generates a sample fully-independent of deterministic levels (non-common random numbers).
@@ -664,9 +668,8 @@ def eval_sample(
     """
     ## Check invariants
     invariants_eval_model(model, skip)
-    invariants_eval_df(
-        df_det, arg_name="df_det", valid_str=["nom"], acc_none=(model.n_var_det == 0)
-    )
+    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
+        acc_none=(model.n_var_det==0))
     if n is None and n_r is None and n_e is None:
         raise ValueError("Must provide a valid n value.")
 
@@ -680,10 +683,10 @@ def eval_sample(
     #     n = int(n)
 
     ## Check for mixed variability sources
-    if "real" in model.source_list and "error" in model.source_list:
+    if 'real' in model.source_list and 'error' in model.source_list:
         if n_r is None or n_e is None:
             raise ValueError("Must provide both a valid n_r value and n_e value.")
-
+        
         source_type = "mixed"
         ## Draw realizations
         # Common random numbers
