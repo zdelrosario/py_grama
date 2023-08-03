@@ -428,7 +428,7 @@ class CopulaIndependence(Copula):
         """Jacobian
 
         Args:
-            z (array-like):
+            z (array-like)
 
         Returns:
             array:
@@ -834,7 +834,11 @@ class Density:
 
         return DataFrame(data=prval, columns=var_comp)
 
+<<<<<<< HEAD
     def sample(self, n_r=None, n_e=None, seed=None, source_type="real"):
+=======
+    def sample(self, n=None, n_r=None, n_e=None, seed=None, source_type="real"):
+>>>>>>> c6100d6ac495e93383c87fd0656847922a8ba3c2
         """Draw samples from joint density
 
         Draw samples according to joint density using marginal and copula
@@ -868,9 +872,13 @@ class Density:
             df_real = self.copula_real.sample(n=n_r, seed=seed)
             df_err = self.copula_err.sample(n=n_e, seed=seed)
             df_pr = tran_outer(df_real, df_err)
+        elif source_type == "mixed_standard":
+            df_real = self.copula_real.sample(n=n, seed=seed)
+            df_err = self.copula_err.sample(n=n, seed=seed)
+            df_pr = concat([df_real, df_err], axis=1)
         else:
             raise ValueError(
-                "Invalid source_type argument. Source type may only be 'real', 'error', or 'mixed'."
+                "Invalid source_type argument. Source type may only be 'real', 'error', 'mixed', or 'mixed_standard'."
             )
 
         return self.pr2sample(df_pr)
@@ -879,12 +887,20 @@ class Density:
         return "{0:}: {1:}".format(var, self.marginals[var].summary())
 
     def summary_copula(self):
+<<<<<<< HEAD
         summary = ""
         if self.copula_real is not None:
             summary += f"{self.copula_real.summary()}\n      "
         if self.copula_err is not None:
             summary += f"{self.copula_err.summary()}"
         return summary
+=======
+        if not (self.copula_real is None):
+            # NEW: uhh fix later to have better formatting and check if both exist first
+            # return f"{self.copula_real.summary()}\n{self.copula_err.summary()}"
+            print("Test temp")
+        return None
+>>>>>>> c6100d6ac495e93383c87fd0656847922a8ba3c2
 
 
 # Model parent class
