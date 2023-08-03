@@ -436,7 +436,7 @@ class CopulaIndependence(Copula):
 
 
 class CopulaGaussian(Copula):
-    def __init__(self, var_rand, df_corr):
+    def __init__(self, var_rand, df_corr, source="real"):
         """Constructor
 
         Args:
@@ -485,6 +485,11 @@ class CopulaGaussian(Copula):
 
         self.df_corr = df_corr
         self.var_rand = var_rand
+        if source not in ["real", "error"]:
+            raise ValueError(
+                "Your source of variability must be either 'real' or 'error'!"
+            )
+        self.source = source
         self.Sigma = Sigma
         self.Sigma_h = Sigma_h
         self.Sigma_i = Sigma_i
@@ -499,8 +504,7 @@ class CopulaGaussian(Copula):
         Returns:
             gr.CopulaGaussian:
         """
-        cop = CopulaGaussian(self.var_rand, self.df_corr.copy())
-
+        cop = CopulaGaussian(self.var_rand, self.df_corr.copy(), self.source)
         return cop
 
     def sample(self, n=1, seed=None):
@@ -591,7 +595,7 @@ class CopulaGaussian(Copula):
         return dot(self.Sigma_h.T, diag(norm.pdf(dot(self.Sigma_h, z))))
 
     def summary(self):
-        return "Gaussian copula with correlations:\n{}".format(self.df_corr)
+        return f"Gaussian copula (source: {self.source}) with correlations:\n{self.df_corr}"
 
 
 ## Density parent class
@@ -705,17 +709,37 @@ class Density:
 
         """
         # Get variable names
-        var = [key for key, _ in self.marginals.items()]
-        df_u = self.sample2pr(df)[var]
+        var = []
+        var_real = []
+        var_err = []
+        for key in self.marginals.keys():
+            var.append(key)
+            if self.marginals[var].source == "real":
+                var_real.append(key)
+            else:
+                var_err.append(key)
+
         # Evaluate copula density
-        l_copula = self.copula.d(df_u.values)
+        if self.copula_real is None:
+            l_copula_real = 1
+        else:
+            df_u_real = self.sample2pr(df)[var_real]
+            l_copula_real = self.copula_real.d(df_u_real.values)
+
+        if self.copula_err is None:
+            l_copula_err = 1
+        else:
+            df_u_err = self.sample2pr(df)[var_err]
+            l_copula_err = self.copula_err.d(df_u_err.values)
+
         # Evaluate marginal densities
         L_marginals = zeros((df.shape[0], len(var)))
         for i, v in enumerate(var):
             L_marginals[:, i] = self.marginals[v].d(df[v])
         l_marginals = prod(L_marginals, axis=1)
 
-        return l_copula * l_marginals
+        # return l_copula * l_marginals
+        return l_copula_real * l_copula_err * l_marginals
 
     def pr2sample(self, df_prval):
         """Convert CDF probabilities to samples
@@ -850,10 +874,12 @@ class Density:
         return "{0:}: {1:}".format(var, self.marginals[var].summary())
 
     def summary_copula(self):
-        if not (self.copula_real is None):
-            # NEW: uhh fix later to have better formatting and check if both exist first
-            return f"{self.copula_real.summary()}\n{self.copula_err.summary()}"
-        return None
+        summary = ""
+        if self.copula_real is not None:
+            summary += f"{self.copula_real.summary()}\n      "
+        if self.copula_err is not None:
+            summary += f"{self.copula_err.summary()}"
+        return summary
 
 
 # Model parent class

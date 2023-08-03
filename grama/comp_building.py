@@ -597,7 +597,6 @@ cp_marginals = add_pipe(comp_marginals)
 ##################################################
 @curry
 def comp_copula_independence(model, source="real"):
-    # NEW: added source
     r"""Add an independence copula to model
 
     Composition. Add an independence copula to an existing model.
@@ -624,7 +623,6 @@ def comp_copula_independence(model, source="real"):
 
     """
     new_model = model.copy()
-    # NEW: fix var_rand to match the number of err and real vars for each copula not total
     var_rand_real = []
     var_rand_err = []
     for var in new_model.var_rand:
@@ -696,41 +694,55 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None, source="real"):
         )
 
     """
+    new_model = model.copy()
+    var_rand_real = []
+    var_rand_err = []
+    for var in new_model.var_rand:
+        if new_model.density.marginals[var].source == "real":
+            var_rand_real.append(var)
+        else:
+            var_rand_err.append(var)
+
+    if not (df_data is None):
+        df_corr = tran_copula_corr(df_data, model=new_model)
+
     if not (df_corr is None):
-        new_model = model.copy()
-        # if source == "real":
-        #     copula = CopulaGaussian(
-        #         list(model.density.marginals.keys()),
-        #         df_corr,
-        #     )
-        new_model.density = Density(
-            marginals=model.density.marginals,
-            copula=CopulaGaussian(
-                list(model.density.marginals.keys()),
-                df_corr,
-            ),
-        )
+        if source == "real":
+            new_model.density = Density(
+                marginals=model.density.marginals,
+                copula_real=CopulaGaussian(var_rand_real, df_corr, source),
+                copula_err=new_model.density.copula_err,
+            )
+        else:
+            new_model.density = Density(
+                marginals=model.density.marginals,
+                copula_err=CopulaGaussian(var_rand_err, df_corr, source),
+                copula_real=new_model.density.copula_real,
+            )
         new_model.update()
 
         return new_model
 
     if not (df_data is None):
-        new_model = model.copy()
         df_corr = tran_copula_corr(df_data, model=new_model)
 
-        new_model.density = Density(
-            marginals=model.density.marginals,
-            copula=CopulaGaussian(
-                list(model.density.marginals.keys()),
-                df_corr,
-            ),
-        )
+        if source == "real":
+            new_model.density = Density(
+                marginals=model.density.marginals,
+                copula_real=CopulaGaussian(var_rand_real, df_corr, source),
+                copula_err=new_model.density.copula_err,
+            )
+        else:
+            new_model.density = Density(
+                marginals=model.density.marginals,
+                copula_err=CopulaGaussian(var_rand_err, df_corr, source),
+                copula_real=new_model.density.copula_real,
+            )
         new_model.update()
 
         return new_model
 
-    else:
-        raise ValueError("Must provide df_corr or df_data")
+    raise ValueError("Must provide df_corr or df_data")
 
 
 cp_copula_gaussian = add_pipe(comp_copula_gaussian)
