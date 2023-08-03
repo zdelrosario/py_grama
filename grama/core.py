@@ -426,7 +426,7 @@ class CopulaIndependence(Copula):
         """Jacobian
 
         Args:
-            z (array-like):
+            z (array-like)
 
         Returns:
             array:

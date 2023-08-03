@@ -646,10 +646,20 @@ def eval_sample(model, n=None, n_r=None, n_e=None, df_det=None, seed=None, appen
     if seed is not None:
         set_seed(seed)
 
-    ## Ensure sample count is int
-    # if not isinstance(n, Integral):
-    #     print("eval_sample() is rounding n...")
-    #     n = int(n)
+    # Ensure sample count is int
+    if not isinstance(n, Integral) and n is not None:
+        print("eval_sample() is rounding n...")
+        n = int(n)
+
+    # Ensure sample count is int
+    if not isinstance(n_r, Integral) and n_r is not None:
+        print("eval_sample() is rounding n_r...")
+        n_r = int(n_r)
+
+    # Ensure sample count is int
+    if not isinstance(n_e, Integral) and n_e is not None:
+        print("eval_sample() is rounding n_e...")
+        n_e = int(n_e)
 
     ## Check for mixed variability sources
     if 'real' in model.source_list and 'error' in model.source_list:
