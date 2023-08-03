@@ -789,7 +789,7 @@ class Density:
 
         return DataFrame(data=prval, columns=var_comp)
 
-    def sample(self, n_r=None, n_e=None, seed=None, source_type="real"):
+    def sample(self, n=None, n_r=None, n_e=None, seed=None, source_type="real"):
         """Draw samples from joint density
 
         Draw samples according to joint density using marginal and copula
@@ -823,9 +823,13 @@ class Density:
             df_real = self.copula_real.sample(n=n_r, seed=seed)
             df_err = self.copula_err.sample(n=n_e, seed=seed)
             df_pr = tran_outer(df_real, df_err)
+        elif source_type == "mixed_standard":
+            df_real = self.copula_real.sample(n=n, seed=seed)
+            df_err = self.copula_err.sample(n=n, seed=seed)
+            df_pr = concat([df_real, df_err], axis=1)
         else:
             raise ValueError(
-                "Invalid source_type argument. Source type may only be 'real', 'error', or 'mixed'."
+                "Invalid source_type argument. Source type may only be 'real', 'error', 'mixed', or 'mixed_standard'."
             )
 
         return self.pr2sample(df_pr)
