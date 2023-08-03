@@ -116,7 +116,10 @@ from scipy.stats import (
     weibull_max,
     wrapcauchy,
 )
+<<<<<<< HEAD
 
+=======
+>>>>>>> 985ad80dce69e01a5efeb48a59a805841c340e3a
 
 ## Scipy metadata
 valid_dist = {
