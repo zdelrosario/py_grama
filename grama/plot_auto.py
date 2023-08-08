@@ -16,6 +16,11 @@ __all__ = [
     "plot_list",
     "set_uqtheme",
     "theme_uqbook",
+
+    "qual1",
+    "qual2",
+    "qual3",
+    "qual4",
 ]
 
 from grama import (
@@ -66,6 +71,12 @@ grey20 = "#2e2e2e"
 grey50 = "#7d7d7d"
 grey80 = "#cccccc"
 black = "#000000"
+
+# by David Nichols, https://davidmathlogic.com/colorblind/
+qual1 = "#D81B60"
+qual2 = "#1E88E5"
+qual3 = "#FFC107"
+qual4 = "#004D40"
 
 ## Helper functions
 ##################################################
@@ -653,9 +664,9 @@ def plot_sinew_outputs(
                 labels=_sci_format,
             )
             + guides(color=None)
-            + theme_minimal()
+            + theme_uqbook()
             + theme(
-                strip_text_y=element_text(angle=0),
+                strip_text_y=element_text(angle=270),
                 panel_border=element_rect(color="black", size=0.5),
             )
             + labs(
@@ -766,6 +777,8 @@ def theme_uqbook():
             axis_text=element_text(size=12),
             axis_title=element_text(size=14),
             strip_text=element_text(size=12),
+            strip_text_y=element_text(size=12, vjust=0.75),
+            strip_background=element_rect(color="black", fill="white", size=0.5),
             legend_title=element_text(size=12),
             legend_text=element_text(size=10),
         )
