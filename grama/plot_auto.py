@@ -137,6 +137,7 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
                     linetype=out,
                     color=level,
                 )
+            + theme_uqbook()
             )
         )
     elif color == "bw":
@@ -153,6 +154,7 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
                     group=level,
                 )
             )
+            + theme_uqbook()
         )
     else:
         raise ValueError("Color mode {} not recognized.".format(color))
@@ -172,7 +174,7 @@ def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
             >> ggplot(aes(var, out))
             + geom_tile(aes(fill=corr))
             + scale_fill_gradient2(name="Corr", midpoint=0)
-            + theme_minimal()
+            + theme_uqbook()
             + theme(axis_text_x=element_text(angle=270))
         )
     elif color == "bw":
@@ -194,7 +196,7 @@ def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
                 colors=("black", "white", "black"),
                 values=(0, 0.5, 1),
             )
-            + theme_minimal()
+            + theme_uqbook()
             + theme(axis_text_x=element_text(angle=270))
         )
     else:
@@ -224,7 +226,7 @@ def plot_sobol_outputs(df, idx=None, color="full"):
             >> ggplot(aes(idx, "out"))
             + geom_tile(aes(fill="S"))
             + scale_fill_gradient(name="Sobol' Index", breaks=(0, 0.5, 1), limits=(0, 1))
-            + theme_minimal()
+            + theme_uqbook()
             + theme(axis_text_x=element_text(angle=270))
             + labs(
                 x="var",
@@ -237,7 +239,7 @@ def plot_sobol_outputs(df, idx=None, color="full"):
             >> ggplot(aes(idx, "out"))
             + geom_tile(aes(fill="S"))
             + scale_fill_gradient(name="Sobol' Index", low="white", high="black", breaks=(0, 0.5, 1), limits=(0, 1))
-            + theme_minimal()
+            + theme_uqbook()
             + theme(axis_text_x=element_text(angle=270))
             + labs(
                 x="var",
@@ -340,7 +342,7 @@ def plot_scattermat(df, var=None, color="full"):
                         label=v1,
                         va="bottom",
                     )
-                    + theme_minimal()
+                    + theme_uqbook()
                     + labs(title=v1)
                 )
 
@@ -358,7 +360,7 @@ def plot_scattermat(df, var=None, color="full"):
                         breaks=breaks_min,
                         labels=labels_y,
                     )
-                    + theme_minimal()
+                    + theme_uqbook()
                     + theme(
                         axis_title=element_text(va="top", size=12),
                     )
@@ -423,7 +425,7 @@ def plot_hists(df, out=None, color="full", **kwargs):
         >> ggplot(aes("value"))
         + geom_histogram(bins=30)
         + facet_wrap("var", scales="free")
-        + theme_minimal()
+        + theme_uqbook()
         + theme(panel_spacing=0.40)
         + labs(
             x="Output Value",
@@ -535,7 +537,7 @@ def plot_sinew_inputs(df, var=None, color="full", sweep_ind="sweep_ind"):
                             labels=labels_y,
                         )
                         + guides(color=None)
-                        + theme_minimal()
+                        + theme_uqbook()
                         + theme(
                             axis_title=element_text(va="top", size=12),
                         )
@@ -554,7 +556,7 @@ def plot_sinew_inputs(df, var=None, color="full", sweep_ind="sweep_ind"):
                             labels=labels_y,
                         )
                         + guides(color=None)
-                        + theme_minimal()
+                        + theme_uqbook()
                         + theme(
                             axis_title=element_text(va="top", size=12),
                         )
@@ -682,7 +684,7 @@ def plot_sinew_outputs(
                 labels=_sci_format,
             )
             + guides(linetype=None)
-            + theme_minimal()
+            + theme_uqbook()
             + theme(
                 strip_text_y=element_text(angle=0),
                 panel_border=element_rect(color="black", size=0.5),
