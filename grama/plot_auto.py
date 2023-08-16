@@ -59,7 +59,6 @@ from plotnine import (
     geom_text,
     geom_segment,
 )
-from patchworklib import load_ggplot
 
 from matplotlib import gridspec
 from pandas import melt
@@ -273,15 +272,14 @@ def plot_scattermat(df, var=None, color="full"):
     Create a scatterplot matrix. Often used to visualize a design (set of inputs
     points) before evaluating the functions.
 
-    Usually called as a dispatch from plot_auto(). Uses the patchworklib library
-    under-the-hood to compose multiple plots.
+    Usually called as a dispatch from plot_auto().
 
     Args:
         var (list of strings): Variables to plot
         color (str): Color mode; value ignored as default vis is black & white
 
     Returns:
-        patchworklib.bricks: Scatterplot matrix
+        ggplot: Scatterplot matrix
 
     Examples::
 
@@ -309,14 +307,18 @@ def plot_scattermat(df, var=None, color="full"):
     labels_blank = lambda v: [""] * len(v)
     breaks_min = lambda lims: (lims[0], 0.5 * (lims[0] + lims[1]), lims[1])
 
-    ## Make blank bricks for full figure
-    bricks = None
+    ## Make blank figure
+    fig = (
+        df
+        >> ggplot()
+        + geom_blank()
+        + theme_void()
+    ).draw(show=False)
 
     gs = gridspec.GridSpec(len(var), len(var))
     for i, v1 in enumerate(var):
-        # Reset the row bricks
-        bricks_row = None
         for j, v2 in enumerate(var):
+            ax = fig.add_subplot(gs[i, j])
             ## Switch labels
             if j == 0:
                 labels_y = _sci_format
@@ -375,20 +377,13 @@ def plot_scattermat(df, var=None, color="full"):
                         axis_title=element_text(va="top", size=12),
                     )
                 )
-            # Add to current row
-            bricks_part = load_ggplot(p, figsize=(2.5, 2.5))
-            if bricks_row is None:
-                bricks_row = bricks_part
-            else:
-                bricks_row = (bricks_row | bricks_part)
-        # Add row to figure
-        if bricks is None:
-            bricks = bricks_row
-        else:
-            bricks = (bricks / bricks_row)
+
+            _ = p._draw_using_figure(fig, [ax])
+
 
     ## Plot
-    return bricks
+    # NB Returning the figure causes a "double plot" in Jupyter....
+    fig.show()
 
 
 pt_scattermat = add_pipe(plot_scattermat)
