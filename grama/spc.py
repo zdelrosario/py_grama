@@ -8,15 +8,44 @@ __all__ = [
 ]
 
 from scipy.special import gamma
-from grama import add_pipe, Intention
-from grama import tf_group_by, tf_summarize, tf_mutate, tf_ungroup, tf_filter
-from grama import tf_pivot_longer, tf_left_join
-from grama import mean, sd, lead, lag, consec, case_when
-from grama import n as nfcn
-from plotnine import ggplot, aes, geom_line, geom_hline, geom_point, facet_grid, theme, theme_minimal, guides
-from plotnine import scale_linetype_manual, scale_shape_manual, scale_color_manual
-from plotnine import labs, labeller
 from numpy import sqrt
+from grama import n as nfcn
+
+from grama import (
+    add_pipe,
+    Intention,
+    tf_group_by,
+    tf_summarize,
+    tf_mutate,
+    tf_ungroup,
+    tf_filter,
+    tf_pivot_longer,
+    tf_left_join,
+    mean,
+    sd,
+    lead,
+    lag,
+    consec,
+    case_when,
+    theme_uqbook,
+)
+
+from plotnine import (
+    ggplot,
+    aes,
+    geom_line,
+    geom_hline,
+    geom_point,
+    facet_grid,
+    theme,
+    theme_minimal,
+    guides,
+    scale_linetype_manual,
+    scale_shape_manual,
+    scale_color_manual,
+    labs,
+    labeller,
+)
 
 ## Helper functions
 # --------------------------------------------------
@@ -246,7 +275,7 @@ def plot_xbs(df, group, var, n_side=9, n_delta=6, color="full"):
                 name="Guideline",
                 values=dict(LCL="dashed", UCL="dashed", center="solid"),
             )
-            + theme_minimal()
+            + theme_uqbook()
             + guides(color=None)
             + facet_grid(
                 "_var~.",
@@ -297,7 +326,7 @@ def plot_xbs(df, group, var, n_side=9, n_delta=6, color="full"):
                 name="Guideline",
                 values=dict(LCL="dashed", UCL="dashed", center="solid"),
             )
-            + theme_minimal()
+            + theme_uqbook()
             + guides(color=None)
             + facet_grid(
                 "_var~.",

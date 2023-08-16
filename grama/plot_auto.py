@@ -14,23 +14,70 @@ __all__ = [
     "plot_auto",
     "pt_auto",
     "plot_list",
+    "set_uqtheme",
+    "theme_grama",
+    "theme_uqbook",
+
+    "qual1",
+    "qual2",
+    "qual3",
+    "qual4",
 ]
 
-from grama import add_pipe, pipe, tf_pivot_longer, tf_outer, tf_select, tf_rename, tf_filter, tf_mutate
-from grama import case_when
-from grama import Intention
+from grama import (
+    add_pipe,
+    pipe,
+    case_when,
+    Intention,
+    tf_pivot_longer,
+    tf_outer,
+    tf_select,
+    tf_rename,
+    tf_filter,
+    tf_mutate,
+)
 from .string_helpers import str_replace
-from pandas import melt
 
 from plotnine import aes, annotate, ggplot, facet_grid, facet_wrap, labs, guides
 from plotnine import theme, theme_void, theme_minimal
-from plotnine import element_text, element_rect
-from plotnine import scale_x_continuous, scale_y_continuous, scale_fill_gradient, scale_fill_gradient2, scale_fill_gradientn
-from plotnine import geom_point, geom_density, geom_histogram, geom_line, geom_tile, geom_text
-from plotnine import geom_segment, geom_blank
+from plotnine import element_blank, element_line, element_text, element_rect
+from plotnine import geoms
+from plotnine import (
+    scale_x_continuous,
+    scale_y_continuous,
+    scale_fill_gradient,
+    scale_fill_gradient2,
+    scale_fill_gradientn,
+)
+from plotnine import (
+    geom_blank,
+    geom_point,
+    geom_density,
+    geom_histogram,
+    geom_line,
+    geom_tile,
+    geom_text,
+    geom_segment,
+)
+
 from matplotlib import gridspec
+from pandas import melt
 
 from toolz import curry
+
+## Set color codes
+##################################################
+white = "#ffffff"
+grey20 = "#2e2e2e"
+grey50 = "#7d7d7d"
+grey80 = "#cccccc"
+black = "#000000"
+
+# by David Nichols, https://davidmathlogic.com/colorblind/
+qual1 = "#D81B60"
+qual2 = "#1E88E5"
+qual3 = "#FFC107"
+qual4 = "#004D40"
 
 ## Helper functions
 ##################################################
@@ -102,6 +149,7 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
                     linetype=out,
                     color=level,
                 )
+            + theme_grama()
             )
         )
     elif color == "bw":
@@ -118,6 +166,7 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
                     group=level,
                 )
             )
+            + theme_grama()
         )
     else:
         raise ValueError("Color mode {} not recognized.".format(color))
@@ -137,7 +186,7 @@ def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
             >> ggplot(aes(var, out))
             + geom_tile(aes(fill=corr))
             + scale_fill_gradient2(name="Corr", midpoint=0)
-            + theme_minimal()
+            + theme_grama()
             + theme(axis_text_x=element_text(angle=270))
         )
     elif color == "bw":
@@ -159,7 +208,7 @@ def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
                 colors=("black", "white", "black"),
                 values=(0, 0.5, 1),
             )
-            + theme_minimal()
+            + theme_grama()
             + theme(axis_text_x=element_text(angle=270))
         )
     else:
@@ -189,7 +238,7 @@ def plot_sobol_outputs(df, idx=None, color="full"):
             >> ggplot(aes(idx, "out"))
             + geom_tile(aes(fill="S"))
             + scale_fill_gradient(name="Sobol' Index", breaks=(0, 0.5, 1), limits=(0, 1))
-            + theme_minimal()
+            + theme_grama()
             + theme(axis_text_x=element_text(angle=270))
             + labs(
                 x="var",
@@ -202,7 +251,7 @@ def plot_sobol_outputs(df, idx=None, color="full"):
             >> ggplot(aes(idx, "out"))
             + geom_tile(aes(fill="S"))
             + scale_fill_gradient(name="Sobol' Index", low="white", high="black", breaks=(0, 0.5, 1), limits=(0, 1))
-            + theme_minimal()
+            + theme_grama()
             + theme(axis_text_x=element_text(angle=270))
             + labs(
                 x="var",
@@ -305,7 +354,7 @@ def plot_scattermat(df, var=None, color="full"):
                         label=v1,
                         va="bottom",
                     )
-                    + theme_minimal()
+                    + theme_grama()
                     + labs(title=v1)
                 )
 
@@ -323,7 +372,7 @@ def plot_scattermat(df, var=None, color="full"):
                         breaks=breaks_min,
                         labels=labels_y,
                     )
-                    + theme_minimal()
+                    + theme_grama()
                     + theme(
                         axis_title=element_text(va="top", size=12),
                     )
@@ -388,7 +437,8 @@ def plot_hists(df, out=None, color="full", **kwargs):
         >> ggplot(aes("value"))
         + geom_histogram(bins=30)
         + facet_wrap("var", scales="free")
-        + theme_minimal()
+        + theme_grama()
+        + theme(panel_spacing=0.40)
         + labs(
             x="Output Value",
             y="Count",
@@ -499,7 +549,7 @@ def plot_sinew_inputs(df, var=None, color="full", sweep_ind="sweep_ind"):
                             labels=labels_y,
                         )
                         + guides(color=None)
-                        + theme_minimal()
+                        + theme_grama()
                         + theme(
                             axis_title=element_text(va="top", size=12),
                         )
@@ -518,7 +568,7 @@ def plot_sinew_inputs(df, var=None, color="full", sweep_ind="sweep_ind"):
                             labels=labels_y,
                         )
                         + guides(color=None)
-                        + theme_minimal()
+                        + theme_grama()
                         + theme(
                             axis_title=element_text(va="top", size=12),
                         )
@@ -615,9 +665,9 @@ def plot_sinew_outputs(
                 labels=_sci_format,
             )
             + guides(color=None)
-            + theme_minimal()
+            + theme_grama()
             + theme(
-                strip_text_y=element_text(angle=0),
+                strip_text_y=element_text(angle=270),
                 panel_border=element_rect(color="black", size=0.5),
             )
             + labs(
@@ -646,7 +696,7 @@ def plot_sinew_outputs(
                 labels=_sci_format,
             )
             + guides(linetype=None)
-            + theme_minimal()
+            + theme_grama()
             + theme(
                 strip_text_y=element_text(angle=0),
                 panel_border=element_rect(color="black", size=0.5),
@@ -710,3 +760,38 @@ def plot_auto(df, color="full"):
 
 
 pt_auto = add_pipe(plot_auto)
+
+
+## UQBook theme
+## ##################################################
+def set_uqtheme():
+    """Override default geometry colors
+    """
+
+    geoms.geom_histogram.DEFAULT_AES['fill'] = grey50
+    geoms.geom_histogram.DEFAULT_AES['color'] = black
+
+def theme_grama():
+    return (
+        theme_minimal()
+        + theme(
+            axis_text=element_text(size=12),
+            axis_title=element_text(size=14),
+            strip_text=element_text(size=12),
+            strip_text_y=element_text(size=12, vjust=0.75),
+            strip_background=element_rect(color="black", fill="white", size=0.5),
+            legend_title=element_text(size=12),
+            legend_text=element_text(size=10),
+        )
+    )
+
+def theme_uqbook():
+    return (
+        theme_grama()
+        + theme(
+            figure_size=(5, 3),
+            legend_position="bottom",
+            legend_box_spacing=0.5,
+            legend_direction="horizontal",
+        )
+    )
