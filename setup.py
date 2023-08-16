@@ -34,7 +34,7 @@ setup(
         "numpy>=1.15",
         "scipy>=1.10",
         "pandas<=1.5.3",
-        "plotnine>=0.8.0,<=0.12.1",
+        "plotnine>=0.8.0,<=0.12.0",
         "patchworklib",
         "scipy",
         "toolz",
