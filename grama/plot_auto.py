@@ -15,6 +15,7 @@ __all__ = [
     "pt_auto",
     "plot_list",
     "set_uqtheme",
+    "theme_grama",
     "theme_uqbook",
 
     "qual1",
@@ -148,7 +149,7 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
                     linetype=out,
                     color=level,
                 )
-            + theme_uqbook()
+            + theme_grama()
             )
         )
     elif color == "bw":
@@ -165,7 +166,7 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
                     group=level,
                 )
             )
-            + theme_uqbook()
+            + theme_grama()
         )
     else:
         raise ValueError("Color mode {} not recognized.".format(color))
@@ -185,7 +186,7 @@ def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
             >> ggplot(aes(var, out))
             + geom_tile(aes(fill=corr))
             + scale_fill_gradient2(name="Corr", midpoint=0)
-            + theme_uqbook()
+            + theme_grama()
             + theme(axis_text_x=element_text(angle=270))
         )
     elif color == "bw":
@@ -207,7 +208,7 @@ def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
                 colors=("black", "white", "black"),
                 values=(0, 0.5, 1),
             )
-            + theme_uqbook()
+            + theme_grama()
             + theme(axis_text_x=element_text(angle=270))
         )
     else:
@@ -237,7 +238,7 @@ def plot_sobol_outputs(df, idx=None, color="full"):
             >> ggplot(aes(idx, "out"))
             + geom_tile(aes(fill="S"))
             + scale_fill_gradient(name="Sobol' Index", breaks=(0, 0.5, 1), limits=(0, 1))
-            + theme_uqbook()
+            + theme_grama()
             + theme(axis_text_x=element_text(angle=270))
             + labs(
                 x="var",
@@ -250,7 +251,7 @@ def plot_sobol_outputs(df, idx=None, color="full"):
             >> ggplot(aes(idx, "out"))
             + geom_tile(aes(fill="S"))
             + scale_fill_gradient(name="Sobol' Index", low="white", high="black", breaks=(0, 0.5, 1), limits=(0, 1))
-            + theme_uqbook()
+            + theme_grama()
             + theme(axis_text_x=element_text(angle=270))
             + labs(
                 x="var",
@@ -436,7 +437,7 @@ def plot_hists(df, out=None, color="full", **kwargs):
         >> ggplot(aes("value"))
         + geom_histogram(bins=30)
         + facet_wrap("var", scales="free")
-        + theme_uqbook()
+        + theme_grama()
         + theme(panel_spacing=0.40)
         + labs(
             x="Output Value",
@@ -548,7 +549,7 @@ def plot_sinew_inputs(df, var=None, color="full", sweep_ind="sweep_ind"):
                             labels=labels_y,
                         )
                         + guides(color=None)
-                        + theme_uqbook()
+                        + theme_grama()
                         + theme(
                             axis_title=element_text(va="top", size=12),
                         )
@@ -567,7 +568,7 @@ def plot_sinew_inputs(df, var=None, color="full", sweep_ind="sweep_ind"):
                             labels=labels_y,
                         )
                         + guides(color=None)
-                        + theme_uqbook()
+                        + theme_grama()
                         + theme(
                             axis_title=element_text(va="top", size=12),
                         )
@@ -664,7 +665,7 @@ def plot_sinew_outputs(
                 labels=_sci_format,
             )
             + guides(color=None)
-            + theme_uqbook()
+            + theme_grama()
             + theme(
                 strip_text_y=element_text(angle=270),
                 panel_border=element_rect(color="black", size=0.5),
@@ -695,7 +696,7 @@ def plot_sinew_outputs(
                 labels=_sci_format,
             )
             + guides(linetype=None)
-            + theme_uqbook()
+            + theme_grama()
             + theme(
                 strip_text_y=element_text(angle=0),
                 panel_border=element_rect(color="black", size=0.5),
@@ -770,7 +771,7 @@ def set_uqtheme():
     geoms.geom_histogram.DEFAULT_AES['fill'] = grey50
     geoms.geom_histogram.DEFAULT_AES['color'] = black
 
-def theme_uqbook():
+def theme_grama():
     return (
         theme_minimal()
         + theme(
@@ -781,5 +782,16 @@ def theme_uqbook():
             strip_background=element_rect(color="black", fill="white", size=0.5),
             legend_title=element_text(size=12),
             legend_text=element_text(size=10),
+        )
+    )
+
+def theme_uqbook():
+    return (
+        theme_grama()
+        + theme(
+            figure_size=(5, 3),
+            legend_position="bottom",
+            legend_box_spacing=0.5,
+            legend_direction="horizontal",
         )
     )
