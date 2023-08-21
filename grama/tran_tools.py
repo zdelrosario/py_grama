@@ -192,9 +192,9 @@ def tran_bootstrap(
     Args:
         df (DataFrame): Data to bootstrap
         tran (grama tran_ function): Transform procedure which generates statistic
-        n_boot (numeric): Monte Carlo resamples for bootstrap
-        n_sub (numeric): Nested resamples to estimate SE
-        con (float): Confidence level
+        n_boot (numeric): Monte Carlo resamples for bootstrap, default n_boot=500
+        n_sub (numeric): Nested resamples to estimate SE, default n_sub=25
+        con (float): Confidence level, default con=0.90
         col_sel (list(string)): Columns to include in bootstrap calculation
 
     Returns:
