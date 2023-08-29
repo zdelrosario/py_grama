@@ -149,8 +149,8 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
                     linetype=out,
                     color=level,
                 )
-            + theme_grama()
             )
+            + theme_grama()
         )
     elif color == "bw":
         return (
