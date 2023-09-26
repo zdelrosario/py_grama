@@ -206,7 +206,7 @@ def fit_nls(
             md_res = (
                 Model(name)
                 >> cp_function(
-                    lambda x: df_nom[var_fix].values,
+                    lambda *x: df_nom[var_fix].values,
                     var=list(set(var_remain).difference(var_fix)),
                     out=var_fix,
                     name="Fix variable levels",
@@ -228,7 +228,7 @@ def fit_nls(
         md_res = (
             Model(name)
             >> cp_function(
-                lambda x: df_best[var_fitted].values,
+                lambda *x: df_best[var_fitted].values,
                 var=var_remain,
                 out=var_fitted,
                 name="Fix variable levels",
