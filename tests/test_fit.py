@@ -171,8 +171,8 @@ class TestFits(unittest.TestCase):
         md_param = (
             gr.Model()
             >> gr.cp_function(
-                fun=lambda x, c, a: a * np.exp(x * c), 
-                var=["x", "c", "a"], 
+                fun=lambda x, c, a: a * np.exp(x * c),
+                var=["x", "c", "a"],
                 out=["y"]
             )
             >> gr.cp_bounds(c=[0, 4], a=[0.1, 2.0])
@@ -221,11 +221,11 @@ class TestFits(unittest.TestCase):
         md_fixed = (
             gr.Model()
             >> gr.cp_function(
-                fun=lambda x, c, a: a * np.exp(x * c),
-                var=["x", "c", "a"],
-                out=["y"]
+                fun=lambda x, c, a, e: a * np.exp(x * c) + e,
+                var=["x", "c", "a", "e"],
+                out=["y"],
             )
-            >> gr.cp_bounds(c=[0, 4], a=[1, 1])
+            >> gr.cp_bounds(c=[0, 4], a=[1, 1], e=[0, 0])
         )
         md_fit_fixed = df_data >> gr.ft_nls(
             md=md_fixed, verbose=False, uq_method="linpool"
@@ -233,6 +233,28 @@ class TestFits(unittest.TestCase):
 
         # Test that fixed model can evaluate successfully
         gr.eval_sample(md_fit_fixed, n=1, df_det="nom")
+
+        ## Model with fixed parameter and two inputs
+        # -------------------------
+        df_data2 = (
+            gr.df_grid(x=(1,2,3,4), y=(1,2,3,4))
+            >> gr.tf_mutate(f=2*X.x + X.y**2)
+        )
+        md_fixed2 = (
+            gr.Model()
+            >> gr.cp_function(
+                fun=lambda x, y, a, b: a*x + b*y**2,
+                var=["x", "y", "a", "b"],
+                out=["f"],
+            )
+            >> gr.cp_bounds(a=(0, 3), b=(1,1))
+        )
+        md_fit_fixed2 = df_data2 >> gr.ft_nls(
+            md=md_fixed2, verbose=False, uq_method="linpool"
+        )
+
+        # Test that fixed model can evaluate successfully
+        gr.eval_sample(md_fit_fixed2, n=1, df_det="nom")
 
         ## Trajectory model
         # -------------------------
