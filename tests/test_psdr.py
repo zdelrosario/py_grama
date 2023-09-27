@@ -71,7 +71,7 @@ class TestPolyridge(unittest.TestCase):
 
         self.assertTrue(gr.df_equal(df_res, df_true, close=True))
 
-        ## Higher-dimensional functionality
+        ## Higher-dimensional case runs without error
         df_higher = (
             gr.df_grid(
                 x=range(10),
@@ -81,6 +81,15 @@ class TestPolyridge(unittest.TestCase):
             >> gr.tf_mutate(f=DF.x + DF.y + DF.z)
         )
         gr.tran_polyridge(df_higher, out="f", n_degree=2, n_dim=2)
+
+        ## Fitting seed runs without error
+        gr.fit_polyridge(df_higher, out="f", n_degree=1, n_dim=1, seed=101)
+
+        ## Seed stabilizes results
+        df_res1 = gr.tran_polyridge(df_higher, out="f", n_degree=1, n_dim=1, seed=101)
+        df_res2 = gr.tran_polyridge(df_higher, out="f", n_degree=1, n_dim=1, seed=101)
+
+        self.assertTrue(gr.df_equal(df_res1, df_res2, close=True))
 
 ## Run tests
 if __name__ == '__main__':

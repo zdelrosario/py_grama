@@ -8,6 +8,7 @@ __all__ = [
 import copy
 from grama import add_pipe, Function, Model
 from numpy import number as npnumber
+from numpy.random import seed as npseed
 from pandas import DataFrame
 from toolz import curry
 
@@ -123,7 +124,7 @@ def _polyridge(
 # --------------------------------------------------
 @curry
 def tran_polyridge(
-    df, var=None, out=None, n_dim=None, n_degree=None, **kwargs
+    df, var=None, out=None, n_dim=None, n_degree=None, seed=None, **kwargs
 ):
     r"""Polynomial Ridge Approximation for parameter space reduction
 
@@ -140,6 +141,7 @@ def tran_polyridge(
 
     Kwargs:
         n_init (int): Number of iterations in optimization
+        seed (int): Seed for random number generator
 
     Returns:
         DataFrame: Set of weights defining the dimension-reduced space.
@@ -178,6 +180,9 @@ def tran_polyridge(
         )
 
     """
+    ## Set the seed, if provided
+    if not (seed is None):
+        npseed(seed)
     ## Run the low-level implementation
     pr, var = _polyridge(df, var=var, out=out, n_dim=n_dim, n_degree=n_degree, **kwargs)
 
@@ -192,7 +197,7 @@ tf_polyridge = add_pipe(tran_polyridge)
 
 @curry
 def fit_polyridge(
-    df, var=None, out=None, n_dim=None, n_degree=None, domain=None, density=None, **kwargs
+    df, var=None, out=None, n_dim=None, n_degree=None, domain=None, density=None, seed=None, **kwargs
 ):
     r"""Polynomial Ridge Approximation fitting routine
 
@@ -211,6 +216,7 @@ def fit_polyridge(
 
     Kwargs:
         n_init (int): Number of iterations in optimization
+        seed (int): Seed for random number generator
 
     Returns:
         Model: Polynomial (surrogate) model.
@@ -258,6 +264,9 @@ def fit_polyridge(
         )
 
     """
+    ## Set the seed, if provided
+    if not (seed is None):
+        npseed(seed)
     ## Run the low-level implementation
     pr, var = _polyridge(df, var=var, out=out, n_dim=n_dim, n_degree=n_degree, **kwargs)
 
