@@ -20,9 +20,19 @@ __all__ = [
     "getvars",
 ]
 
-from grama import add_pipe, CopulaGaussian, CopulaIndependence, Density, \
-    Function, FunctionModel, FunctionVectorized, Marginal, MarginalNamed, \
-    pipe, tran_copula_corr
+from grama import (
+    add_pipe,
+    CopulaGaussian,
+    CopulaIndependence,
+    Density,
+    Function,
+    FunctionModel,
+    FunctionVectorized,
+    Marginal,
+    MarginalNamed,
+    pipe,
+    tran_copula_corr,
+)
 from .eval_defaults import eval_sample
 from collections import ChainMap
 from pandas import concat, DataFrame
@@ -32,8 +42,7 @@ from toolz import curry
 ## Model Building Interface (MBI) tools
 ##################################################
 def _comp_function_data(model, fun, var, out, name, runtime):
-    r"""Internal function builder
-    """
+    r"""Internal function builder"""
     model_new = model.copy()
 
     # Check invariants
@@ -114,6 +123,7 @@ def getvars(f):
     """
     return f.__code__.co_varnames
 
+
 # Freeze inputs
 # -------------------------
 @curry
@@ -139,17 +149,15 @@ def comp_freeze(model, df=None, **var):
     # Process DataFrame if provided
     if not df is None:
         if df.shape[0] > 1:
-            raise ValueError(
-                "Provided DataFrame must have only one row."
-            )
+            raise ValueError("Provided DataFrame must have only one row.")
         var = dict(zip(df.columns, df.values.flatten()))
 
     # All variables are provided
     var_miss = set(set(var.keys())).difference(model.var)
     if len(var_miss) != 0:
         raise ValueError(
-            "All inputs listed in `var` argument must be present in model.var.\n" +
-            "Missing inputs {}".format(var_miss)
+            "All inputs listed in `var` argument must be present in model.var.\n"
+            + "Missing inputs {}".format(var_miss)
         )
 
     if any(map(lambda x: hasattr(x, "__iter__"), var.values())):
@@ -164,7 +172,7 @@ def comp_freeze(model, df=None, **var):
         var_diff,
         list(var.keys()),
         "(Freeze inputs: {})".format(list(var.keys())),
-        0
+        0,
     )
 
     ## Add to model
@@ -566,8 +574,13 @@ def comp_marginals(model, **kwargs):
             except KeyError:
                 sign = 0
 
+            try:
+                source = value_copy.pop("source")
+            except KeyError:
+                source = "real"
+
             new_model.density.marginals[key] = MarginalNamed(
-                sign=sign, d_name=dist, d_param=value_copy
+                sign=sign, d_name=dist, d_param=value_copy, source=source
             )
 
         ## Handle Marginal input
@@ -583,7 +596,7 @@ cp_marginals = add_pipe(comp_marginals)
 # Add copula
 ##################################################
 @curry
-def comp_copula_independence(model):
+def comp_copula_independence(model, source="real"):
     r"""Add an independence copula to model
 
     Composition. Add an independence copula to an existing model.
@@ -610,10 +623,28 @@ def comp_copula_independence(model):
 
     """
     new_model = model.copy()
-    new_model.density = Density(
-        marginals=model.density.marginals,
-        copula=CopulaIndependence(new_model.var_rand),
-    )
+    var_rand_real = []
+    var_rand_err = []
+    for var in new_model.var_rand:
+        if new_model.density.marginals[var].source == "real":
+            var_rand_real.append(var)
+        else:
+            var_rand_err.append(var)
+
+    if source == "real":
+        copula_err = new_model.density.copula_err
+        new_model.density = Density(
+            marginals=model.density.marginals,
+            copula_real=CopulaIndependence(var_rand_real, source),
+            copula_err=copula_err,
+        )
+    else:
+        copula_real = new_model.density.copula_real
+        new_model.density = Density(
+            marginals=model.density.marginals,
+            copula_err=CopulaIndependence(var_rand_err, source),
+            copula_real=copula_real,
+        )
     new_model.update()
 
     return new_model
@@ -623,7 +654,7 @@ cp_copula_independence = add_pipe(comp_copula_independence)
 
 # -------------------------
 @curry
-def comp_copula_gaussian(model, df_corr=None, df_data=None):
+def comp_copula_gaussian(model, df_corr=None, df_data=None, source="real"):
     r"""Add a Gaussian copula to model
 
     Composition. Add a gaussian copula to an existing model.
@@ -663,30 +694,55 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
         )
 
     """
+    new_model = model.copy()
+    var_rand_real = []
+    var_rand_err = []
+    for var in new_model.var_rand:
+        if new_model.density.marginals[var].source == "real":
+            var_rand_real.append(var)
+        else:
+            var_rand_err.append(var)
+
+    if not (df_data is None):
+        df_corr = tran_copula_corr(df_data, model=new_model)
+
     if not (df_corr is None):
-        new_model = model.copy()
-        new_model.density = Density(
-            marginals=model.density.marginals,
-            copula=CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
-        )
+        if source == "real":
+            new_model.density = Density(
+                marginals=model.density.marginals,
+                copula_real=CopulaGaussian(var_rand_real, df_corr, source),
+                copula_err=new_model.density.copula_err,
+            )
+        else:
+            new_model.density = Density(
+                marginals=model.density.marginals,
+                copula_err=CopulaGaussian(var_rand_err, df_corr, source),
+                copula_real=new_model.density.copula_real,
+            )
         new_model.update()
 
         return new_model
 
     if not (df_data is None):
-        new_model = model.copy()
         df_corr = tran_copula_corr(df_data, model=new_model)
 
-        new_model.density = Density(
-            marginals=model.density.marginals,
-            copula=CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
-        )
+        if source == "real":
+            new_model.density = Density(
+                marginals=model.density.marginals,
+                copula_real=CopulaGaussian(var_rand_real, df_corr, source),
+                copula_err=new_model.density.copula_err,
+            )
+        else:
+            new_model.density = Density(
+                marginals=model.density.marginals,
+                copula_err=CopulaGaussian(var_rand_err, df_corr, source),
+                copula_real=new_model.density.copula_real,
+            )
         new_model.update()
 
         return new_model
 
-    else:
-        raise ValueError("Must provide df_corr or df_data")
+    raise ValueError("Must provide df_corr or df_data")
 
 
 cp_copula_gaussian = add_pipe(comp_copula_gaussian)
