@@ -27,6 +27,17 @@ class TestMarginalTools(unittest.TestCase):
         n_gkde = mg_gkde.r(n)
         self.assertTrue(len(n_gkde) == n)
 
+        # Copy
+        mg_new = mg_gkde.copy()
+        self.assertTrue(all(np.isclose(
+            mg_new.d(q_gkde),
+            mg_gkde.d(q_gkde),
+        )))
+        self.assertTrue(all(np.isclose(
+            mg_new.p(q_gkde),
+            mg_gkde.p(q_gkde),
+        )))
+
     def test_fit(self):
         mg_norm = gr.marg_fit("norm", data.df_stang.E)
 
@@ -131,6 +142,72 @@ class TestMarginalTools(unittest.TestCase):
         # Cannot provide both kurt and kurt_excess
         with self.assertRaises(ValueError):
             gr.marg_mom("lognorm", mean=1, sd=1, kurt=1, kurt_excess=-2)
+
+    def test_trunc(self):
+        mg_base = gr.marg_mom("norm", mean=0, sd=1)
+
+        ## Two-sided truncation
+        mg_trunc1 = gr.marg_trunc(mg_base, lo=-2, up=+2)
+        # Summary
+        mg_trunc1.summary()
+
+        # Quantiles
+        self.assertTrue(abs(mg_trunc1.q(0) + 2) < 1e-6)
+        self.assertTrue(abs(mg_trunc1.q(1) - 2) < 1e-6)
+        # PDF truncated
+        self.assertTrue(abs(mg_trunc1.d(-2.1)) < 1e-6)
+        self.assertTrue(abs(mg_trunc1.d(+2.1)) < 1e-6)
+        # CDF truncated
+        self.assertTrue(abs(mg_trunc1.p(-2.1) - 0) < 1e-6)
+        self.assertTrue(abs(mg_trunc1.p(+2.1) - 1) < 1e-6)
+
+        # Vector evaluation
+        qv = mg_trunc1.q(np.array([0, 0.5, 1]))
+        self.assertTrue(all(np.isclose(qv, np.array([-2, 0, +2]))))
+        dv = mg_trunc1.d(np.array([-2.1, 0, +2.1]))
+        self.assertTrue(all(np.isclose(
+            dv,
+            np.array([0, mg_base.d(0) / (mg_base.p(2) - mg_base.p(-2)), 0])
+        )))
+        pv = mg_trunc1.p(np.array([-2.1, 0, +2.1]))
+        self.assertTrue(all(np.isclose(pv, np.array([0, 0.5, 1]))))
+
+        ## Lower truncation
+        mg_trunc_lo = gr.marg_trunc(mg_base, lo=0)
+        # Quantiles
+        self.assertTrue(abs(mg_trunc_lo.q(0) - 0) < 1e-6)
+        self.assertTrue(np.isinf(mg_trunc_lo.q(1)))
+        # PDF truncated
+        self.assertTrue(abs(mg_trunc_lo.d(-0.1)) < 1e-6)
+        # PDF doubled for truncation at center
+        self.assertTrue(abs(mg_trunc_lo.d(0) - mg_base.d(0) * 2) < 1e-6)
+        # CDF truncated
+        self.assertTrue(abs(mg_trunc_lo.p(-0.1) - 0) < 1e-6)
+        self.assertTrue(abs(mg_trunc_lo.p(+np.Inf) - 1) < 1e-6)
+
+        ## Upper truncation
+        mg_trunc_up = gr.marg_trunc(mg_base, up=0)
+        # Quantiles
+        self.assertTrue(np.isinf(mg_trunc_up.q(0)))
+        self.assertTrue(abs(mg_trunc_up.q(1) - 0) < 1e-6)
+        # PDF truncated
+        self.assertTrue(abs(mg_trunc_up.d(+0.1)) < 1e-6)
+        # PDF doubled for truncation at center
+        self.assertTrue(abs(mg_trunc_up.d(0) - mg_base.d(0) * 2) < 1e-6)
+        # CDF truncated
+        self.assertTrue(abs(mg_trunc_up.p(-np.Inf) - 0) < 1e-6)
+        self.assertTrue(abs(mg_trunc_up.p(+0.1) - 1) < 1e-6)
+
+        # Copy
+        mg_copy = mg_trunc1.copy()
+        self.assertTrue(all(np.isclose(
+            mg_copy.q(np.array([0, 0.5, 1])),
+            mg_trunc1.q(np.array([0, 0.5, 1])),
+        )))
+
+        # Invalid truncation
+        with self.assertRaises(ValueError):
+            gr.marg_trunc(mg_base)
 
 # --------------------------------------------------
 

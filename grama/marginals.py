@@ -2,9 +2,11 @@ __all__ = [
     "marg_gkde",
     "marg_fit",
     "marg_mom",
+    "marg_trunc",
     "Marginal",
     "MarginalNamed",
     "MarginalGKDE",
+    "MarginalTruncated",
     "param_dist",
     "valid_dist",
 ]
@@ -432,6 +434,102 @@ class MarginalGKDE(Marginal):
             self.bracket[0], self.bracket[1], self.atol
         )
 
+## Named marginal class
+class MarginalTruncated(Marginal):
+    """Marginal a truncated Marginal"""
+
+    def __init__(self, marg, lo, up, **kw):
+        r"""
+        Args:
+            marg (gr.Marginal): Base Marginal to truncate
+            lo (float): lower bound (a)
+            up (float): upper bound (b)
+
+        Preconditions:
+            at least one of `lo` and `up` must not be None
+        """
+        super().__init__(**kw)
+
+        self.marg = marg
+        self.lo = lo
+        self.up = up
+        self.G_lo, self.G_up = self.truncate()
+
+        if self.lo is None:
+            self.lo = -Inf
+        if self.up is None:
+            self.up = +Inf
+
+    def truncate(self):
+        if self.lo is None:
+            G_lo = 0
+        else:
+            G_lo = self.marg.p(self.lo)
+
+        if self.up is None:
+            G_up = 1
+        else:
+            G_up = self.marg.p(self.up)
+
+        return G_lo, G_up
+
+    def copy(self):
+        new_marginal = MarginalTruncated(
+            self.marg.copy(), self.lo, self.up, sign=self.sign,
+        )
+
+        return new_marginal
+
+    ## Fitting function
+    def fit(self, data, lo, up, **kwargs):
+        # Re-fit the base marginal
+        self.marg.fit(data, **kwargs)
+        # Re-truncate the marginal
+        self.lo = lo
+        self.up = up
+        self.G_lo, self.G_up = self.truncate()
+
+    ## Density function
+    @make_symbolic
+    def d(self, x):
+        return (
+            self.marg.d(x) / (self.G_up - self.G_lo)
+            # Zero-out values outside truncation
+            *(self.lo <= x) * (x <= self.up)
+        )
+
+    ## Cumulative density function
+    @make_symbolic
+    def p(self, x):
+        # Piecewise definition
+        return (
+            # Below lower bound
+            + 0 * (x < self.lo)
+            # Within bounds
+            + (self.marg.p(x) - self.G_lo) / (self.G_up - self.G_lo)
+              *(self.lo <= x) * (x <= self.up)
+            # Above upper bound
+            + 1 * (self.up < x)
+        )
+
+    ## Quantile function
+    @make_symbolic
+    def q(self, p):
+        return self.marg.q( p * (self.G_up - self.G_lo) + self.G_lo )
+
+    ## Summary
+    def summary(self, dig=2):
+        s_base = self.marg.summary()
+        if (self.lo is not None) and (self.up is not None):
+            s_trunc = "truncated to [{0:}, {1:}]".format(round(self.lo, dig), round(self.up, dig))
+        elif self.lo is not None:
+            s_trunc = "truncated to [{0:}, +\infty)".format(round(self.lo, dig))
+        elif self.up is not None:
+            s_trunc = "truncated to (+\infty, {0:}]".format(round(self.up, dig))
+
+        return s_base + " " + s_trunc
+
+
 ## Marginal functions
 ##################################################
 def marg_mom(
@@ -750,3 +848,41 @@ def marg_gkde(data, sign=None):
         sign = 0
 
     return MarginalGKDE(kde, sign=sign)
+
+## Truncate an existing marginal
+def marg_trunc(marg, lo=None, up=None, **kwargs):
+    r"""Truncate an existing Marginal()
+
+    Truncate
+
+    Args:
+        marg (gr.Marginal): Marginal to truncate
+
+    Kwargs:
+        lo (float or None): Lower bound for truncation; None indicates no lower bound (-\infty)
+        up (float or None): Upper bound for truncation; None indicates no upper bound (+\infty)
+
+    Returns:
+        gr.MarginalTruncated: Truncated distribution
+
+    Examples::
+
+        import grama as gr
+        ## Fit a normal distribution
+        mg_norm = gr.marg_mom("norm", mean=0, sd=1)
+        ## Truncate the distribution
+        mg_norm_t1 = gr.marg_trunc(mg_norm, lo=-1, up=+1)
+        ## Truncate the lower-end of the distribution only
+        mg_norm_t2 = gr.marg_trunc(mg_norm, lo=0)
+    """
+    # Make a working copy
+    mg_wk = marg.copy()
+
+    # Check invariants
+    if (lo is None) and (up is None):
+        raise ValueError("Cannot truncate without at least one of `lo` or `up`.")
+
+    # Construct the marginal
+    mg = MarginalTruncated(mg_wk, lo, up, **kwargs)
+
+    return mg
