@@ -27,6 +27,17 @@ class TestMarginalTools(unittest.TestCase):
         n_gkde = mg_gkde.r(n)
         self.assertTrue(len(n_gkde) == n)
 
+        # Copy
+        mg_new = mg_gkde.copy()
+        self.assertTrue(all(np.isclose(
+            mg_new.d(q_gkde),
+            mg_gkde.d(q_gkde),
+        )))
+        self.assertTrue(all(np.isclose(
+            mg_new.p(q_gkde),
+            mg_gkde.p(q_gkde),
+        )))
+
     def test_fit(self):
         mg_norm = gr.marg_fit("norm", data.df_stang.E)
 
