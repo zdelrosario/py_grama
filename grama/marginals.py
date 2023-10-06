@@ -475,7 +475,7 @@ class MarginalTruncated(Marginal):
 
     def copy(self):
         new_marginal = MarginalTruncated(
-            self.marg.copy(), self.G_lo, self.G_up, sign=self.sign,
+            self.marg.copy(), self.lo, self.up, sign=self.sign,
         )
 
         return new_marginal
@@ -521,11 +521,11 @@ class MarginalTruncated(Marginal):
     def summary(self, dig=2):
         s_base = self.marg.summary()
         if (self.lo is not None) and (self.up is not None):
-            s_trunc = "truncated to [{0:}, {1:}]".format(round(lo, dig), round(up, dig))
+            s_trunc = "truncated to [{0:}, {1:}]".format(round(self.lo, dig), round(self.up, dig))
         elif self.lo is not None:
-            s_trunc = "truncated to [{0:}, +\infty)".format(round(lo, dig))
+            s_trunc = "truncated to [{0:}, +\infty)".format(round(self.lo, dig))
         elif self.up is not None:
-            s_trunc = "truncated to (+\infty, {0:}]".format(round(up, dig))
+            s_trunc = "truncated to (+\infty, {0:}]".format(round(self.up, dig))
 
         return s_base + " " + s_trunc
 
