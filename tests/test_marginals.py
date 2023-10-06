@@ -148,6 +148,9 @@ class TestMarginalTools(unittest.TestCase):
 
         ## Two-sided truncation
         mg_trunc1 = gr.marg_trunc(mg_base, lo=-2, up=+2)
+        # Summary
+        mg_trunc1.summary()
+
         # Quantiles
         self.assertTrue(abs(mg_trunc1.q(0) + 2) < 1e-6)
         self.assertTrue(abs(mg_trunc1.q(1) - 2) < 1e-6)
@@ -195,6 +198,16 @@ class TestMarginalTools(unittest.TestCase):
         self.assertTrue(abs(mg_trunc_up.p(-np.Inf) - 0) < 1e-6)
         self.assertTrue(abs(mg_trunc_up.p(+0.1) - 1) < 1e-6)
 
+        # Copy
+        mg_copy = mg_trunc1.copy()
+        self.assertTrue(all(np.isclose(
+            mg_copy.q(np.array([0, 0.5, 1])),
+            mg_trunc1.q(np.array([0, 0.5, 1])),
+        )))
+
+        # Invalid truncation
+        with self.assertRaises(ValueError):
+            gr.marg_trunc(mg_base)
 
 # --------------------------------------------------
 
