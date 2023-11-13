@@ -110,13 +110,13 @@ def make_piston_rand():
         >> cp_vec_function(
             fun=lambda df: df_make(
                 rv_0=df.v_0 * (1 + df.dv_0),
-                rk=  df.k   * (1 + df.dk),
+                rk=df.k * (1 + df.dk),
                 rp_0=df.p_0 * (1 + df.dp_0),
                 rt_a=df.t_a * (1 + df.dt_a),
                 rt_0=df.t_0 * (1 + df.dt_0),
             ),
-            var=[ "v_0",  "k",  "p_0",  "t_a",  "t_0",
-                 "dv_0", "dk", "dp_0", "dt_a", "dt_0" ],
+            var=[ "v_0", "k", "p_0", "t_a", "t_0",
+                 "dv_0", "dk", "dp_0", "dt_a", "dt_0"],
             out=["rv_0", "rk", "rp_0", "rt_a", "rt_0"],
             name="Random operating disturbances",
         )
@@ -161,7 +161,7 @@ def make_piston_rand():
         )
         >> cp_marginals(
             dv_0=marg_mom("uniform", mean=0, sd=0.40),
-            dk  =marg_mom("uniform", mean=0, sd=0.40),
+            dk=marg_mom("uniform", mean=0, sd=0.40),
             dp_0=marg_mom("uniform", mean=0, sd=0.40),
             dt_a=marg_mom("uniform", mean=0, sd=0.40),
             dt_0=marg_mom("uniform", mean=0, sd=0.40),
