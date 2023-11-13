@@ -26,6 +26,7 @@ def make_piston():
         t_cyc: cycle time (s)
 
     References:
+        Kenett, R., & Zacks, S. (1998). Modern industrial statistics: design and control of quality and reliability. Pacific Grove, CA: Duxbury press.
         Moon, H. (2010). Design and Analysis of Computer Experiments for Screening Input Variables (Doctoral dissertation, Ohio State University).
 
     """
@@ -100,6 +101,7 @@ def make_piston_rand():
         t_cyc: cycle time (s)
 
     References:
+        Kenett, R., & Zacks, S. (1998). Modern industrial statistics: design and control of quality and reliability. Pacific Grove, CA: Duxbury press.
         Moon, H. (2010). Design and Analysis of Computer Experiments for Screening Input Variables (Doctoral dissertation, Ohio State University).
 
     """
