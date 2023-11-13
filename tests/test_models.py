@@ -43,6 +43,9 @@ class TestModels(unittest.TestCase):
         df_test = md_test >> gr.ev_nominal(df_det="nom")
         df_traj = md_trajectory_linear >> gr.ev_nominal(df_det="nom")
 
+        ## Piston models give approximately same output
+        self.assertTrue(abs(df_piston.t_cyc[0] - df_piston_rand.t_cyc[0]) < 1e-6)
+
     def test_sir(self):
         from numpy import real
         from scipy.special import lambertw
