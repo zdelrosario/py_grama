@@ -114,6 +114,25 @@ class TestMarginalTools(unittest.TestCase):
             np.array([5e4, 5e2**2])
         )))
 
+        ## Test bounded uniform
+        mg_unif_bnd = gr.marg_mom("uniform", lo=-1, up=+1)
+        self.assertTrue(all(np.isclose(
+            (mg_unif_bnd.d_param["loc"], mg_unif_bnd.d_param["scale"]),
+            (-1, +2)
+        )))
+
+        ## Test bounded beta
+        mg_beta_bnd1 = gr.marg_mom("beta", lo=-1, up=+1, mean=0, var=1/8)
+        self.assertTrue(all(np.isclose(
+            beta(**mg_beta_bnd1.d_param).stats("mv"),
+            np.array([0, 1/8])
+        )))
+        mg_beta_bnd2 = gr.marg_mom("beta", lo=-1, up=+1, mean=0.2, var=1/8)
+        self.assertTrue(all(np.isclose(
+            beta(**mg_beta_bnd2.d_param).stats("mv"),
+            np.array([0.2, 1/8])
+        )))
+
         ## Test invariants
         # Must provide mean
         with self.assertRaises(ValueError):
@@ -142,6 +161,11 @@ class TestMarginalTools(unittest.TestCase):
         # Cannot provide both kurt and kurt_excess
         with self.assertRaises(ValueError):
             gr.marg_mom("lognorm", mean=1, sd=1, kurt=1, kurt_excess=-2)
+        # Cannot use lo or up with non-bounded dist
+        with self.assertRaises(ValueError):
+            gr.marg_mom("lognorm", mean=1, sd=1, kurt=1, kurt_excess=-2, lo=0)
+        with self.assertRaises(ValueError):
+            gr.marg_mom("lognorm", mean=1, sd=1, kurt=1, kurt_excess=-2, up=0)
 
     def test_trunc(self):
         mg_base = gr.marg_mom("norm", mean=0, sd=1)

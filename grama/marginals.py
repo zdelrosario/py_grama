@@ -541,6 +541,8 @@ def marg_mom(
         skew=None,
         kurt=None,
         kurt_excess=None,
+        lo=None,
+        up=None,
         floc=None,
         sign=0,
         dict_x0=None,
@@ -563,6 +565,8 @@ def marg_mom(
         kurt (float): Kurtosis of distribution
         kurt_excess (float): Excess kurtosis of distribution; kurt_excess = kurt - 3.
             Only one of `kurt` and `kurt_excess` can be provided.
+        lo (float): Lower bound, dist = "uniform" or "beta" only
+        up (float): Upper bound, dist = "uniform" or "beta" only
 
         floc (float or None): Frozen value for location parameter
             Note that for distributions such as "lognorm" or "weibull_min",
@@ -601,6 +605,23 @@ def marg_mom(
         )
     if floc is not None:
         n_param = n_param - 1
+
+    ## Handle bounded cases
+    if (lo is not None) or (up is not None):
+        # We can handle the uniform case without optimization
+        if dist == "uniform":
+            return MarginalNamed(
+                sign=sign,
+                d_name=dist,
+                d_param={"loc": lo, "scale": up - lo},
+            )
+        elif dist == "beta":
+            bounded = True
+            n_param = n_param - 2
+        else:
+            raise ValueError("lo and up arguments can only be used with dist=='uniform' or 'beta'")
+    else:
+        bounded = False
 
     ## Check invariants
     if mean is None:
@@ -653,19 +674,28 @@ def marg_mom(
         )
 
     ## Generate helper function for optimization
-    if floc is None:
-        key_wk = copy.copy(param_dist[dist])
-    else:
+    # Get parameters to treat as variables for rootfinding
+    if floc is not None:
         key_wk = {key for key in param_dist[dist] if key != "loc"}
-
-    if floc is None:
+    elif bounded:
+        key_wk = {key for key in param_dist[dist] if (key != "loc" and key != "scale")}
+    else:
+        key_wk = copy.copy(param_dist[dist])
+    # Generate a helper with the variable parameters and target moments
+    if floc is not None:
         def _obj(v):
             kw = dict(zip(key_wk, v))
+            kw["loc"] = floc
+            return array(valid_dist[dist](**kw).stats(s)) - m_target
+    elif bounded:
+        def _obj(v):
+            kw = dict(zip(key_wk, v))
+            kw["loc"] = lo
+            kw["scale"] = up - lo
             return array(valid_dist[dist](**kw).stats(s)) - m_target
     else:
         def _obj(v):
             kw = dict(zip(key_wk, v))
-            kw["loc"] = floc
             return array(valid_dist[dist](**kw).stats(s)) - m_target
 
 
@@ -683,6 +713,14 @@ def marg_mom(
                 loc=0,
                 scale=mean,
                 c=1,
+            )
+
+        elif dist == "beta":
+            dict_x0 = dict(
+                loc=mean - sqrt(var),
+                scale=sqrt(var),
+                a=1 / var / 8,
+                b=1 / var / 8,
             )
 
         else:
@@ -718,6 +756,9 @@ def marg_mom(
     param = dict(zip(key_wk, res.x))
     if floc is not None:
         param["loc"] = floc
+    elif bounded:
+        param["loc"] = lo
+        param["scale"] = up - lo
     return MarginalNamed(sign=sign, d_name=dist, d_param=param)
 
 ## Fit a named scipy.stats distribution
