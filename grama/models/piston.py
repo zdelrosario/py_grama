@@ -83,8 +83,8 @@ def make_piston_rand():
     Deterministic Variables:
         m: Piston weight (kg)
         s: Piston surface area (m^2)
+        v_0: Initial gas volume (m^3)
 
-        v_0: (Nominal) Initial gas volume (m^3)
         k:   (Nominal) Spring coefficient (N/m)
         p_0: (Nominal) Atmospheric pressure (N/m^2)
         t_a: (Nominal) Ambient temperature (K)
