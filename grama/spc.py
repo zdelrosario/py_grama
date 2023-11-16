@@ -36,6 +36,7 @@ from plotnine import (
     geom_line,
     geom_hline,
     geom_point,
+    element_rect,
     facet_grid,
     theme,
     theme_minimal,
@@ -276,6 +277,7 @@ def plot_xbs(df, group, var, n_side=9, n_delta=6, color="full"):
                 values=dict(LCL="dashed", UCL="dashed", center="solid"),
             )
             + theme_uqbook()
+            + theme(panel_border=element_rect(color="black", fill=None, size=0.5))
             + guides(color=None)
             + facet_grid(
                 "_var~.",
@@ -327,6 +329,7 @@ def plot_xbs(df, group, var, n_side=9, n_delta=6, color="full"):
                 values=dict(LCL="dashed", UCL="dashed", center="solid"),
             )
             + theme_uqbook()
+            + theme(panel_border=element_rect(color="black", fill=None, size=0.5))
             + guides(color=None)
             + facet_grid(
                 "_var~.",
