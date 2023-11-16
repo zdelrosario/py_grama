@@ -91,7 +91,6 @@ def make_piston_rand():
         t_0: (Nominal) Filling gas temperature (K)
 
     Random Variables:
-        dv_0: Fluctuation in v_0 (unitless)
         dk:   Fluctuation in k   (unitless)
         dp_0: Fluctuation in p_0 (unitless)
         dt_a: Fluctuation in t_a (unitless)
@@ -109,44 +108,43 @@ def make_piston_rand():
         Model(name = "Piston cycle time, with variability")
         >> cp_vec_function(
             fun=lambda df: df_make(
-                rv_0=df.v_0 * (1 + df.dv_0),
                 rk=df.k * (1 + df.dk),
                 rp_0=df.p_0 * (1 + df.dp_0),
                 rt_a=df.t_a * (1 + df.dt_a),
                 rt_0=df.t_0 * (1 + df.dt_0),
             ),
-            var=[ "v_0", "k", "p_0", "t_a", "t_0",
-                 "dv_0", "dk", "dp_0", "dt_a", "dt_0"],
-            out=["rv_0", "rk", "rp_0", "rt_a", "rt_0"],
+            var=["k", "p_0", "t_a", "t_0",
+                 "dk", "dp_0", "dt_a", "dt_0"],
+            out=["rk", "rp_0", "rt_a", "rt_0"],
             name="Random operating disturbances",
         )
         >> cp_vec_function(
             fun=lambda df: df_make(
                 a=df.rp_0 * df.s
                  +19.62 * df.m
-                 -df.rk * df.rv_0 / df.s
+                 -df.rk * df.v_0 / df.s
             ),
-            var=["rp_0", "s", "m", "rk", "rv_0"],
+            var=["rp_0", "s", "m", "rk", "v_0"],
             out=["a"],
             name="Intermediate calculation 1",
         )
         >> cp_vec_function(
             fun=lambda df: df_make(
                 v=0.5*df.s/df.rk * (
-                    sqrt(df.a**2 + 4*df.rk*df.rp_0*df.rv_0/df.rt_0*df.rt_a) - df.a
+                    sqrt(df.a**2 + 4*df.rk*df.rp_0*df.v_0/df.rt_0*df.rt_a) - df.a
                 )
             ),
-            var=["s", "a", "rk", "rp_0", "rv_0", "rt_0", "rt_a"],
+            var=["s", "a", "rk", "rp_0", "v_0", "rt_0", "rt_a"],
             out=["v"],
             name="Intermediate calculation 2",
         )
         >> cp_vec_function(
             fun=lambda df: df_make(
                 t_cyc=2*pi*sqrt(
-                    df.m / (df.rk + df.s**2 * df.rp_0*df.rv_0/df.rt_0 * df.rt_a/df.v**2)
+                    df.m / (df.rk + df.s**2 * df.rp_0*df.v_0/df.rt_0 * df.rt_a/df.v**2)
                 )
             ),
-            var=["m", "rk", "s", "rp_0", "rv_0", "rt_0", "rt_a", "v"],
+            var=["m", "rk", "s", "rp_0", "v_0", "rt_0", "rt_a", "v"],
             out=["t_cyc"],
             name="Cycle time",
         )
@@ -160,7 +158,6 @@ def make_piston_rand():
             t_0=(340, 360),      # K
         )
         >> cp_marginals(
-            dv_0=marg_mom("uniform", mean=0, sd=0.40),
             dk=marg_mom("uniform", mean=0, sd=0.40),
             dp_0=marg_mom("uniform", mean=0, sd=0.40),
             dt_a=marg_mom("uniform", mean=0, sd=0.40),
