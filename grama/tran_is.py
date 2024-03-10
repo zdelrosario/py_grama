@@ -7,15 +7,16 @@ from grama import add_pipe, pipe, custom_formatwarning
 from pandas import concat, DataFrame
 from toolz import curry
 
+
 ## Reweight using likelihood ratio
 # --------------------------------------------------
 @curry
 def tran_reweight(
-        df_base,
-        md_base,
-        md_new,
-        var_weight="weight",
-        append=True,
+    df_base,
+    md_base,
+    md_new,
+    var_weight="weight",
+    append=True,
 ):
     r"""Reweight a sample using likelihood ratio
 
@@ -116,32 +117,32 @@ def tran_reweight(
     var_diff = set(md_base.var_rand).difference(set(df_base.columns))
     if not (len(var_diff) == 0):
         raise ValueError(
-            "Random variables in md_base missing from df_base:\n" +
-            "Missing: {}".format(var_diff)
+            "Random variables in md_base missing from df_base:\n"
+            + "Missing: {}".format(var_diff)
         )
     # Check that random inputs match between models
     var_base = set(md_base.var_rand)
     var_new = set(md_new.var_rand)
     if var_base != var_new:
         raise ValueError(
-            "Random variables of md_base and md_var must match:\n" +
-            "md_base is missing: {}\n".format(var_new.difference(var_base)) +
-            "md_new is missing: {}".format(var_base.difference(var_new))
+            "Random variables of md_base and md_var must match:\n"
+            + "md_base is missing: {}\n".format(var_new.difference(var_base))
+            + "md_new is missing: {}".format(var_base.difference(var_new))
         )
     # Check that deterministic inputs match between models
     var_base = set(md_base.var_det)
     var_new = set(md_new.var_det)
     if var_base != var_new:
         raise ValueError(
-            "Deterministic variables of md_base and md_var must match:\n" +
-            "md_base is missing: {}\n".format(var_new.difference(var_base)) +
-            "md_new is missing: {}".format(var_base.difference(var_new))
+            "Deterministic variables of md_base and md_var must match:\n"
+            + "md_base is missing: {}\n".format(var_new.difference(var_base))
+            + "md_new is missing: {}".format(var_base.difference(var_new))
         )
     # Check that `weights` name does not collide
     if (var_weight in df_base.columns) and append:
         raise ValueError(
-            "Weight name {} already in df_base.columns; ".format(var_weight) +
-            "choose a new name."
+            "Weight name {} already in df_base.columns; ".format(var_weight)
+            + "choose a new name."
         )
 
     ## Compute weight values
@@ -153,7 +154,7 @@ def tran_reweight(
     w = p / q
 
     ## Return results
-    df_res = DataFrame({var_weight : w})
+    df_res = DataFrame({var_weight: w})
 
     if append:
         df_res = concat(
@@ -162,5 +163,6 @@ def tran_reweight(
         )
 
     return df_res
+
 
 tf_reweight = add_pipe(tran_reweight)

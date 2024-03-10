@@ -19,7 +19,14 @@ from toolz import curry
 # --------------------------------------------------
 @curry
 def tran_umap(
-    df, var=None, out="xi", keep=True, append=False, n_dim=2, seed=None, **kwargs
+    df,
+    var=None,
+    out="xi",
+    keep=True,
+    append=False,
+    n_dim=2,
+    seed=None,
+    **kwargs
 ):
     r"""UMAP dimension reduction of a dataset
 
@@ -67,37 +74,42 @@ def tran_umap(
         diff = set(var).difference(set(df.columns))
         if len(diff) > 0:
             raise ValueError(
-                "`var` must be subset of `df.columns`\n" "diff = {}".format(diff)
+                "`var` must be subset of `df.columns`\n"
+                "diff = {}".format(diff)
             )
     var_leftover = list(set(df.columns).difference(set(var)))
 
     ## Reduce dimensionality
     try:
         df_res = DataFrame(
-            data=UMAP(n_components=n_dim, random_state=seed, **kwargs).fit_transform(
-                df[var].values
-            ),
+            data=UMAP(
+                n_components=n_dim, random_state=seed, **kwargs
+            ).fit_transform(df[var].values),
             columns=[out + "{}".format(i) for i in range(n_dim)],
         )
 
     except NameError as e:
         error_string = str(e)
         raise NameError(
-            error_string +
-            "\n\nThis function requires the `umap` package. " +
-            "Try running the following to install the package:\n"
+            error_string
+            + "\n\nThis function requires the `umap` package. "
+            + "Try running the following to install the package:\n"
             "    pip install umap-learn"
         )
 
     ## Concatenate as necessary
     if keep:
         df_res = concat(
-            (df_res.reset_index(drop=True), df[var_leftover].reset_index(drop=True)),
+            (
+                df_res.reset_index(drop=True),
+                df[var_leftover].reset_index(drop=True),
+            ),
             axis=1,
         )
     if append:
         df_res = concat(
-            (df_res.reset_index(drop=True), df[var].reset_index(drop=True)), axis=1
+            (df_res.reset_index(drop=True), df[var].reset_index(drop=True)),
+            axis=1,
         )
 
     return df_res

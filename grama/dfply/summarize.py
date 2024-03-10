@@ -71,6 +71,7 @@ def tran_summarize(df, **kwargs):
     """
     return DataFrame({k: [v] for k, v in kwargs.items()})
 
+
 tf_summarize = add_pipe(tran_summarize)
 
 
@@ -94,5 +95,6 @@ def tran_summarize_each(df, functions, *args):
             values.append(f(col))
 
     return DataFrame([values], columns=columns)
+
 
 tf_summarize_each = add_pipe(tran_summarize_each)

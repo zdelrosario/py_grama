@@ -5,6 +5,7 @@ import unittest
 
 from nbconvert.preprocessors import ExecutePreprocessor
 
+
 # run_notebook() was released by Mike Driscoll under the wxWidgets License
 # (c) Mike Driscoll, 2018
 # Edits; Zachary del Rosario, 2020
@@ -38,10 +39,13 @@ def run_notebook(notebook_path):
 
 # Find all master notebooks in directory
 files_all = os.listdir()
-files_notebook = list(filter(lambda s: re.search("ipynb", s) is not None, files_all))
+files_notebook = list(
+    filter(lambda s: re.search("ipynb", s) is not None, files_all)
+)
 files_master = list(
     filter(lambda s: re.search("master", s) is not None, files_notebook)
 )
+
 
 # Begin test
 class TestNotebooks(unittest.TestCase):

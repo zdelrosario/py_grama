@@ -11,11 +11,11 @@ from context import models
 ## FD stepsize
 h = 1e-8
 
+
 ## Core function tests
 ##################################################
 class TestModel(unittest.TestCase):
-    """Test implementation of model
-    """
+    """Test implementation of model"""
 
     def setUp(self):
         # Default model
@@ -28,13 +28,19 @@ class TestModel(unittest.TestCase):
             d_name="uniform", d_param={"loc": -1, "scale": 2}
         )
         marginals["x1"] = gr.MarginalNamed(
-            sign=-1, d_name="uniform", d_param={"loc": 0, "scale": 1},
+            sign=-1,
+            d_name="uniform",
+            d_param={"loc": 0, "scale": 1},
         )
 
         self.model_2d = gr.Model(
             functions=[
                 gr.Function(
-                    lambda x0, x1: [x0, x1], ["x0", "x1"], ["y0", "y1"], "test", 0
+                    lambda x0, x1: [x0, x1],
+                    ["x0", "x1"],
+                    ["y0", "y1"],
+                    "test",
+                    0,
                 ),
             ],
             domain=domain_2d,
@@ -122,15 +128,14 @@ class TestModel(unittest.TestCase):
     ## Test re-ordering issues
 
     def test_2d_output_names(self):
-        """Checks that proper output names are assigned to resulting DataFrame
-        """
+        """Checks that proper output names are assigned to resulting DataFrame"""
         self.assertEqual(
-            set(self.model_2d.evaluate_df(self.df_2d).columns), set(self.model_2d.out)
+            set(self.model_2d.evaluate_df(self.df_2d).columns),
+            set(self.model_2d.out),
         )
 
     def test_quantile(self):
-        """Checks that model.sample_quantile() evaluates correctly.
-        """
+        """Checks that model.sample_quantile() evaluates correctly."""
         df_res = self.model_2d.density.pr2sample(self.df_median_in)
 
         self.assertTrue(gr.df_equal(df_res, self.df_median_out))
@@ -143,7 +148,9 @@ class TestModel(unittest.TestCase):
     def test_nominal(self):
         """Checks the implementation of nominal values"""
         md = gr.Model() >> gr.cp_bounds(
-            x0=[-1, +1], x1=[0.1, np.Inf], x2=[-np.Inf, -0.1],
+            x0=[-1, +1],
+            x1=[0.1, np.Inf],
+            x2=[-np.Inf, -0.1],
         )
         df_true = gr.df_make(x0=0.0, x1=+0.1, x2=-0.1)
         df_res = gr.eval_nominal(md, df_det="nom", skip=True)
@@ -159,13 +166,16 @@ class TestModel(unittest.TestCase):
         md = (
             gr.Model()
             >> gr.cp_marginals(
-                x=dict(dist="norm", loc=0, scale=1), y=dict(dist="norm", loc=0, scale=1)
+                x=dict(dist="norm", loc=0, scale=1),
+                y=dict(dist="norm", loc=0, scale=1),
             )
             >> gr.cp_copula_gaussian(df_corr=df_corr)
         )
 
         ## Copula and marginals have same var_rand order
-        self.assertTrue(list(md.density.marginals) == md.density.copula.var_rand)
+        self.assertTrue(
+            list(md.density.marginals) == md.density.copula.var_rand
+        )
 
         ## Transforms invariant
         z = np.array([0, 0])
@@ -216,20 +226,18 @@ class TestModel(unittest.TestCase):
 
 
 class TestEvalDf(unittest.TestCase):
-    """Test implementation of eval_df()
-    """
+    """Test implementation of eval_df()"""
 
     def setUp(self):
         self.model = models.make_test()
         self.df = gr.df_make(x=1)
-
 
     def test_catch_wrong_type(self):
         """Checks that eval_df() raises when wrong input md or df arg is given.
 
         checks: None, tuple, str, list
         """
-        tests = [None, (1,2), 2, "a", [1, 8]]
+        tests = [None, (1, 2), 2, "a", [1, 8]]
         # wrong df arg
         for wrong_type in tests:
             self.assertRaises(TypeError, gr.eval_df, self.model, wrong_type)
@@ -260,28 +268,42 @@ class TestDensity(unittest.TestCase):
     def setUp(self):
         self.density = gr.Density(
             marginals=dict(
-                x=gr.MarginalNamed(d_name="uniform", d_param={"loc": -1, "scale": 2}),
-                y=gr.MarginalNamed(d_name="uniform", d_param={"loc": -1, "scale": 2}),
+                x=gr.MarginalNamed(
+                    d_name="uniform", d_param={"loc": -1, "scale": 2}
+                ),
+                y=gr.MarginalNamed(
+                    d_name="uniform", d_param={"loc": -1, "scale": 2}
+                ),
             ),
             copula=gr.CopulaGaussian(
-                ["x", "y"], pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
+                ["x", "y"],
+                pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5])),
             ),
         )
 
         self.density_ind = gr.Density(
             marginals=dict(
-                x=gr.MarginalNamed(d_name="uniform", d_param={"loc": -1, "scale": 2}),
-                y=gr.MarginalNamed(d_name="norm", d_param={"loc": 0, "scale": 1}),
+                x=gr.MarginalNamed(
+                    d_name="uniform", d_param={"loc": -1, "scale": 2}
+                ),
+                y=gr.MarginalNamed(
+                    d_name="norm", d_param={"loc": 0, "scale": 1}
+                ),
             ),
             copula=gr.CopulaIndependence(["x", "y"]),
         )
         self.density_gauss = gr.Density(
             marginals=dict(
-                x=gr.MarginalNamed(d_name="uniform", d_param={"loc": -1, "scale": 2}),
-                y=gr.MarginalNamed(d_name="norm", d_param={"loc": 0, "scale": 1}),
+                x=gr.MarginalNamed(
+                    d_name="uniform", d_param={"loc": -1, "scale": 2}
+                ),
+                y=gr.MarginalNamed(
+                    d_name="norm", d_param={"loc": 0, "scale": 1}
+                ),
             ),
             copula=gr.CopulaGaussian(
-                ["x", "y"], pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
+                ["x", "y"],
+                pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5])),
             ),
         )
 
@@ -386,7 +408,11 @@ class TestDensity(unittest.TestCase):
         l_gauss_cop = np.zeros(len(x))
         for i in range(len(x)):
             l_gauss_cop[i] = np.exp(
-                -0.5 * np.dot(norm.ppf(df_u.values[i]), np.dot(R_inv - I, norm.ppf(df_u.values[i])))
+                -0.5
+                * np.dot(
+                    norm.ppf(df_u.values[i]),
+                    np.dot(R_inv - I, norm.ppf(df_u.values[i])),
+                )
             ) / np.sqrt(det)
         # Exact
         l_true = (
@@ -399,12 +425,15 @@ class TestDensity(unittest.TestCase):
 
         self.assertTrue(np.allclose(l_true, l_comp, rtol=1e-3, atol=1e-3))
 
+
 # --------------------------------------------------
 class TestFunction(unittest.TestCase):
     def setUp(self):
         self.fcn = gr.Function(lambda x: x, ["x"], ["x"], "test", 0)
 
-        self.fcn_vec = gr.FunctionVectorized(lambda df: df, ["x"], ["x"], "test", 0)
+        self.fcn_vec = gr.FunctionVectorized(
+            lambda df: df, ["x"], ["x"], "test", 0
+        )
 
         self.df = pd.DataFrame({"x": [0]})
 

@@ -7,30 +7,45 @@ __all__ = [
 
 
 import re
-from grama import add_pipe, tran_select, symbolic_evaluation, \
-    group_delegation, resolve_selection, Intention
+from grama import (
+    add_pipe,
+    tran_select,
+    symbolic_evaluation,
+    group_delegation,
+    resolve_selection,
+    Intention,
+)
 from numpy import max as npmax
 from numpy import NaN, size, where, zeros
-from pandas import DataFrame, IndexSlice, MultiIndex, RangeIndex, Series, \
-    concat, isnull, pivot, pivot_table
+from pandas import (
+    DataFrame,
+    IndexSlice,
+    MultiIndex,
+    RangeIndex,
+    Series,
+    concat,
+    isnull,
+    pivot,
+    pivot_table,
+)
 from pandas.api.types import is_int64_dtype
 
 
-def tran_pivot_longer (
+def tran_pivot_longer(
     df,
     columns,
-    index_to = None,
-    names_to = None,
-    #names_prefix = None,
-    names_sep = None,
-    names_pattern = None,
-    #names_ptypes = list(),
-    #names_transform = list(),
-    #names_repair,
-    values_to = None,
-    #values_drop_na = False,
-    #values_ptypes = list(),
-    #values_transform = list(),
+    index_to=None,
+    names_to=None,
+    # names_prefix = None,
+    names_sep=None,
+    names_pattern=None,
+    # names_ptypes = list(),
+    # names_transform = list(),
+    # names_repair,
+    values_to=None,
+    # values_drop_na = False,
+    # values_ptypes = list(),
+    # values_transform = list(),
 ):
     """Lengthen a dataset
 
@@ -106,26 +121,29 @@ def tran_pivot_longer (
 
     """
 
-
     ########### Pre-Check List #############
     ### Check if tran_select was used
     if isinstance(columns, DataFrame):
         columns = columns.columns.values
 
     ### Check if selection helper was used:
-    if isinstance(columns,Intention):
+    if isinstance(columns, Intention):
         columns = pivot_select(df, columns)
         if size(columns) == 0:
-            raise ValueError("""Selection helper has found no matches. Revise
-                columns input.""")
+            raise ValueError(
+                """Selection helper has found no matches. Revise
+                columns input."""
+            )
 
     ### Check if names_to is a list or str
     names_str = False
     if isinstance(names_to, str):
         names_str = True
         if names_sep is not None:
-            raise TypeError("""In order to use names_sep more than 1 value
-                needs to passed to names_to""")
+            raise TypeError(
+                """In order to use names_sep more than 1 value
+                needs to passed to names_to"""
+            )
 
     ### Check for .value input
     dot_value = False
@@ -142,12 +160,12 @@ def tran_pivot_longer (
         values_to = "values"
 
     if names_pattern and names_sep:
-        raise ValueError("""Both names_sep and names_pattern were used,
-            only one or the other is required""")
-
+        raise ValueError(
+            """Both names_sep and names_pattern were used,
+            only one or the other is required"""
+        )
 
     #######################################
-
 
     ########### .value pivot #############
 
@@ -160,11 +178,11 @@ def tran_pivot_longer (
         if names_sep is not None or names_pattern is not None:
             ### Add index and split column to dataset
             longer = df.reset_index().melt(
-                    id_vars="index",
-                    var_name="split",
-                    value_vars=columns,
-                    value_name=values_to
-                )
+                id_vars="index",
+                var_name="split",
+                value_vars=columns,
+                value_name=values_to,
+            )
 
             ### DataFrame Cleanup
             longer = split_cleanup(
@@ -172,17 +190,17 @@ def tran_pivot_longer (
                 names_to=names_to,
                 names_pattern=names_pattern,
                 names_sep=names_sep,
-                values_to=values_to
+                values_to=values_to,
             )
 
         else:
             ### Add index column and .value column
             longer = df.reset_index().melt(
-                    id_vars="index",
-                    var_name=".value",
-                    value_vars=columns,
-                    value_name=values_to
-                )
+                id_vars="index",
+                var_name=".value",
+                value_vars=columns,
+                value_name=values_to,
+            )
 
         ### clean up index_to call
         longer = index_to_cleanup(df, longer, data_index)
@@ -196,15 +214,19 @@ def tran_pivot_longer (
             if value_loc == 0:
                 indexes = ["index"] + data_index + names_to[1:]
             else:
-                indexes = ["index"] + data_index + names_to[0:value_loc] \
-                    + names_to[(value_loc+1):]
+                indexes = (
+                    ["index"]
+                    + data_index
+                    + names_to[0:value_loc]
+                    + names_to[(value_loc + 1) :]
+                )
 
         ### Pivot wider the .value column
         value_longer = tran_pivot_wider(
             longer,
             indexes_from=indexes,
             names_from=".value",
-            values_from=values_to
+            values_from=values_to,
         )
 
         if index_to is None:
@@ -212,12 +234,11 @@ def tran_pivot_longer (
             value_longer.drop("index", axis=1, inplace=True)
         else:
             ### rename index column to desired: index_to
-            value_longer.rename(columns={'index': index_to},inplace=True)
+            value_longer.rename(columns={"index": index_to}, inplace=True)
 
         return value_longer
 
     #########################################
-
 
     ########### names_sep pivot #############
 
@@ -233,7 +254,7 @@ def tran_pivot_longer (
                 id_vars=data_index,
                 var_name="split",
                 value_vars=columns,
-                value_name=values_to
+                value_name=values_to,
             )
 
             ### DataFrame Cleanup
@@ -242,20 +263,20 @@ def tran_pivot_longer (
                 names_to=names_to,
                 names_pattern=names_pattern,
                 names_sep=names_sep,
-                values_to=values_to
+                values_to=values_to,
             )
 
-            return(longer)
+            return longer
 
         ### Add index column to dataset
         longer = df.reset_index().melt(
-                id_vars="index",
-                var_name="split",
-                value_vars=columns,
-                value_name=values_to
-            )
+            id_vars="index",
+            var_name="split",
+            value_vars=columns,
+            value_name=values_to,
+        )
         ### rename index column to desired: index_to
-        longer.rename(columns={'index': index_to},inplace=True)
+        longer.rename(columns={"index": index_to}, inplace=True)
 
         longer = index_to_cleanup(df, longer, data_index)
 
@@ -265,13 +286,12 @@ def tran_pivot_longer (
             names_to=names_to,
             names_pattern=names_pattern,
             names_sep=names_sep,
-            values_to=values_to
+            values_to=values_to,
         )
 
-        return(longer)
+        return longer
 
     ######################################
-
 
     ########### normal pivot #############
 
@@ -290,9 +310,9 @@ def tran_pivot_longer (
                     id_vars=None,
                     var_name=names_to,
                     value_vars=columns,
-                    value_name=values_to
+                    value_name=values_to,
                 )
-                return(longer)
+                return longer
 
             # if it does not have a RangeIndex create new column from ID column
             # and add RangeIndex
@@ -300,9 +320,9 @@ def tran_pivot_longer (
                 id_vars="index",
                 var_name=names_to,
                 value_vars=columns,
-                value_name=values_to
+                value_name=values_to,
             )
-            return(longer)
+            return longer
 
         ### look for unused columns to pivot around
         data_used = columns
@@ -314,22 +334,22 @@ def tran_pivot_longer (
                 id_vars=data_index,
                 var_name=names_to,
                 value_vars=columns,
-                value_name=values_to
+                value_name=values_to,
             )
-            return(longer)
+            return longer
 
     ### collect unused columns to preserve post pivot
     data_index = collect_indexes(df, columns)
 
     ### Add index column to dataset
     longer = df.reset_index().melt(
-            id_vars="index",
-            var_name=names_to,
-            value_vars=columns,
-            value_name=values_to
-        )
+        id_vars="index",
+        var_name=names_to,
+        value_vars=columns,
+        value_name=values_to,
+    )
     ### rename index column to desired: index_to
-    longer.rename(columns={'index': index_to},inplace=True)
+    longer.rename(columns={"index": index_to}, inplace=True)
 
     longer = index_to_cleanup(df, longer, data_index)
 
@@ -337,49 +357,50 @@ def tran_pivot_longer (
 
     ######################################
 
+
 tf_pivot_longer = add_pipe(tran_pivot_longer)
 
 
-def tran_pivot_wider (
-     df,
-     #id_cols,
-     names_from,
-     indexes_from = None,
-     #names_prefix,
-     #names_sep,
-     #names_glue = None,
-     #names_sort = False,
-     #names_glue,
-     values_from = None,
-     #values_fill = None,
-     #values_fn = None
- ):
+def tran_pivot_wider(
+    df,
+    # id_cols,
+    names_from,
+    indexes_from=None,
+    # names_prefix,
+    # names_sep,
+    # names_glue = None,
+    # names_sort = False,
+    # names_glue,
+    values_from=None,
+    # values_fill = None,
+    # values_fn = None
+):
     """Widen a dataset
 
-     "Widens" data by increasing the number of columns and decreasing the
-     number of rows.
+    "Widens" data by increasing the number of columns and decreasing the
+    number of rows.
 
-     Args:
-         df (DataFrame): DataFrame passed through
-         names_from (str): Column(s) name(s) to use to make new columns
-         indexes_from (str): Column(s) to use to make new index, if None will
-                             preserve and use unspecified columns as index
-         values_from (str): Column(s) to use as new values column(s)
+    Args:
+        df (DataFrame): DataFrame passed through
+        names_from (str): Column(s) name(s) to use to make new columns
+        indexes_from (str): Column(s) to use to make new index, if None will
+                            preserve and use unspecified columns as index
+        values_from (str): Column(s) to use as new values column(s)
 
-     Returns:
-        DataFrame: result of being pivoted wider
+    Returns:
+       DataFrame: result of being pivoted wider
 
-     Examples::
+    Examples::
 
-        import grama as gr
-        ## Simple example
-        (
-            gr.df_make(var=["x", "x", "y", "y"], value=[0, 1, 2, 3])
-            >> gr.tf_pivot_wider(
-                names_from="var",
-                values_from="value",
-            )
-        (
+       import grama as gr
+       ## Simple example
+       (
+           gr.df_make(var=["x", "x", "y", "y"], value=[0, 1, 2, 3])
+           >> gr.tf_pivot_wider(
+               names_from="var",
+               values_from="value",
+           )
+       (
 
     """
 
@@ -389,17 +410,16 @@ def tran_pivot_wider (
         data_values_used = values_from
         data_columns_used = names_from
         data_1st_clean = [x for x in data_columns if x not in data_columns_used]
-        data_index_clean = [x for x in data_1st_clean if x not in data_values_used]
+        data_index_clean = [
+            x for x in data_1st_clean if x not in data_values_used
+        ]
         if not data_index_clean:
             data_index_clean = None
 
         ### try pivot, if no repeats exist in data_index_clean values continue,
         ### else use pivot_table to handle repreated values
         wider = pivot(
-            df,
-            index=data_index_clean,
-            columns=names_from,
-            values=values_from
+            df, index=data_index_clean, columns=names_from, values=values_from
         )
         ### Post cleaning of leftover column and index names
         wider.columns.name = None
@@ -409,10 +429,10 @@ def tran_pivot_wider (
                 wider.insert(
                     loc=i,
                     column=data_index_clean[i],
-                    value=wider.index.get_level_values(data_index_clean[i])
-                    )
+                    value=wider.index.get_level_values(data_index_clean[i]),
+                )
         # remake index to be numbered column with no name
-        wider.index = RangeIndex(start=0,stop=len(wider),step=1)
+        wider.index = RangeIndex(start=0, stop=len(wider), step=1)
         wider.index.name = None
 
         return wider
@@ -420,42 +440,34 @@ def tran_pivot_wider (
     ### If indexes_from exists do the same repeat check as above but with the
     ### provided indexes
     wider = pivot(
-        df,
-        index=indexes_from,
-        columns=names_from,
-        values=values_from
+        df, index=indexes_from, columns=names_from, values=values_from
     )
     ### Post cleaning of leftover column and index names
     wider.columns.name = None
     ## preserve rows by re-inserting them
     if isinstance(indexes_from, str):
-        wider.insert(0,indexes_from,wider.index)
+        wider.insert(0, indexes_from, wider.index)
     # if str, insert as so, else loop through list type of indexes_from
     else:
         for i, v in enumerate(indexes_from):
             wider.insert(
                 loc=i,
                 column=indexes_from[i],
-                value=wider.index.get_level_values(indexes_from[i])
-                )
+                value=wider.index.get_level_values(indexes_from[i]),
+            )
     # remake index to be numbered column with no name
-    wider.index = RangeIndex(start=0,stop=len(wider),step=1)
+    wider.index = RangeIndex(start=0, stop=len(wider), step=1)
     wider.index.name = None
 
     return wider
 
+
 tf_pivot_wider = add_pipe(tran_pivot_wider)
 
 
-def split_cleanup(
-    longer,
-    names_to,
-    names_pattern,
-    names_sep,
-    values_to
-):
+def split_cleanup(longer, names_to, names_pattern, names_sep, values_to):
     """
-        split_cleanup cleans up pivots that use the names_sep functionality
+    split_cleanup cleans up pivots that use the names_sep functionality
     """
     ### clean up DataFrame
     # split columns based on character/regex or position via int
@@ -468,33 +480,34 @@ def split_cleanup(
 
             # if one positional split is called
             if len(names_sep) == 1:
-                left, right = split[:names_sep[0]], split[names_sep[0]+1:]
-                split_columns = DataFrame({
-                    0:left,
-                    1:right
-                })
+                left, right = split[: names_sep[0]], split[names_sep[0] + 1 :]
+                split_columns = DataFrame({0: left, 1: right})
             # if multiple positional splits are called
             else:
-                splits = [] # split container
+                splits = []  # split container
 
                 # initial split
-                left, right = split[:names_sep[0]], split[names_sep[0]+1:]
+                left, right = split[: names_sep[0]], split[names_sep[0] + 1 :]
                 splits.append(left)
 
                 # convert and make a pointer of the remaining right half
                 point = right.to_frame().split.str
 
                 # iteratively seperate across the remaining names
-                for i in range(len(names_sep)-1):
-                    sep = i+1                 # current seperator
-                    offset = names_sep[sep-1] # previous seperator value
+                for i in range(len(names_sep) - 1):
+                    sep = i + 1  # current seperator
+                    offset = names_sep[sep - 1]  # previous seperator value
 
-                    left = point[:(names_sep[sep]-offset-1)]  # extra -1 to offset
-                    right = point[names_sep[sep]-offset-1+1:] # range(len(x)-1)
+                    left = point[
+                        : (names_sep[sep] - offset - 1)
+                    ]  # extra -1 to offset
+                    right = point[
+                        names_sep[sep] - offset - 1 + 1 :
+                    ]  # range(len(x)-1)
                     splits.append(left)
-                    point = right.to_frame().split.str # convert and re-point
+                    point = right.to_frame().split.str  # convert and re-point
 
-                splits.append(right) # append final split
+                splits.append(right)  # append final split
 
                 # create final DataFrame of split values
                 split_columns = DataFrame()
@@ -504,11 +517,7 @@ def split_cleanup(
 
         # if a string argument is used
         else:
-            split_columns = longer.split.str.split(
-                names_sep,
-                expand=True,
-                n=0
-            )
+            split_columns = longer.split.str.split(names_sep, expand=True, n=0)
 
     # split columns based on names_pattern regex capture groups
     if names_pattern:
@@ -516,17 +525,17 @@ def split_cleanup(
         split_columns = split.str.extract(names_pattern)
 
     # add back split columns to DataFrame
-    longer = concat([longer,split_columns], axis=1)
+    longer = concat([longer, split_columns], axis=1)
 
     # drop column that the split came from
     longer.drop("split", axis=1, inplace=True)
 
     # rename columns
-    for i,v in enumerate(names_to):
-        longer.rename(columns={i: v},inplace=True)
+    for i, v in enumerate(names_to):
+        longer.rename(columns={i: v}, inplace=True)
 
     # if any values are None make them NaN
-    for i,v in enumerate(names_to):
+    for i, v in enumerate(names_to):
         for j, w in enumerate(longer[names_to[i]].values):
             if w is None:
                 longer[names_to[i]].values[j] = NaN
@@ -539,7 +548,7 @@ def split_cleanup(
 
 def collect_indexes(df, columns):
     """
-        collect_indexes finds unused column to pivot around
+    collect_indexes finds unused column to pivot around
     """
     ### look for unused columns to pivot around
     data_used = columns
@@ -551,15 +560,13 @@ def collect_indexes(df, columns):
 
 def index_to_cleanup(df, longer, data_index):
     """
-        index_to_cleanup cleans up longer if index_to was called to the function
+    index_to_cleanup cleans up longer if index_to was called to the function
     """
     ### if there was columns needing to be re-inserted do so
     if data_index is not None:
         for i, v in enumerate(data_index):
             longer.insert(
-                loc=i+1,
-                column=data_index[i],
-                value=df[data_index[i]]
+                loc=i + 1, column=data_index[i], value=df[data_index[i]]
             )
 
     ### repair NaN values from transformation
@@ -567,7 +574,7 @@ def index_to_cleanup(df, longer, data_index):
         length = len(df[index])
         for i, v in enumerate(longer[index]):
             if isnull(longer[index].values[i]):
-                longer[index].values[i] = longer[index].values[i%length]
+                longer[index].values[i] = longer[index].values[i % length]
 
     return longer
 
@@ -576,8 +583,8 @@ def index_to_cleanup(df, longer, data_index):
 @symbolic_evaluation(eval_as_selector=True)
 def pivot_select(df, columns):
     """
-        pivot_select helps resolve the use of a selection helper in the columns
-        argument (e.g: columns = gr.matches("\\d+"))
+    pivot_select helps resolve the use of a selection helper in the columns
+    argument (e.g: columns = gr.matches("\\d+"))
     """
     ordering, column_indices = resolve_selection(df, columns)
     if (column_indices == 0).all():

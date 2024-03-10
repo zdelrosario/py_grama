@@ -15,7 +15,9 @@ from toolz import curry
 def powerset(iterable):
     s = list(iterable)
 
-    return list(chain.from_iterable(combinations(s, r) for r in range(len(s) + 1)))
+    return list(
+        chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
+    )
 
 
 ## Cohort Shapley
@@ -87,7 +89,9 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20, inds=None):
 
     # Compute distances for coordinate similarity
     df_dist = DataFrame(
-        data={col: [(df[col].max() - df[col].min()) / bins] for col in var_numeric}
+        data={
+            col: [(df[col].max() - df[col].min()) / bins] for col in var_numeric
+        }
     )
 
     # Compute coordinate similarity boolean DataFrame
@@ -121,7 +125,8 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20, inds=None):
 
         # Find all pairs similar along given variables
         flags_cohort = all(
-            df_sim.drop(columns=["_i0", "_i1"])[[var[i] for i in varset]], axis=1
+            df_sim.drop(columns=["_i0", "_i1"])[[var[i] for i in varset]],
+            axis=1,
         ).values
 
         # Filter to pairs including target t
@@ -138,8 +143,7 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20, inds=None):
         return df[out].iloc[c].mean().to_frame().T
 
     def cohort_shapley(j):
-        """Cohort shapley for all observations, single variable
-        """
+        """Cohort shapley for all observations, single variable"""
         poset = powerset(set(range(n)).difference({j}))
         data = zeros((s, len(out)))
         df_tmp = DataFrame(columns=out, data=data)
@@ -162,7 +166,9 @@ def tran_shapley_cohort(df, var=None, out=None, bins=20, inds=None):
     df_res = DataFrame()
     for j in range(n):
         df_tmp = cohort_shapley(j)
-        df_tmp.columns = [df_tmp.columns[i] + "_" + var[j] for i in range(len(out))]
+        df_tmp.columns = [
+            df_tmp.columns[i] + "_" + var[j] for i in range(len(out))
+        ]
 
         df_res = concat((df_res, df_tmp), axis=1)
 

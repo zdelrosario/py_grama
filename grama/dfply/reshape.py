@@ -13,7 +13,7 @@ __all__ = [
     "tf_spread",
     "tran_explode",
     "tf_explode",
-    "convert_type"
+    "convert_type",
 ]
 
 import re
@@ -51,17 +51,18 @@ def tran_arrange(df, *args, **kwargs):
     flat_args = [a for a in flatten(args)]
 
     series = [
-        df[arg]
-        if isinstance(arg, str)
-        else df.iloc[:, arg]
-        if isinstance(arg, int)
-        else Series(arg)
+        (
+            df[arg]
+            if isinstance(arg, str)
+            else df.iloc[:, arg] if isinstance(arg, int) else Series(arg)
+        )
         for arg in flat_args
     ]
 
     sorter = concat(series, axis=1).reset_index(drop=True)
     sorter = sorter.sort_values(sorter.columns.tolist(), **kwargs)
     return df.iloc[sorter.index, :].reset_index(drop=True)
+
 
 tf_arrange = add_pipe(tran_arrange)
 
@@ -113,6 +114,7 @@ def tran_rename(df, **kwargs):
 
     return df.rename(columns={v: k for k, v in kwargs.items()})
 
+
 tf_rename = add_pipe(tran_rename)
 
 
@@ -162,6 +164,7 @@ def tran_gather(df, key, values, *args, **kwargs):
     columns = df.columns.tolist()
     id_vars = [col for col in columns if col not in args]
     return melt(df, id_vars, list(args), key, values)
+
 
 tf_gather = add_pipe(tran_gather)
 
@@ -249,7 +252,9 @@ def tran_spread(df, key, values, convert=False, fill=None):
     spread_data = out_df[[key, values]]
 
     if not all(
-        spread_data.groupby([spread_data.index, key]).agg("count").reset_index()[values]
+        spread_data.groupby([spread_data.index, key])
+        .agg("count")
+        .reset_index()[values]
         < 2
     ):
         raise ValueError("Duplicate identifiers")
@@ -264,13 +269,14 @@ def tran_spread(df, key, values, convert=False, fill=None):
         spread_data.fillna(value=fill, inplace=True)
 
     out_df = out_df[id_cols].drop_duplicates()
-    out_df = out_df.merge(spread_data, left_index=True, right_index=True).reset_index(
-        drop=True
-    )
+    out_df = out_df.merge(
+        spread_data, left_index=True, right_index=True
+    ).reset_index(drop=True)
 
     out_df = (out_df >> tf_arrange(id_cols)).reset_index(drop=True)
 
     return out_df
+
 
 tf_spread = add_pipe(tran_spread)
 
@@ -362,7 +368,11 @@ def tran_separate(
 
         splits = df[column].map(
             lambda x: [
-                str(x)[slice(inds[i], inds[i + 1])] if i < len(inds) - 1 else nan
+                (
+                    str(x)[slice(inds[i], inds[i + 1])]
+                    if i < len(inds) - 1
+                    else nan
+                )
                 for i in range(len(into))
             ]
         )
@@ -389,6 +399,7 @@ def tran_separate(
         df.drop(column, axis=1, inplace=True)
 
     return df
+
 
 tf_separate = add_pipe(tran_separate)
 
@@ -446,12 +457,15 @@ def tran_unite(df, colname, *args, **kwargs):
             lambda x: sep.join(x[~x.isnull()].map(str)), axis=1
         )
     elif na_action == "as_string":
-        df[colname] = df[to_unite].astype(str).apply(lambda x: sep.join(x), axis=1)
+        df[colname] = (
+            df[to_unite].astype(str).apply(lambda x: sep.join(x), axis=1)
+        )
 
     if remove:
         df.drop(to_unite, axis=1, inplace=True)
 
     return df
+
 
 tf_unite = add_pipe(tran_unite)
 
@@ -492,5 +506,6 @@ def tran_explode(df, col, convert=False):
     if convert and (df_res[col].dtype.kind in "OSaU"):
         return convert_type(df_res, [col])
     return df_res
+
 
 tf_explode = add_pipe(tran_explode)

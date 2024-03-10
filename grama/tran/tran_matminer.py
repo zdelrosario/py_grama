@@ -67,17 +67,22 @@ def tran_feat_composition(
     except NameError as e:
         error_string = str(e)
         raise NameError(
-            error_string +
-            "\n\nThis function requires the `matminer` package. " +
-            "Try running the following to install the package:\n"
+            error_string
+            + "\n\nThis function requires the `matminer` package. "
+            + "Try running the following to install the package:\n"
             "    pip install matminer"
         )
 
     df_res = StrToComposition().featurize_dataframe(
-        df[[var_formula]], var_formula, ignore_errors=ignore_errors,
+        df[[var_formula]],
+        var_formula,
+        ignore_errors=ignore_errors,
     )
     df_res = featurizer.featurize_dataframe(
-        df_res, col_id="composition", ignore_errors=ignore_errors, **kwargs,
+        df_res,
+        col_id="composition",
+        ignore_errors=ignore_errors,
+        **kwargs,
     )
     df_res.drop(columns=[var_formula, "composition"], inplace=True)
 

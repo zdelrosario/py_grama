@@ -230,7 +230,9 @@ def cumall(series):
 def percent_rank(series, ascending=True):
     if series.size == 1:
         return 0
-    percents = (series.rank(method="min", ascending=ascending) - 1) / (series.size - 1)
+    percents = (series.rank(method="min", ascending=ascending) - 1) / (
+        series.size - 1
+    )
     return percents
 
 

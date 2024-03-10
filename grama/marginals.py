@@ -21,20 +21,103 @@ from numpy import max as npmax
 from numpy.random import uniform as runif
 from pandas import DataFrame
 from scipy.optimize import root_scalar, root
-from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
-    bradford, burr, burr12, cauchy, chi, chi2, cosine, crystalball, dgamma, \
-    dweibull, erlang, expon, exponnorm, exponweib, exponpow, f, fatiguelife, \
-    fisk, foldcauchy, foldnorm, gaussian_kde, genlogistic, gennorm, genpareto, \
-    genexpon, genextreme, gausshyper, gamma, gengamma, genhalflogistic, \
-    gibrat, gompertz, gumbel_r, gumbel_l, halfcauchy, halflogistic, \
-    halfnorm, halfgennorm, hypsecant, invgamma, invgauss, invweibull, \
-    johnsonsb, johnsonsu, kappa4, kappa3, ksone, kstwobign, laplace, levy, \
-    levy_l, levy_stable, logistic, loggamma, loglaplace, lognorm, lomax, \
-    maxwell, mielke, moyal, nakagami, ncx2, ncf, nct, norm, norminvgauss, \
-    pareto, pearson3, powerlaw, powerlognorm, powernorm, rdist, rayleigh, \
-    rice, recipinvgauss, skewnorm, t, trapz, triang, truncexpon, truncnorm, \
-    tukeylambda, uniform, vonmises, vonmises_line, wald, weibull_min, \
-    weibull_max, wrapcauchy
+from scipy.stats import (
+    alpha,
+    anglit,
+    arcsine,
+    argus,
+    beta,
+    betaprime,
+    bradford,
+    burr,
+    burr12,
+    cauchy,
+    chi,
+    chi2,
+    cosine,
+    crystalball,
+    dgamma,
+    dweibull,
+    erlang,
+    expon,
+    exponnorm,
+    exponweib,
+    exponpow,
+    f,
+    fatiguelife,
+    fisk,
+    foldcauchy,
+    foldnorm,
+    gaussian_kde,
+    genlogistic,
+    gennorm,
+    genpareto,
+    genexpon,
+    genextreme,
+    gausshyper,
+    gamma,
+    gengamma,
+    genhalflogistic,
+    gibrat,
+    gompertz,
+    gumbel_r,
+    gumbel_l,
+    halfcauchy,
+    halflogistic,
+    halfnorm,
+    halfgennorm,
+    hypsecant,
+    invgamma,
+    invgauss,
+    invweibull,
+    johnsonsb,
+    johnsonsu,
+    kappa4,
+    kappa3,
+    ksone,
+    kstwobign,
+    laplace,
+    levy,
+    levy_l,
+    levy_stable,
+    logistic,
+    loggamma,
+    loglaplace,
+    lognorm,
+    lomax,
+    maxwell,
+    mielke,
+    moyal,
+    nakagami,
+    ncx2,
+    ncf,
+    nct,
+    norm,
+    norminvgauss,
+    pareto,
+    pearson3,
+    powerlaw,
+    powerlognorm,
+    powernorm,
+    rdist,
+    rayleigh,
+    rice,
+    recipinvgauss,
+    skewnorm,
+    t,
+    trapz,
+    triang,
+    truncexpon,
+    truncnorm,
+    tukeylambda,
+    uniform,
+    vonmises,
+    vonmises_line,
+    wald,
+    weibull_min,
+    weibull_max,
+    wrapcauchy,
+)
 
 
 ## Scipy metadata
@@ -241,12 +324,12 @@ param_dist = {
     "wrapcauchy": ["c", "loc", "scale"],
 }
 
+
 ## Marginal classes
 ##################################################
 # Marginal parent class
 class Marginal(ABC):
-    """Parent class for marginal distributions
-    """
+    """Parent class for marginal distributions"""
 
     def __init__(self, sign=0):
         self.sign = sign
@@ -304,7 +387,9 @@ class MarginalNamed(Marginal):
 
     def copy(self):
         new_marginal = MarginalNamed(
-            sign=self.sign, d_name=self.d_name, d_param=copy.deepcopy(self.d_param)
+            sign=self.sign,
+            d_name=self.d_name,
+            d_param=copy.deepcopy(self.d_param),
         )
 
         return new_marginal
@@ -337,7 +422,7 @@ class MarginalNamed(Marginal):
             "s.d.": "{0:4.3e}".format(sqrt(stats[1]).round(dig)),
             "COV": round(sqrt(stats[1]) / stats[0], dig),
             "skew.": stats[2].round(dig),
-            "kurt.": stats[3].round(dig) + 3, # full kurtosis
+            "kurt.": stats[3].round(dig) + 3,  # full kurtosis
         }
         return "({0:+}) {1:}, {2:}".format(self.sign, self.d_name, param)
 
@@ -354,7 +439,10 @@ class MarginalGKDE(Marginal):
         self._set_bracket()
 
     def copy(self):
-        new_marginal = MarginalGKDE(kde=copy.deepcopy(self.kde), atol=self.atol,)
+        new_marginal = MarginalGKDE(
+            kde=copy.deepcopy(self.kde),
+            atol=self.atol,
+        )
 
         return new_marginal
 
@@ -434,6 +522,7 @@ class MarginalGKDE(Marginal):
             self.bracket[0], self.bracket[1], self.atol
         )
 
+
 ## Named marginal class
 class MarginalTruncated(Marginal):
     """Marginal a truncated Marginal"""
@@ -475,7 +564,10 @@ class MarginalTruncated(Marginal):
 
     def copy(self):
         new_marginal = MarginalTruncated(
-            self.marg.copy(), self.lo, self.up, sign=self.sign,
+            self.marg.copy(),
+            self.lo,
+            self.up,
+            sign=self.sign,
         )
 
         return new_marginal
@@ -493,9 +585,11 @@ class MarginalTruncated(Marginal):
     @make_symbolic
     def d(self, x):
         return (
-            self.marg.d(x) / (self.G_up - self.G_lo)
+            self.marg.d(x)
+            / (self.G_up - self.G_lo)
             # Zero-out values outside truncation
-            *(self.lo <= x) * (x <= self.up)
+            * (self.lo <= x)
+            * (x <= self.up)
         )
 
     ## Cumulative density function
@@ -504,10 +598,12 @@ class MarginalTruncated(Marginal):
         # Piecewise definition
         return (
             # Below lower bound
-            + 0 * (x < self.lo)
+            +0 * (x < self.lo)
             # Within bounds
-            + (self.marg.p(x) - self.G_lo) / (self.G_up - self.G_lo)
-              *(self.lo <= x) * (x <= self.up)
+            + (self.marg.p(x) - self.G_lo)
+            / (self.G_up - self.G_lo)
+            * (self.lo <= x)
+            * (x <= self.up)
             # Above upper bound
             + 1 * (self.up < x)
         )
@@ -515,13 +611,15 @@ class MarginalTruncated(Marginal):
     ## Quantile function
     @make_symbolic
     def q(self, p):
-        return self.marg.q( p * (self.G_up - self.G_lo) + self.G_lo )
+        return self.marg.q(p * (self.G_up - self.G_lo) + self.G_lo)
 
     ## Summary
     def summary(self, dig=2):
         s_base = self.marg.summary()
         if (self.lo is not None) and (self.up is not None):
-            s_trunc = "truncated to [{0:}, {1:}]".format(round(self.lo, dig), round(self.up, dig))
+            s_trunc = "truncated to [{0:}, {1:}]".format(
+                round(self.lo, dig), round(self.up, dig)
+            )
         elif self.lo is not None:
             s_trunc = "truncated to [{0:}, +\infty)".format(round(self.lo, dig))
         elif self.up is not None:
@@ -533,19 +631,19 @@ class MarginalTruncated(Marginal):
 ## Marginal functions
 ##################################################
 def marg_mom(
-        dist,
-        mean=None,
-        sd=None,
-        cov=None,
-        var=None,
-        skew=None,
-        kurt=None,
-        kurt_excess=None,
-        lo=None,
-        up=None,
-        floc=None,
-        sign=0,
-        dict_x0=None,
+    dist,
+    mean=None,
+    sd=None,
+    cov=None,
+    var=None,
+    skew=None,
+    kurt=None,
+    kurt_excess=None,
+    lo=None,
+    up=None,
+    floc=None,
+    sign=0,
+    dict_x0=None,
 ):
     r"""Fit scipy.stats continuous distribution via moments
 
@@ -619,7 +717,9 @@ def marg_mom(
             bounded = True
             n_param = n_param - 2
         else:
-            raise ValueError("lo and up arguments can only be used with dist=='uniform' or 'beta'")
+            raise ValueError(
+                "lo and up arguments can only be used with dist=='uniform' or 'beta'"
+            )
     else:
         bounded = False
 
@@ -627,13 +727,9 @@ def marg_mom(
     if mean is None:
         raise ValueError("Must provide `mean` argument.")
     if (sd is None) and (var is None) and (cov is None):
-        raise ValueError(
-            "One of `sd`, `cov`, or `var` must be provided."
-        )
+        raise ValueError("One of `sd`, `cov`, or `var` must be provided.")
     if sum([(not sd is None), (not var is None), (not cov is None)]) > 1:
-        raise ValueError(
-            "Only one of `sd`, `cov`, and `var` may be provided."
-        )
+        raise ValueError("Only one of `sd`, `cov`, and `var` may be provided.")
     if (not kurt is None) and (not kurt_excess is None):
         raise ValueError(
             "Only one of `kurt` and `kurt_excess` may be provided."
@@ -641,21 +737,21 @@ def marg_mom(
 
     ## Process arguments
     # Transform to "standard" moments
-    if (not sd is None):
+    if not sd is None:
         var = sd**2
-    if (not cov is None):
-        var = (mean * cov)**2
-    if (not kurt is None):
+    if not cov is None:
+        var = (mean * cov) ** 2
+    if not kurt is None:
         kurt_excess = kurt - 3
 
     # Build up target moments
     s = "mv"
     m_target = array([mean, var])
 
-    if (not skew is None):
+    if not skew is None:
         s = s + "s"
         m_target = concatenate((m_target, array([skew])))
-    if (not kurt is None):
+    if not kurt is None:
         s = s + "k"
         m_target = concatenate((m_target, array([kurt_excess])))
     n_provided = len(s)
@@ -678,26 +774,32 @@ def marg_mom(
     if floc is not None:
         key_wk = {key for key in param_dist[dist] if key != "loc"}
     elif bounded:
-        key_wk = {key for key in param_dist[dist] if (key != "loc" and key != "scale")}
+        key_wk = {
+            key for key in param_dist[dist] if (key != "loc" and key != "scale")
+        }
     else:
         key_wk = copy.copy(param_dist[dist])
     # Generate a helper with the variable parameters and target moments
     if floc is not None:
+
         def _obj(v):
             kw = dict(zip(key_wk, v))
             kw["loc"] = floc
             return array(valid_dist[dist](**kw).stats(s)) - m_target
+
     elif bounded:
+
         def _obj(v):
             kw = dict(zip(key_wk, v))
             kw["loc"] = lo
             kw["scale"] = up - lo
             return array(valid_dist[dist](**kw).stats(s)) - m_target
+
     else:
+
         def _obj(v):
             kw = dict(zip(key_wk, v))
             return array(valid_dist[dist](**kw).stats(s)) - m_target
-
 
     ## Generate initial guess
     if dict_x0 is None:
@@ -734,8 +836,8 @@ def marg_mom(
                 df=10,
                 c=10,
                 beta=1,
-                #K=None,
-                #chi=None,
+                # K=None,
+                # chi=None,
             )
 
     # Repackage for optimizer
@@ -748,8 +850,8 @@ def marg_mom(
     if res.success is False:
         raise RuntimeError(
             "Moment matching failed; initial guess may be poor, or requested "
-            "moments may be infeasible. Try setting `dict_x0`. " +
-            "Printing optimization results for debugging:\n\n{}".format(res)
+            "moments may be infeasible. Try setting `dict_x0`. "
+            + "Printing optimization results for debugging:\n\n{}".format(res)
         )
 
     ## Repackage and return
@@ -760,6 +862,7 @@ def marg_mom(
         param["loc"] = lo
         param["scale"] = up - lo
     return MarginalNamed(sign=sign, d_name=dist, d_param=param)
+
 
 ## Fit a named scipy.stats distribution
 def marg_fit(dist, data, name=True, sign=None, **kwargs):
@@ -832,7 +935,9 @@ def marg_fit(dist, data, name=True, sign=None, **kwargs):
     """
     ## Catch case where user provides entire DataFrame
     if isinstance(data, DataFrame):
-        raise ValueError("`data` argument must be a single column; try data.var")
+        raise ValueError(
+            "`data` argument must be a single column; try data.var"
+        )
 
     ## Fit the distribution
     with warnings.catch_warnings():
@@ -879,7 +984,9 @@ def marg_gkde(data, sign=None):
     """
     ## Catch case where user provides entire DataFrame
     if isinstance(data, DataFrame):
-        raise ValueError("`data` argument must be a single column; try data.var")
+        raise ValueError(
+            "`data` argument must be a single column; try data.var"
+        )
 
     kde = gaussian_kde(data)
     if sign is not None:
@@ -889,6 +996,7 @@ def marg_gkde(data, sign=None):
         sign = 0
 
     return MarginalGKDE(kde, sign=sign)
+
 
 ## Truncate an existing marginal
 def marg_trunc(marg, lo=None, up=None, **kwargs):
@@ -921,7 +1029,9 @@ def marg_trunc(marg, lo=None, up=None, **kwargs):
 
     # Check invariants
     if (lo is None) and (up is None):
-        raise ValueError("Cannot truncate without at least one of `lo` or `up`.")
+        raise ValueError(
+            "Cannot truncate without at least one of `lo` or `up`."
+        )
 
     # Construct the marginal
     mg = MarginalTruncated(mg_wk, lo, up, **kwargs)

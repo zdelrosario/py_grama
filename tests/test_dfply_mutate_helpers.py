@@ -24,6 +24,7 @@ class TestFactors(unittest.TestCase):
 
         self.assertTrue(list(ang_fct.categories) == [0, 90, 45])
 
+
 class TestPandasUtils(unittest.TestCase):
     def setUp(self):
         pass
@@ -34,6 +35,7 @@ class TestPandasUtils(unittest.TestCase):
         s_true = Series([0.0] * 2)
 
         self.assertTrue((s_filled == s_true).all())
+
 
 class TestPareto(unittest.TestCase):
     def setUp(self):
@@ -79,6 +81,7 @@ class TestPareto(unittest.TestCase):
         with self.assertRaises(ValueError):
             gr.stratum_min([1], [1, 2, 3])
 
+
 class TestQQ(unittest.TestCase):
     def setUp(self):
         pass
@@ -88,18 +91,19 @@ class TestQQ(unittest.TestCase):
         n = 10
         i = arange(1, n + 1)
         p = (i - 0.3175) / (len(i) + 0.365)
-        p[0] = 1 - 0.5**(1/n)
-        p[-1] = 0.5**(1/n)
+        p[0] = 1 - 0.5 ** (1 / n)
+        p[-1] = 0.5 ** (1 / n)
         q = norm.ppf(p)
 
         # Correct values
-        marg = gr.marg_mom("norm", mean=0, sd=1) # Use true distribution
+        marg = gr.marg_mom("norm", mean=0, sd=1)  # Use true distribution
         q_res = gr.qqvals(q, marg=marg)
         self.assertTrue((q == q_res).all())
 
         # Handles shuffling
         shuffle(q)
         self.assertTrue((q == gr.qqvals(q, marg=marg)).all())
+
 
 class TestArray(unittest.TestCase):
     def setUp(self):

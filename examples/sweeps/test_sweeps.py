@@ -6,12 +6,12 @@ import matplotlib.pyplot as plt
 
 from grama.models import make_cantilever_beam
 
-np.random.seed(101) # Set for reproducibility
+np.random.seed(101)  # Set for reproducibility
 
 n_monte_carlo = int(1e4)
 
 ## Instantiate model with desired geometry
-model  = make_cantilever_beam()
+model = make_cantilever_beam()
 
 df_res = gr.eval_sinews(model, df_det="nom")
 

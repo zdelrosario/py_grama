@@ -41,6 +41,7 @@ def validate_set_ops(df, other):
 # `union`
 # ------------------------------------------------------------------------------
 
+
 @dfdelegate
 def tran_union(df, other, index=False, keep="first"):
     """
@@ -62,7 +63,9 @@ def tran_union(df, other, index=False, keep="first"):
     if index:
         stacked_reset_indexes = stacked.reset_index()
         index_cols = [
-            col for col in stacked_reset_indexes.columns if col not in df.columns
+            col
+            for col in stacked_reset_indexes.columns
+            if col not in df.columns
         ]
         index_name = df.index.names
         return_df = stacked_reset_indexes.drop_duplicates(keep=keep).set_index(
@@ -72,6 +75,7 @@ def tran_union(df, other, index=False, keep="first"):
         return return_df
     else:
         return stacked.drop_duplicates(keep=keep)
+
 
 tf_union = add_pipe(tran_union)
 
@@ -102,7 +106,9 @@ def tran_intersect(df, other, index=False, keep="first"):
     if index:
         df_reset_index = df.reset_index()
         other_reset_index = other.reset_index()
-        index_cols = [col for col in df_reset_index.columns if col not in df.columns]
+        index_cols = [
+            col for col in df_reset_index.columns if col not in df.columns
+        ]
         df_index_names = df.index.names
         return_df = merge(
             df_reset_index,
@@ -124,6 +130,7 @@ def tran_intersect(df, other, index=False, keep="first"):
     )
     return_df = return_df.drop_duplicates(keep=keep)
     return return_df
+
 
 tf_intersect = add_pipe(tran_intersect)
 
@@ -154,7 +161,9 @@ def tran_set_diff(df, other, index=False, keep="first"):
     if index:
         df_reset_index = df.reset_index()
         other_reset_index = other.reset_index()
-        index_cols = [col for col in df_reset_index.columns if col not in df.columns]
+        index_cols = [
+            col for col in df_reset_index.columns if col not in df.columns
+        ]
         df_index_names = df.index.names
         return_df = merge(
             df_reset_index,
@@ -180,5 +189,6 @@ def tran_set_diff(df, other, index=False, keep="first"):
     return_df = return_df[return_df._merge == "left_only"]
     return_df = return_df.drop_duplicates(keep=keep)[df.columns]
     return return_df
+
 
 tf_set_diff = add_pipe(tran_set_diff)

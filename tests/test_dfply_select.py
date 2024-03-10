@@ -24,25 +24,34 @@ class TestSelect(unittest.TestCase):
             df.equals(data.df_diamonds >> gr.tf_select("carat", "cut", "price"))
         )
         self.assertTrue(df.equals(data.df_diamonds >> gr.tf_select(0, 1, 6)))
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_select(0, 1, "price")))
+        self.assertTrue(
+            df.equals(data.df_diamonds >> gr.tf_select(0, 1, "price"))
+        )
         self.assertTrue(
             df.equals(data.df_diamonds >> gr.tf_select([0, X.cut], X.price))
         )
         self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_select(X.carat, X["cut"], X.price))
+            df.equals(
+                data.df_diamonds >> gr.tf_select(X.carat, X["cut"], X.price)
+            )
         )
         self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_select(X[["carat", "cut", "price"]]))
+            df.equals(
+                data.df_diamonds >> gr.tf_select(X[["carat", "cut", "price"]])
+            )
         )
         self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_select(X[["carat", "cut"]], X.price))
+            df.equals(
+                data.df_diamonds >> gr.tf_select(X[["carat", "cut"]], X.price)
+            )
         )
         self.assertTrue(
             df.equals(data.df_diamonds >> gr.tf_select(X.iloc[:, [0, 1, 6]]))
         )
         self.assertTrue(
             df.equals(
-                data.df_diamonds >> gr.tf_select([X.loc[:, ["carat", "cut", "price"]]])
+                data.df_diamonds
+                >> gr.tf_select([X.loc[:, ["carat", "cut", "price"]]])
             )
         )
 
@@ -57,21 +66,34 @@ class TestSelect(unittest.TestCase):
             df.equals(data.df_diamonds >> gr.tf_drop("carat", "cut", "price"))
         )
         self.assertTrue(df.equals(data.df_diamonds >> gr.tf_drop(0, 1, 6)))
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_drop(0, 1, "price")))
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_drop([0, X.cut], X.price)))
         self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_drop(X.carat, X["cut"], X.price))
+            df.equals(data.df_diamonds >> gr.tf_drop(0, 1, "price"))
         )
         self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_drop(X[["carat", "cut", "price"]]))
+            df.equals(data.df_diamonds >> gr.tf_drop([0, X.cut], X.price))
         )
-        self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_drop(X[["carat", "cut"]], X.price))
-        )
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_drop(X.iloc[:, [0, 1, 6]])))
         self.assertTrue(
             df.equals(
-                data.df_diamonds >> gr.tf_drop([X.loc[:, ["carat", "cut", "price"]]])
+                data.df_diamonds >> gr.tf_drop(X.carat, X["cut"], X.price)
+            )
+        )
+        self.assertTrue(
+            df.equals(
+                data.df_diamonds >> gr.tf_drop(X[["carat", "cut", "price"]])
+            )
+        )
+        self.assertTrue(
+            df.equals(
+                data.df_diamonds >> gr.tf_drop(X[["carat", "cut"]], X.price)
+            )
+        )
+        self.assertTrue(
+            df.equals(data.df_diamonds >> gr.tf_drop(X.iloc[:, [0, 1, 6]]))
+        )
+        self.assertTrue(
+            df.equals(
+                data.df_diamonds
+                >> gr.tf_drop([X.loc[:, ["carat", "cut", "price"]]])
             )
         )
 
@@ -85,11 +107,15 @@ class TestSelect(unittest.TestCase):
 
     def test_select_matches(self):
         df = data.df_diamonds[["carat", "cut", "color", "clarity", "price"]]
-        assert df.equals(data.df_diamonds >> gr.tf_select(gr.matches("^c[auol]|pri")))
+        assert df.equals(
+            data.df_diamonds >> gr.tf_select(gr.matches("^c[auol]|pri"))
+        )
 
     def test_drop_matches(self):
         df = data.df_diamonds[["depth", "table", "x", "y", "z"]]
-        assert df.equals(data.df_diamonds >> gr.tf_drop(gr.matches("^c[auol]|p.i")))
+        assert df.equals(
+            data.df_diamonds >> gr.tf_drop(gr.matches("^c[auol]|p.i"))
+        )
 
     def test_select_startswith(self):
         df = data.df_diamonds[["carat", "cut", "color", "clarity"]]
@@ -111,33 +137,45 @@ class TestSelect(unittest.TestCase):
         df = data.df_diamonds[["cut", "color", "clarity"]]
         self.assertTrue(
             df.equals(
-                data.df_diamonds >> gr.tf_select(gr.columns_between(X.cut, X.clarity))
+                data.df_diamonds
+                >> gr.tf_select(gr.columns_between(X.cut, X.clarity))
             )
         )
         self.assertTrue(
             df.equals(
-                data.df_diamonds >> gr.tf_select(gr.columns_between("cut", "clarity"))
+                data.df_diamonds
+                >> gr.tf_select(gr.columns_between("cut", "clarity"))
             )
         )
         self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_select(gr.columns_between(1, 3)))
+            df.equals(
+                data.df_diamonds >> gr.tf_select(gr.columns_between(1, 3))
+            )
         )
 
         df = data.df_diamonds[["x", "y", "z"]]
-        assert df.equals(data.df_diamonds >> gr.tf_select(gr.columns_between("x", 20)))
+        assert df.equals(
+            data.df_diamonds >> gr.tf_select(gr.columns_between("x", 20))
+        )
 
     def test_drop_between(self):
         df = data.df_diamonds[["carat", "z"]]
         self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_between("cut", "y")))
+            df.equals(
+                data.df_diamonds >> gr.tf_drop(gr.columns_between("cut", "y"))
+            )
         )
         self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_between(X.cut, 8)))
+            df.equals(
+                data.df_diamonds >> gr.tf_drop(gr.columns_between(X.cut, 8))
+            )
         )
 
         df = data.df_diamonds[["carat", "cut"]]
         self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_between(X.color, 20)))
+            df.equals(
+                data.df_diamonds >> gr.tf_drop(gr.columns_between(X.color, 20))
+            )
         )
 
     def test_select_from(self):
@@ -148,7 +186,9 @@ class TestSelect(unittest.TestCase):
         self.assertTrue(
             df.equals(data.df_diamonds >> gr.tf_select(gr.columns_from(X.x)))
         )
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_select(gr.columns_from(7))))
+        self.assertTrue(
+            df.equals(data.df_diamonds >> gr.tf_select(gr.columns_from(7)))
+        )
         self.assertTrue(
             data.df_diamonds[[]].equals(
                 data.df_diamonds >> gr.tf_select(gr.columns_from(100))
@@ -163,7 +203,9 @@ class TestSelect(unittest.TestCase):
         self.assertTrue(
             df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_from(X.color)))
         )
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_from(2))))
+        self.assertTrue(
+            df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_from(2)))
+        )
         self.assertTrue(
             data.df_diamonds[[]].equals(
                 data.df_diamonds >> gr.tf_drop(gr.columns_from(0))
@@ -178,29 +220,40 @@ class TestSelect(unittest.TestCase):
         self.assertTrue(
             df.equals(data.df_diamonds >> gr.tf_select(gr.columns_to(X.color)))
         )
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_select(gr.columns_to(2))))
+        self.assertTrue(
+            df.equals(data.df_diamonds >> gr.tf_select(gr.columns_to(2)))
+        )
 
     def test_drop_to(self):
         df = data.df_diamonds[["x", "y", "z"]]
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_to("x"))))
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_to(X.x))))
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_to(7))))
+        self.assertTrue(
+            df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_to("x")))
+        )
+        self.assertTrue(
+            df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_to(X.x)))
+        )
+        self.assertTrue(
+            df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_to(7)))
+        )
 
     def select_through(self):
         df = data.df_diamonds[["carat", "cut", "color"]]
         self.assertTrue(
             df.equals(
-                data.df_diamonds >> gr.tf_select(gr.columns_to("color", inclusive=True))
+                data.df_diamonds
+                >> gr.tf_select(gr.columns_to("color", inclusive=True))
             )
         )
         self.assertTrue(
             df.equals(
-                data.df_diamonds >> gr.tf_select(gr.columns_to(X.color, inclusive=True))
+                data.df_diamonds
+                >> gr.tf_select(gr.columns_to(X.color, inclusive=True))
             )
         )
         self.assertTrue(
             df.equals(
-                data.df_diamonds >> gr.tf_select(gr.columns_to(2, inclusive=True))
+                data.df_diamonds
+                >> gr.tf_select(gr.columns_to(2, inclusive=True))
             )
         )
 
@@ -208,16 +261,20 @@ class TestSelect(unittest.TestCase):
         df = data.df_diamonds[["y", "z"]]
         self.assertTrue(
             df.equals(
-                data.df_diamonds >> gr.tf_drop(gr.columns_to("x", inclusive=True))
+                data.df_diamonds
+                >> gr.tf_drop(gr.columns_to("x", inclusive=True))
             )
         )
         self.assertTrue(
             df.equals(
-                data.df_diamonds >> gr.tf_drop(gr.columns_to(X.x, inclusive=True))
+                data.df_diamonds
+                >> gr.tf_drop(gr.columns_to(X.x, inclusive=True))
             )
         )
         self.assertTrue(
-            df.equals(data.df_diamonds >> gr.tf_drop(gr.columns_to(7, inclusive=True)))
+            df.equals(
+                data.df_diamonds >> gr.tf_drop(gr.columns_to(7, inclusive=True))
+            )
         )
 
     def test_select_if(self):
@@ -232,13 +289,18 @@ class TestSelect(unittest.TestCase):
                 pass
         df_if = data.df_diamonds[cols]
         self.assertTrue(
-            df_if.equals(data.df_diamonds >> gr.tf_select_if(lambda col: mean(col) > 3))
+            df_if.equals(
+                data.df_diamonds >> gr.tf_select_if(lambda col: mean(col) > 3)
+            )
         )
         # test 2: use and
         cols = list()
         for col in data.df_diamonds:
             try:
-                if mean(data.df_diamonds[col]) > 3 and max(data.df_diamonds[col]) < 50:
+                if (
+                    mean(data.df_diamonds[col]) > 3
+                    and max(data.df_diamonds[col]) < 50
+                ):
                     cols.append(col)
             except:
                 pass
@@ -253,7 +315,10 @@ class TestSelect(unittest.TestCase):
         cols = list()
         for col in data.df_diamonds:
             try:
-                if mean(data.df_diamonds[col]) > 3 or max(data.df_diamonds[col]) < 6:
+                if (
+                    mean(data.df_diamonds[col]) > 3
+                    or max(data.df_diamonds[col]) < 6
+                ):
                     cols.append(col)
             except:
                 pass
@@ -298,12 +363,7 @@ class TestSelect(unittest.TestCase):
         # test 6: is_numeric helper
         self.assertEqual(
             {"carat", "depth", "table", "price", "x", "y", "z"},
-            set(
-                (
-                    data.df_diamonds
-                    >> gr.tf_select_if(gr.is_numeric)
-                ).columns
-            )
+            set((data.df_diamonds >> gr.tf_select_if(gr.is_numeric)).columns),
         )
 
     def test_drop_if(self):
@@ -320,7 +380,9 @@ class TestSelect(unittest.TestCase):
         inverse_cols = [col for col in data.df_diamonds if col not in cols]
         df_if = data.df_diamonds[inverse_cols]
         self.assertTrue(
-            df_if.equals(data.df_diamonds >> gr.tf_drop_if(lambda col: mean(col) > 3))
+            df_if.equals(
+                data.df_diamonds >> gr.tf_drop_if(lambda col: mean(col) > 3)
+            )
         )
         # test 2: use and
         # return colums where both conditions are false:
@@ -329,7 +391,10 @@ class TestSelect(unittest.TestCase):
         cols = list()
         for col in data.df_diamonds:
             try:
-                if mean(data.df_diamonds[col]) > 3 and max(data.df_diamonds[col]) < 50:
+                if (
+                    mean(data.df_diamonds[col]) > 3
+                    and max(data.df_diamonds[col]) < 50
+                ):
                     cols.append(col)
             except:
                 pass
@@ -347,7 +412,10 @@ class TestSelect(unittest.TestCase):
         cols = list()
         for col in data.df_diamonds:
             try:
-                if mean(data.df_diamonds[col]) > 3 or max(data.df_diamonds[col]) < 6:
+                if (
+                    mean(data.df_diamonds[col]) > 3
+                    or max(data.df_diamonds[col]) < 6
+                ):
                     cols.append(col)
             except:
                 pass

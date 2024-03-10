@@ -4,6 +4,7 @@ from context import grama as gr
 from context import data
 from context import models
 
+
 ## Test autoplots
 ##################################################
 class TestAutoplot(unittest.TestCase):
@@ -28,13 +29,11 @@ class TestAutoplot(unittest.TestCase):
 
         self.df_mc = gr.eval_sample(self.md, n=10, df_det="nom")
         self.df_mc_skip = gr.eval_sample(self.md, n=10, df_det="nom", skip=True)
-        self.df_sinew = gr.eval_sinews(self.md, n_density=2, n_sweeps=1, df_det="nom")
+        self.df_sinew = gr.eval_sinews(
+            self.md, n_density=2, n_sweeps=1, df_det="nom"
+        )
         self.df_sinew_skip = gr.eval_sinews(
-            self.md,
-            n_density=2,
-            n_sweeps=1,
-            df_det="nom",
-            skip=True
+            self.md, n_density=2, n_sweeps=1, df_det="nom", skip=True
         )
 
         self.df_contour = gr.eval_contour(
@@ -51,9 +50,7 @@ class TestAutoplot(unittest.TestCase):
         )
 
         self.df_sobol = (
-            self.md_rand
-            >> gr.ev_hybrid(df_det="nom")
-            >> gr.tf_sobol()
+            self.md_rand >> gr.ev_hybrid(df_det="nom") >> gr.tf_sobol()
         )
 
     def test_autoplot(self):
@@ -74,9 +71,7 @@ class TestAutoplot(unittest.TestCase):
 
         ## iocorr fits into pipeline
         gr.plot_auto(
-            self.md_rand
-            >> gr.ev_sample(n=10, df_det="nom")
-            >> gr.tf_iocorr()
+            self.md_rand >> gr.ev_sample(n=10, df_det="nom") >> gr.tf_iocorr()
         )
 
         with self.assertRaises(ValueError):

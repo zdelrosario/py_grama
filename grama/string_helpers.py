@@ -25,6 +25,7 @@ from pandas import Series
 # - a straight port of stringr
 # ------------------------------------------------------------------------------
 
+
 ## Vectorized Concatenate
 # --------------------------------------------------
 def _vec_len(x):
@@ -95,7 +96,9 @@ def str_locate(string, pattern):
     try:
         if isinstance(string, str):
             raise TypeError
-        return Series([[m.start(0) for m in re.finditer(pattern, s)] for s in string])
+        return Series(
+            [[m.start(0) for m in re.finditer(pattern, s)] for s in string]
+        )
 
     except TypeError:
         return [m.start(0) for m in re.finditer(pattern, string)]
@@ -186,7 +189,9 @@ def str_replace(string, pattern, replacement):
     try:
         if isinstance(string, str):
             raise TypeError
-        return Series([re.sub(pattern, replacement, s, count=1) for s in string])
+        return Series(
+            [re.sub(pattern, replacement, s, count=1) for s in string]
+        )
 
     except TypeError:
 

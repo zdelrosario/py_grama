@@ -5,9 +5,18 @@ __all__ = [
     "ev_min",
 ]
 
-from grama import add_pipe, pipe, custom_formatwarning, df_make, \
-    eval_df, eval_nominal, eval_sample, comp_marginals, \
-    comp_copula_independence, tran_outer
+from grama import (
+    add_pipe,
+    pipe,
+    custom_formatwarning,
+    df_make,
+    eval_df,
+    eval_nominal,
+    eval_sample,
+    comp_marginals,
+    comp_copula_independence,
+    tran_outer,
+)
 from grama.eval_defaults import invariants_eval_model, invariants_eval_df
 from numpy import Inf, isfinite
 from numpy.random import seed as setseed
@@ -50,7 +59,7 @@ def eval_nls(
             Assumed to be model.out if left as None.
         var_fix (list or None): Variables to fix to nominal levels. Note that
             variables with domain width zero will automatically be fixed.
-        df_init (DataFrame or None): Initial guesses for parameters; overrides 
+        df_init (DataFrame or None): Initial guesses for parameters; overrides
         n_restart
         append (bool): Append metadata? (Initial guess, MSE, optimizer status)
         tol (float): Optimizer convergence tolerance
@@ -144,7 +153,10 @@ def eval_nls(
 
     for var in var_fit_rand:
         bounds.append(
-            (model.density.marginals[var].q(0), model.density.marginals[var].q(1),)
+            (
+                model.density.marginals[var].q(0),
+                model.density.marginals[var].q(1),
+            )
         )
 
     ## Determine initial guess points
@@ -190,14 +202,21 @@ def eval_nls(
             md_sweep = comp_copula_independence(md_sweep)
             ## Generate random start points
             df_rand = eval_sample(
-                md_sweep, n=n_restart - 1, df_det="nom", skip=True,
+                md_sweep,
+                n=n_restart - 1,
+                df_det="nom",
+                skip=True,
             )
-            df_init = concat((df_init, df_rand[var_fit]), axis=0).reset_index(drop=True)
+            df_init = concat((df_init, df_rand[var_fit]), axis=0).reset_index(
+                drop=True
+            )
 
     ## Iterate over initial guesses
     df_res = DataFrame()
+
     def fun_mp(i):
         x0 = df_init[var_fit].iloc[i].values
+
         ## Build evaluator
         def objective(x):
             """x = [var_fit]"""
@@ -205,7 +224,10 @@ def eval_nls(
             df_var = tran_outer(
                 df_data[var_feat],
                 concat(
-                    (df_nom[var_fix].iloc[[0]], df_make(**dict(zip(var_fit, x)))),
+                    (
+                        df_nom[var_fix].iloc[[0]],
+                        df_make(**dict(zip(var_fit, x))),
+                    ),
                     axis=1,
                 ),
             )
@@ -222,7 +244,12 @@ def eval_nls(
             method=method,
             jac=False,
             tol=tol,
-            options={"maxiter": n_maxiter, "disp": False, "ftol": ftol, "gtol": gtol,},
+            options={
+                "maxiter": n_maxiter,
+                "disp": False,
+                "ftol": ftol,
+                "gtol": gtol,
+            },
             bounds=bounds,
         )
 
@@ -248,6 +275,7 @@ def eval_nls(
 
 
 ev_nls = add_pipe(eval_nls)
+
 
 ## Minimize
 # --------------------------------------------------
@@ -384,11 +412,14 @@ def eval_min(
             md_sweep = comp_copula_independence(md_sweep)
             ## Generate random start points
             df_rand = eval_sample(
-                md_sweep, n=n_restart - 1, df_det="nom", skip=True,
+                md_sweep,
+                n=n_restart - 1,
+                df_det="nom",
+                skip=True,
             )
-            df_start = concat((df_start, df_rand[model.var]), axis=0).reset_index(
-                drop=True
-            )
+            df_start = concat(
+                (df_start, df_rand[model.var]), axis=0
+            ).reset_index(drop=True)
     else:
         n_restart = df_start.shape[0]
 
@@ -407,19 +438,28 @@ def eval_min(
     if not (out_geq is None):
         for out in out_geq:
             constraints.append(
-                {"type": "ineq", "fun": make_fun(out),}
+                {
+                    "type": "ineq",
+                    "fun": make_fun(out),
+                }
             )
 
     if not (out_leq is None):
         for out in out_leq:
             constraints.append(
-                {"type": "ineq", "fun": make_fun(out, sign=-1),}
+                {
+                    "type": "ineq",
+                    "fun": make_fun(out, sign=-1),
+                }
             )
 
     if not (out_eq is None):
         for out in out_eq:
             constraints.append(
-                {"type": "eq", "fun": make_fun(out),}
+                {
+                    "type": "eq",
+                    "fun": make_fun(out),
+                }
             )
 
     ## Parse the bounds for minimize
