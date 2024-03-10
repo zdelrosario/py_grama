@@ -6,6 +6,7 @@ import unittest
 from context import grama as gr
 from context import models, data
 
+
 ## Core function tests
 ##################################################
 class TestPipe(unittest.TestCase):

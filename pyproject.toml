@@ -1,0 +1,9 @@
+[tool.black]
+# Black uses a line length of 88 by default, so set it explicitly to 80 here.
+line-length = 80
+# Preview enables reformatting based on experimental, potentially disruptive
+# style guidelines. It is not guaranteed to provide consistent formatting across
+# releases of Black, but it is much better at multi-line string formatting,
+# which is why we use it. For more info:
+# https://black.readthedocs.io/en/stable/the_black_code_style/future_style.html#labels-multiline-string-handling
+preview = true

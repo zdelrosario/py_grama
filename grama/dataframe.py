@@ -10,6 +10,7 @@ from pandas.testing import assert_frame_equal
 from .dfply import Intention
 from .tools import tran_outer
 
+
 ## Safe length-checker
 def safelen(x):
     try:
@@ -54,12 +55,12 @@ def df_make(**kwargs):
     ## Catch passed Intention operator
     if any([isinstance(v, Intention) for v in kwargs.values()]):
         raise ValueError(
-            "df_make() does not support the Intention operator; " +
-            "did you mean to use a DataFrame argument?\n\n" +
-            "A common mistake is to write\n\n" +
-            "    lambda df: gr.df_make(y=DF.x) # Incorrect\n\n" +
-            "rather than\n\n" +
-            "    lambda df: gr.df_make(y=df.x) # Correct"
+            "df_make() does not support the Intention operator; "
+            + "did you mean to use a DataFrame argument?\n\n"
+            + "A common mistake is to write\n\n"
+            + "    lambda df: gr.df_make(y=DF.x) # Incorrect\n\n"
+            + "rather than\n\n"
+            + "    lambda df: gr.df_make(y=df.x) # Correct"
         )
 
     ## Check lengths
@@ -108,13 +109,14 @@ def df_equal(df1, df2, close=False, precision=3):
                 df2,
                 check_dtype=False,
                 check_exact=False,
-                rtol=1e5
+                rtol=1e5,
             )
             return True
         except:
             return False
     else:
         return df1[df2.columns].equals(df2)
+
 
 ## DataFrame constructor utility; outer product
 def df_grid(**kwargs):
@@ -143,8 +145,8 @@ def df_grid(**kwargs):
     ## Catch passed Intention operator
     if any([isinstance(v, Intention) for v in kwargs.values()]):
         raise ValueError(
-            "df_grid() does not support the Intention operator; " +
-            "did you mean to use a DataFrame argument?"
+            "df_grid() does not support the Intention operator; "
+            + "did you mean to use a DataFrame argument?"
         )
 
     ## Construct dataframe

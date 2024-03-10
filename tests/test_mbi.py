@@ -7,6 +7,7 @@ import sys
 from context import grama as gr
 from context import models
 
+
 ## Test the Model Building Interface
 ##################################################
 class TestMBI(unittest.TestCase):
@@ -30,6 +31,7 @@ class TestMBI(unittest.TestCase):
         # Define test function
         def fun(x, y, z):
             return x + y + z
+
         # Check that getvars function works correctly
         self.assertTrue(gr.getvars(fun), ("x", "y", "z"))
 
@@ -37,9 +39,7 @@ class TestMBI(unittest.TestCase):
         md_base = (
             gr.Model()
             >> gr.cp_vec_function(
-                fun = lambda df: gr.df_make(
-                    f=df.x + df.y + df.z
-                ),
+                fun=lambda df: gr.df_make(f=df.x + df.y + df.z),
                 var=["x", "y", "z"],
                 out=["f"],
             )
@@ -53,10 +53,7 @@ class TestMBI(unittest.TestCase):
             )
         )
 
-        md_frz = (
-            md_base
-            >> gr.cp_freeze(x=0)
-        )
+        md_frz = md_base >> gr.cp_freeze(x=0)
 
         # Correct variable list
         self.assertTrue(set(md_frz.var) == {"y", "z"})
@@ -77,10 +74,7 @@ class TestMBI(unittest.TestCase):
             gr.comp_freeze(md_base, x=[0, 1])
 
         # Dataframe input
-        md_frz_df = (
-            md_base
-            >> gr.cp_freeze(df=gr.df_make(x=0, z=0))
-        )
+        md_frz_df = md_base >> gr.cp_freeze(df=gr.df_make(x=0, z=0))
         self.assertTrue(set(md_frz_df.var) == {"y"})
         df_res = gr.eval_sample(md_frz_df, n=10, df_det="nom")
 
@@ -125,30 +119,43 @@ class TestMBI(unittest.TestCase):
             gr.comp_function(self.md, fun=lambda x: x, var=["foo"], out=None)
         with self.assertRaises(ValueError):
             # Intersection var / out names
-            self.md >> gr.cp_function(lambda x: x, var=["x"], out=["x"], name="f0")
+            self.md >> gr.cp_function(
+                lambda x: x, var=["x"], out=["x"], name="f0"
+            )
         with self.assertRaises(ValueError):
             # Non-unique function names
-            self.md >> gr.cp_function(
-                lambda x: x, var=1, out=1, name="f0"
-            ) >> gr.cp_function(lambda x: x, var=1, out=1, name="f0")
+            (
+                self.md
+                >> gr.cp_function(lambda x: x, var=1, out=1, name="f0")
+                >> gr.cp_function(lambda x: x, var=1, out=1, name="f0")
+            )
         ## DAG invariant checks
         with self.assertRaises(ValueError):
             # Cycle by input
-            self.md >> gr.cp_function(
-                fun=lambda x0: x0, var=["y0"], out=1
-            ) >> gr.cp_function(fun=lambda x0: x0, var=1, out=["y0"])
+            (
+                self.md
+                >> gr.cp_function(fun=lambda x0: x0, var=["y0"], out=1)
+                >> gr.cp_function(fun=lambda x0: x0, var=1, out=["y0"])
+            )
         with self.assertRaises(ValueError):
             # Non-unique output
-            self.md >> gr.cp_function(
-                fun=lambda x0: x0, var=1, out=["y0"]
-            ) >> gr.cp_function(fun=lambda x0: x0, var=1, out=["y0"])
+            (
+                self.md
+                >> gr.cp_function(fun=lambda x0: x0, var=1, out=["y0"])
+                >> gr.cp_function(fun=lambda x0: x0, var=1, out=["y0"])
+            )
 
         ## Check vectorized builder
         md_vec = gr.comp_vec_function(
-            self.md, fun=lambda df: df.assign(y0=df.x0), var=1, out=1,
+            self.md,
+            fun=lambda df: df.assign(y0=df.x0),
+            var=1,
+            out=1,
         )
         self.assertTrue(
-            gr.df_equal(gr.df_make(x0=0, y0=0), md_vec >> gr.ev_df(df=gr.df_make(x0=0)))
+            gr.df_equal(
+                gr.df_make(x0=0, y0=0), md_vec >> gr.ev_df(df=gr.df_make(x0=0))
+            )
         )
 
     def test_comp_model(self):
@@ -206,7 +213,9 @@ class TestMBI(unittest.TestCase):
         """Test comp_bounds()"""
 
         ## Add marginal w/o function
-        md1 = gr.comp_marginals(self.md, x={"dist": "norm", "loc": 0, "scale": 1})
+        md1 = gr.comp_marginals(
+            self.md, x={"dist": "norm", "loc": 0, "scale": 1}
+        )
 
         self.assertEqual(md1.density.marginals["x"].d_name, "norm")
 
@@ -222,7 +231,9 @@ class TestMBI(unittest.TestCase):
 
         ## Check number and list of vars computed correctly
         md3 = gr.comp_bounds(self.md, x=(0, 1), y=(0, 1))
-        md3 = gr.comp_marginals(md3, x={"dist": "uniform", "loc": 0, "scale": 1})
+        md3 = gr.comp_marginals(
+            md3, x={"dist": "uniform", "loc": 0, "scale": 1}
+        )
 
         self.assertEqual(md3.n_var, 2)
         self.assertEqual(md3.n_var_det, 1)
@@ -251,7 +262,8 @@ class TestMBI(unittest.TestCase):
 
         ## Gaussian copula
         md_gaussian = gr.comp_copula_gaussian(
-            md_incomplete, pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5]))
+            md_incomplete,
+            pd.DataFrame(dict(var1=["x"], var2=["y"], corr=[0.5])),
         )
         df_gau = md_gaussian.density.sample()
         self.assertTrue(set(df_gau.columns) == set(["x", "y"]))

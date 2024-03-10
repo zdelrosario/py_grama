@@ -6,10 +6,23 @@ __all__ = [
 ## Collection of fitting synonyms: functions implemented in terms of other grama
 ## verbs
 
-from grama import add_pipe, pipe, custom_formatwarning, Model, \
-    df_make, tran_outer, eval_nominal, eval_nls, eval_df, \
-    eval_grad_fd, cp_function, cp_md_det, cp_marginals, \
-    cp_copula_gaussian, cp_bounds
+from grama import (
+    add_pipe,
+    pipe,
+    custom_formatwarning,
+    Model,
+    df_make,
+    tran_outer,
+    eval_nominal,
+    eval_nls,
+    eval_df,
+    eval_grad_fd,
+    cp_function,
+    cp_md_det,
+    cp_marginals,
+    cp_copula_gaussian,
+    cp_bounds,
+)
 from toolz import curry
 from numpy import zeros, diag, atleast_2d, triu_indices
 from numpy import sum as npsum
@@ -126,7 +139,9 @@ def fit_nls(
         **kwargs,
     )
     ## Select best-fit values
-    df_best = df_fit.sort_values(by="mse", axis=0).iloc[[0]].reset_index(drop=True)
+    df_best = (
+        df_fit.sort_values(by="mse", axis=0).iloc[[0]].reset_index(drop=True)
+    )
     if verbose:
         print(df_fit.sort_values(by="mse", axis=0))
 
@@ -183,7 +198,9 @@ def fit_nls(
 
         ## Convert to std deviations and correlation
         sigma_comp = npsqrt(diag(Sigma_pooled))
-        corr_mat = Sigma_pooled / (atleast_2d(sigma_comp).T.dot(atleast_2d(sigma_comp)))
+        corr_mat = Sigma_pooled / (
+            atleast_2d(sigma_comp).T.dot(atleast_2d(sigma_comp))
+        )
         corr_data = []
         I, J = triu_indices(n_fitted, k=1)
         for ind in range(len(I)):

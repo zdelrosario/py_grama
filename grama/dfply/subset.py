@@ -33,18 +33,18 @@ from pandas import Series
 
 @dfdelegate
 def tran_head(df, n=5):
-    r"""Return the first n rows of a DataFrame
-    """
+    r"""Return the first n rows of a DataFrame"""
     return df.head(n)
+
 
 tf_head = add_pipe(tran_head)
 
 
 @dfdelegate
 def tran_tail(df, n=5):
-    r"""Return the last n rows of a DataFrame
-    """
+    r"""Return the last n rows of a DataFrame"""
     return df.tail(n)
+
 
 tf_tail = add_pipe(tran_tail)
 
@@ -87,6 +87,7 @@ def tran_sample(df, *args, **kwargs):
 
     """
     return df.sample(*args, **kwargs).reset_index(drop=True)
+
 
 tf_sample = add_pipe(tran_sample)
 
@@ -136,6 +137,7 @@ def tran_distinct(df, *args, **kwargs):
         return df.drop_duplicates(**kwargs).reset_index(drop=True)
     return df.drop_duplicates(list(args), **kwargs).reset_index(drop=True)
 
+
 tf_distinct = add_pipe(tran_distinct)
 
 
@@ -151,6 +153,7 @@ def tran_row_slice(df, indices):
     if indices.dtype == bool:
         return df.loc[indices, :].reset_index(drop=True)
     return df.iloc[indices, :].reset_index(drop=True)
+
 
 tf_row_slice = add_pipe(tran_row_slice)
 
@@ -207,6 +210,7 @@ def mask(df, *args):
         mask = mask & arg.reset_index(drop=True)
     return df[mask.values].reset_index(drop=True)
 
+
 tran_filter = mask  # alias for mask()
 
 tf_filter = add_pipe(tran_filter)
@@ -225,6 +229,7 @@ def tran_top_n(df, n=None, ascending=True, col=None):
     index = index[index["ranks"] >= index["ranks"].nlargest(n).min()]
     return df.reindex(index.index)
 
+
 tf_top_n = add_pipe(tran_top_n)
 
 
@@ -237,11 +242,13 @@ def tran_pull(df, col=-1):
 
     return df[col]
 
+
 tf_pull = add_pipe(tran_pull)
 
 
 @dfdelegate
 def tran_dropna(df, how="any", subset=None):
-   return df.dropna(how=how, subset=subset).reset_index(drop=True)
+    return df.dropna(how=how, subset=subset).reset_index(drop=True)
+
 
 tf_dropna = add_pipe(tran_dropna)

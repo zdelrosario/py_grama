@@ -4,7 +4,7 @@ __all__ = [
     "make_symbolic",
     "symbolic_evaluation",
     "group_delegation",
-    "flatten"
+    "flatten",
 ]
 
 import warnings
@@ -58,7 +58,9 @@ def _context_kwargs(kwargs):
 
 
 def _delayed_function(function, args, kwargs):
-    return lambda x: function(*_context_args(args)(x), **_context_kwargs(kwargs)(x))
+    return lambda x: function(
+        *_context_args(args)(x), **_context_kwargs(kwargs)(x)
+    )
 
 
 def make_symbolic(f):
@@ -290,13 +292,15 @@ class IntentionEvaluator(object):
         eval_as_selector = self._find_eval_args(self.eval_as_selector, args)
 
         return [
-            self._symbolic_to_label(df, a)
-            if i in eval_as_label
-            else self._symbolic_to_selector(df, a)
-            if i in eval_as_selector
-            else self._symbolic_eval(df, a)
-            if i in eval_symbols
-            else a
+            (
+                self._symbolic_to_label(df, a)
+                if i in eval_as_label
+                else (
+                    self._symbolic_to_selector(df, a)
+                    if i in eval_as_selector
+                    else self._symbolic_eval(df, a) if i in eval_symbols else a
+                )
+            )
             for i, a in enumerate(args)
         ]
 
@@ -309,11 +313,11 @@ class IntentionEvaluator(object):
             k: (
                 self._symbolic_to_label(df, v)
                 if k in eval_as_label
-                else self._symbolic_to_selector(df, v)
-                if k in eval_as_selector
-                else self._symbolic_eval(df, v)
-                if k in eval_symbols
-                else v
+                else (
+                    self._symbolic_to_selector(df, v)
+                    if k in eval_as_selector
+                    else self._symbolic_eval(df, v) if k in eval_symbols else v
+                )
             )
             for k, v in kwargs.items()
         }
@@ -389,7 +393,9 @@ class group_delegation(object):
 
     def __call__(self, *args, **kwargs):
         grouped_by = getattr(args[0], "_grouped_by", None)
-        if (grouped_by is None) or not all([g in args[0].columns for g in grouped_by]):
+        if (grouped_by is None) or not all(
+            [g in args[0].columns for g in grouped_by]
+        ):
             return self.function(*args, **kwargs)
 
         applied = self._apply(args[0], *args[1:], **kwargs)
@@ -408,4 +414,5 @@ def dfpipe(f):
 def dfdelegate(f):
     class addName(group_delegation):
         __name__ = f.__name__
+
     return addName(group_delegation(symbolic_evaluation(f)))

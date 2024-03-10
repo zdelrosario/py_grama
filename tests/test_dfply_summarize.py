@@ -23,11 +23,15 @@ class TestSummarize(unittest.TestCase):
         self.assertTrue(
             p.equals(
                 data.df_diamonds
-                >> gr.tf_summarize(price_mean=X.price.mean(), price_std=X.price.std())
+                >> gr.tf_summarize(
+                    price_mean=X.price.mean(), price_std=X.price.std()
+                )
             )
         )
 
-        pcut = pd.DataFrame({"cut": ["Fair", "Good", "Ideal", "Premium", "Very Good"]})
+        pcut = pd.DataFrame(
+            {"cut": ["Fair", "Good", "Ideal", "Premium", "Very Good"]}
+        )
         pcut["price_mean"] = [
             data.df_diamonds[data.df_diamonds.cut == c].price.mean()
             for c in pcut.cut.values
@@ -40,7 +44,9 @@ class TestSummarize(unittest.TestCase):
             pcut.equals(
                 data.df_diamonds
                 >> gr.tf_group_by("cut")
-                >> gr.tf_summarize(price_mean=X.price.mean(), price_std=X.price.std())
+                >> gr.tf_summarize(
+                    price_mean=X.price.mean(), price_std=X.price.std()
+                )
             )
         )
 
@@ -53,16 +59,22 @@ class TestSummarize(unittest.TestCase):
                 "depth_var": [np.var(data.df_diamonds.depth)],
             }
         )
-        to_match = to_match[["price_mean", "price_var", "depth_mean", "depth_var"]]
+        to_match = to_match[
+            ["price_mean", "price_var", "depth_mean", "depth_var"]
+        ]
 
-        test1 = data.df_diamonds >> gr.tf_summarize_each([np.mean, np.var], X.price, 4)
+        test1 = data.df_diamonds >> gr.tf_summarize_each(
+            [np.mean, np.var], X.price, 4
+        )
         test2 = data.df_diamonds >> gr.tf_summarize_each(
             [np.mean, np.var], X.price, "depth"
         )
         self.assertTrue(to_match.equals(test1))
         self.assertTrue(to_match.equals(test2))
 
-        group = pd.DataFrame({"cut": ["Fair", "Good", "Ideal", "Premium", "Very Good"]})
+        group = pd.DataFrame(
+            {"cut": ["Fair", "Good", "Ideal", "Premium", "Very Good"]}
+        )
         group["price_mean"] = [
             np.mean(data.df_diamonds[data.df_diamonds.cut == c].price)
             for c in group.cut.values
@@ -80,7 +92,9 @@ class TestSummarize(unittest.TestCase):
             for c in group.cut.values
         ]
 
-        group = group[["cut", "price_mean", "price_var", "depth_mean", "depth_var"]]
+        group = group[
+            ["cut", "price_mean", "price_var", "depth_mean", "depth_var"]
+        ]
 
         test1 = (
             data.df_diamonds
