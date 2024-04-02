@@ -4,7 +4,7 @@ import grama as gr
 
 from scipy.integrate import solve_ivp
 from scipy.special import lambertw
-from scipy import real
+from numpy import real
 from toolz import curry
 
 DF = gr.Intention()
