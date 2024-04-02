@@ -6,6 +6,7 @@ import unittest
 from context import grama as gr
 from context import models, data
 
+
 ## Marginals function tests
 ##################################################
 class TestMarginalTools(unittest.TestCase):
@@ -29,14 +30,22 @@ class TestMarginalTools(unittest.TestCase):
 
         # Copy
         mg_new = mg_gkde.copy()
-        self.assertTrue(all(np.isclose(
-            mg_new.d(q_gkde),
-            mg_gkde.d(q_gkde),
-        )))
-        self.assertTrue(all(np.isclose(
-            mg_new.p(q_gkde),
-            mg_gkde.p(q_gkde),
-        )))
+        self.assertTrue(
+            all(
+                np.isclose(
+                    mg_new.d(q_gkde),
+                    mg_gkde.d(q_gkde),
+                )
+            )
+        )
+        self.assertTrue(
+            all(
+                np.isclose(
+                    mg_new.p(q_gkde),
+                    mg_gkde.p(q_gkde),
+                )
+            )
+        )
 
     def test_fit(self):
         mg_norm = gr.marg_fit("norm", data.df_stang.E)
@@ -69,10 +78,14 @@ class TestMarginalTools(unittest.TestCase):
             kurt=2,
         )
 
-        self.assertTrue(all(np.isclose(
-            beta(**mg_mom.d_param).stats("mvsk"),
-            np.array([1, 1, 0, 2 - 3])
-        )))
+        self.assertTrue(
+            all(
+                np.isclose(
+                    beta(**mg_mom.d_param).stats("mvsk"),
+                    np.array([1, 1, 0, 2 - 3]),
+                )
+            )
+        )
 
         ## Test COV specification
         mg_cov = gr.marg_mom(
@@ -83,10 +96,14 @@ class TestMarginalTools(unittest.TestCase):
             kurt=2,
         )
 
-        self.assertTrue(all(np.isclose(
-            beta(**mg_cov.d_param).stats("mvsk"),
-            np.array([1, 4, 0, 2 - 3])
-        )))
+        self.assertTrue(
+            all(
+                np.isclose(
+                    beta(**mg_cov.d_param).stats("mvsk"),
+                    np.array([1, 4, 0, 2 - 3]),
+                )
+            )
+        )
 
         ## Test 2-parameter lognormal
         mg_log = gr.marg_mom(
@@ -96,10 +113,14 @@ class TestMarginalTools(unittest.TestCase):
             floc=0,
         )
 
-        self.assertTrue(all(np.isclose(
-            lognorm(**mg_log.d_param).stats("mv"),
-            np.array([5e4, 5e2**2])
-        )))
+        self.assertTrue(
+            all(
+                np.isclose(
+                    lognorm(**mg_log.d_param).stats("mv"),
+                    np.array([5e4, 5e2**2]),
+                )
+            )
+        )
 
         ## Test 2-parameter Weibull fit
         mg_weibull2 = gr.marg_mom(
@@ -109,29 +130,45 @@ class TestMarginalTools(unittest.TestCase):
             floc=0,
         )
 
-        self.assertTrue(all(np.isclose(
-            weibull_min(**mg_weibull2.d_param).stats("mv"),
-            np.array([5e4, 5e2**2])
-        )))
+        self.assertTrue(
+            all(
+                np.isclose(
+                    weibull_min(**mg_weibull2.d_param).stats("mv"),
+                    np.array([5e4, 5e2**2]),
+                )
+            )
+        )
 
         ## Test bounded uniform
         mg_unif_bnd = gr.marg_mom("uniform", lo=-1, up=+1)
-        self.assertTrue(all(np.isclose(
-            (mg_unif_bnd.d_param["loc"], mg_unif_bnd.d_param["scale"]),
-            (-1, +2)
-        )))
+        self.assertTrue(
+            all(
+                np.isclose(
+                    (mg_unif_bnd.d_param["loc"], mg_unif_bnd.d_param["scale"]),
+                    (-1, +2),
+                )
+            )
+        )
 
         ## Test bounded beta
-        mg_beta_bnd1 = gr.marg_mom("beta", lo=-1, up=+1, mean=0, var=1/8)
-        self.assertTrue(all(np.isclose(
-            beta(**mg_beta_bnd1.d_param).stats("mv"),
-            np.array([0, 1/8])
-        )))
-        mg_beta_bnd2 = gr.marg_mom("beta", lo=-1, up=+1, mean=0.2, var=1/8)
-        self.assertTrue(all(np.isclose(
-            beta(**mg_beta_bnd2.d_param).stats("mv"),
-            np.array([0.2, 1/8])
-        )))
+        mg_beta_bnd1 = gr.marg_mom("beta", lo=-1, up=+1, mean=0, var=1 / 8)
+        self.assertTrue(
+            all(
+                np.isclose(
+                    beta(**mg_beta_bnd1.d_param).stats("mv"),
+                    np.array([0, 1 / 8]),
+                )
+            )
+        )
+        mg_beta_bnd2 = gr.marg_mom("beta", lo=-1, up=+1, mean=0.2, var=1 / 8)
+        self.assertTrue(
+            all(
+                np.isclose(
+                    beta(**mg_beta_bnd2.d_param).stats("mv"),
+                    np.array([0.2, 1 / 8]),
+                )
+            )
+        )
 
         ## Test invariants
         # Must provide mean
@@ -189,10 +226,16 @@ class TestMarginalTools(unittest.TestCase):
         qv = mg_trunc1.q(np.array([0, 0.5, 1]))
         self.assertTrue(all(np.isclose(qv, np.array([-2, 0, +2]))))
         dv = mg_trunc1.d(np.array([-2.1, 0, +2.1]))
-        self.assertTrue(all(np.isclose(
-            dv,
-            np.array([0, mg_base.d(0) / (mg_base.p(2) - mg_base.p(-2)), 0])
-        )))
+        self.assertTrue(
+            all(
+                np.isclose(
+                    dv,
+                    np.array(
+                        [0, mg_base.d(0) / (mg_base.p(2) - mg_base.p(-2)), 0]
+                    ),
+                )
+            )
+        )
         pv = mg_trunc1.p(np.array([-2.1, 0, +2.1]))
         self.assertTrue(all(np.isclose(pv, np.array([0, 0.5, 1]))))
 
@@ -224,16 +267,22 @@ class TestMarginalTools(unittest.TestCase):
 
         # Copy
         mg_copy = mg_trunc1.copy()
-        self.assertTrue(all(np.isclose(
-            mg_copy.q(np.array([0, 0.5, 1])),
-            mg_trunc1.q(np.array([0, 0.5, 1])),
-        )))
+        self.assertTrue(
+            all(
+                np.isclose(
+                    mg_copy.q(np.array([0, 0.5, 1])),
+                    mg_trunc1.q(np.array([0, 0.5, 1])),
+                )
+            )
+        )
 
         # Invalid truncation
         with self.assertRaises(ValueError):
             gr.marg_trunc(mg_base)
 
+
 # --------------------------------------------------
+
 
 class TestMarginal(unittest.TestCase):
     def setUp(self):

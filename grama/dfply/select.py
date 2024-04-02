@@ -18,12 +18,18 @@ __all__ = [
     "columns_between",
     "columns_from",
     "columns_to",
-    "resolve_selection"
+    "resolve_selection",
 ]
 
 import re
-from .base import Intention, dfdelegate, symbolic_evaluation, \
-    group_delegation, flatten, make_symbolic
+from .base import (
+    Intention,
+    dfdelegate,
+    symbolic_evaluation,
+    group_delegation,
+    flatten,
+    make_symbolic,
+)
 from .. import add_pipe
 from numpy import zeros, where, ones
 from numpy import max as npmax
@@ -77,7 +83,6 @@ def resolve_selection(df, *args, drop=False):
         ordering = list(df.columns)
         column_indices = ones(df.shape[1])
     return ordering, column_indices
-
 
 
 @group_delegation
@@ -139,6 +144,7 @@ def tran_select(df, *args):
         return df[ordering]
     return df
 
+
 tf_select = add_pipe(tran_select)
 
 
@@ -152,6 +158,7 @@ def tran_drop(df, *args):
         (column_indices == npmax(column_indices)) & (column_indices >= 0)
     )[0]
     return df.iloc[:, selection]
+
 
 tf_drop = add_pipe(tran_drop)
 
@@ -172,6 +179,7 @@ def tran_select_if(df, fun):
     cols = list(filter(_filter_f, df.columns))
     return df[cols]
 
+
 tf_select_if = add_pipe(tran_select_if)
 
 
@@ -191,7 +199,9 @@ def tran_drop_if(df, fun):
     cols = list(filter(_filter_f, df.columns))
     return df.drop(cols, axis=1)
 
+
 tf_drop_if = add_pipe(tran_drop_if)
+
 
 @selection_filter
 def starts_with(columns, prefix):

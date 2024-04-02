@@ -4,6 +4,7 @@ from context import grama as gr
 from numpy import isnan
 from pandas import Series, Index
 
+
 ##==============================================================================
 ## string helper tests
 ##==============================================================================
@@ -88,7 +89,9 @@ class TestStringHelpers(unittest.TestCase):
         self.assertTrue(R_c0[0] == 0)
 
     def test_str_replace(self):
-        self.assertTrue(gr.str_replace("foofoo", "foo", "barbar") == "barbarfoo")
+        self.assertTrue(
+            gr.str_replace("foofoo", "foo", "barbar") == "barbarfoo"
+        )
         self.assertTrue(gr.str_replace("barbar", "foo", "bar") == "barbar")
 
         R = gr.str_replace(["foo", "nope"], "foo", "bar")

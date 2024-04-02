@@ -17,7 +17,6 @@ __all__ = [
     "set_uqtheme",
     "theme_grama",
     "theme_uqbook",
-
     "qual1",
     "qual2",
     "qual3",
@@ -79,22 +78,25 @@ qual2 = "#1E88E5"
 qual3 = "#FFC107"
 qual4 = "#004D40"
 
+
 ## Helper functions
 ##################################################
 def _sci_format(v):
-    r"""Scientific format
-    """
+    r"""Scientific format"""
     return (
-        ["{0:1.1e}".format(v[0])] +
-        [""] * (len(v) - 2) +
-        ["\n{0:1.1e}".format(v[-1])]
+        ["{0:1.1e}".format(v[0])]
+        + [""] * (len(v) - 2)
+        + ["\n{0:1.1e}".format(v[-1])]
     )
+
 
 ## Function-specific plot functions
 ##################################################
 ## eval_contour
 @curry
-def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"):
+def plot_contour(
+    df, var=None, out="out", level="level", aux=False, color="full"
+):
     r"""Plot 2d contours
 
     Plot contours. Usually called as a dispatch from plot_auto().
@@ -131,9 +133,9 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
         raise ValueError("Must provide input columns list as keyword var")
     if aux:
         raise ValueError(
-            "Autoplot plot_contour not designed to handle auxiliary variables. " +
-            "Regenerate contour data with fixed auxilary variables, " +
-            "or try creating a manual plot."
+            "Autoplot plot_contour not designed to handle auxiliary variables. "
+            + "Regenerate contour data with fixed auxilary variables, "
+            + "or try creating a manual plot."
         )
 
     if color == "full":
@@ -144,8 +146,8 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
                 aes(
                     var[0],
                     var[1],
-                    xend=var[0]+"_end",
-                    yend=var[1]+"_end",
+                    xend=var[0] + "_end",
+                    yend=var[1] + "_end",
                     linetype=out,
                     color=level,
                 )
@@ -160,8 +162,8 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
                 aes(
                     var[0],
                     var[1],
-                    xend=var[0]+"_end",
-                    yend=var[1]+"_end",
+                    xend=var[0] + "_end",
+                    yend=var[1] + "_end",
                     linetype=out,
                     group=level,
                 )
@@ -174,20 +176,19 @@ def plot_contour(df, var=None, out="out", level="level", aux=False, color="full"
 
 pt_contour = add_pipe(plot_contour)
 
+
 ## tran_iocorr
 # --------------------------------------------------
 @curry
 def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
-    r"""
-    """
+    r""" """
     if color == "full":
-        return (
-            df
-            >> ggplot(aes(var, out))
-            + geom_tile(aes(fill=corr))
-            + scale_fill_gradient2(name="Corr", midpoint=0)
-            + theme_grama()
-            + theme(axis_text_x=element_text(angle=270))
+        return df >> ggplot(aes(var, out)) + geom_tile(
+            aes(fill=corr)
+        ) + scale_fill_gradient2(
+            name="Corr", midpoint=0
+        ) + theme_grama() + theme(
+            axis_text_x=element_text(angle=270)
         )
     elif color == "bw":
         DF = Intention()
@@ -214,54 +215,52 @@ def plot_corrtile(df, var=None, out=None, corr=None, color="full"):
     else:
         raise ValueError("Color mode {} not recognized.".format(color))
 
+
 pt_corrtile = add_pipe(plot_corrtile)
+
 
 ## tran_sobol
 # --------------------------------------------------
 @curry
 def plot_sobol_outputs(df, idx=None, color="full"):
-    r"""
-    """
-    df_data = (
-        df
-        >> tf_pivot_longer(
-            columns=df.drop(idx, axis=1).columns,
-            names_to="out",
-            values_to="S"
-        )
+    r""" """
+    df_data = df >> tf_pivot_longer(
+        columns=df.drop(idx, axis=1).columns, names_to="out", values_to="S"
     )
     df_data[idx] = str_replace(df_data[idx], "^S_", "")
 
     if color == "full":
-        return (
-            df_data
-            >> ggplot(aes(idx, "out"))
-            + geom_tile(aes(fill="S"))
-            + scale_fill_gradient(name="Sobol' Index", breaks=(0, 0.5, 1), limits=(0, 1))
-            + theme_grama()
-            + theme(axis_text_x=element_text(angle=270))
-            + labs(
-                x="var",
-                y="out",
-            )
+        return df_data >> ggplot(aes(idx, "out")) + geom_tile(
+            aes(fill="S")
+        ) + scale_fill_gradient(
+            name="Sobol' Index", breaks=(0, 0.5, 1), limits=(0, 1)
+        ) + theme_grama() + theme(
+            axis_text_x=element_text(angle=270)
+        ) + labs(
+            x="var",
+            y="out",
         )
     elif color == "bw":
-        return (
-            df_data
-            >> ggplot(aes(idx, "out"))
-            + geom_tile(aes(fill="S"))
-            + scale_fill_gradient(name="Sobol' Index", low="white", high="black", breaks=(0, 0.5, 1), limits=(0, 1))
-            + theme_grama()
-            + theme(axis_text_x=element_text(angle=270))
-            + labs(
-                x="var",
-                y="out",
-            )
+        return df_data >> ggplot(aes(idx, "out")) + geom_tile(
+            aes(fill="S")
+        ) + scale_fill_gradient(
+            name="Sobol' Index",
+            low="white",
+            high="black",
+            breaks=(0, 0.5, 1),
+            limits=(0, 1),
+        ) + theme_grama() + theme(
+            axis_text_x=element_text(angle=270)
+        ) + labs(
+            x="var",
+            y="out",
         )
     else:
         raise ValueError("Color mode {} not recognized.".format(color))
 
+
 pt_corrtile = add_pipe(plot_corrtile)
+
 
 ## Sample
 # --------------------------------------------------
@@ -308,12 +307,7 @@ def plot_scattermat(df, var=None, color="full"):
     breaks_min = lambda lims: (lims[0], 0.5 * (lims[0] + lims[1]), lims[1])
 
     ## Make blank figure
-    fig = (
-        df
-        >> ggplot()
-        + geom_blank()
-        + theme_void()
-    ).draw(show=False)
+    fig = (df >> ggplot() + geom_blank() + theme_void()).draw(show=False)
 
     gs = gridspec.GridSpec(len(var), len(var))
     for i, v1 in enumerate(var):
@@ -331,55 +325,39 @@ def plot_scattermat(df, var=None, color="full"):
 
             ## Density
             if i == j:
-                xmid = 0.5 * (
-                    df[v1].min() + df[v1].max()
-                )
+                xmid = 0.5 * (df[v1].min() + df[v1].max())
 
-                p = (
-                    df
-                    >> ggplot(aes(v1))
-                    + geom_density()
-                    + scale_x_continuous(
-                        breaks=breaks_min,
-                        labels=labels_x,
-                    )
-                    + scale_y_continuous(
-                        breaks=breaks_min,
-                        labels=labels_y,
-                    )
-                    + annotate(
-                        "label",
-                        x=xmid,
-                        y=0,
-                        label=v1,
-                        va="bottom",
-                    )
-                    + theme_grama()
-                    + labs(title=v1)
+                p = df >> ggplot(aes(v1)) + geom_density() + scale_x_continuous(
+                    breaks=breaks_min,
+                    labels=labels_x,
+                ) + scale_y_continuous(
+                    breaks=breaks_min,
+                    labels=labels_y,
+                ) + annotate(
+                    "label",
+                    x=xmid,
+                    y=0,
+                    label=v1,
+                    va="bottom",
+                ) + theme_grama() + labs(
+                    title=v1
                 )
 
             ## Scatterplot
             else:
-                p = (
-                    df
-                    >> ggplot(aes(v2, v1))
-                    + geom_point()
-                    + scale_x_continuous(
-                        breaks=breaks_min,
-                        labels=labels_x,
-                    )
-                    + scale_y_continuous(
-                        breaks=breaks_min,
-                        labels=labels_y,
-                    )
-                    + theme_grama()
-                    + theme(
-                        axis_title=element_text(va="top", size=12),
-                    )
+                p = df >> ggplot(
+                    aes(v2, v1)
+                ) + geom_point() + scale_x_continuous(
+                    breaks=breaks_min,
+                    labels=labels_x,
+                ) + scale_y_continuous(
+                    breaks=breaks_min,
+                    labels=labels_y,
+                ) + theme_grama() + theme(
+                    axis_title=element_text(va="top", size=12),
                 )
 
             _ = p._draw_using_figure(fig, [ax])
-
 
     ## Plot
     # NB Returning the figure causes a "double plot" in Jupyter....
@@ -448,6 +426,7 @@ def plot_hists(df, out=None, color="full", **kwargs):
 
 pt_hists = add_pipe(plot_hists)
 
+
 ## Sinew plots
 # --------------------------------------------------
 @curry
@@ -497,12 +476,7 @@ def plot_sinew_inputs(df, var=None, color="full", sweep_ind="sweep_ind"):
     breaks_min = lambda lims: (lims[0], 0.5 * (lims[0] + lims[1]), lims[1])
 
     ## Make blank figure
-    fig = (
-        df
-        >> ggplot()
-        + geom_blank()
-        + theme_void()
-    ).draw(show=False)
+    fig = (df >> ggplot() + geom_blank() + theme_void()).draw(show=False)
 
     gs = gridspec.GridSpec(len(var), len(var))
     for i, v1 in enumerate(var):
@@ -520,62 +494,45 @@ def plot_sinew_inputs(df, var=None, color="full", sweep_ind="sweep_ind"):
 
             ## Label
             if i == j:
-                p = (
-                    df
-                    >> ggplot()
-                    + annotate(
-                        "label",
-                        x=0,
-                        y=0,
-                        label=v1,
-                    )
-                    + theme_void()
-                    + guides(color=None, linetype=None)
-                )
+                p = df >> ggplot() + annotate(
+                    "label",
+                    x=0,
+                    y=0,
+                    label=v1,
+                ) + theme_void() + guides(color=None, linetype=None)
 
             ## Scatterplot
             else:
                 if color == "full":
-                    p = (
-                        df
-                        >> ggplot(aes(v2, v1, color="factor("+sweep_ind+")"))
-                        + geom_point(size=0.1)
-                        + scale_x_continuous(
-                            breaks=breaks_min,
-                            labels=labels_x,
-                        )
-                        + scale_y_continuous(
-                            breaks=breaks_min,
-                            labels=labels_y,
-                        )
-                        + guides(color=None)
-                        + theme_grama()
-                        + theme(
-                            axis_title=element_text(va="top", size=12),
-                        )
+                    p = df >> ggplot(
+                        aes(v2, v1, color="factor(" + sweep_ind + ")")
+                    ) + geom_point(size=0.1) + scale_x_continuous(
+                        breaks=breaks_min,
+                        labels=labels_x,
+                    ) + scale_y_continuous(
+                        breaks=breaks_min,
+                        labels=labels_y,
+                    ) + guides(
+                        color=None
+                    ) + theme_grama() + theme(
+                        axis_title=element_text(va="top", size=12),
                     )
                 elif color == "bw":
-                    p = (
-                        df
-                        >> ggplot(aes(v2, v1))
-                        + geom_point(size=0.1)
-                        + scale_x_continuous(
-                            breaks=breaks_min,
-                            labels=labels_x,
-                        )
-                        + scale_y_continuous(
-                            breaks=breaks_min,
-                            labels=labels_y,
-                        )
-                        + guides(color=None)
-                        + theme_grama()
-                        + theme(
-                            axis_title=element_text(va="top", size=12),
-                        )
+                    p = df >> ggplot(aes(v2, v1)) + geom_point(
+                        size=0.1
+                    ) + scale_x_continuous(
+                        breaks=breaks_min,
+                        labels=labels_x,
+                    ) + scale_y_continuous(
+                        breaks=breaks_min,
+                        labels=labels_y,
+                    ) + guides(
+                        color=None
+                    ) + theme_grama() + theme(
+                        axis_title=element_text(va="top", size=12),
                     )
 
             _ = p._draw_using_figure(fig, [ax])
-
 
     ## Plot
     # NB Returning the figure causes a "double plot" in Jupyter....
@@ -587,7 +544,12 @@ pt_sinew_inputs = add_pipe(plot_sinew_inputs)
 
 @curry
 def plot_sinew_outputs(
-    df, var=None, out=None, sweep_ind="sweep_ind", sweep_var="sweep_var", color="full",
+    df,
+    var=None,
+    out=None,
+    sweep_ind="sweep_ind",
+    sweep_var="sweep_var",
+    color="full",
 ):
     r"""Construct sinew plot
 
@@ -645,66 +607,54 @@ def plot_sinew_outputs(
 
     breaks_min = lambda lims: (lims[0], 0.5 * (lims[0] + lims[1]), lims[1])
     if color == "full":
-        return (
-            df_plot
-            >> ggplot(aes(
+        return df_plot >> ggplot(
+            aes(
                 "_x",
                 "_y",
                 color="factor(" + sweep_ind + ")",
                 group="factor(" + sweep_ind + ")",
-            ))
-            + geom_line()
-            + facet_grid("_out~_var", scales="free")
-
-            + scale_x_continuous(
-                breaks=breaks_min,
-                labels=_sci_format,
             )
-            + scale_y_continuous(
-                breaks=breaks_min,
-                labels=_sci_format,
-            )
-            + guides(color=None)
-            + theme_grama()
-            + theme(
-                strip_text_y=element_text(angle=270),
-                panel_border=element_rect(color="black", size=0.5),
-            )
-            + labs(
-                x="Input Value",
-                y="Output Value",
-            )
+        ) + geom_line() + facet_grid(
+            "_out~_var", scales="free"
+        ) + scale_x_continuous(
+            breaks=breaks_min,
+            labels=_sci_format,
+        ) + scale_y_continuous(
+            breaks=breaks_min,
+            labels=_sci_format,
+        ) + guides(
+            color=None
+        ) + theme_grama() + theme(
+            strip_text_y=element_text(angle=270),
+            panel_border=element_rect(color="black", size=0.5),
+        ) + labs(
+            x="Input Value",
+            y="Output Value",
         )
     elif color == "bw":
-        return (
-            df_plot
-            >> ggplot(aes(
+        return df_plot >> ggplot(
+            aes(
                 "_x",
                 "_y",
                 linetype="factor(" + sweep_ind + ")",
                 group="factor(" + sweep_ind + ")",
-            ))
-            + geom_line()
-            + facet_grid("_out~_var", scales="free")
-
-            + scale_x_continuous(
-                breaks=breaks_min,
-                labels=_sci_format,
             )
-            + scale_y_continuous(
-                breaks=breaks_min,
-                labels=_sci_format,
-            )
-            + guides(linetype=None)
-            + theme_grama()
-            + theme(
-                strip_text_y=element_text(angle=0),
-                panel_border=element_rect(color="black", size=0.5),
-            )
-            + labs(
-                x="Input Value",
-                y="Output Value",
-            )
+        ) + geom_line() + facet_grid(
+            "_out~_var", scales="free"
+        ) + scale_x_continuous(
+            breaks=breaks_min,
+            labels=_sci_format,
+        ) + scale_y_continuous(
+            breaks=breaks_min,
+            labels=_sci_format,
+        ) + guides(
+            linetype=None
+        ) + theme_grama() + theme(
+            strip_text_y=element_text(angle=0),
+            panel_border=element_rect(color="black", size=0.5),
+        ) + labs(
+            x="Input Value",
+            y="Output Value",
         )
     else:
         raise ValueError("Color mode {} not recognized.".format(color))
@@ -765,33 +715,28 @@ pt_auto = add_pipe(plot_auto)
 ## UQBook theme
 ## ##################################################
 def set_uqtheme():
-    """Override default geometry colors
-    """
+    """Override default geometry colors"""
 
-    geoms.geom_histogram.DEFAULT_AES['fill'] = grey50
-    geoms.geom_histogram.DEFAULT_AES['color'] = black
+    geoms.geom_histogram.DEFAULT_AES["fill"] = grey50
+    geoms.geom_histogram.DEFAULT_AES["color"] = black
+
 
 def theme_grama():
-    return (
-        theme_minimal()
-        + theme(
-            axis_text=element_text(size=12),
-            axis_title=element_text(size=14),
-            strip_text=element_text(size=12),
-            strip_text_y=element_text(size=12, vjust=0.75),
-            strip_background=element_rect(color="black", fill="white", size=0.5),
-            legend_title=element_text(size=12),
-            legend_text=element_text(size=10),
-        )
+    return theme_minimal() + theme(
+        axis_text=element_text(size=12),
+        axis_title=element_text(size=14),
+        strip_text=element_text(size=12),
+        strip_text_y=element_text(size=12, vjust=0.75),
+        strip_background=element_rect(color="black", fill="white", size=0.5),
+        legend_title=element_text(size=12),
+        legend_text=element_text(size=10),
     )
 
+
 def theme_uqbook():
-    return (
-        theme_grama()
-        + theme(
-            figure_size=(5, 3),
-            legend_position="bottom",
-            legend_box_spacing=0.5,
-            legend_direction="horizontal",
-        )
+    return theme_grama() + theme(
+        figure_size=(5, 3),
+        legend_position="bottom",
+        legend_box_spacing=0.5,
+        legend_direction="horizontal",
     )

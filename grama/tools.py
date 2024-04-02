@@ -25,20 +25,103 @@ from pandas._libs import (
     properties,
 )
 from pandas.testing import assert_frame_equal
-from scipy.stats import alpha, anglit, arcsine, argus, beta, betaprime, \
-    bradford, burr, burr12, cauchy, chi, chi2, cosine, crystalball, dgamma, \
-    dweibull, erlang, expon, exponnorm, exponweib, exponpow, f, fatiguelife, \
-    fisk, foldcauchy, foldnorm, gaussian_kde, genlogistic, gennorm, genpareto, \
-    genexpon, genextreme, gausshyper, gamma, gengamma, genhalflogistic, \
-    gibrat, gompertz, gumbel_r, gumbel_l, halfcauchy, halflogistic, \
-    halfnorm, halfgennorm, hypsecant, invgamma, invgauss, invweibull, \
-    johnsonsb, johnsonsu, kappa4, kappa3, ksone, kstwobign, laplace, levy, \
-    levy_l, levy_stable, logistic, loggamma, loglaplace, lognorm, lomax, \
-    maxwell, mielke, moyal, nakagami, ncx2, ncf, nct, norm, norminvgauss, \
-    pareto, pearson3, powerlaw, powerlognorm, powernorm, rdist, rayleigh, \
-    rice, recipinvgauss, skewnorm, t, trapz, triang, truncexpon, truncnorm, \
-    tukeylambda, uniform, vonmises, vonmises_line, wald, weibull_min, \
-    weibull_max, wrapcauchy
+from scipy.stats import (
+    alpha,
+    anglit,
+    arcsine,
+    argus,
+    beta,
+    betaprime,
+    bradford,
+    burr,
+    burr12,
+    cauchy,
+    chi,
+    chi2,
+    cosine,
+    crystalball,
+    dgamma,
+    dweibull,
+    erlang,
+    expon,
+    exponnorm,
+    exponweib,
+    exponpow,
+    f,
+    fatiguelife,
+    fisk,
+    foldcauchy,
+    foldnorm,
+    gaussian_kde,
+    genlogistic,
+    gennorm,
+    genpareto,
+    genexpon,
+    genextreme,
+    gausshyper,
+    gamma,
+    gengamma,
+    genhalflogistic,
+    gibrat,
+    gompertz,
+    gumbel_r,
+    gumbel_l,
+    halfcauchy,
+    halflogistic,
+    halfnorm,
+    halfgennorm,
+    hypsecant,
+    invgamma,
+    invgauss,
+    invweibull,
+    johnsonsb,
+    johnsonsu,
+    kappa4,
+    kappa3,
+    ksone,
+    kstwobign,
+    laplace,
+    levy,
+    levy_l,
+    levy_stable,
+    logistic,
+    loggamma,
+    loglaplace,
+    lognorm,
+    lomax,
+    maxwell,
+    mielke,
+    moyal,
+    nakagami,
+    ncx2,
+    ncf,
+    nct,
+    norm,
+    norminvgauss,
+    pareto,
+    pearson3,
+    powerlaw,
+    powerlognorm,
+    powernorm,
+    rdist,
+    rayleigh,
+    rice,
+    recipinvgauss,
+    skewnorm,
+    t,
+    trapz,
+    triang,
+    truncexpon,
+    truncnorm,
+    tukeylambda,
+    uniform,
+    vonmises,
+    vonmises_line,
+    wald,
+    weibull_min,
+    weibull_max,
+    wrapcauchy,
+)
 from toolz import curry
 
 
@@ -313,9 +396,9 @@ def add_pipe(fun):
         __name__ = fun.__name__
         __doc__ = (
             fun.__doc__
-            #"Pipe-enabled version of {}\n".format(fun)
-            #+ "Inherited Signature: {}\n".format(signature(fun))
-            #+ fun.__doc__
+            # "Pipe-enabled version of {}\n".format(fun)
+            # + "Inherited Signature: {}\n".format(signature(fun))
+            # + fun.__doc__
         )
 
     return NewPipe(fun)
@@ -361,9 +444,9 @@ def tran_outer(df, df_outer):
     if (df.shape[0] == 0) and (df_outer.shape[0] == 0):
         raise ValueError("At least one of df and df_outer must be non-empty")
     # Handle single-empty cases
-    if (df.shape[0] == 0):
+    if df.shape[0] == 0:
         return df_outer
-    if (df_outer.shape[0] == 0):
+    if df_outer.shape[0] == 0:
         return df
 
     n_rows = df.shape[0]
@@ -411,7 +494,7 @@ def lookup(df, row_labels, col_labels):
     else:
         result = empty(n, dtype="O")
         for i, (r, c) in enumerate(zip(row_labels, col_labels)):
-            print(r,c)
+            print(r, c)
             result[i] = df._get_value(r, c)
 
     if is_object_dtype(result):
@@ -422,14 +505,20 @@ def lookup(df, row_labels, col_labels):
 
 # Suppress traceback
 def hide_traceback():
-    r"""Configure Jupyter to hide error traceback
-    """
+    r"""Configure Jupyter to hide error traceback"""
     ipython = get_ipython()
 
-    def _hide_traceback(exc_tuple=None, filename=None, tb_offset=None,
-                        exception_only=False, running_compiled_code=False):
+    def _hide_traceback(
+        exc_tuple=None,
+        filename=None,
+        tb_offset=None,
+        exception_only=False,
+        running_compiled_code=False,
+    ):
         etype, value, tb = sys.exc_info()
         value.__cause__ = None  # suppress chained exceptions
-        return ipython._showtraceback(etype, value, ipython.InteractiveTB.get_exception_only(etype, value))
+        return ipython._showtraceback(
+            etype, value, ipython.InteractiveTB.get_exception_only(etype, value)
+        )
 
     ipython.showtraceback = _hide_traceback

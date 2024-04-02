@@ -2,13 +2,14 @@ import unittest
 
 from context import grama as gr
 from context import data
+
 DF = gr.Intention()
+
 
 ## Core function tests
 ##################################################
 class TestSPC(unittest.TestCase):
-    """Test statistical process control (SPC) tools
-    """
+    """Test statistical process control (SPC) tools"""
 
     def test_factors(self):
         """Test factor implementations"""

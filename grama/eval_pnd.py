@@ -5,7 +5,7 @@ all = [
     "make_proposal_sigma",
     "rprop",
     "dprop",
-    "approx_pnd"
+    "approx_pnd",
 ]
 
 from grama import add_pipe, Model, tf_md
@@ -27,8 +27,17 @@ from toolz import curry
 
 
 @curry
-def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True, \
-    mean_prefix="_mean", sd_prefix="_sd"):
+def eval_pnd(
+    model,
+    df_train,
+    df_test,
+    signs,
+    n=int(1e4),
+    seed=None,
+    append=True,
+    mean_prefix="_mean",
+    sd_prefix="_sd",
+):
     """Approximate the probability non-dominated (PND)
 
     Approximates the probability non-dominated (PND) for a set of training points given a fitted probabilistic model. Used to rank a set of candidates in the context of multiobjective optimization.
@@ -101,10 +110,9 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
     invariants_eval_df(df_train, arg_name="df_train")
     invariants_eval_df(df_test, arg_name="df_test")
 
-
     # Check content
-    if len(model.out)/2 < 2:
-        raise ValueError('Given Model needs multiple outputs')
+    if len(model.out) / 2 < 2:
+        raise ValueError("Given Model needs multiple outputs")
 
     if not set(model.var).issubset(set(df_train.columns)):
         raise ValueError("model.var must be subset of df_train.columns")
@@ -113,16 +121,17 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
         raise ValueError("model.var must be subset of df_test.columns")
 
     for key in signs.keys():
-        if key+mean_prefix not in model.out:
-            raise ValueError(f"signs.{key} implies output {key+mean_prefix}, which is not found in provided md.out")
-        if key+sd_prefix not in model.out:
-            raise ValueError(f"signs{key} implies output {key+sd_prefix}, which is not found in provided sd.out")
+        if key + mean_prefix not in model.out:
+            raise ValueError(
+                f"signs.{key} implies output {key+mean_prefix}, which is not found in provided md.out"
+            )
+        if key + sd_prefix not in model.out:
+            raise ValueError(
+                f"signs{key} implies output {key+sd_prefix}, which is not found in provided sd.out"
+            )
 
     ## Compute predictions and predicted uncertainties
-    df_pred = (
-        df_test
-        >> tf_md(md=model)
-    )
+    df_pred = df_test >> tf_md(md=model)
 
     ## Setup for reshaping
     means = []
@@ -134,15 +143,15 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
 
     ## append mean and sd prefixes
     for i, value in enumerate(outputs):
-        means.append(value+mean_prefix)
-        sds.append(value+sd_prefix)
+        means.append(value + mean_prefix)
+        sds.append(value + sd_prefix)
 
     ## Remove extra columns from df_test
     df_pred = df_pred[means + sds]
 
     ## Reshape data for PND algorithm
-    X_pred = df_pred[means].values      # Predicted response values
-    X_sig = df_pred[sds].values         # Predictive uncertainties
+    X_pred = df_pred[means].values  # Predicted response values
+    X_sig = df_pred[sds].values  # Predictive uncertainties
     X_train = df_train[outputs].values  # Training
 
     ### Create covariance matrices
@@ -153,12 +162,7 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
 
     ### Apply pnd
     pr_scores, var_values = approx_pnd(
-        X_pred,
-        X_cov,
-        X_train,
-        signs = signs,
-        n = n,
-        seed = seed
+        X_pred, X_cov, X_train, signs=signs, n=n, seed=seed
     )
 
     ### Package outputs
@@ -170,8 +174,11 @@ def eval_pnd(model, df_train, df_test, signs, n=int(1e4), seed=None, append=True
     )
 
     if append:
-        return df_test.reset_index(drop=True).merge(df_pnd, left_index=True, right_index=True)
+        return df_test.reset_index(drop=True).merge(
+            df_pnd, left_index=True, right_index=True
+        )
     return df_pnd
+
 
 ev_pnd = add_pipe(eval_pnd)
 
@@ -205,17 +212,18 @@ def pareto_min_rel(X_test, X_base=None):
         for i, x in enumerate(X_test):
             is_efficient[i] = not (
                 npany(npall(x >= X_base, axis=1))
-                and npany(npany(x >  X_base, axis=1))
+                and npany(npany(x > X_base, axis=1))
             )
 
     return is_efficient
 
+
 # Floor an array of variances
 def floor_sig(sig, sig_min=1e-8):
-    r"""Floor an array of variances
-    """
+    r"""Floor an array of variances"""
     sig_floor = npmin([norm(sig), sig_min])
     return list(map(lambda s: npmax([s, sig_floor]), sig))
+
 
 # Estimate parameters for PND importance distribution
 def make_proposal_sigma(X, idx_pareto, X_cov):
@@ -248,7 +256,7 @@ def make_proposal_sigma(X, idx_pareto, X_cov):
     ## Find largest predictive covariance component to avoid dangerously light tails
     sig_min = npmax(X_cov)
     ## Apply heuristic based on Owen "Monte Carlo", Exercise 9.7
-    sig_min = ((5/4)**1/2) * sig_min
+    sig_min = ((5 / 4) ** 1 / 2) * sig_min
 
     ## Floor the variances
     sig = floor_sig(sig, sig_min=sig_min)
@@ -257,6 +265,7 @@ def make_proposal_sigma(X, idx_pareto, X_cov):
     Sigma = dot(Vh.T, dot(diag(sig), Vh)) / n_pareto
 
     return Sigma
+
 
 # Draw from mixture distribution
 def rprop(n, Sigma, X_means, seed=None):
@@ -293,6 +302,7 @@ def rprop(n, Sigma, X_means, seed=None):
 
     return X_sample
 
+
 # Calculate density based on proposal distribution
 def dprop(X, Sigma, X_means):
     r"""Evaluate the PDF of a mixture proposal distribution
@@ -315,7 +325,7 @@ def dprop(X, Sigma, X_means):
     """
     n, n_dim = X.shape
     n_comp = X_means.shape[0]
-    w = 1 / n_comp           # Equal weighting of mixture components
+    w = 1 / n_comp  # Equal weighting of mixture components
 
     L = zeros((n_comp, n))
     dist = mvnorm(cov=Sigma)
@@ -323,6 +333,7 @@ def dprop(X, Sigma, X_means):
         L[i, :] = dist.pdf(X - X_means[i])
 
     return npsum(L, axis=0) * w
+
 
 # Approximate PND via IS
 def approx_pnd(X_pred, X_cov, X_train, signs, n=int(1e4), seed=None):
@@ -377,6 +388,6 @@ def approx_pnd(X_pred, X_cov, X_train, signs, n=int(1e4), seed=None):
         # Owen (2013), Equation (9.3)
         pr_scores[i] = npsum(w_test) / n
         # Owen (2013), Equation (9.5)
-        var_values[i] = npsum( (w_test - pr_scores[i])**2 ) / n
+        var_values[i] = npsum((w_test - pr_scores[i]) ** 2) / n
 
     return pr_scores, var_values
