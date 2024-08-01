@@ -31,7 +31,7 @@ setup(
     python_requires=">=3.8, <3.10",
     install_requires=[
         "matplotlib",
-        "numpy>=1.15",
+        "numpy>=1.15,<2.0",
         "scipy>=1.10",
         "pandas<=1.5.3",
         "plotnine>=0.8.0",
