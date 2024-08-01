@@ -3,6 +3,7 @@ __all__ = [
     "copy_meta",
     "custom_formatwarning",
     "lookup",
+    "find_files",
     "hide_traceback",
     "param_dist",
     "pipe",
@@ -16,7 +17,9 @@ import sys
 from functools import wraps
 from inspect import signature
 from numbers import Integral
+from glob import glob
 from numpy import empty
+from os.path import join as pathjoin
 from pandas import DataFrame, concat
 from pandas.core.dtypes.common import is_object_dtype
 from pandas._libs import (
@@ -433,3 +436,29 @@ def hide_traceback():
         return ipython._showtraceback(etype, value, ipython.InteractiveTB.get_exception_only(etype, value))
 
     ipython.showtraceback = _hide_traceback
+
+# Find files
+def find_files(dir, ext, recursive=False):
+    r"""Find files in a given directory
+
+    Args:
+        dir (str or list[str]): Path as string or list of directories (to be joined)
+        ext (str): File extension
+
+    Kwargs:
+        recursive (bool): Search recursively?
+    """
+    ## Parse arguments
+    # Handle dir provided as list
+    if isinstance(dir, list):
+        dir = pathjoin(**dir)
+    # Ensure leading dot
+    if ext[0] != ".":
+        ext = "." + ext
+    ## Find the files
+    if recursive:
+        files = glob(pathjoin(dir, "**", "*" + ext), recursive=True)
+    else:
+        files = glob(pathjoin(dir, "*" + ext), recursive=False)
+
+    return files
