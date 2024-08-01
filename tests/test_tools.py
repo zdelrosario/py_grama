@@ -23,11 +23,21 @@ class TestFindFiles(unittest.TestCase):
         self.assertTrue(
             not join("longrun", "sp_convergence.ipynb") in res
         )
+        # Handles missing ext dot
+        res = gr.find_files(".", "py", recursive=False)
+        self.assertTrue(
+            join(".", "context.py") in res
+        )
         # No return
         res = gr.find_files(".", ".exe", recursive=False)
         self.assertTrue(len(res) == 0)
         # Recursive
         res = gr.find_files(".", ".ipynb", recursive=True)
+        self.assertTrue(
+            join(".", "longrun", "sp_convergence.ipynb") in res
+        )
+        # Accepts paths to join
+        res = gr.find_files([".", "longrun"], ".ipynb", recursive=False)
         self.assertTrue(
             join(".", "longrun", "sp_convergence.ipynb") in res
         )

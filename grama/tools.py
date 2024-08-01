@@ -451,7 +451,7 @@ def find_files(dir, ext, recursive=False):
     ## Parse arguments
     # Handle dir provided as list
     if isinstance(dir, list):
-        dir = pathjoin(**dir)
+        dir = pathjoin(*dir)
     # Ensure leading dot
     if ext[0] != ".":
         ext = "." + ext
