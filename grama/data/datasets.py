@@ -31,7 +31,9 @@ df_ruff = read_csv(Path(path_grama / "data/ruff.csv"))
 
 # Trajectories
 df_trajectory_full = read_csv(Path(path_grama / "data/trajectory_full.csv"))
-df_trajectory_windowed = read_csv(Path(path_grama / "data/trajectory_windowed.csv"))
+df_trajectory_windowed = read_csv(
+    Path(path_grama / "data/trajectory_windowed.csv")
+)
 
 # Shewhart
 df_shewhart = read_csv(Path(path_grama / "data/shewhart1931-table3.csv"))
@@ -63,7 +65,7 @@ df_channel.rename(
 )
 # Compute thermal diffusivity from initial temperature
 df_channel["alpha_f"] = (
-      1.862e1
+    1.862e1
     + 1.327e-1 * df_channel.T_0
     + 1.026e-4 * df_channel.T_0**2
     - 5.270e-9 * df_channel.T_0**3

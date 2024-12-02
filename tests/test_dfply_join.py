@@ -13,7 +13,9 @@ from context import data
 class TestJoins(unittest.TestCase):
     def setUp(self):
         self.dfA = pd.DataFrame({"x1": ["A", "B", "C"], "x2": [1, 2, 3]})
-        self.dfB = pd.DataFrame({"x1": ["A", "B", "D"], "x3": [True, False, True]})
+        self.dfB = pd.DataFrame(
+            {"x1": ["A", "B", "D"], "x3": [True, False, True]}
+        )
         self.dfC = pd.DataFrame({"x1": ["B", "C", "D"], "x2": [2, 3, 4]})
 
     def test_inner_join(self):
@@ -38,7 +40,11 @@ class TestJoins(unittest.TestCase):
 
     def test_left_join(self):
         ab = pd.DataFrame(
-            {"x1": ["A", "B", "C"], "x2": [1, 2, 3], "x3": [True, False, np.nan]}
+            {
+                "x1": ["A", "B", "C"],
+                "x2": [1, 2, 3],
+                "x3": [True, False, np.nan],
+            }
         )
 
         c = self.dfA >> gr.tf_left_join(self.dfB, by="x1")
@@ -46,7 +52,11 @@ class TestJoins(unittest.TestCase):
 
     def test_right_join(self):
         ab = pd.DataFrame(
-            {"x1": ["A", "B", "D"], "x2": [1, 2, np.nan], "x3": [True, False, True]}
+            {
+                "x1": ["A", "B", "D"],
+                "x2": [1, 2, np.nan],
+                "x3": [True, False, True],
+            }
         )
 
         c = self.dfA >> gr.tf_right_join(self.dfB, by="x1")

@@ -13,7 +13,11 @@ __all__ = [
 try:
     from sklearn.linear_model import LinearRegression
     from sklearn.gaussian_process import GaussianProcessRegressor
-    from sklearn.gaussian_process.kernels import Kernel, RBF, ConstantKernel as Con
+    from sklearn.gaussian_process.kernels import (
+        Kernel,
+        RBF,
+        ConstantKernel as Con,
+    )
     from sklearn.cluster import KMeans
     from sklearn.ensemble import RandomForestRegressor
 
@@ -216,9 +220,9 @@ def fit_gp(
     except NameError as e:
         error_string = str(e)
         raise NameError(
-            error_string +
-            "\n\nThis function requires the `sklearn` package. " +
-            "Try running the following to install the package:\n"
+            error_string
+            + "\n\nThis function requires the `sklearn` package. "
+            + "Try running the following to install the package:\n"
             "    pip install scikit-learn"
         )
 
@@ -250,9 +254,9 @@ def fit_gp(
     except NameError as e:
         error_string = str(e)
         raise NameError(
-            error_string +
-            "\n\nThis function requires the `sklearn` package. " +
-            "Try running the following to install the package:\n"
+            error_string
+            + "\n\nThis function requires the `sklearn` package. "
+            + "Try running the following to install the package:\n"
             "    pip install scikit-learn"
         )
 
@@ -261,6 +265,7 @@ def fit_gp(
 
 
 ft_gp = add_pipe(fit_gp)
+
 
 ## Fit random forest model with sklearn
 # --------------------------------------------------
@@ -335,7 +340,9 @@ def fit_rf(
     set_inter = set(out).intersection(set(var))
     if len(set_inter) > 0:
         raise ValueError(
-            "outputs and inputs must be disjoint; intersect = {}".format(set_inter)
+            "outputs and inputs must be disjoint; intersect = {}".format(
+                set_inter
+            )
         )
     if not set(var).issubset(set(df.columns)):
         raise ValueError("var must be subset of df.columns")
@@ -355,9 +362,9 @@ def fit_rf(
     except NameError as e:
         error_string = str(e)
         raise NameError(
-            error_string +
-            "\n\nThis function requires the `sklearn` package. " +
-            "Try running the following to install the package:\n"
+            error_string
+            + "\n\nThis function requires the `sklearn` package. "
+            + "Try running the following to install the package:\n"
             "    pip install scikit-learn"
         )
 
@@ -366,6 +373,7 @@ def fit_rf(
 
 
 ft_rf = add_pipe(fit_rf)
+
 
 ## Fit linear model with sklearn
 # --------------------------------------------------
@@ -424,7 +432,9 @@ def fit_lm(
     set_inter = set(out).intersection(set(var))
     if len(set_inter) > 0:
         raise ValueError(
-            "outputs and inputs must be disjoint; intersect = {}".format(set_inter)
+            "outputs and inputs must be disjoint; intersect = {}".format(
+                set_inter
+            )
         )
     if not set(var).issubset(set(df.columns)):
         raise ValueError("var must be subset of df.columns")
@@ -444,9 +454,9 @@ def fit_lm(
     except NameError as e:
         error_string = str(e)
         raise NameError(
-            error_string +
-            "\n\nThis function requires the `sklearn` package. " +
-            "Try running the following to install the package:\n"
+            error_string
+            + "\n\nThis function requires the `sklearn` package. "
+            + "Try running the following to install the package:\n"
             "    pip install scikit-learn"
         )
 
@@ -515,7 +525,8 @@ def fit_kmeans(df, var=None, colname="cluster_id", seed=None, **kwargs):
         diff = set(var).difference(set(df.columns))
         if len(diff) > 0:
             raise ValueError(
-                "`var` must be subset of `df.columns`\n" "diff = {}".format(diff)
+                "`var` must be subset of `df.columns`\n"
+                "diff = {}".format(diff)
             )
 
     ## Generate clustering
@@ -525,9 +536,9 @@ def fit_kmeans(df, var=None, colname="cluster_id", seed=None, **kwargs):
     except NameError as e:
         error_string = str(e)
         raise NameError(
-            error_string +
-            "\n\nThis function requires the `sklearn` package. " +
-            "Try running the following to install the package:\n"
+            error_string
+            + "\n\nThis function requires the `sklearn` package. "
+            + "Try running the following to install the package:\n"
             "    pip install scikit-learn"
         )
 

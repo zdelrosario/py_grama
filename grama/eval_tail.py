@@ -206,11 +206,15 @@ def eval_form_pma(
                 return z.dot(z) - (betas[key]) ** 2
 
             ## Use conservative direction for initial guess
-            signs = array([model.density.marginals[k].sign for k in model.var_rand])
+            signs = array(
+                [model.density.marginals[k].sign for k in model.var_rand]
+            )
             if length(signs) > 0:
                 z0 = betas[key] * signs / length(signs)
             else:
-                z0 = betas[key] * ones(model.n_var_rand) / sqrt(model.n_var_rand)
+                z0 = (
+                    betas[key] * ones(model.n_var_rand) / sqrt(model.n_var_rand)
+                )
 
             ## Minimize
             res_all = []
@@ -229,7 +233,9 @@ def eval_form_pma(
                 if res["status"] == 0:
                     res_all.append(res)
                 # Set a random start; repeat
-                z0 = multivariate_normal([0] * model.n_var_rand, eye(model.n_var_rand))
+                z0 = multivariate_normal(
+                    [0] * model.n_var_rand, eye(model.n_var_rand)
+                )
                 z0 = z0 / length(z0) * betas[key]
 
             # Choose value among restarts
@@ -394,7 +400,9 @@ def eval_form_ria(
                 return g
 
             ## Use conservative direction for initial guess
-            signs = array([model.density.marginals[k].sign for k in model.var_rand])
+            signs = array(
+                [model.density.marginals[k].sign for k in model.var_rand]
+            )
             if length(signs) > 0:
                 z0 = signs / length(signs)
             else:
@@ -417,7 +425,9 @@ def eval_form_ria(
                 if res["status"] == 0:
                     res_all.append(res)
                 # Set a random start; repeat
-                z0 = multivariate_normal([0] * model.n_var_rand, eye(model.n_var_rand))
+                z0 = multivariate_normal(
+                    [0] * model.n_var_rand, eye(model.n_var_rand)
+                )
                 z0 = z0 / length(z0)
 
             # Choose value among restarts
@@ -458,21 +468,28 @@ def eval_form_ria(
     beta_names = ["beta_" + s for s in limits]
     if not append:
         df_return = (
-            df_return.groupby(model.var_det) \
-                     .agg({n: max for n in beta_names}).reset_index()
+            df_return.groupby(model.var_det)
+            .agg({n: max for n in beta_names})
+            .reset_index()
         )
 
     ## Convert betas if other format requested
     if format == "rels":
-        df_return = df_return.apply(lambda col: norm.cdf(col) if col.name in beta_names else col) \
-                             .rename(columns={"beta_" + s: "rel_" + s for s in limits})
+        df_return = df_return.apply(
+            lambda col: norm.cdf(col) if col.name in beta_names else col
+        ).rename(columns={"beta_" + s: "rel_" + s for s in limits})
 
     elif format == "pofs":
-        df_return = df_return.apply(lambda col: 1 - norm.cdf(col) if col.name in beta_names else col) \
-                             .rename(columns={"beta_" + s: "pof_" + s for s in limits})
+        df_return = df_return.apply(
+            lambda col: 1 - norm.cdf(col) if col.name in beta_names else col
+        ).rename(columns={"beta_" + s: "pof_" + s for s in limits})
 
     elif not (format == "betas"):
-        print("    format = '{}' unrecognized; returning reliability indices".format(format))
+        print(
+            "    format = '{}' unrecognized; returning reliability indices".format(
+                format
+            )
+        )
 
     return df_return
 

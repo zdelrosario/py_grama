@@ -5,29 +5,38 @@ from numpy import array
 from math import sqrt, log10, pow, log
 from scipy.optimize import bisect
 
-def re_fcn(rho,u,d,mu,eps):
-    # {rho,u,d,mu,eps}
-    return rho*u*d/mu
 
-def f_lam(rho,u,d,mu,eps):
+def re_fcn(rho, u, d, mu, eps):
     # {rho,u,d,mu,eps}
-    return 64. / re_fcn(rho,u,d,mu,eps)
+    return rho * u * d / mu
 
-def colebrook(rho,u,d,mu,eps,f):
+
+def f_lam(rho, u, d, mu, eps):
     # {rho,u,d,mu,eps}
-    fs = sqrt(f); Re = re_fcn(rho,u,d,mu,eps)
-    return 1 + 2.*fs*log10(eps/3.6/d + 2.51/Re/fs)
+    return 64.0 / re_fcn(rho, u, d, mu, eps)
 
-def f_tur(rho,u,d,mu,eps):
-    return bisect(lambda f: colebrook(rho,u,d,mu,eps,f), 1e-5, 10)
+
+def colebrook(rho, u, d, mu, eps, f):
+    # {rho,u,d,mu,eps}
+    fs = sqrt(f)
+    Re = re_fcn(rho, u, d, mu, eps)
+    return 1 + 2.0 * fs * log10(eps / 3.6 / d + 2.51 / Re / fs)
+
+
+def f_tur(rho, u, d, mu, eps):
+    return bisect(lambda f: colebrook(rho, u, d, mu, eps, f), 1e-5, 10)
+
 
 Re_c = 3e3
-def fcn_pipe(rho,u,d,mu,eps):
-    Re = re_fcn(rho,u,d,mu,eps)
+
+
+def fcn_pipe(rho, u, d, mu, eps):
+    Re = re_fcn(rho, u, d, mu, eps)
     if Re < Re_c:
-        return f_lam(rho,u,d,mu,eps)
+        return f_lam(rho, u, d, mu, eps)
     else:
-        return f_tur(rho,u,d,mu,eps)
+        return f_tur(rho, u, d, mu, eps)
+
 
 def make_pipe_friction():
     r"""Pipe Friction Factor
@@ -56,13 +65,11 @@ def make_pipe_friction():
     md = (
         Model("Pipe Friction Factor")
         >> cp_function(
-            fun=fcn_pipe,
-            var=["rho", "u", "d", "mu", "eps"],
-            out=["f"]
+            fun=fcn_pipe, var=["rho", "u", "d", "mu", "eps"], out=["f"]
         )
         >> cp_bounds(
             rho=(1.0, 1.4),
-            u=(1e-4, 1e+1),
+            u=(1e-4, 1e1),
             d=(1.3, 1.7),
             mu=(1.0e-5, 1.5e-5),
             eps=(0.5e-1, 2.0e-1),

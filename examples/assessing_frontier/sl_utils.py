@@ -6,20 +6,23 @@ import pickle
 from functools import reduce
 from pypif_sdk.readview import ReadView
 
+
 ## Metaprogramming
 ##################################################
 # Append a suffix to a function's __name__
 class _nameSuffix(object):
     def __init__(self, suffix):
         self.suffix = suffix
+
     def __call__(self, f):
         f.__name__ = f.__name__ + self.suffix
         return f
 
+
 ## Parsing
 ##################################################
 # Set results directory
-def setResDir(env_var = "SL_RESULTS"):
+def setResDir(env_var="SL_RESULTS"):
     """Set the results directory
 
     :param env_var: Environment variable to reference
@@ -29,12 +32,15 @@ def setResDir(env_var = "SL_RESULTS"):
 
     """
     results_dir = os.environ[env_var]
-    assert os.path.isdir(results_dir), "Results directory {} must exist!".format(results_dir)
+    assert os.path.isdir(
+        results_dir
+    ), "Results directory {} must exist!".format(results_dir)
     # Ensure trailing slash
     if results_dir[-1] != "/":
         results_dir = results_dir + "/"
 
     return results_dir
+
 
 # Get a PIF scalar
 def parsePifKey(pif, key):
@@ -48,8 +54,8 @@ def parsePifKey(pif, key):
     :rtype:
 
     """
-    if (key in ReadView(pif).keys()):
-        if 'scalars' in dir(ReadView(pif)[key]):
+    if key in ReadView(pif).keys():
+        if "scalars" in dir(ReadView(pif)[key]):
             try:
                 return ReadView(pif)[key].scalars[0].value
             except IndexError:
@@ -58,6 +64,7 @@ def parsePifKey(pif, key):
             return np.nan
     else:
         return np.nan
+
 
 # Flatten a collection of PIFs
 def pifs2df(pifs):
@@ -100,22 +107,13 @@ def pifs2df(pifs):
     """
     ## Consolidate superset of keys
     key_sets = [set(ReadView(pif).keys()) for pif in pifs]
-    keys_ref = reduce(
-        lambda s1, s2: s1.union(s2),
-        key_sets
-    )
+    keys_ref = reduce(lambda s1, s2: s1.union(s2), key_sets)
 
     ## Rectangularize
     ## TODO: Append dataframes, rather than using a comprehension
-    df_data = \
-        pd.DataFrame(
-            columns = keys_ref,
-            data = [
-                [
-                    parsePifKey(pif, key) \
-                    for key in keys_ref
-                ] for pif in pifs
-            ]
-        )
+    df_data = pd.DataFrame(
+        columns=keys_ref,
+        data=[[parsePifKey(pif, key) for key in keys_ref] for pif in pifs],
+    )
 
     return df_data

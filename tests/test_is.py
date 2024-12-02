@@ -9,6 +9,7 @@ from pandas import DataFrame
 
 DF = gr.Intention()
 
+
 ## Test support points
 ##################################################
 class TestReweight(unittest.TestCase):
@@ -25,20 +26,14 @@ class TestReweight(unittest.TestCase):
         )
 
     def test_tran_reweight(self):
-        """Test the functionality of tran_reweight()
-
-        """
+        """Test the functionality of tran_reweight()"""
         ## Correctness
         # Choose scale based on Owen (2013) Exercise 9.7
-        md_new = (
-            self.md
-            >> gr.cp_marginals(x=dict(dist="norm", loc=0, scale=sqrt(4/5)))
+        md_new = self.md >> gr.cp_marginals(
+            x=dict(dist="norm", loc=0, scale=sqrt(4 / 5))
         )
 
-        df_base = (
-            self.md
-            >> gr.ev_sample(n=500, df_det="nom", seed=101)
-        )
+        df_base = self.md >> gr.ev_sample(n=500, df_det="nom", seed=101)
 
         df = (
             df_base
@@ -53,10 +48,7 @@ class TestReweight(unittest.TestCase):
         se = df.se[0]
         se_orig = df.se_orig[0]
 
-        self.assertTrue(
-            mu - se * 2 < 0 and
-            0 < mu + se * 2
-        )
+        self.assertTrue(mu - se * 2 < 0 and 0 < mu + se * 2)
 
         ## Optimized IS should be more precise than ordinary monte carlo
         # print("se_orig = {0:4.3f}".format(se_orig))
@@ -69,16 +61,11 @@ class TestReweight(unittest.TestCase):
             gr.tran_reweight(df_base[["y"]], md_base=self.md, md_new=self.md)
         # Input mismatch
         with self.assertRaises(ValueError):
-            gr.tran_reweight(
-                df_base,
-                md_base=self.md,
-                md_new=gr.Model()
-            )
+            gr.tran_reweight(df_base, md_base=self.md, md_new=gr.Model())
         # Weights collision
         with self.assertRaises(ValueError):
             gr.tran_reweight(
-                df_base
-                >> gr.tf_mutate(weight=0),
+                df_base >> gr.tf_mutate(weight=0),
                 md_base=self.md,
-                md_new=self.md
+                md_new=self.md,
             )

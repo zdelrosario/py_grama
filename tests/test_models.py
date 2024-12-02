@@ -7,6 +7,7 @@ import sys
 from context import grama as gr
 from context import models
 
+
 ## Test the built-in models
 ##################################################
 class TestModels(unittest.TestCase):
@@ -44,11 +45,14 @@ class TestModels(unittest.TestCase):
         df_traj = md_trajectory_linear >> gr.ev_nominal(df_det="nom")
 
         ## Piston models give approximately same output
-        self.assertTrue(abs(df_piston.t_cyc[0] - df_piston_rand.t_cyc[0]) < 1e-6)
+        self.assertTrue(
+            abs(df_piston.t_cyc[0] - df_piston_rand.t_cyc[0]) < 1e-6
+        )
 
     def test_sir(self):
         from numpy import real
         from scipy.special import lambertw
+
         ## Verification test
         # Test parameters
         I0 = 1
@@ -64,19 +68,21 @@ class TestModels(unittest.TestCase):
         r_0 = R0 / N
 
         # Asymptotic solution
-        S_inf = real(-(1/R_0) * lambertw(-s_0 * R_0 * np.exp(-R_0 * (1 - r_0))) * N)
+        S_inf = real(
+            -(1 / R_0) * lambertw(-s_0 * R_0 * np.exp(-R_0 * (1 - r_0))) * N
+        )
 
         ## Base tolerance
         md_sir = models.make_sir()
         df_inf = gr.eval_df(
             md_sir,
             gr.df_make(
-                t=1e6, # Approximation of t -> +\infty
+                t=1e6,  # Approximation of t -> +\infty
                 I0=I0,
                 N=N,
                 beta=beta,
                 gamma=gamma,
-            )
+            ),
         )
         S_inf_comp = df_inf.S.values[-1]
 
@@ -89,12 +95,12 @@ class TestModels(unittest.TestCase):
         df_inf = gr.eval_df(
             md_sir,
             gr.df_make(
-                t=1e6, # Approximation of t -> +\infty
+                t=1e6,  # Approximation of t -> +\infty
                 I0=I0,
                 N=N,
                 beta=beta,
                 gamma=gamma,
-            )
+            ),
         )
         S_inf_comp = df_inf.S.values[-1]
 

@@ -77,9 +77,14 @@ def tran_inner_join(df, other, **kwargs):
 
     left_on, right_on, suffixes = get_join_parameters(kwargs)
     joined = df.merge(
-        other, how="inner", left_on=left_on, right_on=right_on, suffixes=suffixes
+        other,
+        how="inner",
+        left_on=left_on,
+        right_on=right_on,
+        suffixes=suffixes,
     )
     return joined
+
 
 tf_inner_join = add_pipe(tran_inner_join)
 
@@ -114,9 +119,14 @@ def tran_full_join(df, other, **kwargs):
 
     left_on, right_on, suffixes = get_join_parameters(kwargs)
     joined = df.merge(
-        other, how="outer", left_on=left_on, right_on=right_on, suffixes=suffixes
+        other,
+        how="outer",
+        left_on=left_on,
+        right_on=right_on,
+        suffixes=suffixes,
     )
     return joined
+
 
 tf_full_join = add_pipe(tran_full_join)
 
@@ -151,9 +161,14 @@ def tran_outer_join(df, other, **kwargs):
 
     left_on, right_on, suffixes = get_join_parameters(kwargs)
     joined = df.merge(
-        other, how="outer", left_on=left_on, right_on=right_on, suffixes=suffixes
+        other,
+        how="outer",
+        left_on=left_on,
+        right_on=right_on,
+        suffixes=suffixes,
     )
     return joined
+
 
 tf_outer_join = add_pipe(tran_outer_join)
 
@@ -192,6 +207,7 @@ def tran_left_join(df, other, **kwargs):
     )
     return joined
 
+
 tf_left_join = add_pipe(tran_left_join)
 
 
@@ -225,9 +241,14 @@ def tran_right_join(df, other, **kwargs):
 
     left_on, right_on, suffixes = get_join_parameters(kwargs)
     joined = df.merge(
-        other, how="right", left_on=left_on, right_on=right_on, suffixes=suffixes
+        other,
+        how="right",
+        left_on=left_on,
+        right_on=right_on,
+        suffixes=suffixes,
     )
     return joined
+
 
 tf_right_join = add_pipe(tran_right_join)
 
@@ -280,6 +301,7 @@ def tran_semi_join(df, other, **kwargs):
     ).query('_merge=="both"')[df.columns.values.tolist()]
     return joined
 
+
 tf_semi_join = add_pipe(tran_semi_join)
 
 
@@ -331,6 +353,7 @@ def tran_anti_join(df, other, **kwargs):
     ).query('_merge=="left_only"')[df.columns.values.tolist()]
     return joined
 
+
 tf_anti_join = add_pipe(tran_anti_join)
 
 
@@ -362,12 +385,16 @@ def tran_bind_rows(df, other, join="outer", ignore_index=False, reset=True):
 
     df = concat(
         [df.reset_index(drop=True), other.reset_index(drop=True)],
-        join=join, ignore_index=ignore_index, axis=0, sort=False
+        join=join,
+        ignore_index=ignore_index,
+        axis=0,
+        sort=False,
     )
 
     if reset:
         return df.reset_index(drop=True)
     return df
+
 
 tf_bind_rows = add_pipe(tran_bind_rows)
 
@@ -392,8 +419,12 @@ def tran_bind_cols(df, other, join="outer", ignore_index=False):
 
     df = concat(
         [df.reset_index(drop=True), other.reset_index(drop=True)],
-        join=join, ignore_index=ignore_index, axis=1, sort=False
+        join=join,
+        ignore_index=ignore_index,
+        axis=1,
+        sort=False,
     )
     return df
+
 
 tf_bind_cols = add_pipe(tran_bind_cols)

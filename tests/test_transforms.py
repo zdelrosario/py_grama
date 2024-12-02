@@ -10,6 +10,7 @@ from context import models
 
 DF = gr.Intention()
 
+
 ## Test transform tools
 ##################################################
 class TestTools(unittest.TestCase):
@@ -52,7 +53,12 @@ class TestTools(unittest.TestCase):
         )
 
         df_sel = gr.tran_bootstrap(
-            df_stang, tran=tran_stats, n_boot=3e0, n_sub=3e0, seed=101, col_sel=["mean"]
+            df_stang,
+            tran=tran_stats,
+            n_boot=3e0,
+            n_sub=3e0,
+            seed=101,
+            col_sel=["mean"],
         )
 
         df_piped = df_stang >> gr.tf_bootstrap(
@@ -62,12 +68,15 @@ class TestTools(unittest.TestCase):
         ## Test output shape
         self.assertTrue(
             set(df_res.columns)
-            == set(["var", "mean", "mean_lo", "mean_up", "std", "std_lo", "std_up"])
+            == set(
+                ["var", "mean", "mean_lo", "mean_up", "std", "std_lo", "std_up"]
+            )
         )
         self.assertTrue(df_res.shape[0] == 4)
 
         self.assertTrue(
-            set(df_sel.columns) == set(["var", "mean", "mean_lo", "mean_up", "std"])
+            set(df_sel.columns)
+            == set(["var", "mean", "mean_lo", "mean_up", "std"])
         )
         self.assertTrue(df_sel.shape[0] == 4)
 
@@ -99,14 +108,8 @@ class TestTools(unittest.TestCase):
         )
 
         # Empty cases
-        gr.df_equal(
-            df,
-            gr.tran_outer(pd.DataFrame(), df_outer=df)
-        )
-        gr.df_equal(
-            df,
-            gr.tran_outer(df, df_outer=pd.DataFrame())
-        )
+        gr.df_equal(df, gr.tran_outer(pd.DataFrame(), df_outer=df))
+        gr.df_equal(df, gr.tran_outer(df, df_outer=pd.DataFrame()))
 
     def test_gauss_copula(self):
         md = gr.Model() >> gr.cp_marginals(
@@ -224,7 +227,7 @@ class TestSummaries(unittest.TestCase):
 
     def test_iocorr(self):
         df = (
-            gr.df_make(x=[1., 2., 3., 4.])
+            gr.df_make(x=[1.0, 2.0, 3.0, 4.0])
             >> gr.tf_mutate(
                 y=+0.5 * DF.x,
                 z=-0.5 * DF.x,
@@ -373,13 +376,17 @@ class TestDR(unittest.TestCase):
     def test_tsne(self):
         ## t-SNE executes successfully
         df_tsne = (
-            data.df_diamonds >> gr.tf_sample(n=100) >> gr.tf_tsne(var=["x", "y", "z"])
+            data.df_diamonds
+            >> gr.tf_sample(n=100)
+            >> gr.tf_tsne(var=["x", "y", "z"])
         )
 
     def test_umap(self):
         ## UMAP executes successfully
         df_umap = (
-            data.df_diamonds >> gr.tf_sample(n=100) >> gr.tf_umap(var=["x", "y", "z"])
+            data.df_diamonds
+            >> gr.tf_sample(n=100)
+            >> gr.tf_umap(var=["x", "y", "z"])
         )
 
 

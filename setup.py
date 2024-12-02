@@ -53,5 +53,5 @@ setup(
             "pyDOE",
             "umap-learn",
         ],
-    }
+    },
 )

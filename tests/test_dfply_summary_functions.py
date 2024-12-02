@@ -38,17 +38,15 @@ class TestSummaryFcn(unittest.TestCase):
 
     def test_skew(self):
         df_truth = pd.DataFrame({"m": [0.09984760044443139]})
-        df_res = (
-            data.df_shewhart
-            >> gr.tf_summarize(m=gr.skew(X.tensile_strength))
+        df_res = data.df_shewhart >> gr.tf_summarize(
+            m=gr.skew(X.tensile_strength)
         )
         self.assertTrue(df_truth.equals(df_res))
 
     def test_kurt(self):
         df_truth = pd.DataFrame({"m": [2.605643942300021]})
-        df_res = (
-            data.df_shewhart
-            >> gr.tf_summarize(m=gr.kurt(X.tensile_strength))
+        df_res = data.df_shewhart >> gr.tf_summarize(
+            m=gr.kurt(X.tensile_strength)
         )
         self.assertTrue(df_truth.equals(df_res))
 
@@ -132,7 +130,11 @@ class TestSummaryFcn(unittest.TestCase):
         df_truth["out_of_range"] = np.nan
         self.assertTrue(t.equals(df_truth))
         # grouped mutate
-        t = df >> gr.tf_group_by(X.cut) >> gr.tf_mutate(penultimate=gr.nth(X.x, -2))
+        t = (
+            df
+            >> gr.tf_group_by(X.cut)
+            >> gr.tf_mutate(penultimate=gr.nth(X.x, -2))
+        )
         df_truth = df.copy()
         df_truth["penultimate"] = pd.Series(
             [np.nan, 3.89, 4.05, 3.89, 4.05, 4.07, 4.07, 4.07, np.nan, 4.07]
@@ -147,7 +149,9 @@ class TestSummaryFcn(unittest.TestCase):
         self.assertTrue(t.equals(df_truth))
         # grouped summarize
         t = df >> gr.tf_group_by(X.cut) >> gr.tf_summarize(n=gr.n(X.x))
-        df_truth = pd.DataFrame({"cut": ["Good", "Ideal", "Premium"], "n": [2, 1, 2]})
+        df_truth = pd.DataFrame(
+            {"cut": ["Good", "Ideal", "Premium"], "n": [2, 1, 2]}
+        )
         self.assertTrue(t.equals(df_truth))
         # straight mutate
         t = df >> gr.tf_mutate(n=gr.n(X.x))
@@ -180,7 +184,11 @@ class TestSummaryFcn(unittest.TestCase):
         df_truth = pd.DataFrame({"n": [5]})
         self.assertTrue(t.equals(df_truth))
         # grouped summarize
-        t = df >> gr.tf_group_by(X.col_1) >> gr.tf_summarize(n=gr.n_distinct(X.col_2))
+        t = (
+            df
+            >> gr.tf_group_by(X.col_1)
+            >> gr.tf_summarize(n=gr.n_distinct(X.col_2))
+        )
         df_truth = pd.DataFrame({"col_1": ["a", "b", "c"], "n": [1, 2, 2]})
         self.assertTrue(t.equals(df_truth))
         # straight mutate
@@ -189,7 +197,11 @@ class TestSummaryFcn(unittest.TestCase):
         df_truth["n"] = 5
         self.assertTrue(t.equals(df_truth))
         # grouped mutate
-        t = df >> gr.tf_group_by(X.col_1) >> gr.tf_mutate(n=gr.n_distinct(X.col_2))
+        t = (
+            df
+            >> gr.tf_group_by(X.col_1)
+            >> gr.tf_mutate(n=gr.n_distinct(X.col_2))
+        )
         df_truth["n"] = pd.Series([1, 1, 1, 2, 2, 2, 2, 2])
         self.assertTrue(t.equals(df_truth))
 
@@ -445,31 +457,31 @@ class TestSummaryFcn(unittest.TestCase):
         self.assertTrue(rsq_comp, 3 / 4)
 
     def test_corr(self):
-        df_data = gr.df_make(x=[1., 2., 3., 4.])
+        df_data = gr.df_make(x=[1.0, 2.0, 3.0, 4.0])
         df_data["y"] = 0.5 * df_data.x
-        df_data["z"] = - 0.5 * df_data.x
+        df_data["z"] = -0.5 * df_data.x
 
         self.assertTrue(abs(gr.corr(df_data.x, df_data.y) - 1.0) < 1e-6)
         self.assertTrue(abs(gr.corr(df_data.x, df_data.z) + 1.0) < 1e-6)
 
         ## Test NaN handling
-        df_nan = (
-            df_data
-            >> gr.tf_mutate(
-                x=gr.if_else(X.x == 1, gr.NaN, X.x),
-                y=gr.if_else(X.x == 4, gr.NaN, X.y),
-            )
+        df_nan = df_data >> gr.tf_mutate(
+            x=gr.if_else(X.x == 1, gr.NaN, X.x),
+            y=gr.if_else(X.x == 4, gr.NaN, X.y),
         )
 
         with self.assertRaises(ValueError):
             gr.corr(df_nan.x, df_nan.y)
-        self.assertTrue(abs(gr.corr(df_nan.x, df_nan.y, nan_drop=True) - 1.0) < 1e-6)
+        self.assertTrue(
+            abs(gr.corr(df_nan.x, df_nan.y, nan_drop=True) - 1.0) < 1e-6
+        )
+
 
 class TestCIHelpers(unittest.TestCase):
 
     def test_mean_ci(self):
         # Basic functionality
-        y = pd.Series([-1, -1, 0, +1, +1]) # sd == 1
+        y = pd.Series([-1, -1, 0, +1, +1])  # sd == 1
         lo_true = 0 - (-norm.ppf(0.005)) * 1 / np.sqrt(5)
         up_true = 0 + (-norm.ppf(0.005)) * 1 / np.sqrt(5)
 
@@ -490,20 +502,15 @@ class TestCIHelpers(unittest.TestCase):
             )
         )
 
-        self.assertTrue(
-            (df[df.x==0].mean_lo.values[0] - lo_true) < 1e-6
-        )
-        self.assertTrue(
-            (df[df.x==0].mean_up.values[0] - up_true) < 1e-6
-        )
+        self.assertTrue((df[df.x == 0].mean_lo.values[0] - lo_true) < 1e-6)
+        self.assertTrue((df[df.x == 0].mean_up.values[0] - up_true) < 1e-6)
 
         self.assertTrue(
-            (df[df.x==1].mean_lo.values[0] - (lo_true + 1)) < 1e-6
+            (df[df.x == 1].mean_lo.values[0] - (lo_true + 1)) < 1e-6
         )
         self.assertTrue(
-            (df[df.x==1].mean_up.values[0] - (up_true + 1)) < 1e-6
+            (df[df.x == 1].mean_up.values[0] - (up_true + 1)) < 1e-6
         )
-
 
     def test_pr_ci(self):
         # Basic functionality
@@ -519,7 +526,6 @@ class TestCIHelpers(unittest.TestCase):
         self.assertTrue(gr.pr_lo(f) <= gr.pr(f))
         self.assertTrue(gr.pr(f) <= gr.pr_up(f))
 
-
     def test_prediction_intervals(self):
         ## Correct indexes
         # Example 5.11, Hahn and Meeker
@@ -530,19 +536,13 @@ class TestCIHelpers(unittest.TestCase):
         self.assertTrue(idx == 37)
 
         ## Test functionality
-        df_res = (
-            data.df_shewhart
-            >> gr.tf_summarize(
-                pi_lo=gr.pint_lo(X.tensile_strength, alpha=0.10/2),
-                pi_up=gr.pint_up(X.tensile_strength, alpha=0.10/2),
-            )
+        df_res = data.df_shewhart >> gr.tf_summarize(
+            pi_lo=gr.pint_lo(X.tensile_strength, alpha=0.10 / 2),
+            pi_up=gr.pint_up(X.tensile_strength, alpha=0.10 / 2),
         )
         # Raises assertion
         with self.assertRaises(ValueError):
-            df_res = (
-                data.df_shewhart
-                >> gr.tf_summarize(
-                    pi_lo=gr.pint_lo(X.tensile_strength),
-                    pi_up=gr.pint_up(X.tensile_strength),
-                )
+            df_res = data.df_shewhart >> gr.tf_summarize(
+                pi_lo=gr.pint_lo(X.tensile_strength),
+                pi_up=gr.pint_up(X.tensile_strength),
             )

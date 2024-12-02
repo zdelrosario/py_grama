@@ -7,6 +7,7 @@ from context import data
 
 X = gr.Intention()
 
+
 ##==============================================================================
 ## transform test functions
 ##==============================================================================
@@ -21,9 +22,13 @@ class testTransform(unittest.TestCase):
         df["testcol"] = 1
         self.assertTrue(df.equals(data.df_diamonds >> gr.tf_mutate(testcol=1)))
         df["testcol"] = df["x"]
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_mutate(testcol=X.x)))
+        self.assertTrue(
+            df.equals(data.df_diamonds >> gr.tf_mutate(testcol=X.x))
+        )
         df["testcol"] = df["x"] * df["y"]
-        self.assertTrue(df.equals(data.df_diamonds >> gr.tf_mutate(testcol=X.x * X.y)))
+        self.assertTrue(
+            df.equals(data.df_diamonds >> gr.tf_mutate(testcol=X.x * X.y))
+        )
         df["testcol"] = df["x"].mean()
         self.assertTrue(
             df.equals(data.df_diamonds >> gr.tf_mutate(testcol=np.mean(X.x)))
@@ -51,7 +56,9 @@ class testTransform(unittest.TestCase):
         self.assertTrue(
             df.equals(
                 data.df_diamonds
-                >> gr.tf_mutate_if(lambda col: max(col) < 10, lambda row: row * 2)
+                >> gr.tf_mutate_if(
+                    lambda col: max(col) < 10, lambda row: row * 2
+                )
             )
         )
         df = data.df_diamonds.copy()
@@ -65,7 +72,8 @@ class testTransform(unittest.TestCase):
             df.equals(
                 data.df_diamonds
                 >> gr.tf_mutate_if(
-                    lambda col: any(col.str.contains(".")), lambda row: row.str.lower()
+                    lambda col: any(col.str.contains(".")),
+                    lambda row: row.str.lower(),
                 )
             )
         )

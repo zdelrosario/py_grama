@@ -20,9 +20,19 @@ __all__ = [
     "getvars",
 ]
 
-from grama import add_pipe, CopulaGaussian, CopulaIndependence, Density, \
-    Function, FunctionModel, FunctionVectorized, Marginal, MarginalNamed, \
-    pipe, tran_copula_corr
+from grama import (
+    add_pipe,
+    CopulaGaussian,
+    CopulaIndependence,
+    Density,
+    Function,
+    FunctionModel,
+    FunctionVectorized,
+    Marginal,
+    MarginalNamed,
+    pipe,
+    tran_copula_corr,
+)
 from .eval_defaults import eval_sample
 from collections import ChainMap
 from pandas import concat, DataFrame
@@ -32,8 +42,7 @@ from toolz import curry
 ## Model Building Interface (MBI) tools
 ##################################################
 def _comp_function_data(model, fun, var, out, name, runtime):
-    r"""Internal function builder
-    """
+    r"""Internal function builder"""
     model_new = model.copy()
 
     # Check invariants
@@ -66,7 +75,8 @@ def _comp_function_data(model, fun, var, out, name, runtime):
     args_inter = set(out).intersection(set(var))
     if len(args_inter) > 0:
         raise ValueError(
-            "`out` must not intersect `var`\n" + "intersection = {}".format(args_inter)
+            "`out` must not intersect `var`\n"
+            + "intersection = {}".format(args_inter)
         )
     out_var_inter = set(out).intersection(set(model.var))
     if len(out_var_inter) > 0:
@@ -114,6 +124,7 @@ def getvars(f):
     """
     return f.__code__.co_varnames
 
+
 # Freeze inputs
 # -------------------------
 @curry
@@ -139,17 +150,15 @@ def comp_freeze(model, df=None, **var):
     # Process DataFrame if provided
     if not df is None:
         if df.shape[0] > 1:
-            raise ValueError(
-                "Provided DataFrame must have only one row."
-            )
+            raise ValueError("Provided DataFrame must have only one row.")
         var = dict(zip(df.columns, df.values.flatten()))
 
     # All variables are provided
     var_miss = set(set(var.keys())).difference(model.var)
     if len(var_miss) != 0:
         raise ValueError(
-            "All inputs listed in `var` argument must be present in model.var.\n" +
-            "Missing inputs {}".format(var_miss)
+            "All inputs listed in `var` argument must be present in model.var.\n"
+            + "Missing inputs {}".format(var_miss)
         )
 
     if any(map(lambda x: hasattr(x, "__iter__"), var.values())):
@@ -164,7 +173,7 @@ def comp_freeze(model, df=None, **var):
         var_diff,
         list(var.keys()),
         "(Freeze inputs: {})".format(list(var.keys())),
-        0
+        0,
     )
 
     ## Add to model
@@ -265,10 +274,13 @@ def comp_function(model, fun=None, var=None, out=None, name=None, runtime=0):
 
 cp_function = add_pipe(comp_function)
 
+
 # Add vectorized function
 # -------------------------
 @curry
-def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0):
+def comp_vec_function(
+    model, fun=None, var=None, out=None, name=None, runtime=0
+):
     r"""Add a vectorized function to a model
 
     Composition. Add a function to an existing model. Function must be
@@ -322,6 +334,7 @@ def comp_vec_function(model, fun=None, var=None, out=None, name=None, runtime=0)
 
 cp_vec_function = add_pipe(comp_vec_function)
 
+
 # Add model as deterministic function
 # -------------------------
 @curry
@@ -365,6 +378,7 @@ def comp_md_det(model, md=None):
 
 
 cp_md_det = add_pipe(comp_md_det)
+
 
 # Add model as sampled function
 # -------------------------
@@ -436,7 +450,9 @@ def comp_md_sample(model, md=None, param=None, rand2out=False):
 
             ## Evaluate
             df_tmp = eval_sample(
-                md, n=1, df_det=df.iloc[[i]][list(md.var_det)].reset_index(drop=True)
+                md,
+                n=1,
+                df_det=df.iloc[[i]][list(md.var_det)].reset_index(drop=True),
             )
 
             ## Concatenate
@@ -452,6 +468,7 @@ def comp_md_sample(model, md=None, param=None, rand2out=False):
 
 
 cp_md_sample = add_pipe(comp_md_sample)
+
 
 # Add bounds
 # -------------------------
@@ -501,6 +518,7 @@ def comp_bounds(model, **kwargs):
 
 
 cp_bounds = add_pipe(comp_bounds)
+
 
 # Add marginals
 # -------------------------
@@ -580,6 +598,7 @@ def comp_marginals(model, **kwargs):
 
 cp_marginals = add_pipe(comp_marginals)
 
+
 # Add copula
 ##################################################
 @curry
@@ -620,6 +639,7 @@ def comp_copula_independence(model):
 
 
 cp_copula_independence = add_pipe(comp_copula_independence)
+
 
 # -------------------------
 @curry
@@ -667,7 +687,10 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
         new_model = model.copy()
         new_model.density = Density(
             marginals=model.density.marginals,
-            copula=CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
+            copula=CopulaGaussian(
+                list(model.density.marginals.keys()),
+                df_corr,
+            ),
         )
         new_model.update()
 
@@ -679,7 +702,10 @@ def comp_copula_gaussian(model, df_corr=None, df_data=None):
 
         new_model.density = Density(
             marginals=model.density.marginals,
-            copula=CopulaGaussian(list(model.density.marginals.keys()), df_corr,),
+            copula=CopulaGaussian(
+                list(model.density.marginals.keys()),
+                df_corr,
+            ),
         )
         new_model.update()
 

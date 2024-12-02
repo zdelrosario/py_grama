@@ -1,9 +1,15 @@
 __all__ = ["make_channel_nondim", "make_channel"]
 
-from grama import cp_bounds, cp_copula_independence, cp_vec_function, cp_marginals
+from grama import (
+    cp_bounds,
+    cp_copula_independence,
+    cp_vec_function,
+    cp_marginals,
+)
 from grama import Model, df_make, marg_mom
 from numpy import exp
 from pandas import DataFrame
+
 
 ## Define the PSAAP 1d Channel model; dimensionless form
 def make_channel_nondim():
@@ -18,23 +24,24 @@ def make_channel_nondim():
     md = (
         Model("1d Particle-laden Channel with Radiation; Dimensionless Form")
         >> cp_vec_function(
-            fun=lambda df: df_make(
-                beta=120 * (1 + df.Phi_M * df.chi)
-            ),
+            fun=lambda df: df_make(beta=120 * (1 + df.Phi_M * df.chi)),
             var=["Phi_M", "chi"],
             out=["beta"],
         )
         >> cp_vec_function(
             fun=lambda df: df_make(
-                T_f=(df.Phi_M * df.chi) /
-                    (1 + df.Phi_M * df.chi) * (
-                        df.I * df.xst - df.beta**(-1) * df.I * (1 - exp(-df.beta * df.xst))
-                    ),
-                T_p=1 /
-                    (1 + df.Phi_M * df.chi) * (
-                        df.Phi_M * df.chi * df.I * df.xst
-                      + df.beta**(-1) * df.I * (1 - exp(-df.beta * df.xst))
-                    ),
+                T_f=(df.Phi_M * df.chi)
+                / (1 + df.Phi_M * df.chi)
+                * (
+                    df.I * df.xst
+                    - df.beta ** (-1) * df.I * (1 - exp(-df.beta * df.xst))
+                ),
+                T_p=1
+                / (1 + df.Phi_M * df.chi)
+                * (
+                    df.Phi_M * df.chi * df.I * df.xst
+                    + df.beta ** (-1) * df.I * (1 - exp(-df.beta * df.xst))
+                ),
             ),
             var=["xst", "Phi_M", "chi", "I", "beta"],
             out=["T_f", "T_p"],
@@ -50,11 +57,12 @@ def make_channel_nondim():
             chi={"dist": "uniform", "loc": 0.1, "scale": 0.9},
             ## Normalized radiative intensity (-)
             I={"dist": "uniform", "loc": 0.1, "scale": 0.9},
-         )
+        )
         >> cp_copula_independence()
     )
 
     return md
+
 
 ## Define the PSAAP 1d Channel model; dimensional form
 def make_channel():
@@ -96,31 +104,31 @@ def make_channel():
                 tau_flow=df.L / df.U,
                 tau_pt=(df.rho_p * df.cp_p * 0.318 * df.d_p) / df.h_p,
                 tau_rad=(df.rho_p * df.cp_p * 0.667 * df.d_p * df.T_0)
-                       /(df.Q_abs * 0.78 * df.I_0),
+                / (df.Q_abs * 0.78 * df.I_0),
             ),
             var=[
-                "U",        # Fluid bulk velocity
-                "H",        # Channel width
-                "nu_f",     # Fluid kinematic viscosity
-                "cp_p",     # Particle isobaric heat capacity
-                "cp_f",     # Fluid isobaric heat capacity
+                "U",  # Fluid bulk velocity
+                "H",  # Channel width
+                "nu_f",  # Fluid kinematic viscosity
+                "cp_p",  # Particle isobaric heat capacity
+                "cp_f",  # Fluid isobaric heat capacity
                 "alpha_f",  # Fluid thermal diffusivity
-                "rho_p",    # Particle density
-                "rho_f",    # Fluid density
-                "d_p",      # Particle diameter
-                "n",        # Particle number density
-                "h_p",      # Particle-to-gas convection coefficient
-                "T_0",      # Initial temperature
-                "Q_abs",    # Particle radiation absorption coefficient
-                "I_0",      # Incident radiation
+                "rho_p",  # Particle density
+                "rho_f",  # Fluid density
+                "d_p",  # Particle diameter
+                "n",  # Particle number density
+                "h_p",  # Particle-to-gas convection coefficient
+                "T_0",  # Initial temperature
+                "Q_abs",  # Particle radiation absorption coefficient
+                "I_0",  # Incident radiation
             ],
             out=[
-                "Re",       # Reynolds number
-                "Pr",       # Prandtl number
-                "chi",      # Particle-fluid heat capacity ratio
-                "Phi_M",    # Mass Loading Ratio
-                "tau_flow", # Fluid residence time
-                "tau_pt",   # Particle thermal time constant
+                "Re",  # Reynolds number
+                "Pr",  # Prandtl number
+                "chi",  # Particle-fluid heat capacity ratio
+                "Phi_M",  # Mass Loading Ratio
+                "tau_flow",  # Fluid residence time
+                "tau_pt",  # Particle thermal time constant
                 "tau_rad",  # Particle temperature doubling time (approximate)
             ],
             name="Dimensionless Numbers",
@@ -130,28 +138,48 @@ def make_channel():
                 ## Let xi = x / L
                 xst=(df.xi * df.L) / df.H / df.Re / df.Pr,
                 ## Assume an optically-thin scenario; I/I_0 = 1
-                Is=df.Re * df.Pr * (df.H / df.L) * (df.tau_flow / df.tau_rad) * 1,
-                beta=df.Re * df.Pr * (df.H / df.L) * (df.tau_flow / df.tau_pt)
-                    *(1 + df.Phi_M * df.chi),
+                Is=df.Re
+                * df.Pr
+                * (df.H / df.L)
+                * (df.tau_flow / df.tau_rad)
+                * 1,
+                beta=df.Re
+                * df.Pr
+                * (df.H / df.L)
+                * (df.tau_flow / df.tau_pt)
+                * (1 + df.Phi_M * df.chi),
             ),
-            var=["xi", "chi", "H", "L", "Phi_M", "tau_flow", "tau_rad", "tau_pt"],
+            var=[
+                "xi",
+                "chi",
+                "H",
+                "L",
+                "Phi_M",
+                "tau_flow",
+                "tau_rad",
+                "tau_pt",
+            ],
             out=[
-                "xst",   # Flow-normalized channel axial location
-                "Is",    # Normalized heat flux
+                "xst",  # Flow-normalized channel axial location
+                "Is",  # Normalized heat flux
                 "beta",  # Spatial development coefficient
             ],
             name="Intermediate Dimensionless Numbers",
         )
         >> cp_vec_function(
             fun=lambda df: df_make(
-                T_f=(df.Phi_M * df.chi) /
-                    (1 + df.Phi_M * df.chi) * (
-                        df.Is * df.xst - df.Is / df.beta * (1 - exp(-df.beta * df.xst))
-                    ),
-                T_p=1 / (1 + df.Phi_M * df.chi) * (
-                        df.Phi_M * df.chi * df.Is * df.xst
-                      + df.Is / df.beta * (1 - exp(-df.beta * df.xst))
-                    ),
+                T_f=(df.Phi_M * df.chi)
+                / (1 + df.Phi_M * df.chi)
+                * (
+                    df.Is * df.xst
+                    - df.Is / df.beta * (1 - exp(-df.beta * df.xst))
+                ),
+                T_p=1
+                / (1 + df.Phi_M * df.chi)
+                * (
+                    df.Phi_M * df.chi * df.Is * df.xst
+                    + df.Is / df.beta * (1 - exp(-df.beta * df.xst))
+                ),
             ),
             var=["xst", "Phi_M", "chi", "Is", "beta"],
             out=["T_f", "T_p"],
@@ -191,7 +219,7 @@ def make_channel():
             Q_abs={"dist": "uniform", "loc": 0.25, "scale": 0.50},
             ## Incident radiation (W/m^2)
             I_0={"dist": "uniform", "loc": 9.5e6, "scale": 1.0e6},
-         )
+        )
         >> cp_copula_independence()
     )
 

@@ -17,6 +17,7 @@ from pandas import Series
 # - a straight port of stringr
 # ------------------------------------------------------------------------------
 
+
 ## Detect matches
 # --------------------------------------------------
 @make_symbolic
@@ -59,7 +60,9 @@ def str_locate(string, pattern):
     try:
         if isinstance(string, str):
             raise TypeError
-        return Series([[m.start(0) for m in re.finditer(pattern, s)] for s in string])
+        return Series(
+            [[m.start(0) for m in re.finditer(pattern, s)] for s in string]
+        )
 
     except TypeError:
         return [m.start(0) for m in re.finditer(pattern, string)]
@@ -124,6 +127,7 @@ def str_count(string, pattern):
 
 ## Subset strings
 # --------------------------------------------------
+
 
 ## Mutate string
 # --------------------------------------------------

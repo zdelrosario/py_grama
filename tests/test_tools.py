@@ -3,6 +3,7 @@ from os.path import join
 from context import grama as gr
 from context import models
 
+
 ## Core function tests
 ##################################################
 class TestPipe(unittest.TestCase):

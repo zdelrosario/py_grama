@@ -6,6 +6,7 @@ import unittest
 from context import grama as gr
 from context import data
 
+
 ##==============================================================================
 ## grouping test functions
 ##==============================================================================
@@ -14,5 +15,8 @@ class TestGroup(unittest.TestCase):
         d = data.df_diamonds >> gr.tf_group_by("cut")
         self.assertTrue(hasattr(d, "_grouped_by"))
         self.assertTrue(
-            d._grouped_by == ["cut",]
+            d._grouped_by
+            == [
+                "cut",
+            ]
         )

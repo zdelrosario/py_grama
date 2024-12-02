@@ -2,7 +2,9 @@ import unittest
 import pandas as pd
 
 from context import grama as gr
+
 DF = gr.Intention()
+
 
 class TestDataHelpers(unittest.TestCase):
     def setUp(self):
@@ -38,12 +40,14 @@ class TestDataHelpers(unittest.TestCase):
             z=1,
             w="x",
         )
-        df_true = pd.DataFrame(dict(
-            x=[  0,   1,   2,   0,   1,   2],
-            y=["A", "A", "A", "B", "B", "B"],
-            z=[  1,   1,   1,   1,   1,   1],
-            w=["x", "x", "x", "x", "x", "x"],
-        ))
+        df_true = pd.DataFrame(
+            dict(
+                x=[0, 1, 2, 0, 1, 2],
+                y=["A", "A", "A", "B", "B", "B"],
+                z=[1, 1, 1, 1, 1, 1],
+                w=["x", "x", "x", "x", "x", "x"],
+            )
+        )
 
         self.assertTrue(gr.df_equal(df_true, df_res))
 

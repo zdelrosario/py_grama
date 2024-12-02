@@ -4,10 +4,11 @@ import numpy as np
 ## Load data for RV model
 from grama.data import df_stang
 
+
 ## Functions
 def fun_critical(x):
     E, mu, t, h = x
-    return np.pi ** 2 * E / 12 / (1 - mu ** 2) * (t / h) ** 2
+    return np.pi**2 * E / 12 / (1 - mu**2) * (t / h) ** 2
 
 
 var_critical = ["E", "mu", "t", "h"]
@@ -37,8 +38,12 @@ md_plate = (
     >> gr.cp_function(
         fun=fun_critical, var=var_critical, out=out_critical, name="Critical"
     )
-    >> gr.cp_function(fun=fun_applied, var=var_applied, out=out_applied, name="Applied")
-    >> gr.cp_function(fun=fun_limit, var=var_limit, out=out_limit, name="Safety")
+    >> gr.cp_function(
+        fun=fun_applied, var=var_applied, out=out_applied, name="Applied"
+    )
+    >> gr.cp_function(
+        fun=fun_limit, var=var_limit, out=out_limit, name="Safety"
+    )
     >> gr.cp_bounds(  # Deterministic variables
         t=(0.03, 0.12),  # Thickness
         w=(6, 18),  # Width
