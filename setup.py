@@ -43,14 +43,14 @@ setup(
         "matminer": ["pymatgen==2021.2.8.1", "matminer"],
         "sklearn": ["scikit-learn"],
         "statsmodels": ["statsmodels"],
-        "pyDOE": ["pyDOE"],
+        "pyDOE2": ["pyDOE2"],
         "umap": ["umap-learn"],
         "dev": [
             "pymatgen==2021.2.8.1",
             "matminer",
             "scikit-learn",
             "statsmodels",
-            "pyDOE",
+            "pyDOE2",
             "umap-learn",
         ],
     }

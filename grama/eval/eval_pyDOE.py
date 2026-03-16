@@ -1,7 +1,7 @@
 __all__ = ["eval_lhs", "ev_lhs"]
 
 try:
-    from pyDOE import lhs
+    from pyDOE2 import lhs
 
 except ModuleNotFoundError:
     pass
@@ -43,19 +43,20 @@ def eval_lhs(
     Notes:
         - Wrapper on pyDOE.lhs
     """
-    ## Set seed only if given
-    if seed is not None:
-        set_seed(seed)
 
     ## Ensure sample count is int
     if not isinstance(n, Integral):
         print("eval_lhs() is rounding n...")
         n = int(n)
 
+    ## Set seed only if given
+    # if seed is not None:
+    #     set_seed(seed)
+
     ## Draw samples
     try:
         df_quant = DataFrame(
-            data=lhs(model.n_var_rand, samples=n), columns=model.var_rand
+            data=lhs(model.n_var_rand, samples=n, random_state=seed), columns=model.var_rand
         )
     except NameError as e:
         error_string = str(e)
