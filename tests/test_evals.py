@@ -6,7 +6,7 @@ from collections import OrderedDict as od
 from context import core
 from context import grama as gr
 from context import models
-from pyDOE import lhs
+from pyDOE2 import lhs
 
 DF = gr.Intention()
 
@@ -391,8 +391,7 @@ class TestRandomSampling(unittest.TestCase):
         n = 2
         df_res = gr.eval_lhs(self.md_2d, n=n, df_det="nom", seed=101)
 
-        np.random.seed(101)
-        df_truth = pd.DataFrame(data=lhs(2, samples=n), columns=["x0", "x1"])
+        df_truth = pd.DataFrame(data=lhs(2, samples=n, random_state=101), columns=["x0", "x1"])
         df_truth["y0"] = df_truth["x0"]
 
         self.assertTrue(gr.df_equal(df_res, df_truth))
@@ -400,7 +399,7 @@ class TestRandomSampling(unittest.TestCase):
         ## Rounding
         df_round = gr.eval_lhs(self.md_2d, n=n + 0.1, df_det="nom", seed=101)
 
-        self.assertTrue(gr.df_equal(df_round, df_truth))
+        self.assertTrue(gr.df_equal(df_round, df_res))
 
         ## Pass-through
         df_pass = gr.eval_lhs(self.md_2d, n=n, skip=True, df_det="nom", seed=101)
