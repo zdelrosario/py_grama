@@ -178,6 +178,7 @@ def tran_kfolds(
 
 tf_kfolds = add_pipe(tran_kfolds)
 
+
 ## Bootstrap utility
 # --------------------------------------------------
 @curry
@@ -395,6 +396,7 @@ def tran_copula_corr(df, model=None, density=None):
 
 tf_copula_corr = add_pipe(tran_copula_corr)
 
+
 ## Model as transform
 # --------------------------------------------------
 @curry
@@ -439,7 +441,10 @@ def tran_md(df, md=None, append=True):
 
     if append:
         df_res = concat(
-            [df.reset_index(drop=True).drop(md.out, axis=1, errors="ignore"), df_res,],
+            [
+                df.reset_index(drop=True).drop(md.out, axis=1, errors="ignore"),
+                df_res,
+            ],
             axis=1,
         )
 

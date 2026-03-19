@@ -39,7 +39,9 @@ class TestVector(unittest.TestCase):
         self.assertTrue(ordered1.equals(true1))
 
         order2 = pd.Series([2, 2, 2, 2, 1, 1, 1, 1])
-        ordered2 = gr.order_series_by(series, [order1, order2]).reset_index(drop=True)
+        ordered2 = gr.order_series_by(series, [order1, order2]).reset_index(
+            drop=True
+        )
         true2 = pd.Series([5, 7, 1, 3, 6, 8, 2, 4])
         self.assertTrue(ordered2.equals(true2))
 
@@ -68,13 +70,15 @@ class TestVector(unittest.TestCase):
         df = pd.DataFrame({"num": np.arange(31)})
         df_truth = df.assign(
             strnum=[
-                "fizzbuzz"
-                if (i % 15 == 0)
-                else "fizz"
-                if (i % 3 == 0)
-                else "buzz"
-                if (i % 5 == 0)
-                else str(i)
+                (
+                    "fizzbuzz"
+                    if (i % 15 == 0)
+                    else (
+                        "fizz"
+                        if (i % 3 == 0)
+                        else "buzz" if (i % 5 == 0) else str(i)
+                    )
+                )
                 for i in np.arange(31)
             ]
         )
@@ -94,7 +98,17 @@ class TestVector(unittest.TestCase):
 
     def test_if_else(self):
         df = pd.DataFrame({"a": [1, 2, 3, 4, 5, 6, 7, 8, 9]})
-        b_truth = ["odd", "even", "odd", "even", "odd", "even", "odd", "even", "odd"]
+        b_truth = [
+            "odd",
+            "even",
+            "odd",
+            "even",
+            "odd",
+            "even",
+            "odd",
+            "even",
+            "odd",
+        ]
         d = df >> gr.tf_mutate(b=gr.if_else(X.a % 2 == 0, "even", "odd"))
         self.assertTrue(d.equals(df.assign(b=b_truth)))
 
@@ -102,7 +116,9 @@ class TestVector(unittest.TestCase):
         b_truth = [5, 5, 5, 5, 5, 5, 9, 9, 9]
         d = df >> gr.tf_mutate(
             b=gr.if_else(
-                X.a < 2, [5, 5, 5, 5, 5, 5, 5, 5, 5], [9, 9, 9, 9, 9, 9, 9, 9, 9]
+                X.a < 2,
+                [5, 5, 5, 5, 5, 5, 5, 5, 5],
+                [9, 9, 9, 9, 9, 9, 9, 9, 9],
             )
         )
         self.assertTrue(d.equals(df.assign(b=b_truth)))
@@ -115,5 +131,7 @@ class TestVector(unittest.TestCase):
         df = pd.DataFrame({"a": [1, 2, 3, 4, 5]})
         d = df >> gr.tf_mutate(b=gr.na_if(X.a, 3), c=gr.na_if(X.a, 1, 2, 3))
         d = d[["a", "b", "c"]]
-        df_true = df.assign(b=[1, 2, np.nan, 4, 5], c=[np.nan, np.nan, np.nan, 4, 5])
+        df_true = df.assign(
+            b=[1, 2, np.nan, 4, 5], c=[np.nan, np.nan, np.nan, 4, 5]
+        )
         self.assertTrue(df_true.equals(d))

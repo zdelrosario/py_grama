@@ -9,6 +9,7 @@ from context import data
 
 X = gr.Intention()
 
+
 ## Core function tests
 ##################################################
 class TestFits(unittest.TestCase):
@@ -18,19 +19,25 @@ class TestFits(unittest.TestCase):
         ## Smooth model
         self.md_smooth = (
             gr.Model()
-            >> gr.cp_function(fun=lambda x: [x, x + 1], var=["x"], out=["y", "z"])
+            >> gr.cp_function(
+                fun=lambda x: [x, x + 1], var=["x"], out=["y", "z"]
+            )
             # >> gr.cp_vec_function(fun=lambda df: gr.df_make(y=df.x, z=df.x + 1), var=["x"], out=["y", "z"])
             >> gr.cp_marginals(x={"dist": "uniform", "loc": 0, "scale": 2})
             >> gr.cp_copula_independence()
         )
-        self.df_smooth = self.md_smooth >> gr.ev_df(df=pd.DataFrame(dict(x=[0, 1, 2])))
+        self.df_smooth = self.md_smooth >> gr.ev_df(
+            df=pd.DataFrame(dict(x=[0, 1, 2]))
+        )
 
         ## Tree model
         self.md_tree = (
             gr.Model()
             # >> gr.cp_function(fun=lambda x: [0, x < 5], var=["x"], out=["y", "z"])
             >> gr.cp_vec_function(
-                fun=lambda df: gr.df_make(y=df.x, z=df.x + 1), var=["x"], out=["y", "z"]
+                fun=lambda df: gr.df_make(y=df.x, z=df.x + 1),
+                var=["x"],
+                out=["y", "z"],
             )
             >> gr.cp_marginals(x={"dist": "uniform", "loc": 0, "scale": 2})
             >> gr.cp_copula_independence()
@@ -125,7 +132,8 @@ class TestFits(unittest.TestCase):
         ## Fit copies model data
         self.assertTrue(set(md_fit.var) == set(self.md_smooth.var))
         self.assertTrue(
-            set(md_fit.out) == set(map(lambda s: s + "_mean", self.md_smooth.out))
+            set(md_fit.out)
+            == set(map(lambda s: s + "_mean", self.md_smooth.out))
         )
 
     def test_kmeans(self):
@@ -140,10 +148,14 @@ class TestFits(unittest.TestCase):
         id_res = (df_res >> gr.tf_filter(X.x == gr.min(X.x))).cluster_id[0]
 
         df_res1 = (
-            self.df_cluster >> gr.tf_filter(X.c == id_true) >> gr.tf_select(X.x, X.y)
+            self.df_cluster
+            >> gr.tf_filter(X.c == id_true)
+            >> gr.tf_select(X.x, X.y)
         )
         df_res2 = (
-            df_res >> gr.tf_filter(X.cluster_id == id_res) >> gr.tf_select(X.x, X.y)
+            df_res
+            >> gr.tf_filter(X.cluster_id == id_res)
+            >> gr.tf_select(X.x, X.y)
         )
 
         self.assertTrue(gr.df_equal(df_res1, df_res2))
@@ -173,7 +185,7 @@ class TestFits(unittest.TestCase):
             >> gr.cp_function(
                 fun=lambda x, c, a: a * np.exp(x * c),
                 var=["x", "c", "a"],
-                out=["y"]
+                out=["y"],
             )
             >> gr.cp_bounds(c=[0, 4], a=[0.1, 2.0])
         )
@@ -236,18 +248,17 @@ class TestFits(unittest.TestCase):
 
         ## Model with fixed parameter and two inputs
         # -------------------------
-        df_data2 = (
-            gr.df_grid(x=(1,2,3,4), y=(1,2,3,4))
-            >> gr.tf_mutate(f=2*X.x + X.y**2)
+        df_data2 = gr.df_grid(x=(1, 2, 3, 4), y=(1, 2, 3, 4)) >> gr.tf_mutate(
+            f=2 * X.x + X.y**2
         )
         md_fixed2 = (
             gr.Model()
             >> gr.cp_function(
-                fun=lambda x, y, a, b: a*x + b*y**2,
+                fun=lambda x, y, a, b: a * x + b * y**2,
                 var=["x", "y", "a", "b"],
                 out=["f"],
             )
-            >> gr.cp_bounds(a=(0, 3), b=(1,1))
+            >> gr.cp_bounds(a=(0, 3), b=(1, 1))
         )
         md_fit_fixed2 = df_data2 >> gr.ft_nls(
             md=md_fixed2, verbose=False, uq_method="linpool"
@@ -283,7 +294,9 @@ class TestFits(unittest.TestCase):
             )
         )
 
-        df_split = gr.df_make(x=gr.linspace(-1, +1, 100)) >> gr.tf_mutate(f=X.x, g=X.x)
+        df_split = gr.df_make(x=gr.linspace(-1, +1, 100)) >> gr.tf_mutate(
+            f=X.x, g=X.x
+        )
 
         # Fitting both outputs: cannot achieve mse ~= 0
         df_both = (

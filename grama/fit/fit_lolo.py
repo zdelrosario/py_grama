@@ -136,7 +136,9 @@ def fit_lolo(
     set_inter = set(out).intersection(set(var))
     if len(set_inter) > 0:
         raise ValueError(
-            "outputs and inputs must be disjoint; intersect = {}".format(set_inter)
+            "outputs and inputs must be disjoint; intersect = {}".format(
+                set_inter
+            )
         )
     if not set(var).issubset(set(df.columns)):
         raise ValueError("var must be subset of df.columns")

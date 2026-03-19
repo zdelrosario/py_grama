@@ -10,7 +10,8 @@ from pandas import concat, DataFrame
 from toolz import curry
 from warnings import formatwarning, catch_warnings, simplefilter, warn
 
-class Square():
+
+class Square:
     # D -- C
     # |    |
     # |    |
@@ -26,31 +27,25 @@ class Square():
 
     def GetCaseId(self, threshold):
         caseId = 0
-        if (self.A_data >= threshold):
+        if self.A_data >= threshold:
             caseId |= 1
-        if (self.B_data >= threshold):
+        if self.B_data >= threshold:
             caseId |= 2
-        if (self.C_data >= threshold):
+        if self.C_data >= threshold:
             caseId |= 4
-        if (self.D_data >= threshold):
+        if self.D_data >= threshold:
             caseId |= 8
 
         return caseId
 
     def InterpolateVertical(self, px, py, qx, qy, d, d1, thresh):
         x = px
-        y = (
-            py +
-            (qy - py) * ((thresh - d) / (d1 - d))
-        )
+        y = py + (qy - py) * ((thresh - d) / (d1 - d))
         return x, y
 
     def InterpolateHorizontal(self, px, py, qx, qy, d, d1, thresh):
         y = py
-        x = (
-            px +
-            (qx - px) * ((thresh - d) / (d1 - d))
-        )
+        x = px + (qx - px) * ((thresh - d) / (d1 - d))
         return x, y
 
     def GetLines(self, Threshold):
@@ -134,13 +129,14 @@ class Square():
 
         return lines
 
+
 def marching_square(xVector, yVector, Data, threshold):
     linesList = []
 
     Height = len(Data)  # rows
     Width = len(Data[1])  # cols
 
-    if ((Width == len(xVector)) and (Height == len(yVector))):
+    if (Width == len(xVector)) and (Height == len(yVector)):
         squares = full((Height - 1, Width - 1), Square())
 
         sqHeight = squares.shape[0]  # rows count
@@ -175,17 +171,18 @@ def marching_square(xVector, yVector, Data, threshold):
 
     return [linesList]
 
+
 ## Generate contours from a model
 # --------------------------------------------------
 @curry
 def eval_contour(
-        model,
-        var=None,
-        out=None,
-        df=None,
-        levels=None,
-        n_side=20,
-        n_levels=5,
+    model,
+    var=None,
+    out=None,
+    df=None,
+    levels=None,
+    n_side=20,
+    n_levels=5,
 ):
     r"""Generate contours from a model
 
@@ -195,7 +192,7 @@ def eval_contour(
         model (gr.Model): Model to evaluate.
         var (list of str): Model inputs to target; must provide exactly two inputs, and both must have finite domain width.
         out (list of str): Model output(s) for contour generation.
-        df (DataFrame or None): Levels for model variables not included in var 
+        df (DataFrame or None): Levels for model variables not included in var
             (auxiliary inputs). If provided var and model.var contain the same
             values, then df may equal None.
         levels (dict): Specific output levels for contour generation; overrides n_levels.
@@ -277,8 +274,8 @@ def eval_contour(
     if len(var_diff) > 0:
         if df is None:
             raise ValueError(
-                "Must provide values for remaining model variables using df; " +
-                "missing values: {}".format(var_diff)
+                "Must provide values for remaining model variables using df; "
+                + "missing values: {}".format(var_diff)
             )
         # Drop the swept variables
         df = df.drop(columns=var, errors="ignore")
@@ -287,8 +284,8 @@ def eval_contour(
         var_diff2 = var_diff.difference(set(df.columns))
         if len(var_diff2) > 0:
             raise ValueError(
-                "All model variables need values in provided df; " +
-                "missing values: {}".format(var_diff2)
+                "All model variables need values in provided df; "
+                + "missing values: {}".format(var_diff2)
             )
 
         if df.shape[0] > 1:
@@ -299,12 +296,16 @@ def eval_contour(
         has_aux = False
 
     # Finite bound width
-    if not all([
-            isfinite(model.domain.get_width(v)) and
-            (model.domain.get_width(v) > 0)
+    if not all(
+        [
+            isfinite(model.domain.get_width(v))
+            and (model.domain.get_width(v) > 0)
             for v in var
-    ]):
-        raise ValueError("All model bounds for `var` must be finite and nonzero")
+        ]
+    ):
+        raise ValueError(
+            "All model bounds for `var` must be finite and nonzero"
+        )
 
     # Argument given
     if out is None:
@@ -321,22 +322,16 @@ def eval_contour(
     yv = linspace(*model.domain.get_bound(var[1]), n_side)
     df_x = DataFrame({var[0]: xv})
     df_y = DataFrame({var[1]: yv})
-    df_input = (
-        df_x
-        >> tf_outer(df_outer=df_y)
-    )
+    df_input = df_x >> tf_outer(df_outer=df_y)
 
     # Create singleton level if necessary
     if df is None:
-        df = DataFrame({"_foo":[0]})
+        df = DataFrame({"_foo": [0]})
 
     ## Loop over provided auxiliary levels
     df_res = DataFrame()
     for i in range(df.shape[0]):
-        df_in_tmp = (
-            df_input
-            >> tf_outer(df_outer=df.iloc[[i]])
-        )
+        df_in_tmp = df_input >> tf_outer(df_outer=df.iloc[[i]])
         df_out = eval_df(
             model,
             df=df_in_tmp,
@@ -345,13 +340,17 @@ def eval_contour(
         ## Set output threshold levels
         if levels is None:
             # Do not overwrite `levels`, to adapt per loop
-            levels_wk = dict(zip(
-                out,
-                [
-                    linspace(df_out[o].min(), df_out[o].max(), n_levels + 2)[1:-1]
-                    for o in out
-                ]
-            ))
+            levels_wk = dict(
+                zip(
+                    out,
+                    [
+                        linspace(
+                            df_out[o].min(), df_out[o].max(), n_levels + 2
+                        )[1:-1]
+                        for o in out
+                    ],
+                )
+            )
         else:
             levels_wk = levels
 
@@ -370,14 +369,16 @@ def eval_contour(
                     # Package
                     df_tmp = DataFrame(
                         data=sqdata,
-                        columns=[var[0], var[1], var[0]+"_end", var[1]+"_end"],
+                        columns=[
+                            var[0],
+                            var[1],
+                            var[0] + "_end",
+                            var[1] + "_end",
+                        ],
                     )
                     df_tmp["out"] = [o] * df_tmp.shape[0]
                     df_tmp["level"] = [t] * df_tmp.shape[0]
-                    df_tmp = (
-                        df_tmp
-                        >> tf_outer(df_outer=df.iloc[[i]])
-                    )
+                    df_tmp = df_tmp >> tf_outer(df_outer=df.iloc[[i]])
 
                     df_res = concat((df_res, df_tmp), axis=0)
                 else:

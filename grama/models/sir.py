@@ -9,6 +9,7 @@ from toolz import curry
 
 DF = gr.Intention()
 
+
 ## Model setup
 def sir_rhs(t, y, beta, gamma):
     r"""Right-hand side (RHS) of SIR ODE model
@@ -26,7 +27,7 @@ def sir_rhs(t, y, beta, gamma):
 
     """
     ## Unpack data
-    N = sum(y) # Total population
+    N = sum(y)  # Total population
     S, I, R = y
 
     ## Compute derivatives
@@ -36,6 +37,7 @@ def sir_rhs(t, y, beta, gamma):
 
     ## Package for solver
     return [dSdt, dIdt, dRdt]
+
 
 def sir_vtime(T, S0, I0, R0, beta, gamma, rtol=1e-4):
     r"""Solve SIR IVP, vectorized over T
@@ -82,6 +84,7 @@ def sir_vtime(T, S0, I0, R0, beta, gamma, rtol=1e-4):
 
     return df_res
 
+
 @curry
 def fun_sir(df, rtol=1e-4):
     r"""Fully-vectorized SIR solver
@@ -101,53 +104,46 @@ def fun_sir(df, rtol=1e-4):
         pd.DataFrame: Solution results
     """
     ## Find all groups of non-t parameters
-    df_grouped = (
-        df
-        >> gr.tf_mutate(
-            _idx=DF.index,
-            _code=gr.str_c(
-                "S0", DF.S0,
-                "I0", DF.I0,
-                "R0", DF.R0,
-                "beta", DF.beta,
-                "gamma", DF.gamma,
-            )
-        )
+    df_grouped = df >> gr.tf_mutate(
+        _idx=DF.index,
+        _code=gr.str_c(
+            "S0",
+            DF.S0,
+            "I0",
+            DF.I0,
+            "R0",
+            DF.R0,
+            "beta",
+            DF.beta,
+            "gamma",
+            DF.gamma,
+        ),
     )
 
     ## Run time-vectorized SIR solver over each group
     df_results = gr.df_grid()
     codes = set(df_grouped._code)
     for code in codes:
-        df_param = (
-            df_grouped
-            >> gr.tf_filter(DF._code == code)
-        )
+        df_param = df_grouped >> gr.tf_filter(DF._code == code)
 
-        df_results = (
-            df_results
-            >> gr.tf_bind_rows(
-                sir_vtime(
-                    df_param.t,
-                    df_param.S0[0],
-                    df_param.I0[0],
-                    df_param.R0[0],
-                    df_param.beta[0],
-                    df_param.gamma[0],
-                    rtol=rtol,
-                )
-                >> gr.tf_mutate(_idx=df_param._idx)
+        df_results = df_results >> gr.tf_bind_rows(
+            sir_vtime(
+                df_param.t,
+                df_param.S0[0],
+                df_param.I0[0],
+                df_param.R0[0],
+                df_param.beta[0],
+                df_param.gamma[0],
+                rtol=rtol,
             )
+            >> gr.tf_mutate(_idx=df_param._idx)
         )
 
     ## Sort to match original ordering
     # NOTE: Without this, the output rows will be scrambled, relative
     # to the input rows, leading to very confusing output!
-    return (
-        df_results
-        >> gr.tf_arrange(DF._idx)
-        >> gr.tf_drop("_idx")
-    )
+    return df_results >> gr.tf_arrange(DF._idx) >> gr.tf_drop("_idx")
+
 
 ## Model builder
 def make_sir(rtol=1e-4):
@@ -186,7 +182,7 @@ def make_sir(rtol=1e-4):
             name="ODE solver & interpolation",
         )
         >> gr.cp_bounds(
-            N=(100, 100), # Fixed population size
+            N=(100, 100),  # Fixed population size
             I0=(1, 10),
             beta=(0.1, 0.5),
             gamma=(0.1, 0.5),

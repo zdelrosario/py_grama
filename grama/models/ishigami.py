@@ -1,12 +1,18 @@
 __all__ = ["make_ishigami"]
 
-from grama import cp_bounds, cp_function, cp_copula_independence, cp_marginals, \
-    Model
+from grama import (
+    cp_bounds,
+    cp_function,
+    cp_copula_independence,
+    cp_marginals,
+    Model,
+)
 from numpy import sin, pi
 
 
 def fun(a, b, x1, x2, x3):
-    return sin(x1) + a * sin(x2)**2 + b * x3**4 * sin(x1)
+    return sin(x1) + a * sin(x2) ** 2 + b * x3**4 * sin(x1)
+
 
 def make_ishigami():
     """Ishigami function
@@ -44,18 +50,16 @@ def make_ishigami():
         T. Ishigami and T. Homma, “An importance quantification technique in uncertainty analysis for computer models,” In the First International Symposium on Uncertainty Modeling and Analysis, Maryland, USA, Dec. 3–5, 1990. DOI:10.1109/SUMA.1990.151285
     """
 
-    md = Model(name = "Ishigami Function") >> \
-        cp_function(
-            fun=fun,
-            var=["a", "b", "x1", "x2", "x3"],
-            out=1
-        ) >> \
-        cp_bounds(a=(6.0, 8.0), b=(0, 0.2)) >> \
-        cp_marginals(
+    md = (
+        Model(name="Ishigami Function")
+        >> cp_function(fun=fun, var=["a", "b", "x1", "x2", "x3"], out=1)
+        >> cp_bounds(a=(6.0, 8.0), b=(0, 0.2))
+        >> cp_marginals(
             x1={"dist": "uniform", "loc": -pi, "scale": 2 * pi},
             x2={"dist": "uniform", "loc": -pi, "scale": 2 * pi},
-            x3={"dist": "uniform", "loc": -pi, "scale": 2 * pi}
-        ) >> \
-        cp_copula_independence()
+            x3={"dist": "uniform", "loc": -pi, "scale": 2 * pi},
+        )
+        >> cp_copula_independence()
+    )
 
     return md

@@ -57,15 +57,13 @@ from scipy.stats import norm, rankdata
 # -------------------------
 @make_symbolic
 def floor(x):
-    r"""Round downwards to nearest integer
-    """
+    r"""Round downwards to nearest integer"""
     return npfloor(x)
 
 
 @make_symbolic
 def ceil(x):
-    r"""Round upwards to nearest integer
-    """
+    r"""Round upwards to nearest integer"""
     return npceil(x)
 
 
@@ -83,48 +81,43 @@ def round(x, decimals=0):
 
 @make_symbolic
 def abs(x):
-    r"""Absolute value
-    """
+    r"""Absolute value"""
     return npabs(x)
 
 
 @make_symbolic
 def sin(x):
-    r"""Sine
-    """
+    r"""Sine"""
     return npsin(x)
 
 
 @make_symbolic
 def cos(x):
-    r"""Cosine
-    """
+    r"""Cosine"""
     return npcos(x)
+
 
 @make_symbolic
 def tan(x):
-    r"""Tangent
-    """
+    r"""Tangent"""
     return nptan(x)
+
 
 @make_symbolic
 def log(x):
-    r"""(Natural) log
-    """
+    r"""(Natural) log"""
     return nplog(x)
 
 
 @make_symbolic
 def exp(x):
-    r"""Exponential (e-base)
-    """
+    r"""Exponential (e-base)"""
     return npexp(x)
 
 
 @make_symbolic
 def sqrt(x):
-    r"""Square-root
-    """
+    r"""Square-root"""
     return npsqrt(x)
 
 
@@ -146,22 +139,19 @@ def pow(x, p):
 # -------------------------
 @make_symbolic
 def as_int(x):
-    r"""Cast to integer
-    """
+    r"""Cast to integer"""
     return x.astype(int)
 
 
 @make_symbolic
 def as_float(x):
-    r"""Cast to float
-    """
+    r"""Cast to float"""
     return x.astype(float)
 
 
 @make_symbolic
 def as_str(x):
-    r"""Cast to string
-    """
+    r"""Cast to string"""
     return x.astype(str)
 
 
@@ -179,8 +169,7 @@ def as_factor(x, categories=None, ordered=True, dtype=None):
 
 @make_symbolic
 def as_numeric(x):
-    r"""Cast to numeric
-    """
+    r"""Cast to numeric"""
     return to_numeric(x, errors="coerce")
 
 
@@ -188,22 +177,19 @@ def as_numeric(x):
 # -------------------------
 @make_symbolic
 def qnorm(x):
-    r"""Normal quantile function (inverse CDF)
-    """
+    r"""Normal quantile function (inverse CDF)"""
     return norm.ppf(x)
 
 
 @make_symbolic
 def dnorm(x):
-    r"""Normal probability density function (PDF)
-    """
+    r"""Normal probability density function (PDF)"""
     return norm.pdf(x)
 
 
 @make_symbolic
 def pnorm(x):
-    r"""Normal cumulative distribution function (CDF)
-    """
+    r"""Normal cumulative distribution function (CDF)"""
     return norm.cdf(x)
 
 
@@ -236,6 +222,7 @@ def pareto_min(*args):
         )
 
     return is_efficient
+
 
 # Shell number calculation
 # -------------------------
@@ -343,6 +330,7 @@ def fillna(*args, **kwargs):
 
 fillna.__doc__ = fillna.__doc__ + Series.fillna.__doc__
 
+
 # Q-Q Plot Helper
 # -------------------------
 @make_symbolic
@@ -393,16 +381,12 @@ def qqvals(x, dist=None, marg=None):
     """
     # Check invariants
     if (marg is None) and (dist is None):
-        raise ValueError(
-            "Must provide one of marg or dist (exclusively)."
-        )
+        raise ValueError("Must provide one of marg or dist (exclusively).")
     if (marg is not None) and (dist is not None):
-        raise ValueError(
-            "Must provide either marg or dist (exclusively)."
-        )
+        raise ValueError("Must provide either marg or dist (exclusively).")
 
     # Handle marginal input
-    if (dist is not None):
+    if dist is not None:
         marg = marg_fit(dist, x)
 
     # Get sorted probability values
@@ -410,8 +394,8 @@ def qqvals(x, dist=None, marg=None):
     i = rankdata(x, method="ordinal")
     # Filliben order statistic medians
     p = (i - 0.3175) / (n + 0.365)
-    p[argmax(x)] = 0.5**(1/n)
-    p[argmin(x)] = 1 - 0.5**(1/n)
+    p[argmax(x)] = 0.5 ** (1 / n)
+    p[argmin(x)] = 1 - 0.5 ** (1 / n)
 
     return marg.q(p)
 
@@ -447,6 +431,7 @@ def linspace(a, b, n=100, **kwargs):
 
     """
     return nplinspace(a, b, num=n, **kwargs)
+
 
 @make_symbolic
 def logspace(a, b, n=100, **kwargs):
@@ -495,14 +480,17 @@ def consec(series, i=3):
 
     """
     # Pad the series
-    s = concat((
-        Series([False] * i),
-        series,
-        Series([False] * i),
-    ))
+    s = concat(
+        (
+            Series([False] * i),
+            series,
+            Series([False] * i),
+        )
+    )
     # Find the runs
-    run = s.rolling(i, center=True).sum() \
-           .rolling(i+1, center=True).max() \
-           [i:-i] >= i
+    run = (
+        s.rolling(i, center=True).sum().rolling(i + 1, center=True).max()[i:-i]
+        >= i
+    )
     # Touches run and is True
     return run & series

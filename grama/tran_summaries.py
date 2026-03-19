@@ -102,7 +102,7 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
                 .mul(df[out][I_var].reset_index(drop=True))
             ).mean()
 
-            df_tau = DataFrame(s2_var - mu_tot ** 2).transpose()
+            df_tau = DataFrame(s2_var - mu_tot**2).transpose()
             df_tau[typename] = "T_" + var
 
             df_index = (
@@ -141,7 +141,9 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
 
     ## Post-process
     outputs = df_res.drop(typename, axis=1).columns
-    df_res[outputs] = df_res[outputs].apply(lambda row: round(row, decimals=digits))
+    df_res[outputs] = df_res[outputs].apply(
+        lambda row: round(row, decimals=digits)
+    )
     df_res.sort_values(typename, inplace=True)
 
     ## Filter, if necessary
@@ -164,6 +166,7 @@ def tran_sobol(df, typename="ind", digits=2, full=False):
 
 
 tf_sobol = add_pipe(tran_sobol)
+
 
 ## Linear algebra tools
 ##################################################
@@ -216,6 +219,7 @@ def tran_pca(df, var=None, lamvar="lam", standardize=False):
 
 
 tf_pca = add_pipe(tran_pca)
+
 
 ## Gradient principal directions (AS)
 @curry
@@ -272,6 +276,7 @@ def tran_asub(df, prefix="D", outvar="out", lamvar="lam"):
 
 
 tf_asub = add_pipe(tran_asub)
+
 
 # --------------------------------------------------
 ## Inner product
@@ -357,7 +362,9 @@ def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
 
     elif df_weights.shape[0] > 1:
         if name is None:
-            names = list(map(lambda i: prefix + str(i), range(dot_prod.shape[1])))
+            names = list(
+                map(lambda i: prefix + str(i), range(dot_prod.shape[1]))
+            )
         else:
             names = list(
                 map(
@@ -375,6 +382,7 @@ def tran_inner(df, df_weights, prefix="dot", name=None, append=True):
 
 
 tf_inner = add_pipe(tran_inner)
+
 
 # --------------------------------------------------
 ## Describe
@@ -395,6 +403,7 @@ def tran_describe(df):
 
 
 tf_describe = add_pipe(tran_describe)
+
 
 ## Input/Output Correlations
 # --------------------------------------------------
@@ -433,12 +442,14 @@ def tran_iocorr(df, var=None, out=None, method="pearson", nan_drop=False):
     df_res = DataFrame()
     for v in var:
         for o in out:
-            df_tmp = DataFrame(dict(
-                rho=corr(df[v], df[o], method=method, nan_drop=nan_drop),
-                var=v,
-                out=o,
-                index=[0],
-            ))
+            df_tmp = DataFrame(
+                dict(
+                    rho=corr(df[v], df[o], method=method, nan_drop=nan_drop),
+                    var=v,
+                    out=o,
+                    index=[0],
+                )
+            )
             df_res = concat((df_res, df_tmp), axis=0)
     df_res = df_res.drop("index", axis=1).reset_index(drop=True)
 

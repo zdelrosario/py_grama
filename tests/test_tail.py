@@ -9,8 +9,7 @@ from context import models
 
 
 class TestFORM(unittest.TestCase):
-    """Test implementations of FORM
-    """
+    """Test implementations of FORM"""
 
     def setUp(self):
         ## Linear limit state w/ MPP off initial guess
@@ -37,7 +36,7 @@ class TestFORM(unittest.TestCase):
                     g=gr.exp(gr.sqrt(2) * 1) - df.x * df.y
                 ),
                 var=["x", "y"],
-                out=["g"]
+                out=["g"],
             )
             >> gr.cp_marginals(
                 x=dict(dist="lognorm", loc=0, scale=1, s=1),
@@ -46,8 +45,8 @@ class TestFORM(unittest.TestCase):
             >> gr.cp_copula_independence()
         )
         self.df_mpp = gr.df_make(
-            x=gr.exp(gr.sqrt(2)/2),
-            y=gr.exp(gr.sqrt(2)/2),
+            x=gr.exp(gr.sqrt(2) / 2),
+            y=gr.exp(gr.sqrt(2) / 2),
             beta_g=1.0,
             g=0.0,
         )
@@ -58,7 +57,9 @@ class TestFORM(unittest.TestCase):
     def test_ria(self):
         ## Test accuracy
         df_res = self.md >> gr.ev_form_ria(df_det="nom", limits=["g"])
-        self.assertTrue(np.allclose(df_res["beta_g"], [self.beta_true], atol=1e-3))
+        self.assertTrue(
+            np.allclose(df_res["beta_g"], [self.beta_true], atol=1e-3)
+        )
 
         ## Test MPP mapped correctly
         df_mpp = self.md_log >> gr.ev_form_ria(df_det="nom", limits=["g"])
@@ -77,28 +78,44 @@ class TestFORM(unittest.TestCase):
         beta_names = ["beta_g_stress", "beta_g_disp"]
         # Return reliabilities
         df_rels = self.md_beam >> gr.ev_form_ria(
-            df_det="nom", limits=limits, append=False, format="rels",
+            df_det="nom",
+            limits=limits,
+            append=False,
+            format="rels",
         )
-        self.assertTrue(gr.df_equal(
-            df_beam.apply(lambda col: norm.cdf(col) if col.name in beta_names else col)
-                   .rename(columns={"beta_" + s: "rel_" + s for s in limits}),
-            df_rels,
-            close=True,
-        ))
+        self.assertTrue(
+            gr.df_equal(
+                df_beam.apply(
+                    lambda col: norm.cdf(col) if col.name in beta_names else col
+                ).rename(columns={"beta_" + s: "rel_" + s for s in limits}),
+                df_rels,
+                close=True,
+            )
+        )
         # Return POFs
         df_pofs = self.md_beam >> gr.ev_form_ria(
-            df_det="nom", limits=limits, append=False, format="pofs",
+            df_det="nom",
+            limits=limits,
+            append=False,
+            format="pofs",
         )
-        self.assertTrue(gr.df_equal(
-            df_beam.apply(lambda col: 1-norm.cdf(col) if col.name in beta_names else col)
-                   .rename(columns={"beta_" + s: "pof_" + s for s in limits}),
-            df_pofs,
-            close=True,
-        ))
+        self.assertTrue(
+            gr.df_equal(
+                df_beam.apply(
+                    lambda col: (
+                        1 - norm.cdf(col) if col.name in beta_names else col
+                    )
+                ).rename(columns={"beta_" + s: "pof_" + s for s in limits}),
+                df_pofs,
+                close=True,
+            )
+        )
 
     def test_pma(self):
         ## Test accuracy
-        df_res = self.md >> gr.ev_form_pma(df_det="nom", betas=dict(g=self.beta_true))
+        df_res = self.md >> gr.ev_form_pma(
+            df_det="nom", betas=dict(g=self.beta_true)
+        )
         self.assertTrue(np.allclose(df_res["g"], [0], atol=1e-3))
 
         ## Test MPP mapped correctly
@@ -109,18 +126,24 @@ class TestFORM(unittest.TestCase):
 
         ## Test flatten
         df_beam = self.md_beam >> gr.ev_form_pma(
-            df_det="nom", betas={"g_stress": 3, "g_disp": 3}, append=False,
+            df_det="nom",
+            betas={"g_stress": 3, "g_disp": 3},
+            append=False,
         )
         self.assertTrue(df_beam.shape[0] == 1)
 
         ## Specify reliabilities
         df_rels = self.md_beam >> gr.ev_form_pma(
-            df_det="nom", rels={"g_stress": norm.cdf(3), "g_disp": norm.cdf(3)}, append=False,
+            df_det="nom",
+            rels={"g_stress": norm.cdf(3), "g_disp": norm.cdf(3)},
+            append=False,
         )
         self.assertTrue(gr.df_equal(df_beam, df_rels, close=True))
 
         ## Specify POFs
         df_pofs = self.md_beam >> gr.ev_form_pma(
-            df_det="nom", pofs={"g_stress": 1 - norm.cdf(3), "g_disp": 1 - norm.cdf(3)}, append=False,
+            df_det="nom",
+            pofs={"g_stress": 1 - norm.cdf(3), "g_disp": 1 - norm.cdf(3)},
+            append=False,
         )
         self.assertTrue(gr.df_equal(df_beam, df_pofs, close=True))

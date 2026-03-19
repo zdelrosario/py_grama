@@ -59,9 +59,9 @@ def fit_ols(df, formulae=[""], domain=None, density=None):
     except NameError as e:
         error_string = str(e)
         raise NameError(
-            error_string +
-            "\n\nThis function requires the `statsmodels` package. " +
-            "Try running the following to install the package:\n"
+            error_string
+            + "\n\nThis function requires the `statsmodels` package. "
+            + "Try running the following to install the package:\n"
             "    pip install statsmodels"
         )
 

@@ -8,6 +8,7 @@ from context import data
 
 X = gr.Intention()
 
+
 ##==============================================================================
 ## reshape test functions
 ##==============================================================================
@@ -47,8 +48,9 @@ class TestReshape(unittest.TestCase):
         ).reset_index(drop=True)
         assert df.equals(d)
 
-        df = data.df_diamonds.sort_values(["cut", "price"], ascending=False) \
-                             .reset_index(drop=True)
+        df = data.df_diamonds.sort_values(
+            ["cut", "price"], ascending=False
+        ).reset_index(drop=True)
         d = data.df_diamonds >> gr.tf_arrange(gr.desc(X.cut), gr.desc(X.price))
         self.assertTrue(df.equals(d))
 
@@ -56,7 +58,9 @@ class TestReshape(unittest.TestCase):
         df = data.df_diamonds.rename(
             columns={"cut": "Cut", "table": "Table", "carat": "Carat"}
         )
-        d = data.df_diamonds >> gr.tf_rename(Cut=X.cut, Table=X.table, Carat="carat")
+        d = data.df_diamonds >> gr.tf_rename(
+            Cut=X.cut, Table=X.table, Carat="carat"
+        )
         self.assertTrue(df.equals(d))
 
     def test_gather(self):
@@ -118,16 +122,9 @@ class TestReshape(unittest.TestCase):
 
         ## Test fill
         df_base = gr.df_make(
-            x=[1, 2, 3, 4, 5],
-            y=["a", "b", "c", "a", "b"],
-            idx=[0, 0, 0, 1, 1]
+            x=[1, 2, 3, 4, 5], y=["a", "b", "c", "a", "b"], idx=[0, 0, 0, 1, 1]
         )
-        df_true = gr.df_make(
-            a=[1, 4],
-            b=[2, 5],
-            c=[3, 0],
-            idx=[0, 1]
-        )
+        df_true = gr.df_make(a=[1, 4], b=[2, 5], c=[3, 0], idx=[0, 1])
         df_res = df_base >> gr.tf_spread(X.y, X.x, fill=0)
 
         self.assertTrue(gr.df_equal(df_true, df_res, close=True))
@@ -201,7 +198,10 @@ class TestReshape(unittest.TestCase):
         )
 
         true4 = pd.DataFrame(
-            {"col1": ["1", "1", "1", "9", "1"], "col2": ["-a", "-b", "-c", "-d", "0"]}
+            {
+                "col1": ["1", "1", "1", "9", "1"],
+                "col2": ["-a", "-b", "-c", "-d", "0"],
+            }
         )
         self.assertTrue(true4.equals(test4))
 
@@ -280,6 +280,7 @@ class TestReshape(unittest.TestCase):
 
         self.assertTrue(true4.equals(test4))
 
+
 class TestNesting(unittest.TestCase):
     def setUp(self):
         pass
@@ -287,10 +288,7 @@ class TestNesting(unittest.TestCase):
     def test_explode(self):
         df_base = gr.df_make(x=[1, 2], y=[[3, 4], [5, 6]])
         df_str = gr.df_make(x=[1, 2], y=[["3", "4"], ["5", "6"]])
-        df_true = gr.df_make(
-            x=[1, 1, 2, 2],
-            y=[3, 4, 5, 6]
-        )
+        df_true = gr.df_make(x=[1, 1, 2, 2], y=[3, 4, 5, 6])
 
         df_res = df_base >> gr.tf_explode(X.y)
         df_res_s = df_base >> gr.tf_explode(X.y, convert=True)

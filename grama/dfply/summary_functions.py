@@ -17,20 +17,16 @@ __all__ = [
     "sd",
     "skew",
     "kurt",
-
     "min",
     "max",
     "sum",
     "median",
-
     "first",
     "last",
-
     "n",
     "nth",
     "n_distinct",
     "neff_is",
-
     "mad",
     "mead",
     "mse",
@@ -169,6 +165,7 @@ def kurt(series, bias=True, nan_policy="propagate", excess=False):
     """
 
     return kurtosis(series, fisher=excess, bias=bias, nan_policy="propagate")
+
 
 @make_symbolic
 def first(series, order_by=None):
@@ -542,8 +539,8 @@ def binomial_ci(series, alpha=0.05, side="both"):
     n_f = n_t - n_s
     z = -norm.ppf(alpha / 2)
 
-    mid = (n_s + 0.5 * z ** 2) / (n_t + z ** 2)
-    delta = z / (n_t + z ** 2) * sqrt(n_s * n_f / n_t + 0.25 * z ** 2)
+    mid = (n_s + 0.5 * z**2) / (n_t + z**2)
+    delta = z / (n_t + z**2) * sqrt(n_s * n_f / n_t + 0.25 * z**2)
     lo = mid - delta
     up = mid + delta
 
@@ -555,6 +552,7 @@ def binomial_ci(series, alpha=0.05, side="both"):
         return up
     else:
         raise ValueError("side value {} not recognized".format(side))
+
 
 # Probability helpers
 # --------------------------------------------------
@@ -703,7 +701,7 @@ def corr(series1, series2, method="pearson", res="corr", nan_drop=False):
 
     """
     if nan_drop:
-        ids = (isnan(series1) | isnan(series2))
+        ids = isnan(series1) | isnan(series2)
     else:
         ids = array([False] * len(series1))
 
@@ -731,11 +729,11 @@ def pint_lo_index(n, m, j, alpha):
     prediction interval.
 
     """
-    l = int(n - nhypergeom.ppf(1 - alpha, m + n, n, m - j  + 1))
+    l = int(n - nhypergeom.ppf(1 - alpha, m + n, n, m - j + 1))
     if l <= 0:
         raise ValueError(
-            "Insufficient series length for requested `alpha` level; " +
-            "obtain more observations or choose a larger value for `alpha`."
+            "Insufficient series length for requested `alpha` level; "
+            + "obtain more observations or choose a larger value for `alpha`."
         )
     return l
 
@@ -750,8 +748,8 @@ def pint_up_index(n, m, j, alpha):
     u = int(nhypergeom.ppf(1 - alpha, m + n, n, j) + 1)
     if u >= n + 1:
         raise ValueError(
-            "Insufficient series length for requested `alpha` level; " +
-            "obtain more observations or choose a larger value for `alpha`."
+            "Insufficient series length for requested `alpha` level; "
+            + "obtain more observations or choose a larger value for `alpha`."
         )
     return u
 
@@ -778,7 +776,8 @@ def pint_lo(series, m=1, j=1, alpha=0.005):
     """
     n = len(series)
     l = pint_lo_index(n, m, j, alpha)
-    return series.sort_values().iloc[l - 1] # for 0-based indexing
+    return series.sort_values().iloc[l - 1]  # for 0-based indexing
+
 
 @make_symbolic
 def pint_up(series, m=1, j=1, alpha=0.005):
@@ -802,7 +801,8 @@ def pint_up(series, m=1, j=1, alpha=0.005):
     """
     n = len(series)
     u = pint_up_index(n, m, j, alpha)
-    return series.sort_values().iloc[u - 1] # for 0-based indexing
+    return series.sort_values().iloc[u - 1]  # for 0-based indexing
+
 
 # ------------------------------------------------------------------------------
 # Effective Sample Size helpers

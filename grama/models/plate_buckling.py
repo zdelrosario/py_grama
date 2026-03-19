@@ -1,7 +1,14 @@
 __all__ = ["make_plate_buckle"]
 
-from grama import cp_bounds, cp_copula_gaussian, cp_vec_function, cp_marginals, \
-    marg_fit, Model, df_make
+from grama import (
+    cp_bounds,
+    cp_copula_gaussian,
+    cp_vec_function,
+    cp_marginals,
+    marg_fit,
+    Model,
+    df_make,
+)
 from grama.data import df_stang
 from numpy import pi
 
@@ -37,14 +44,19 @@ def make_plate_buckle():
         Model("Plate Buckling")
         >> cp_vec_function(
             fun=lambda df: df_make(
-                k_cr=(df.m*df.h/df.w + df.w/df.m/df.h)**2
+                k_cr=(df.m * df.h / df.w + df.w / df.m / df.h) ** 2
             ),
             var=["w", "h", "m"],
             out=["k_cr"],
         )
         >> cp_vec_function(
             fun=lambda df: df_make(
-                g_buckle=df.k_cr * pi**2/12 * df.E / (1 - df.mu**2) * (df.t/df.h)**2
+                g_buckle=df.k_cr
+                * pi**2
+                / 12
+                * df.E
+                / (1 - df.mu**2)
+                * (df.t / df.h) ** 2
                 - df.L / df.t / df.w
             ),
             var=["k_cr", "t", "h", "w", "E", "mu", "L"],

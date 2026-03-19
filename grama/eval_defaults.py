@@ -24,6 +24,7 @@ from warnings import formatwarning, catch_warnings, simplefilter
 
 formatwarning = custom_formatwarning
 
+
 def invariants_eval_model(md, skip=False):
     r"""Helper function to group common model argument invariant checks for eval functions.
 
@@ -40,16 +41,22 @@ def invariants_eval_model(md, skip=False):
         if md is None:
             raise TypeError("No input model given")
         elif isinstance(md, tuple):
-            raise TypeError("Given model argument is type tuple. Have you " +
-            "declared your model with an extra comma after the closing `)`?")
+            raise TypeError(
+                "Given model argument is type tuple. Have you "
+                + "declared your model with an extra comma after the closing `)`?"
+            )
         else:
-            raise TypeError("Type gr.Model was expected, a " + str(type(md)) +
-            " was passed.")
+            raise TypeError(
+                "Type gr.Model was expected, a "
+                + str(type(md))
+                + " was passed."
+            )
 
     ## Value checking
     if not skip and len(md.functions) == 0:
         raise ValueError("Given model has no functions.")
     return
+
 
 def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
     r"""Helper function to group common DataFrame argument invariant checks for eval functions.
@@ -69,6 +76,7 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
         invariants_eval_df(df_test, arg_name="df_test", acc_none=())
 
     """
+
     def aps(string):
         r"""Helper function for valid_args_msg() to put apostrophes around a
         string.
@@ -91,7 +99,7 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
 
         Returns:
             String"""
-        msg = df_arg + " must be DataFrame" # general msg for valid args
+        msg = df_arg + " must be DataFrame"  # general msg for valid args
         if acc_str:
             # add on string options to msg
             if len(valid_str) == 1:
@@ -117,23 +125,32 @@ def invariants_eval_df(df, arg_name="df", valid_str=None, acc_none=False):
         if df is None:
             if not acc_none:
                 # allow "None" df if None accepted
-                raise TypeError("No " + arg_name + " argument given. " +
-                    valid_args_msg(arg_name, acc_str, valid_str))
+                raise TypeError(
+                    "No "
+                    + arg_name
+                    + " argument given. "
+                    + valid_args_msg(arg_name, acc_str, valid_str)
+                )
         elif isinstance(df, str) and acc_str:
             # case check for invalid str input
             if df not in valid_str:
-                raise ValueError(arg_name + " shortcut string invalid. " +
-                    valid_args_msg(arg_name, acc_str, valid_str))
+                raise ValueError(
+                    arg_name
+                    + " shortcut string invalid. "
+                    + valid_args_msg(arg_name, acc_str, valid_str)
+                )
         else:
-            raise TypeError(valid_args_msg(arg_name, acc_str, valid_str) +
-                " Given argument is type " + str(type(df)) +
-                    ". ")
+            raise TypeError(
+                valid_args_msg(arg_name, acc_str, valid_str)
+                + " Given argument is type "
+                + str(type(df))
+                + ". "
+            )
 
     ## Value checking
     #### TO DO
 
     return
-
 
 
 ## Default evaluation function
@@ -177,7 +194,9 @@ def eval_df(model, df=None, append=True, verbose=True):
     if append:
         df_res = concat(
             [
-                df.reset_index(drop=True).drop(model.out, axis=1, errors="ignore"),
+                df.reset_index(drop=True).drop(
+                    model.out, axis=1, errors="ignore"
+                ),
                 df_res,
             ],
             axis=1,
@@ -188,10 +207,13 @@ def eval_df(model, df=None, append=True, verbose=True):
 
 ev_df = add_pipe(eval_df)
 
+
 ## Linear Uncertainty Propagation
 # --------------------------------------------------
 @curry
-def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4, seed=None):
+def eval_linup(
+    model, df_base=None, append=True, decomp=False, decimals=2, n=1e4, seed=None
+):
     r"""Linear uncertainty propagation
 
     Approximates the variance of output models using a linearization of functions---linear uncertainty propagation. Optionally decomposes the output variance according to additive factors from each input.
@@ -231,7 +253,9 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4
         df_base = eval_df(model, df=df_base)
 
     ## Approximate the covariance matrix
-    df_sample = eval_sample(model, n=n, seed=seed, df_det=df_base[model.var_det], skip=True)
+    df_sample = eval_sample(
+        model, n=n, seed=seed, df_det=df_base[model.var_det], skip=True
+    )
     cov = df_sample[model.var_rand].cov()
 
     ## Approximate the gradient
@@ -242,17 +266,16 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4
     for out in model.out:
         for i in range(df_grad.shape[0]):
             # Build gradient column names
-            var_names = map(
-                lambda s: "D" + out + "_D" + s,
-                model.var_rand
-            )
+            var_names = map(lambda s: "D" + out + "_D" + s, model.var_rand)
             # Extract gradient values
             grad = df_grad.iloc[i][var_names].values.flatten()
             # Approximate variance
             var = dot(grad, dot(cov, grad))
 
             # Store values
-            df_tmp = df_base.iloc[[i]][model.var + model.out].reset_index(drop=True)
+            df_tmp = df_base.iloc[[i]][model.var + model.out].reset_index(
+                drop=True
+            )
             df_tmp["out"] = out
             df_tmp["var"] = var
 
@@ -263,8 +286,9 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4
                 U, V = triu_indices(sens_mat.shape[0])
                 sens_values = [
                     round(
-                        sens_mat[U[j], V[j]] * (1 + (U[j] != V[j])), # Double off-diag
-                        decimals=decimals
+                        sens_mat[U[j], V[j]]
+                        * (1 + (U[j] != V[j])),  # Double off-diag
+                        decimals=decimals,
                     )
                     for j in range(len(U))
                 ]
@@ -273,18 +297,18 @@ def eval_linup(model, df_base=None, append=True, decomp=False, decimals=2, n=1e4
                     for j in range(len(U))
                 ]
 
-                df_sens = DataFrame({
-                    "var_frac": sens_values,
-                    "var_rand": sens_var
-                })
+                df_sens = DataFrame(
+                    {"var_frac": sens_values, "var_rand": sens_var}
+                )
                 df_tmp = tran_outer(df_tmp, df_sens)
 
             df_res = concat(
-                (df_res,df_tmp),
+                (df_res, df_tmp),
                 axis=0,
             ).reset_index(drop=True)
 
     return df_res
+
 
 ev_linup = add_pipe(eval_linup)
 
@@ -322,8 +346,12 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
     """
     ## Perform common invariant tests
     invariants_eval_model(model, skip)
-    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
-        acc_none=(model.n_var_det==0))
+    invariants_eval_df(
+        df_det,
+        arg_name="df_det",
+        valid_str=["nom"],
+        acc_none=(model.n_var_det == 0),
+    )
 
     ## Draw from underlying gaussian
     quantiles = ones((1, model.n_var_rand)) * 0.5  # Median
@@ -345,10 +373,13 @@ def eval_nominal(model, df_det=None, append=True, skip=False):
 
 ev_nominal = add_pipe(eval_nominal)
 
+
 ## Gradient finite-difference evaluation
 # --------------------------------------------------
 @curry
-def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False):
+def eval_grad_fd(
+    model, h=1e-8, df_base=None, var=None, append=True, skip=False
+):
     r"""Finite-difference gradient approximation
 
     Evaluates a given model with a central-difference stencil to approximate the
@@ -411,7 +442,8 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
 
     outputs = model.out
     nested_labels = [
-        list(map(lambda s_out: "D" + s_out + "_D" + s_var, outputs)) for s_var in var
+        list(map(lambda s_out: "D" + s_out + "_D" + s_var, outputs))
+        for s_var in var
     ]
     grad_labels = list(itertools.chain.from_iterable(nested_labels))
 
@@ -423,7 +455,8 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
             model,
             tran_outer(
                 DataFrame(
-                    columns=var, data=-stencil + df_base[var].iloc[[row_i]].values
+                    columns=var,
+                    data=-stencil + df_base[var].iloc[[row_i]].values,
                 ),
                 df_base[var_fix].iloc[[row_i]],
             ),
@@ -434,7 +467,8 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
             model,
             tran_outer(
                 DataFrame(
-                    columns=var, data=+stencil + df_base[var].iloc[[row_i]].values
+                    columns=var,
+                    data=+stencil + df_base[var].iloc[[row_i]].values,
                 ),
                 df_base[var_fix].iloc[[row_i]],
             ),
@@ -442,7 +476,9 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
         )
 
         ## Compute differences
-        res = (stepscale * (df_right[outputs] - df_left[outputs]).values).flatten()
+        res = (
+            stepscale * (df_right[outputs] - df_left[outputs]).values
+        ).flatten()
         df_grad = DataFrame(columns=grad_labels, data=[res])
 
         results.append(df_grad)
@@ -458,10 +494,13 @@ def eval_grad_fd(model, h=1e-8, df_base=None, var=None, append=True, skip=False)
 
 ev_grad_fd = add_pipe(eval_grad_fd)
 
+
 ## Conservative quantile evaluation
 # --------------------------------------------------
 @curry
-def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=False):
+def eval_conservative(
+    model, quantiles=None, df_det=None, append=True, skip=False
+):
     r"""Evaluates a given model at conservative input quantiles
 
     Uses model specifications to determine the "conservative" direction for each input, and evaluates the model at the desired quantile. Provided primarily for comparing UQ against pseudo-deterministic design criteria (del Rosario et al.; 2021).
@@ -498,8 +537,12 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
     """
     ## Check invariants
     invariants_eval_model(model, skip)
-    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
-        acc_none=(model.n_var_det==0))
+    invariants_eval_df(
+        df_det,
+        arg_name="df_det",
+        valid_str=["nom"],
+        acc_none=(model.n_var_det == 0),
+    )
 
     ## Default behavior
     if quantiles is None:
@@ -515,7 +558,8 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
 
     ## Modify quantiles for conservative directions
     quantiles = [
-        0.5 + (0.5 - quantiles[i]) * model.density.marginals[model.var_rand[i]].sign
+        0.5
+        + (0.5 - quantiles[i]) * model.density.marginals[model.var_rand[i]].sign
         for i in range(model.n_var_rand)
     ]
     quantiles = atleast_2d(quantiles)
@@ -537,10 +581,20 @@ def eval_conservative(model, quantiles=None, df_det=None, append=True, skip=Fals
 
 ev_conservative = add_pipe(eval_conservative)
 
+
 ## Random sampling
 # --------------------------------------------------
 @curry
-def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, comm=True, ind_comm=None):
+def eval_sample(
+    model,
+    n=None,
+    df_det=None,
+    seed=None,
+    append=True,
+    skip=False,
+    comm=True,
+    ind_comm=None,
+):
     r"""Draw a random sample
 
     Evaluates a model with a random sample of the random model inputs. Generates outer product with deterministic levels (common random numbers) OR generates a sample fully-independent of deterministic levels (non-common random numbers).
@@ -637,8 +691,12 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
     """
     ## Check invariants
     invariants_eval_model(model, skip)
-    invariants_eval_df(df_det, arg_name="df_det", valid_str=["nom"],
-        acc_none=(model.n_var_det==0))
+    invariants_eval_df(
+        df_det,
+        arg_name="df_det",
+        valid_str=["nom"],
+        acc_none=(model.n_var_det == 0),
+    )
     if n is None:
         raise ValueError("Must provide a valid n value.")
 
@@ -664,10 +722,14 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
         if not ind_comm is None:
             df_rand[ind_comm] = df_rand.index
         df_samp = concat(
-            (df_rand, concat([df_det[model.var_det]]*n, axis=0).reset_index(drop=True)),
+            (
+                df_rand,
+                concat([df_det[model.var_det]] * n, axis=0).reset_index(
+                    drop=True
+                ),
+            ),
             axis=1,
         ).reset_index(drop=True)
-
 
     if skip:
         ## Evaluation estimate
@@ -683,7 +745,6 @@ def eval_sample(model, n=None, df_det=None, seed=None, append=True, skip=False, 
             }
 
         return df_samp
-
 
     df_res = eval_df(model, df=df_samp, append=append)
     ## Attach metadata

@@ -46,6 +46,7 @@ def tran_mutate(df, **kwargs):
 
     return df.assign(**kwargs)
 
+
 tf_mutate = add_pipe(tran_mutate)
 
 
@@ -81,5 +82,6 @@ def tran_mutate_if(df, predicate, fun):
     # df2 = df.copy()
     # df2[cols] = df2[cols].apply(fun)
     # return df2
+
 
 tf_mutate_if = add_pipe(tran_mutate_if)

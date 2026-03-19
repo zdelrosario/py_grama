@@ -20,8 +20,21 @@ from grama import pipe, valid_dist, param_dist
 from .tools import tran_outer
 from abc import ABC, abstractmethod
 from itertools import chain
-from numpy import ones, zeros, triu_indices, eye, array, Inf, NaN, sqrt, \
-    dot, diag, isfinite, prod, exp
+from numpy import (
+    ones,
+    zeros,
+    triu_indices,
+    eye,
+    array,
+    Inf,
+    NaN,
+    sqrt,
+    dot,
+    diag,
+    isfinite,
+    prod,
+    exp,
+)
 from numpy import min as npmin
 from numpy import max as npmax
 from numpy.linalg import cholesky, det, inv
@@ -36,6 +49,7 @@ from toolz import curry
 
 ## Package settings
 RUNTIME_LOWER = 1  # Cutoff threshold for runtime messages
+
 
 ## Core functions
 ##################################################
@@ -114,8 +128,7 @@ class Function:
         return DataFrame(data=results, columns=self.out)
 
     def summary(self):
-        """Returns a summary string
-        """
+        """Returns a summary string"""
         return "{0:}: {1:} -> {2:}".format(self.name, self.var, self.out)
 
 
@@ -144,8 +157,7 @@ class FunctionVectorized(Function):
 
 
 class FunctionModel(Function):
-    """gr.Model as gr.Function
-    """
+    """gr.Model as gr.Function"""
 
     def __init__(self, md, ev=None, var=None, out=None):
         """Model-Function constructor
@@ -204,7 +216,9 @@ class FunctionModel(Function):
 
     def copy(self):
         """Make a copy"""
-        func_new = FunctionModel(self.model, ev=self.ev, var=self.var, out=self.out)
+        func_new = FunctionModel(
+            self.model, ev=self.ev, var=self.var, out=self.out
+        )
         return func_new
 
 
@@ -249,7 +263,8 @@ class Domain:
 
     def copy(self):
         new_domain = Domain(
-            bounds=copy.deepcopy(self.bounds), feasible=copy.deepcopy(self.feasible)
+            bounds=copy.deepcopy(self.bounds),
+            feasible=copy.deepcopy(self.feasible),
         )
 
         return new_domain
@@ -278,15 +293,16 @@ class Domain:
     def bound_summary(self, var):
         if var in self.bounds.keys():
             return "{0:}: [{1:}, {2:}]".format(
-                var, self.bounds[var][0], self.bounds[var][1],
+                var,
+                self.bounds[var][0],
+                self.bounds[var][1],
             )
         return "{0:}: (unbounded)".format(var)
 
 
 ## Copula base class
 class Copula(ABC):
-    """Parent class for copulas
-    """
+    """Parent class for copulas"""
 
     @abstractmethod
     def __init__(self):
@@ -298,32 +314,27 @@ class Copula(ABC):
 
     @abstractmethod
     def sample(self, n=1):
-        r"""Draw a sample of a given size
-        """
+        r"""Draw a sample of a given size"""
         raise NotImplementedError
 
     @abstractmethod
     def d(self, u):
-        r"""Copula density
-        """
+        r"""Copula density"""
         raise NotImplementedError
 
     @abstractmethod
     def u2z(self, u):
-        r"""Transform from [0, 1]^d to sample space
-        """
+        r"""Transform from [0, 1]^d to sample space"""
         raise NotImplementedError
 
     @abstractmethod
     def z2u(self, z):
-        r"""Transform from sample space to [0, 1]^d
-        """
+        r"""Transform from sample space to [0, 1]^d"""
         raise NotImplementedError
 
     @abstractmethod
     def dudz(self, z):
-        r"""Jacobian of copula transform
-        """
+        r"""Jacobian of copula transform"""
         raise NotImplementedError
 
     @abstractmethod
@@ -369,7 +380,9 @@ class CopulaIndependence(Copula):
         if seed is not None:
             set_seed(seed)
 
-        return DataFrame(data=random((n, len(self.var_rand))), columns=self.var_rand)
+        return DataFrame(
+            data=random((n, len(self.var_rand))), columns=self.var_rand
+        )
 
     def d(self, u):
         """Density function
@@ -464,7 +477,7 @@ class CopulaGaussian(Copula):
         except LinAlgError:
             warnings.warn(
                 "Correlation structure is not positive-definite; copula transforms not available",
-                RuntimeWarning
+                RuntimeWarning,
             )
             Sigma_h = None
             Sigma_i = None
@@ -534,7 +547,7 @@ class CopulaGaussian(Copula):
         for i in range(n_obs):
             v = norm.ppf(u[i, :])
             l_values[i] = exp(
-                -0.5*dot(v, dot( self.Sigma_i - eye(n_dim), v))
+                -0.5 * dot(v, dot(self.Sigma_i - eye(n_dim), v))
             ) / sqrt(self.det)
 
         return l_values
@@ -650,7 +663,6 @@ class Density:
         l_marginals = prod(L_marginals, axis=1)
 
         return l_copula * l_marginals
-
 
     def pr2sample(self, df_prval):
         """Convert CDF probabilities to samples
@@ -778,11 +790,14 @@ class Density:
 
 # Model parent class
 class Model:
-    """Parent class for grama models.
-    """
+    """Parent class for grama models."""
 
     def __init__(
-        self, name=None, functions=None, domain=None, density=None,
+        self,
+        name=None,
+        functions=None,
+        domain=None,
+        density=None,
     ):
         r"""Constructor
 
@@ -854,7 +869,9 @@ class Model:
 
         ## Construct var and out, respecting DAG properties
         for fun in self.functions:
-            self.var = list(set(self.var).union(set(fun.var).difference(set(self.out))))
+            self.var = list(
+                set(self.var).union(set(fun.var).difference(set(self.out)))
+            )
 
             self.out = list(set(self.out).union(set(fun.out)))
 
@@ -1107,14 +1124,18 @@ class Model:
         return DataFrame(data=data, columns=self.var_rand)
 
     def name_corr(self):
-        """Name the correlation elements
-        """
+        """Name the correlation elements"""
         raise NotImplementedError
         ## Build matrix of names
         corr_mat = []
         for ind in range(self.n_in):
             corr_mat.append(
-                list(map(lambda s: s + "," + self.domain.var[ind], self.domain.var))
+                list(
+                    map(
+                        lambda s: s + "," + self.domain.var[ind],
+                        self.domain.var,
+                    )
+                )
             )
 
         ## Access matrix of names
@@ -1130,8 +1151,7 @@ class Model:
     ## Infrastructure
     # -------------------------
     def copy(self):
-        """Make a copy of this model
-        """
+        """Make a copy of this model"""
         new_model = Model(
             name=self.name,
             functions=copy.deepcopy(self.functions),
@@ -1150,19 +1170,25 @@ class Model:
             "",
             "  inputs:",
             "    var_det:",
-            "".join([
-                "      {}\n".format(self.domain.bound_summary(var_det))
-                for var_det in self.var_det
-            ]),
+            "".join(
+                [
+                    "      {}\n".format(self.domain.bound_summary(var_det))
+                    for var_det in self.var_det
+                ]
+            ),
             "    var_rand:",
         ]
 
         try:
             l = l + [
-                "".join([
-                    "      {}\n".format(self.density.summary_marginal(var_rand))
-                    for var_rand in self.density.marginals.keys()
-                ]),
+                "".join(
+                    [
+                        "      {}\n".format(
+                            self.density.summary_marginal(var_rand)
+                        )
+                        for var_rand in self.density.marginals.keys()
+                    ]
+                ),
             ]
         except AttributeError:
             l = l + ["\n"]
@@ -1171,10 +1197,12 @@ class Model:
             "    copula:",
             "      {}\n".format(self.density.summary_copula()),
             "  functions:",
-            "".join([
-                "      {}\n".format(function.summary())
-                for function in self.functions
-            ])
+            "".join(
+                [
+                    "      {}\n".format(function.summary())
+                    for function in self.functions
+                ]
+            ),
         ]
 
         return "\n".join(l)
@@ -1186,13 +1214,11 @@ class Model:
         return self.string_rep()
 
     def printpretty(self):
-        """Formatted print of model attributes
-        """
+        """Formatted print of model attributes"""
         print(self.string_rep())
 
     def make_dag(self, expand=set()):
-        """Generate a DAG for the model
-        """
+        """Generate a DAG for the model"""
         G = nx.DiGraph()
 
         ## Inputs-to-Functions
@@ -1275,8 +1301,7 @@ class Model:
         return G
 
     def show_dag(self, expand=set()):
-        """Generate and show a DAG for the model
-        """
+        """Generate and show a DAG for the model"""
         from matplotlib.pyplot import show as pltshow
 
         G = self.make_dag(expand=expand)
@@ -1285,7 +1310,16 @@ class Model:
             warnings.simplefilter("ignore")
             ## Plotting
             edge_labels = dict(
-                [((u, v,), d["label"]) for u, v, d in G.edges(data=True)]
+                [
+                    (
+                        (
+                            u,
+                            v,
+                        ),
+                        d["label"],
+                    )
+                    for u, v, d in G.edges(data=True)
+                ]
             )
             n = G.size()
 
@@ -1326,5 +1360,7 @@ class Model:
 
             # Draw
             nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
-            nx.draw(G, pos, node_size=1000, with_labels=True, node_color=color_map)
+            nx.draw(
+                G, pos, node_size=1000, with_labels=True, node_color=color_map
+            )
             pltshow()

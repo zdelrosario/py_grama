@@ -129,9 +129,13 @@ def eval_sinews(
             C_ind[ind_start:ind_end] = [i_sweep] * n_density
 
             ## Modify endpoints for infinite support
-            if not isfinite(model.density.marginals[model.var_rand[i_input]].q(0)):
+            if not isfinite(
+                model.density.marginals[model.var_rand[i_input]].q(0)
+            ):
                 Q_all[ind_start, i_input] = 1 / n_density / 10
-            if not isfinite(model.density.marginals[model.var_rand[i_input]].q(1)):
+            if not isfinite(
+                model.density.marginals[model.var_rand[i_input]].q(1)
+            ):
                 Q_all[ind_end - 1, i_input] = 1 - 1 / n_density / 10
 
     ## Assemble sampling plan
@@ -170,6 +174,7 @@ def eval_sinews(
 
 
 ev_sinews = add_pipe(eval_sinews)
+
 
 ## Hybrid points for Sobol' indices
 # --------------------------------------------------

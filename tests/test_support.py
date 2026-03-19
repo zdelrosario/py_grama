@@ -7,13 +7,15 @@ from numpy import eye, zeros
 from numpy.random import multivariate_normal
 from pandas import DataFrame
 
+
 ## Test support points
 ##################################################
 class TestSupportPoints(unittest.TestCase):
     def setUp(self):
         n = 100
         self.df = DataFrame(
-            data=multivariate_normal(zeros(3), eye(3), size=n), columns=["x", "y", "z"],
+            data=multivariate_normal(zeros(3), eye(3), size=n),
+            columns=["x", "y", "z"],
         )
         self.df["c"] = list(map(str, range(n)))
 
@@ -25,7 +27,10 @@ class TestSupportPoints(unittest.TestCase):
         """
 
         ## Basic facts
-        df_sp = gr.tran_sp(self.df, n=10,)
+        df_sp = gr.tran_sp(
+            self.df,
+            n=10,
+        )
         # Correct number of samples
         self.assertTrue(df_sp.shape[0] == 10)
         # Correct variables (numeric only)

@@ -15,7 +15,9 @@ X = gr.Intention()
 
 class TestSubset(unittest.TestCase):
     def test_dropna(self):
-        df = gr.df_make(x=[1.0, 2.0, 3.0], y=[1.0, np.nan, 3.0], z=[1.0, 2.0, np.nan])
+        df = gr.df_make(
+            x=[1.0, 2.0, 3.0], y=[1.0, np.nan, 3.0], z=[1.0, 2.0, np.nan]
+        )
 
         df_true_default = gr.df_make(x=[1.0], y=[1.0], z=[1.0])
         df_true_y = gr.df_make(x=[1.0, 3.0], y=[1.0, 3.0], z=[1.0, np.nan])
